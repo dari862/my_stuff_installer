@@ -1,0 +1,18 @@
+
+In /home/dari/Desktop/my_stuff/bin/bin/lazygit line 46:
+function _glog {
+^-- SC2120 (warning): _glog references arguments, but none are ever passed.
+
+
+In /home/dari/Desktop/my_stuff/bin/bin/lazygit line 63:
+		| command less -r $([ $# -eq 0 ] && echo "+/[^/]HEAD")
+                                  ^-- SC2046 (warning): Quote this to prevent word splitting.
+
+
+In /home/dari/Desktop/my_stuff/bin/bin/lazygit line 209:
+		git push origin HEAD $([ -n "$FORCE" ] && echo '--force-with-lease')
+                                     ^-- SC2046 (warning): Quote this to prevent word splitting.
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2046 -- Quote this to prevent word splitt...
+  https://www.shellcheck.net/wiki/SC2120 -- _glog references arguments, but n...

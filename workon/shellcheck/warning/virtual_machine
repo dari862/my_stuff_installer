@@ -1,0 +1,7 @@
+
+In /home/dari/Desktop/my_stuff/bin/openbox/virtual_machine line 3:
+ep_url="https://download.virtualbox.org/virtualbox/7.0.8/Oracle_VM_VirtualBox_Extension_Pack-7.0.8.vbox-extpack"
+^----^ SC2034 (warning): ep_url appears unused. Verify use (or export if used externally).
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2034 -- ep_url appears unused. Verify use...

@@ -1,0 +1,181 @@
+#!/bin/bash
+
+mem_enc(){
+    "${gpgec[@]}" > "${rpgpgf}"
+}
+
+mem_dec(){
+    "${gpgdc[@]}" < "${rpgpgf}"
+}
+
+mem_mod(){
+    local crt="$(${be}_dec)"
+    echo -ne "${crt}\n${qry}\n.dump\n" | \
+	"${sl3}" | \
+	"${be}_enc"
+}
+
+mem_prev(){
+    local crt="$(${be}_dec)"
+    echo -ne "${crt}\n${qry}\n" | \
+	"${sl3}"
+}
+
+mem_mkdefaultdb(){
+    local qry="$(cat "${sdn}/examples/create.sql")\n.dump\n"
+    echo -ne "${qry}" | \
+	"${sl3}" | \
+	"${be}_enc" || return $?
+}
+
+mem_import(){
+    local qry=".mode csv\n.import ${1} ${act}"
+    "${be}_mod"
+}
+
+mem_insert_rec(){
+    local IFS=$'\|'
+    local vals=( ${1} )
+    local IFS=$'\ \t\n'
+    local vals[0]=${vals[0]:-NULL} vals[1]=${vals[1]:-NULL} vals[2]=${vals[2]:-NULL} vals[3]=${vals[3]:-NULL} vals[4]=${vals[4]:-NULL}
+    local qry="INSERT INTO ${act} \n \
+    	       VALUES ('${vals[0]//:/\:}', \n \
+	       	      '${vals[1]}', \n \
+		      '${vals[2]}', \n \
+		      '${vals[3]}', \n \
+		      '${vals[4]}');"
+    "${be}_mod"
+}
+
+mem_update_rec(){
+    local IFS=$'\|'
+    local vals=( ${1} )
+    local IFS=$'\ \t\n'
+    local qry="UPDATE ${act} \n \
+    	       SET ${dmf} = '${vals[1]}', \n \
+	       	   ${emf} = '${vals[2]}', \n \
+		   ${unf} = '${vals[3]}', \n \
+		   ${pwf} = '${vals[4]}', \n \
+		   ${cmf} = '${vals[5]}'  \n \
+	       WHERE ${idf} = '${vals[0]}';"
+    "${be}_mod"
+}
+
+mem_delete_ids(){
+    local where_clause="WHERE ${idf} = '${1}'"
+    shift
+    while [[ -n "${1}" ]]; do
+	local where_clause+=" OR ${idf} = '${1}'"
+	shift
+    done
+    local qry="DELETE FROM ${act} ${where_clause};"
+    "${be}_mod"
+}
+
+mem_session(){
+    "${be}_dec" | "${sl3}" "${rpdb}"
+    "${sl3}" "${rpdb}"
+    ${shrc[@]} "${rpdb}"
+}
+
+mem_tables(){
+    local qry="\n.tables"
+    "${be}_prev"
+}
+
+mem_schema(){
+    local qry="\n.schema ${1}"
+    "${be}_prev"
+}
+
+mem_dfltcrtstmnt(){
+    cat "${sdn}/examples/create.sql" | while read -r line; do
+	if [[ "${line}" =~ ^CREATE ]]; then
+	    echo "${line}"
+	    break
+	fi
+    done
+}
+
+mem_read_dbflds(){
+    # ADHOC db table fields extractor just for the lolz factor.
+    local -a tbls=($(${be}_tables))
+    local schm="$(${be}_schema ${tbls[0]})"
+    local dfst="$(${be}_dfltcrtstmnt)"
+    if [[ "${schm^^}" != "${dfst^^}" ]]; then
+	return "255" # Non standard create statement. (according to git)
+    fi
+    schm="${schm^^}" # sqlite is case insensitive
+    local -a brkdwn=(
+	"CREATE" "TABLE" "IF" "NOT" "EXISTS" "NULL"
+	"DEFAULT" "PRIMARY" "KEY" "UNIQUE" "AUTOINCREMENT"
+	"INTEGER" "REAL" "TEXT" "BLOB" "TEXT"
+	"NUMERIC" "NONE" "INT" "INTEGER" "TINYINT" "SMALLINT"
+	"MEDIUMINT" "BIGINT" "UNSIGNED" "BIG" "INT2" "INT8"
+	"CHARACTER" "VARCHAR" "VARYING" "CHARACTER" "NCHAR" "NATIVE"
+	"NVARCHAR" "CLOB" "DOUBLE" "PRECISION" "FLOAT" "NUMERIC"
+	"DECIMAL" "BOOLEAN" "DATE" "DATETIME"
+	"(" ")" "," ";" "\""
+    )
+    for i in ${brkdwn[@]}; do
+	schm="${schm//${i}/$' '}"
+    done
+    local -a arrflds=( ${schm} )
+    export act="${arrflds[0]}" idf="rowid" dmf="${arrflds[1]}" emf="${arrflds[2]}" unf="${arrflds[3]}" pwf="${arrflds[4]}" cmf="${arrflds[5]}"
+    unset tbls schm dfst brkdwn arrflds
+}
+
+mem_self_test() {
+    "${be}_read_dbflds" || return $?
+    "${be}_export" &> /dev/null
+}
+
+mem_criteria_sql(){
+    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${dmf} LIKE '%${1}%' OR ${emf} LIKE '%${1}%' OR ${unf} LIKE '%${1}%';"
+}
+
+mem_newrecs_sql(){
+    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${idf} > '${1}';"
+}
+
+mem_id_sql(){
+    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} WHERE ${idf} = '${1}';"
+}
+
+mem_allbyid_sql(){
+    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${pwf}, ${cmf} FROM ${act} WHERE ${idf} = '${1}';"
+}
+
+mem_preview_sql(){
+    echo -ne "SELECT ${idf} AS ID, ${dmf}, ${emf}, ${unf}, ${cmf} FROM ${act} ORDER BY ${idf} ASC;"
+}
+
+mem_maxid(){
+    local qry="SELECT MAX(${idf}) FROM ${act};"
+    "${be}_prev"
+}
+
+mem_allbyid(){
+     local qry="$(${be}_allbyid_sql "${@}")"
+     "${be}_prev"
+}
+
+mem_export(){
+    local qry=".mode csv\n.header on\nSELECT * FROM ${act} ORDER BY ${idf} ASC;"
+    "${be}_prev"
+}
+
+mem_preview(){
+    local qry="$(${be}_preview_sql)"
+    "${be}_prev"
+}
+
+mem_showpw(){
+    local qry="SELECT ${pwf} FROM ${act} WHERE ${idf} = '${1}';"
+    "${be}_prev"
+}
+
+mem_runcustomquery(){
+    local qry="${1}"
+    "${be}_prev"
+}

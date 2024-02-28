@@ -1,0 +1,23 @@
+#!/bin/bash
+push_now(){
+	git remote set-url origin git@github.com:dari862/$(basename "$PWD").git
+	git add -A
+	git commit -am "Update README.md"
+	git push
+}
+
+git_repo_Array=(
+my_stuff
+Theme_Stuff
+my_stuff_installer
+)
+
+cd my_stuff_installer
+for getthis in "${git_repo_Array[@]}"; do
+	cd ..
+	cd $getthis
+	echo "###############################################"
+	echo "#		pushing $getthis repo"
+	echo "###############################################"
+	push_now
+done

@@ -1,0 +1,16 @@
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/apps_center/Gaming/Gaming_Tools/openrgb_Manage-RGB line 4:
+extra_apps_=()
+^---------^ SC2034 (warning): extra_apps_ appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/apps_center/Gaming/Gaming_Tools/openrgb_Manage-RGB line 38:
+	cd /tmp
+        ^-----^ SC2164 (warning): Use 'cd ... || exit' or 'cd ... || return' in case cd fails.
+
+Did you mean: 
+	cd /tmp || exit
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2034 -- extra_apps_ appears unused. Verif...
+  https://www.shellcheck.net/wiki/SC2164 -- Use 'cd ... || exit' or 'cd ... |...

@@ -1,0 +1,7 @@
+
+In /home/dari/Desktop/my_stuff/bin/session_managers/clipboard-manager-session line 17:
+	clipboard_manager_name="xfce4-clipman"
+        ^--------------------^ SC2034 (warning): clipboard_manager_name appears unused. Verify use (or export if used externally).
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2034 -- clipboard_manager_name appears un...

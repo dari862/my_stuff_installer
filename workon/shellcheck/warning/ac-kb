@@ -1,0 +1,7 @@
+
+In /home/dari/Desktop/my_stuff/bin/openbox/ac-kb line 21:
+    grep '<!ENTITY' $rc_file | while read -r a b c line ; do
+                                             ^-- SC2034 (warning): a appears unused. Verify use (or export if used externally).
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2034 -- a appears unused. Verify use (or ...

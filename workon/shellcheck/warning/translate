@@ -1,0 +1,17 @@
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/translate line 32:
+libretranslate_instance="https://libretranslate.de"
+^---------------------^ SC2034 (warning): libretranslate_instance appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/translate line 33:
+lingva_instance="https://lingva.ml"
+^-------------^ SC2034 (warning): lingva_instance appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/translate line 47:
+  translate_services[lingva]="https://lingva.ml"
+  ^------------------------^ SC2034 (warning): translate_services appears unused. Verify use (or export if used externally).
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2034 -- libretranslate_instance appears u...

@@ -1,0 +1,38 @@
+
+In /home/dari/Desktop/my_stuff/bin/rofi/rofi-music line 23:
+	button_music=' MPD'
+        ^----------^ SC2034 (warning): button_music appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/rofi/rofi-music line 81:
+    $button_previous)
+    ^--------------^ SC2254 (warning): Quote expansions in case patterns to match literally rather than as a glob.
+
+
+In /home/dari/Desktop/my_stuff/bin/rofi/rofi-music line 84:
+    $toggle)
+    ^-----^ SC2254 (warning): Quote expansions in case patterns to match literally rather than as a glob.
+
+
+In /home/dari/Desktop/my_stuff/bin/rofi/rofi-music line 87:
+    $button_stop)
+    ^----------^ SC2254 (warning): Quote expansions in case patterns to match literally rather than as a glob.
+
+
+In /home/dari/Desktop/my_stuff/bin/rofi/rofi-music line 90:
+    $button_next)
+    ^----------^ SC2254 (warning): Quote expansions in case patterns to match literally rather than as a glob.
+
+
+In /home/dari/Desktop/my_stuff/bin/rofi/rofi-music line 93:
+    $tog_repeat)
+    ^---------^ SC2254 (warning): Quote expansions in case patterns to match literally rather than as a glob.
+
+
+In /home/dari/Desktop/my_stuff/bin/rofi/rofi-music line 96:
+    $tog_random)
+    ^---------^ SC2254 (warning): Quote expansions in case patterns to match literally rather than as a glob.
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2034 -- button_music appears unused. Veri...
+  https://www.shellcheck.net/wiki/SC2254 -- Quote expansions in case patterns...

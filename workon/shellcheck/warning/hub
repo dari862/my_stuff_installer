@@ -1,0 +1,7 @@
+
+In /home/dari/Desktop/my_stuff/bin/rofi/hub line 17:
+config_editer_hub()
+^-- SC2120 (warning): config_editer_hub references arguments, but none are ever passed.
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2120 -- config_editer_hub references argu...

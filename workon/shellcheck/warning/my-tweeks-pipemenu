@@ -1,0 +1,7 @@
+
+In /home/dari/Desktop/my_stuff/bin/openbox/pipemenu/my-tweeks-pipemenu line 32:
+TWEEKS=($(ls ${_TWEEKS_DIR}))
+        ^------------------^ SC2207 (warning): Prefer mapfile or read -a to split command output (or quote to avoid splitting).
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2207 -- Prefer mapfile or read -a to spli...

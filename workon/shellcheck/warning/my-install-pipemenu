@@ -1,0 +1,47 @@
+
+In /home/dari/Desktop/my_stuff/bin/openbox/pipemenu/my-install-pipemenu line 17:
+LIST_OF_APPS_SCRIPTS_=($(ls -d "$_SCRIPTS_LIBDIR"/*/ 2>/dev/null | grep -v "GAMING_SCRIPTS_LIBDIR"))
+                       ^-- SC2207 (warning): Prefer mapfile or read -a to split command output (or quote to avoid splitting).
+                         ^-- SC2010 (warning): Don't use ls | grep. Use a glob or a for loop with a condition to allow non-alphanumeric filenames.
+
+
+In /home/dari/Desktop/my_stuff/bin/openbox/pipemenu/my-install-pipemenu line 18:
+LIST_OF_GAMES_SCRIPTS_=($(ls -d "$GAMING_SCRIPTS_LIBDIR"/*/ 2>/dev/null))
+                        ^-- SC2207 (warning): Prefer mapfile or read -a to split command output (or quote to avoid splitting).
+
+
+In /home/dari/Desktop/my_stuff/bin/openbox/pipemenu/my-install-pipemenu line 61:
+		cd $d
+                ^---^ SC2164 (warning): Use 'cd ... || exit' or 'cd ... || return' in case cd fails.
+
+Did you mean: 
+		cd $d || exit
+
+
+In /home/dari/Desktop/my_stuff/bin/openbox/pipemenu/my-install-pipemenu line 79:
+				cd $gd
+                                ^----^ SC2164 (warning): Use 'cd ... || exit' or 'cd ... || return' in case cd fails.
+
+Did you mean: 
+				cd $gd || exit
+
+
+In /home/dari/Desktop/my_stuff/bin/openbox/pipemenu/my-install-pipemenu line 115:
+			cd $d
+                        ^---^ SC2164 (warning): Use 'cd ... || exit' or 'cd ... || return' in case cd fails.
+
+Did you mean: 
+			cd $d || exit
+
+
+In /home/dari/Desktop/my_stuff/bin/openbox/pipemenu/my-install-pipemenu line 129:
+				cd $gd
+                                ^----^ SC2164 (warning): Use 'cd ... || exit' or 'cd ... || return' in case cd fails.
+
+Did you mean: 
+				cd $gd || exit
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2010 -- Don't use ls | grep. Use a glob o...
+  https://www.shellcheck.net/wiki/SC2164 -- Use 'cd ... || exit' or 'cd ... |...
+  https://www.shellcheck.net/wiki/SC2207 -- Prefer mapfile or read -a to spli...

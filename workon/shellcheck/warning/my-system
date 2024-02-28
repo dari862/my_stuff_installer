@@ -1,0 +1,25 @@
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/my-system line 53:
+  	_battery_tab_='--tab="Battery"'
+                      ^---------------^ SC2089 (warning): Quotes/backslashes will be treated literally. Use an array.
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/my-system line 59:
+	SENSORS=($(sensors | grep -E '^[^:]+$'))
+                 ^----------------------------^ SC2207 (warning): Prefer mapfile or read -a to split command output (or quote to avoid splitting).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/my-system line 74:
+  	_Sensors_tab_='--tab="Sensors"'
+                      ^---------------^ SC2089 (warning): Quotes/backslashes will be treated literally. Use an array.
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/my-system line 86:
+    $_battery_tab_ $_Sensors_tab_ --active-tab=${1:-1}
+    ^------------^ SC2090 (warning): Quotes/backslashes in this variable will not be respected.
+                   ^------------^ SC2090 (warning): Quotes/backslashes in this variable will not be respected.
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2089 -- Quotes/backslashes will be treate...
+  https://www.shellcheck.net/wiki/SC2090 -- Quotes/backslashes in this variab...
+  https://www.shellcheck.net/wiki/SC2207 -- Prefer mapfile or read -a to spli...

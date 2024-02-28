@@ -1,0 +1,119 @@
+#!/bin/bash
+#
+# Just to pickup syntax highlighting
+#shellcheck disable=SC2034,SC2155,SC2034,SC2155,SC2154
+
+declare -r black='\e[0;30m' red='\e[0;31m' \
+	green='\e[0;32m' yellow='\e[0;33m' \
+	blue='\e[0;34m' magenta='\e[0;35m' \
+	cyan='\e[0;36m' white='\e[0;37m' \
+	default='\e[0;39m'
+
+myread(){
+    echo -ne "${1}"
+    read -r"${2}" input || return $?
+    [[ -n "${2}" ]] && echo
+    export input
+}
+
+menu_terminal(){
+    myread "\n ${tui_menu[*]}" || return $?
+    export usrinpt="${input}"
+}
+
+create_terminal() {
+    local fnc="${FUNCNAME[@]:(-4):1}: (Ctrl-D to cancel):" input
+
+    if [[ -z "${1}" ]]; then # Create mode
+	dm="${dm:-"enter a domain"}" em="${em:-"enter an email address"}"
+	un="${un:-"enter your username"}" pw="${pw:-"$(func_gpw 16)"}"
+	pw1="${pw}" cm="${cm:-"comments goes here..."}"
+    else # Update mode
+        id="${1}"
+	local IFS=$'\|'
+	local -a rs=( $(${be}_allbyid "${id}") )
+	dm="${dm:-"${rs[1]}"}" em="${em:-"${rs[2]}"}"
+	un="${un:-"${rs[3]}"}" pw="${pw:-"${rs[4]}"}"
+	pw1="${pw:-"${rs[4]}"}" cm="${cm:-"${rs[5]}"}"
+    fi
+
+    echo -ne "  ${fnc^} Enter required details!
+    Passwords can be alpha/numeric/punctuation characters.
+    You can use a pword of your choice or a desired length (8-64 chars)
+    or leave empty for auto (16 chars).
+    Make sure you're not using any restricted characters as input.
+    Like  : $(func_regex_forbid)
+    Namely: space,backslash,backtick,pound,colon,comma or quotes(both).\n"
+
+    myread "${fnc^} default: ${dm}: " || return $?
+    export dm="${input:-${dm}}"
+
+    myread "${fnc^} default: ${em}: " || return $?
+    export em="${input:-${em}}"
+
+    myread "${fnc^} default: ${un}: " || return $?
+    export un="${input:-${un}}"
+
+    myread "${fnc^} default: ${pw}: (alpha/numeric/punctuation or length/empty for auto): " "s" || return $?
+    export pw="${input:-${pw}}"
+
+    myread "${fnc^} default: ${pw1}: (again to verify): " "s" || return $?
+    export pw1="${input:-${pw1}}"
+
+    myread "${fnc^} default: ${cm}: " || return $?
+    export cm="${input:-${cm}}"
+}
+
+retrieve_terminal(){
+    myread "Enter search term to look for: (empty for All) " || return $?
+    export criteria="${input}"
+}
+
+update_terminal(){
+    ${be}_runcustomquery ".mode column\n.headers on\n$(${be}_preview_sql)"
+    myread "Select ID to ${FUNCNAME[@]:(-4):1}: (empty to cancel) "
+    id="${input}"
+    [[ -z "${id}" ]] && return 1
+    export id
+}
+
+delete_terminal(){
+    update_terminal
+}
+
+csv_terminal(){
+    myread "Enter csv file to ${FUNCNAME[1]:0:6}: (empty to cancel) " || return $?
+    csvf="${input}"
+    [[ -z "${csvf}" ]] && return 1
+    export csvf
+}
+
+importcsv_terminal(){
+    csv_terminal
+}
+
+exportcsv_terminal(){
+    csv_terminal
+}
+
+results_terminal(){
+    local id pw
+    while :; do
+	${be}_runcustomquery ".mode column\n.headers on\n${1}"
+	myread "Select ID to preview password: (empty to cancel) " || return $?
+	id="${input}"
+	[[ -z "${id}" ]] && return 1
+	pw="$("${be}_showpw" "${id}")"
+	echo "Account: ${id}, Password: ${pw}"
+	read -rp "Return to continue... "
+	[[ -n "$(type -P xclip)" ]] && echo "${pw}" | "xclip" "-r"
+    done
+}
+
+message_terminal(){
+    echo -ne "Account ID: #${id} deleted. No errors reported!\n"
+}
+
+usage_terminal(){
+    echo -ne "${tui_hmsg[*]}"
+}

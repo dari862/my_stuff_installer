@@ -1,0 +1,224 @@
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 208:
+        LOCALE_SETTINGS="Locale Settings"
+        ^-------------^ SC2034 (warning): LOCALE_SETTINGS appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 209:
+        LANGUAGE_PACKAGES="Language Packages"
+        ^---------------^ SC2034 (warning): LANGUAGE_PACKAGES appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 210:
+        KERNEL="Kernel"
+        ^----^ SC2034 (warning): KERNEL appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 211:
+        USER_ACCOUNTS="User Accounts"
+        ^-----------^ SC2034 (warning): USER_ACCOUNTS appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 212:
+        TIME_DATE="Time and Date"
+        ^-------^ SC2034 (warning): TIME_DATE appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 213:
+        KEYBOARD="Mouse and Keyboard Settings"
+        ^------^ SC2034 (warning): KEYBOARD appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 214:
+        HARDWARE="Hardware Configuration"
+        ^------^ SC2034 (warning): HARDWARE appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 215:
+        SOFTWARE="Software"
+        ^------^ SC2034 (warning): SOFTWARE appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 222:
+        MENU="Menu/SidePanels"
+        ^--^ SC2034 (warning): MENU appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 228:
+        SOFTWARE_DESC="Software installation and update - Preferred Applications.\n"
+        ^-----------^ SC2034 (warning): SOFTWARE_DESC appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 235:
+        EDIT_FILE="Edit file"
+        ^-------^ SC2034 (warning): EDIT_FILE appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 237:
+        T_CONF="Configure panel"
+        ^----^ SC2034 (warning): T_CONF appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 240:
+        T_LAUNCHERS="Add/remove launchers..."
+        ^---------^ SC2034 (warning): T_LAUNCHERS appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 247:
+        MENU_DESC="Main menu (<small>access it by right click, win+space shortcut or from panel icon</small>) have type to search functionality. Just start to type what you looking for.\n<small><i>There are also two <b>side-panels</b> available for quick access to file system locations for example.</i> You can add custom commands to menus and side-panels <a href='https://blog.maboxlinux.org/how-to-add-custom-commands-to-menu-and-sidepanels/'>blogpost</a></small>"
+        ^-------^ SC2034 (warning): MENU_DESC appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 248:
+        M_EDIT_MAIN="Edit Favorites"
+        ^---------^ SC2034 (warning): M_EDIT_MAIN appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 249:
+        M_EDIT_MAIN_AFTER="Edit below Apps"
+        ^---------------^ SC2034 (warning): M_EDIT_MAIN_AFTER appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 250:
+        M_RESTORE_MAIN="Reset mainmenu to default"
+        ^------------^ SC2034 (warning): M_RESTORE_MAIN appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 251:
+        M_LEFT="<b>LEFT PANEL</b>"
+        ^----^ SC2034 (warning): M_LEFT appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 252:
+        M_LEFT_KEY="<small>(ctrl+super+left)</small>"
+        ^--------^ SC2034 (warning): M_LEFT_KEY appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 253:
+        M_MAIN="<b>MAIN MENU</b>"
+        ^----^ SC2034 (warning): M_MAIN appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 254:
+        M_MAIN_KEY="<small>(super)</small>"
+        ^--------^ SC2034 (warning): M_MAIN_KEY appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 255:
+        SETTINGS_MENU="<b>SETTINGS MENU</b>"
+        ^-----------^ SC2034 (warning): SETTINGS_MENU appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 256:
+        SETTINGS_EDIT="Edit..."
+        ^-----------^ SC2034 (warning): SETTINGS_EDIT appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 257:
+        M_RIGHT="<b>RIGHT PANEL</b>"
+        ^-----^ SC2034 (warning): M_RIGHT appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 258:
+        M_RIGHT_KEY="<small>(ctrl+super+right)</small>"
+        ^---------^ SC2034 (warning): M_RIGHT_KEY appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 259:
+        M_LEFT_DESC="<small>Left panel\n - quick navigation\n - GTK Bookmarks\n - Virtualbox machines</small>"
+        ^---------^ SC2034 (warning): M_LEFT_DESC appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 260:
+        M_RIGHT_DESC="<small>Right panel\n - system settings\n - help\n - exit options</small>"
+        ^----------^ SC2034 (warning): M_RIGHT_DESC appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 261:
+        M_CUSTOMIZE="<i>Customize commands:</i>"
+        ^---------^ SC2034 (warning): M_CUSTOMIZE appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 262:
+        M_MORE="<b>MORE SETTINGS..</b>"
+        ^----^ SC2034 (warning): M_MORE appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 263:
+        M_COLORSETTINGS="<b>Coloring...</b>"
+        ^-------------^ SC2034 (warning): M_COLORSETTINGS appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 264:
+        OWN_COMMANDS_TOP="(TOP)"
+        ^--------------^ SC2034 (warning): OWN_COMMANDS_TOP appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 265:
+        OWN_COMMANDS_BOTTOM="(BOTTOM)"
+        ^-----------------^ SC2034 (warning): OWN_COMMANDS_BOTTOM appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 268:
+        COMP_GUI="Settings"
+        ^------^ SC2034 (warning): COMP_GUI appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 272:
+        COMP_REMOVE="Remove picom.conf"
+        ^---------^ SC2034 (warning): COMP_REMOVE appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 273:
+        COMP_DEFAULT="Reset to default"
+        ^----------^ SC2034 (warning): COMP_DEFAULT appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 276:
+        COLORIZER_DESC="<b>Colorizer</b>\nColorizer allows you to change the color of the desktop elements.\nIt can also automatically generate colors based on the wallpaper.\n<i>See video (online - YT):</i> <a href='https://youtu.be/h50oeS7aFyM'>Colorizer - overview</a>\n"
+        ^------------^ SC2034 (warning): COLORIZER_DESC appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 277:
+        COL_MODULES="Individual Modules (advanced mode):"
+        ^---------^ SC2034 (warning): COL_MODULES appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 278:
+        COL_MENU="Colorizer Menu (advanced)"
+        ^------^ SC2034 (warning): COL_MENU appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 279:
+        LNG="en"
+        ^-^ SC2034 (warning): LNG appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 288:
+        KERNELS="Kernels"
+        ^-----^ SC2034 (warning): KERNELS appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 311:
+trap "rm -f $res1 $res3 $res4 $res5 $res6 $res7 $res8 $res9 $res10 $res11 $res12 $out" EXIT
+            ^---^ SC2064 (warning): Use single quotes, otherwise this expands now rather than when signalled.
+                  ^---^ SC2064 (warning): Use single quotes, otherwise this expands now rather than when signalled.
+                        ^---^ SC2064 (warning): Use single quotes, otherwise this expands now rather than when signalled.
+                              ^---^ SC2064 (warning): Use single quotes, otherwise this expands now rather than when signalled.
+                                    ^---^ SC2064 (warning): Use single quotes, otherwise this expands now rather than when signalled.
+                                          ^---^ SC2064 (warning): Use single quotes, otherwise this expands now rather than when signalled.
+                                                ^---^ SC2064 (warning): Use single quotes, otherwise this expands now rather than when signalled.
+                                                      ^---^ SC2064 (warning): Use single quotes, otherwise this expands now rather than when signalled.
+                                                            ^----^ SC2064 (warning): Use single quotes, otherwise this expands now rather than when signalled.
+                                                                   ^----^ SC2064 (warning): Use single quotes, otherwise this expands now rather than when signalled.
+                                                                          ^----^ SC2064 (warning): Use single quotes, otherwise this expands now rather than when signalled.
+                                                                                 ^--^ SC2064 (warning): Use single quotes, otherwise this expands now rather than when signalled.
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/control_center line 313:
+OSNAME=$(lsb_release -d | awk '{print $2}')
+^----^ SC2034 (warning): OSNAME appears unused. Verify use (or export if used externally).
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2034 -- COLORIZER_DESC appears unused. Ve...
+  https://www.shellcheck.net/wiki/SC2064 -- Use single quotes, otherwise this...

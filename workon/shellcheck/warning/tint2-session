@@ -1,0 +1,10 @@
+
+In /home/dari/Desktop/my_stuff/bin/session_managers/tint2-session line 18:
+	cd $HOME/.config/tint2
+        ^--------------------^ SC2164 (warning): Use 'cd ... || exit' or 'cd ... || return' in case cd fails.
+
+Did you mean: 
+	cd $HOME/.config/tint2 || exit
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2164 -- Use 'cd ... || exit' or 'cd ... |...

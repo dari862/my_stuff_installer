@@ -1,0 +1,7 @@
+
+In /home/dari/Desktop/my_stuff/bin/openbox/pipemenu/ac-sysinfo line 76:
+	type=`nmcli device status | grep "wifi" | tr -s '[:blank:]' | cut -d' ' -f2`
+        ^--^ SC2034 (warning): type appears unused. Verify use (or export if used externally).
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2034 -- type appears unused. Verify use (...

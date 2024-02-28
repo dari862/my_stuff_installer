@@ -1,0 +1,269 @@
+#!/bin/bash
+set -e
+
+Custom_distro_name="My Stuff"
+Custom_distro_dir_name="$(echo "$Custom_distro_name" | tr -dc '[:alnum:] \n\r' | tr '[:upper:]' '[:lower:]' | tr -s ' ' '_')"
+
+repo_name="my_stuff_installer"
+repo_name2="my_stuff"
+script_fullpath="$(dirname "$(readlink -f "$0")")"
+
+if echo "${script_fullpath}" | grep  "${repo_name}" &>/dev/null ; then
+	repo_path="$(echo "${script_fullpath}" | awk -F "${repo_name}" '{print $1}' )"
+	if [[ $(ls "$repo_path/${repo_name2}" 2>/dev/null) ]] ;then
+		tmp_folder="${repo_path}"
+	elif [[ $(ls "$repo_path"/../../"${repo_name2}" 2>/dev/null) ]] ;then
+		tmp_folder="$(cd "${repo_path}"/../.. && pwd)"
+	else
+		tmp_folder="/tmp"
+	fi
+else
+	tmp_folder="/tmp"
+fi
+
+declare -a to_be_purged=(
+aisleriot
+anthy
+kasumi
+aspell
+debian-reference-common
+fcitx
+fcitx-bin
+fcitx-frontend-gtk2
+fcitx-frontend-gtk3
+fcitx-mozc
+five-or-more
+four-in-a-row
+gnome-chess
+gnome-klotski
+gnome-mahjongg
+gnome-mines
+gnome-music
+gnome-nibbles
+gnome-robots
+gnome-sudoku
+gnome-taquin
+gnome-tetravex
+gnote
+goldendict
+hamster-applet
+hdate-applet
+hexchat
+hitori
+iagno
+khmerconverter
+lightsoff
+mate-themes
+mlterm
+mlterm-tiny
+mozc-utils-gui
+quadrapassel
+reportbug
+rhythmbox
+scim
+simple-scan
+sound-juicer
+swell-foop
+tali
+uim
+xboard
+xiterm+thai
+xterm
+im-config
+xfce4-notifyd
+xfce4-power-manager*
+)
+
+sudoaptinstall='sudo apt-get install -y'
+aptinstall='apt-get install -y'
+##################################################################################
+##################################################################################
+
+## functions
+show_m()
+{
+  echo -e $'\033[1;32m'"$*"$'\033[0m'
+}
+
+show_em()
+{
+	__massage="${1-}"
+	echo "$__massage"
+}
+
+aptupdate()
+{
+	show_m "updating your system"
+	sudo apt-get update
+}
+
+check_and_run_else_download_and_run()
+{
+  check_this_file_="${1-}"
+  if [ ! -f "$check_this_file_" ]; then
+  	show_em "Error: Failed to locate $check_this_file_ ."
+	wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/"$check_this_file_" || show_em "Error: Failed to download $check_this_file_ ."
+	chmod +x "$check_this_file_"
+	if [ ! -f "$check_this_file_" ]; then
+		show_em "Error: Failed to locate $check_this_file_ ."
+		exit 1
+	fi
+fi
+}
+
+check_for_SUDO()
+{
+if ! command -v sudo >/dev/null
+then
+	show_m "Install sudo and add user 1000 to sudo group"
+	# INFO: SUDO allow users exec commands with root privileges without login as root
+	[ "$(find /var/cache/apt/pkgcache.bin -mtime 0 2>/dev/null)" ] || aptupdate
+	$aptinstall sudo
+	user=$(cut -f 1,3 -d: /etc/passwd | grep :1000$ | cut -f1 -d:)
+	[ "$user" ] && adduser "$user" sudo
+	$aptinstall -f
+fi
+}
+
+_unattended_upgrades_()
+{
+	auto_upgrades_file="/etc/apt/apt.conf.d/20auto-upgrades"
+	if [ -f "${auto_upgrades_file}" ];then
+		auto_upgrades_file_bak="/etc/apt/apt.conf.d/20auto-upgrades.bak"
+		case "$1" in
+			start)
+				if [ ! -f "${auto_upgrades_file_bak}" ];then
+					sudo systemctl stop unattended-upgrades
+					sudo mv "${auto_upgrades_file}" "${auto_upgrades_file_bak}"
+				fi
+			;;
+			stop)
+				if [ -f /etc/apt/apt.conf.d/20auto-upgrades.bak ];then
+					sudo rm "${auto_upgrades_file}"
+					sudo mv "${auto_upgrades_file_bak}" "${auto_upgrades_file}"
+				fi
+			;;
+		esac
+	fi
+}
+
+rm_if_link()
+{ 
+_arg="${}"
+_arg2="${}"
+	if [ -L "$1" ]; then
+		rm "$1";
+	fi 
+}
+
+apt_purge_with_error2info()
+{
+localarray=("$@")
+for package in "${localarray[@]}"
+do
+	if dpkg -s "${package}" &>/dev/null; then
+		show_m "Purging ${package}."
+		sudo apt-get -y purge "$package"
+	fi
+done
+
+}
+
+keep_Sudo_refresed()
+{
+	while true
+		do
+			sudo -v
+			sleep 10m
+		done
+}
+
+run_fixes_()
+{
+	#fix xfce4-panel workspace settings error in openbox
+	[ -L "$1" ] &&  sudo rm "/usr/bin/xfwm4-workspace-settings"
+	[ -f /usr/bin/xfwm4-workspace-settings ] && sudo rm /usr/bin/xfwm4-workspace-settings
+	sudo ln -s /usr/bin/obconf /usr/bin/xfwm4-workspace-settings
+}
+
+do_you_want_2_run_this_yes_or_no(){
+	massage_is_="${1}"
+	yn=""
+	read -r -p "${massage_is_} (yes/no) " yn
+	yn="${yn^^}"
+	[ "$yn" = "YES" ] && yn="Y"
+	echo "$yn"
+}
+######################################################################################################################
+######################################################################################################################
+######################################################################################################################
+######################################################################################################################
+######################################################################################################################
+
+CHECK_IF_THIS_LAPTOP(){
+	# Are we a mac?
+	if test -d /proc/pmu; then
+        	batteries=$(grep Battery /proc/pmu/info | cut -f2 -d:)
+        	if test "$batteries" -ne 0; then
+            	echo true
+        	fi
+	fi
+	
+	if dmidecode="$(command -v dmidecode)" && [ -r /dev/mem -a -x "$dmidecode" ]
+	then
+        	# dmidecode to grab the Chassis type
+        	dmitype=$("$dmidecode" --string chassis-type)
+	
+        	if test "$dmitype" = "Notebook" || \
+           	test "$dmitype" = "Portable" || \
+           	test "$dmitype" = "Laptop"   || \
+           	test "$dmitype" = "Hand Held"; then
+            	echo true
+        	fi
+	
+        	# turn back on for debugging
+        	#echo "$dmitype"
+	fi
+	
+	if [ -e /sys/devices/virtual/dmi/id/chassis_type ] ; then
+    	chassis_type="$(cat /sys/devices/virtual/dmi/id/chassis_type)"
+    	case "$chassis_type" in
+        	8|9|10|11) # Portable
+            	echo true
+            	;;
+    	esac
+	fi
+	
+	# check for non device ACPI batteries
+	/sbin/modprobe battery 2> /dev/null || true
+	sysfs_power_supply=/sys/class/power_supply
+	if [ -d "$sysfs_power_supply" ]; then
+		for power_supply in "$sysfs_power_supply"/*
+		do
+			if (
+				grep -q Battery "$power_supply"/type 2>/dev/null
+			) && (
+				! grep -q Device "$power_supply"/scope 2>/dev/null
+			)
+			then
+				echo true
+			fi
+		done
+	fi
+	# old interface:
+	if [ -d /proc/acpi/battery ]; then
+        	results=$(find /proc/acpi/battery -mindepth 1 -type d)
+        	if [ -n "$results" ]; then
+            	echo true
+        	fi
+	fi
+
+	# check for APM batteries. This sucks, because we'll only get a valid response
+	# if the laptop has a battery fitted at the time
+	if [ -f /proc/apm ]; then
+    	battery=$(awk '{print $6}' </proc/apm)
+    	if [ "$battery" != "0xff" ] && [ "$battery" != "0x80" ]; then
+        	echo true
+    	fi
+	fi
+}

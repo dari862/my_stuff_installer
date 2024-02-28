@@ -1,0 +1,56 @@
+
+In /home/dari/Desktop/my_stuff/bin/bin/full-upgrade line 53:
+PINGTEST0=$(sudo ping -c 1 debian.org | grep [0-9])
+                                             ^---^ SC2062 (warning): Quote the grep pattern so the shell won't interpret it.
+
+
+In /home/dari/Desktop/my_stuff/bin/bin/full-upgrade line 87:
+	cd "${Custom_distro_path}/bin/not_add_2_path/updater"
+        ^-- SC2164 (warning): Use 'cd ... || exit' or 'cd ... || return' in case cd fails.
+
+Did you mean: 
+	cd "${Custom_distro_path}/bin/not_add_2_path/updater" || exit
+
+
+In /home/dari/Desktop/my_stuff/bin/bin/full-upgrade line 88:
+	updaters_list=($(ls))
+                       ^---^ SC2207 (warning): Prefer mapfile or read -a to split command output (or quote to avoid splitting).
+
+
+In /home/dari/Desktop/my_stuff/bin/bin/full-upgrade line 98:
+cd "${Custom_distro_path}"
+^------------------------^ SC2164 (warning): Use 'cd ... || exit' or 'cd ... || return' in case cd fails.
+
+Did you mean: 
+cd "${Custom_distro_path}" || exit
+
+
+In /home/dari/Desktop/my_stuff/bin/bin/full-upgrade line 100:
+if $(git fetch &>/dev/null);then
+   ^----------------------^ SC2091 (warning): Remove surrounding $() to avoid executing output (or use eval if intentional).
+
+
+In /home/dari/Desktop/my_stuff/bin/bin/full-upgrade line 116:
+	cd "${Custom_distro_path}/opt/git/"
+        ^-- SC2164 (warning): Use 'cd ... || exit' or 'cd ... || return' in case cd fails.
+
+Did you mean: 
+	cd "${Custom_distro_path}/opt/git/" || exit
+
+
+In /home/dari/Desktop/my_stuff/bin/bin/full-upgrade line 117:
+	__git_dir_to_update_=($(ls))
+                              ^---^ SC2207 (warning): Prefer mapfile or read -a to split command output (or quote to avoid splitting).
+
+
+In /home/dari/Desktop/my_stuff/bin/bin/full-upgrade line 121:
+			cd "${__repo_}"
+                        ^-------------^ SC2164 (warning): Use 'cd ... || exit' or 'cd ... || return' in case cd fails.
+
+Did you mean: 
+			cd "${__repo_}" || exit
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2062 -- Quote the grep pattern so the she...
+  https://www.shellcheck.net/wiki/SC2091 -- Remove surrounding $() to avoid e...
+  https://www.shellcheck.net/wiki/SC2164 -- Use 'cd ... || exit' or 'cd ... |...

@@ -1,0 +1,59 @@
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/nbrowser line 245:
+				source "${NBROWSER_CONFIG_DIR}/ubangs/${selected_browser/?}"
+                                       ^-- SC1090 (warning): ShellCheck can't follow non-constant source. Use a directive to specify location.
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/nbrowser line 253:
+				source "${NBROWSER_CONFIG_DIR}/ubangs/${ubang}"
+                                       ^-- SC1090 (warning): ShellCheck can't follow non-constant source. Use a directive to specify location.
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/nbrowser line 272:
+	local domain=$(echo "$cleanurl" | awk -F \/ '{l=split($3,a,"."); print (a[l-1]=="com"?a[l-2] OFS:X) a[l-1] OFS a[l]}' OFS=".")
+              ^----^ SC2155 (warning): Declare and assign separately to avoid masking return values.
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/nbrowser line 274:
+		source "${NBROWSER_CONFIG_DIR}/dbangs/${domain}"
+                       ^-- SC1090 (warning): ShellCheck can't follow non-constant source. Use a directive to specify location.
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/nbrowser line 338:
+			source "${NBROWSER_CONFIG_DIR}/bangs/${bang}"
+                               ^-- SC1090 (warning): ShellCheck can't follow non-constant source. Use a directive to specify location.
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/nbrowser line 349:
+				source "${NBROWSER_CONFIG_DIR}/engines/${engine}"
+                                       ^-- SC1090 (warning): ShellCheck can't follow non-constant source. Use a directive to specify location.
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/nbrowser line 357:
+				local url=$(jq -r ".[]|select( .t == \"$engine\" )|.u" "$NBROWSER_CONFIG_DIR/engines.json")
+                                      ^-^ SC2155 (warning): Declare and assign separately to avoid masking return values.
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/nbrowser line 363:
+					ENGINESLIST+=" ${!ENGINES[@]}"
+                                                     ^---------------^ SC2124 (warning): Assigning an array to a string! Assign as array, or use * instead of @ to concatenate.
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/nbrowser line 371:
+				ENGINESLIST+=" ${!ENGINES[@]}"
+                                             ^---------------^ SC2124 (warning): Assigning an array to a string! Assign as array, or use * instead of @ to concatenate.
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/nbrowser line 392:
+				source "${NBROWSER_CONFIG_DIR}/engines/${NBROWSER_DEFAULT_SEARCH}"
+                                       ^-- SC1090 (warning): ShellCheck can't follow non-constant source. Use a directive to specify location.
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/utilities/nbrowser line 394:
+				[ -n "$1" ] && url_handler "$(nbrowser_search $*)"
+                                                                              ^-- SC2048 (warning): Use "$@" (with quotes) to prevent whitespace problems.
+
+For more information:
+  https://www.shellcheck.net/wiki/SC1090 -- ShellCheck can't follow non-const...
+  https://www.shellcheck.net/wiki/SC2048 -- Use "$@" (with quotes) to prevent...
+  https://www.shellcheck.net/wiki/SC2124 -- Assigning an array to a string! A...

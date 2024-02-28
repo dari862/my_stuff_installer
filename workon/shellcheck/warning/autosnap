@@ -1,0 +1,74 @@
+
+In /home/dari/Desktop/my_stuff/bin/openbox/autosnap line 16:
+topleft_key="super+KP_Home"
+^---------^ SC2034 (warning): topleft_key appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/openbox/autosnap line 17:
+top_key="super+KP_Up"
+^-----^ SC2034 (warning): top_key appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/openbox/autosnap line 18:
+topright_key="super+KP_Prior"
+^----------^ SC2034 (warning): topright_key appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/openbox/autosnap line 19:
+left_key="super+KP_Left"
+^------^ SC2034 (warning): left_key appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/openbox/autosnap line 20:
+center_key="super+KP_Begin"
+^--------^ SC2034 (warning): center_key appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/openbox/autosnap line 21:
+right_key="super+KP_Right"
+^-------^ SC2034 (warning): right_key appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/openbox/autosnap line 22:
+bottomleft_key="super+KP_End"
+^------------^ SC2034 (warning): bottomleft_key appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/openbox/autosnap line 23:
+bottom_key="super+KP_Down"
+^--------^ SC2034 (warning): bottom_key appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/openbox/autosnap line 24:
+bottomright_key="super+KP_Next"
+^-------------^ SC2034 (warning): bottomright_key appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/openbox/autosnap line 32:
+screen_left=($(echo "$xrandr" | head -1))
+             ^-------------------------^ SC2207 (warning): Prefer mapfile or read -a to split command output (or quote to avoid splitting).
+
+
+In /home/dari/Desktop/my_stuff/bin/openbox/autosnap line 33:
+[ "$num_screens" -gt 1 ] && screen_right=($(echo "$xrandr" | tail -1))
+                                          ^-------------------------^ SC2207 (warning): Prefer mapfile or read -a to split command output (or quote to avoid splitting).
+
+
+In /home/dari/Desktop/my_stuff/bin/openbox/autosnap line 37:
+out=(${out//[^0-9 ]/})
+     ^--------------^ SC2206 (warning): Quote to prevent word splitting/globbing, or split robustly with mapfile or read -a.
+
+
+In /home/dari/Desktop/my_stuff/bin/openbox/autosnap line 43:
+	current_screen=(${screen_right[*]})
+                        ^----------------^ SC2206 (warning): Quote to prevent word splitting/globbing, or split robustly with mapfile or read -a.
+
+
+In /home/dari/Desktop/my_stuff/bin/openbox/autosnap line 46:
+	current_screen=(${screen_left[*]})
+                        ^---------------^ SC2206 (warning): Quote to prevent word splitting/globbing, or split robustly with mapfile or read -a.
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2034 -- bottom_key appears unused. Verify...
+  https://www.shellcheck.net/wiki/SC2206 -- Quote to prevent word splitting/g...
+  https://www.shellcheck.net/wiki/SC2207 -- Prefer mapfile or read -a to spli...

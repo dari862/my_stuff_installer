@@ -1,0 +1,10 @@
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/apps_center/Steam_fix line 3:
+cd ~/.steam/steam/steamapps/common/ 
+^-- SC2164 (warning): Use 'cd ... || exit' or 'cd ... || return' in case cd fails.
+
+Did you mean: 
+cd ~/.steam/steam/steamapps/common/ || exit 
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2164 -- Use 'cd ... || exit' or 'cd ... |...

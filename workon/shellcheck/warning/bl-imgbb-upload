@@ -1,0 +1,39 @@
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/bl-imgbb-upload line 178:
+    source "${SETTINGS_FILE}"
+           ^----------------^ SC1090 (warning): ShellCheck can't follow non-constant source. Use a directive to specify location.
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/bl-imgbb-upload line 416:
+        dlg_err=$(${DIALOG} --text="${dlg_msg}" \
+        ^-----^ SC2034 (warning): dlg_err appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/bl-imgbb-upload line 429:
+    api_line="CLIENT_API_KEY="\""${CLIENT_API_KEY}\""
+                              ^-- SC2140 (warning): Word is of the form "A"B"C" (B indicated). Did you mean "ABC" or "A\"B\"C"?
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/bl-imgbb-upload line 431:
+    source "${SETTINGS_FILE}"
+           ^----------------^ SC1090 (warning): ShellCheck can't follow non-constant source. Use a directive to specify location.
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/bl-imgbb-upload line 539:
+            source "${SETTINGS_FILE}"
+                   ^----------------^ SC1090 (warning): ShellCheck can't follow non-constant source. Use a directive to specify location.
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/bl-imgbb-upload line 549:
+    source "${SETTINGS_FILE}"
+           ^----------------^ SC1090 (warning): ShellCheck can't follow non-constant source. Use a directive to specify location.
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/bl-imgbb-upload line 569:
+    elif ! . "${SETTINGS_FILE}" 2> /dev/null; then
+             ^----------------^ SC1090 (warning): ShellCheck can't follow non-constant source. Use a directive to specify location.
+
+For more information:
+  https://www.shellcheck.net/wiki/SC1090 -- ShellCheck can't follow non-const...
+  https://www.shellcheck.net/wiki/SC2034 -- dlg_err appears unused. Verify us...
+  https://www.shellcheck.net/wiki/SC2140 -- Word is of the form "A"B"C" (B in...

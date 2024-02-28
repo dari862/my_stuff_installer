@@ -1,0 +1,33 @@
+
+In /home/dari/Desktop/my_stuff/bin/rofi/rofi-url-handler line 3:
+__is_there_arg_="$@"
+                ^--^ SC2124 (warning): Assigning an array to a string! Assign as array, or use * instead of @ to concatenate.
+
+
+In /home/dari/Desktop/my_stuff/bin/rofi/rofi-url-handler line 18:
+	_rofi_prompt_value="$@"
+                           ^--^ SC2124 (warning): Assigning an array to a string! Assign as array, or use * instead of @ to concatenate.
+
+
+In /home/dari/Desktop/my_stuff/bin/rofi/rofi-url-handler line 26:
+__reason_rofi(){
+^-- SC2120 (warning): __reason_rofi references arguments, but none are ever passed.
+
+
+In /home/dari/Desktop/my_stuff/bin/rofi/rofi-url-handler line 27:
+	_rofi_reason_value="$@"
+                           ^--^ SC2124 (warning): Assigning an array to a string! Assign as array, or use * instead of @ to concatenate.
+
+
+In /home/dari/Desktop/my_stuff/bin/rofi/rofi-url-handler line 39:
+	___all_arg_="$@"
+                    ^--^ SC2124 (warning): Assigning an array to a string! Assign as array, or use * instead of @ to concatenate.
+
+
+In /home/dari/Desktop/my_stuff/bin/rofi/rofi-url-handler line 92:
+	___all_arg_="$@"
+                    ^--^ SC2124 (warning): Assigning an array to a string! Assign as array, or use * instead of @ to concatenate.
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2120 -- __reason_rofi references argument...
+  https://www.shellcheck.net/wiki/SC2124 -- Assigning an array to a string! A...

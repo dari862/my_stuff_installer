@@ -1,0 +1,7 @@
+
+In /home/dari/Desktop/my_stuff/bin/bin/bl-setlocale line 91:
+    local user_path=($(dbus-send --print-reply=literal --system --dest=org.freedesktop.Accounts /org/freedesktop/Accounts org.freedesktop.Accounts.FindUserByName string:"$USER")) || error_exit "error finding ${USER}'s accountsservice path"
+                     ^-- SC2207 (warning): Prefer mapfile or read -a to split command output (or quote to avoid splitting).
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2207 -- Prefer mapfile or read -a to spli...

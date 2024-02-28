@@ -1,0 +1,73 @@
+
+In /home/dari/Desktop/my_stuff/bin/apps/my_power_manager line 4:
+arg_="$2"
+^--^ SC2034 (warning): arg_ appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/my_power_manager line 36:
+	set_idletime="1 idletime"
+        ^----------^ SC2034 (warning): set_idletime appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/my_power_manager line 37:
+	set_turnoff_moniter_time="2 turnoff_moniter_time"
+        ^----------------------^ SC2034 (warning): set_turnoff_moniter_time appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/my_power_manager line 38:
+	set_logout_time="3 logout_time"
+        ^-------------^ SC2034 (warning): set_logout_time appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/my_power_manager line 39:
+	set_suspend_time="4 suspend_time"
+        ^--------------^ SC2034 (warning): set_suspend_time appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/my_power_manager line 40:
+	set_hibernate_time="5 hibernate_time"
+        ^----------------^ SC2034 (warning): set_hibernate_time appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/my_power_manager line 41:
+	set_poweroff_time="6 poweroff_time"
+        ^---------------^ SC2034 (warning): set_poweroff_time appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/my_power_manager line 42:
+	set_brightness_level="7 brightness_level"
+        ^------------------^ SC2034 (warning): set_brightness_level appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/my_power_manager line 43:
+	set_lock_screen_on_idle="8 enable_lock_screen_on_idle"
+        ^---------------------^ SC2034 (warning): set_lock_screen_on_idle appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/my_power_manager line 44:
+	enable_lock_screen_on_idle="8 enable_lock_screen_on_idle"
+        ^------------------------^ SC2034 (warning): enable_lock_screen_on_idle appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/my_power_manager line 45:
+	disable_lock_screen_on_idle="8 disable_lock_screen_on_idle"
+        ^-------------------------^ SC2034 (warning): disable_lock_screen_on_idle appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/my_power_manager line 46:
+	finish="9 finish"
+        ^----^ SC2034 (warning): finish appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/my_power_manager line 47:
+	cancel="10 cancel"
+        ^----^ SC2034 (warning): cancel appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/my_power_manager line 129:
+  	for i in $*
+                 ^-- SC2048 (warning): Use "$@" (with quotes) to prevent whitespace problems.
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2034 -- arg_ appears unused. Verify use (...
+  https://www.shellcheck.net/wiki/SC2048 -- Use "$@" (with quotes) to prevent...

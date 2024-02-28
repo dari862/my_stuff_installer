@@ -1,0 +1,7 @@
+
+In /home/dari/Desktop/my_stuff/bin/rofi/mounter line 26:
+		[[ "$mounted" =~ "$escphone" ]] && break 1
+                                 ^---------^ SC2076 (warning): Remove quotes from right-hand side of =~ to match as a regex rather than literally.
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2076 -- Remove quotes from right-hand sid...

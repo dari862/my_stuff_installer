@@ -1,0 +1,17 @@
+
+In /home/dari/Desktop/my_stuff/bin/apps/tint2_scripts line 14:
+		--blueman) [ $(command -v blueman-manager &> /dev/null) ] && blueman-manager ;;
+                             ^-- SC2046 (warning): Quote this to prevent word splitting.
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/tint2_scripts line 15:
+		--rofi-bluetooth) [ $(command -v blueman-manager &> /dev/null) ] && rofi-bluetooth ;;
+                                    ^-- SC2046 (warning): Quote this to prevent word splitting.
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/tint2_scripts line 26:
+		--pavucontrol) [ $(command -v pavucontrol &> /dev/null) ] && pavucontrol ;;
+                                 ^-- SC2046 (warning): Quote this to prevent word splitting.
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2046 -- Quote this to prevent word splitt...

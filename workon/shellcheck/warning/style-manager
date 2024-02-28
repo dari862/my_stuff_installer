@@ -1,0 +1,94 @@
+
+In /home/dari/Desktop/my_stuff/bin/apps/style-manager line 130:
+	CONKYSESSION="$CONKYPATH/conky-sessionfile"
+        ^----------^ SC2034 (warning): CONKYSESSION appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/style-manager line 131:
+	TINTSESSION="$HOME/.config/tint2/tint2-sessionfile"
+        ^---------^ SC2034 (warning): TINTSESSION appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/style-manager line 215:
+	theme_font_name=($(grep '<name>' $RCFILE | sed -e 's/.*>\(.*\)<\/.*/\1/' | head -2))
+                         ^-- SC2207 (warning): Prefer mapfile or read -a to split command output (or quote to avoid splitting).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/style-manager line 272:
+	XFILE="$HOME/.Xresources"
+        ^---^ SC2034 (warning): XFILE appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/style-manager line 273:
+	BKP_SFX=".$(date +"%Y%m%d-%H%M%S").blob~"
+        ^-----^ SC2034 (warning): BKP_SFX appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/style-manager line 279:
+	yadPassword="yad --center --width=300 --image=keys.png --title 'Sudo-Password' --button='Ok:0' --button='Cancel:1'  --entry --hide-text --text"
+                     ^-- SC2089 (warning): Quotes/backslashes will be treated literally. Use an array.
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/style-manager line 280:
+	yadWarning="yad --center  --borders=20 --window-icon=/usr/share/DmDmDmdMdMdM/images/linux.svg --title Alert  --button='Ok:1' --button='Cancel:0' --text"
+                    ^-- SC2089 (warning): Quotes/backslashes will be treated literally. Use an array.
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/style-manager line 319:
+	MOUSECMD="click 3"          # mouse r-click
+        ^------^ SC2034 (warning): MOUSECMD appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/style-manager line 336:
+        	INTRO=$($DIALOGDEC $IMG \
+                ^---^ SC2034 (warning): INTRO appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/style-manager line 367:
+    	NUMDIRS=$(ls -l "$CONFIGPATH" | grep -c ^d) # check if any dirs present
+                  ^-- SC2010 (warning): Don't use ls | grep. Use a glob or a for loop with a condition to allow non-alphanumeric filenames.
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/style-manager line 406:
+    	DEL=0
+        ^-^ SC2034 (warning): DEL appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/style-manager line 443:
+                		TXT=""
+                                ^-^ SC2034 (warning): TXT appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/style-manager line 539:
+			$yadPassword "$msg" | sudo -S -v && cat "$1/$LDM" | sudo tee "$LDMDIR/$LDMnew" 2>/dev/null
+                        ^----------^ SC2090 (warning): Quotes/backslashes in this variable will not be respected.
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/style-manager line 554:
+            	$yadWarning "$msg" && return 0
+                ^---------^ SC2090 (warning): Quotes/backslashes in this variable will not be respected.
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/style-manager line 575:
+            	if [[ $SET = $d ]];then
+                             ^-- SC2053 (warning): Quote the right-hand side of = in [[ ]] to prevent glob matching.
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/style-manager line 581:
+            	f="$dir"/*"-thumb.jpg"
+                  ^------------------^ SC2125 (warning): Brace expansions and globs are literal in assignments. Quote it or use an array.
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/style-manager line 620:
+                	echo $(basename $FPATH) > "$CURSESSION"
+                             ^----------------^ SC2046 (warning): Quote this to prevent word splitting.
+
+
+In /home/dari/Desktop/my_stuff/bin/apps/style-manager line 644:
+                    	if [[ $currentsession = $fpath ]];then
+                                                ^----^ SC2053 (warning): Quote the right-hand side of = in [[ ]] to prevent glob matching.
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2010 -- Don't use ls | grep. Use a glob o...
+  https://www.shellcheck.net/wiki/SC2034 -- BKP_SFX appears unused. Verify us...
+  https://www.shellcheck.net/wiki/SC2046 -- Quote this to prevent word splitt...

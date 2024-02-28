@@ -1,0 +1,180 @@
+#!/bin/bash
+
+# Get some parameters like the location and the school to be used
+# when calculating the fajr and isha angle
+opt="${1-}"
+lat='30.001780'
+long='31.290419'
+city="Cairo"
+country="Egypt"
+method="5" # https://api.aladhan.com/v1/methods
+adjustment="0"
+prayers="$HOME/.local/share/prayers.json"
+available_month=""
+current_month=$(date +%m | awk '/^0.*/ {sub("0","")}{print}')
+current_year=$(date +%Y)
+
+prayer_times_yad(){
+	# Parsing the data for the five salawat
+	day_idx=$(( $(date +%d | awk '/^0.*/{sub("0","")}{print}') - 1 ))
+	fajr=$(date -d "$(jq ".data[$day_idx].timings.Fajr" $prayers | bc)" '+%I:%M')
+	sunrise=$(date -d "$(jq ".data[$day_idx].timings.Sunrise" $prayers | bc)" '+%I:%M')
+	dhuhr=$(date -d "$(jq ".data[$day_idx].timings.Dhuhr" $prayers | bc)" '+%I:%M')
+	asr=$(date -d "$(jq ".data[$day_idx].timings.Asr" $prayers | bc)" '+%I:%M')
+	maghrib=$(date -d "$(jq ".data[$day_idx].timings.Maghrib" $prayers | bc)" '+%I:%M')
+	isha=$(date -d "$(jq ".data[$day_idx].timings.Isha" $prayers | bc)" '+%I:%M')
+	# Hijri date
+	day=$(jq ".data[$day_idx].date.hijri.weekday.en" $prayers | bc)
+	day_ar=$(jq ".data[$day_idx].date.hijri.weekday.ar" $prayers | bc)
+	daynumber=$(jq ".data[$day_idx].date.hijri.day" $prayers | bc)
+	month=$(jq ".data[$day_idx].date.hijri.month.en" $prayers | bc)
+	month_ar=$(jq ".data[$day_idx].date.hijri.month.ar" $prayers | bc)
+	year=$(jq ".data[$day_idx].date.hijri.year" $prayers | bc)
+	
+	YAD_dialog_AR="$(printf "📅 $day_ar،$daynumber-$month_ar-$year\n۞ الفجر\t\t$fajr\n۞ الشروق\t$sunrise\n۞ الظهر\t\t$dhuhr\n۞ العصر\t\t$asr\n۞ المغرب\t$maghrib\n۞ العشاء\t\t$isha\n")"
+	
+	YAD_dialog_EN="$(printf "📅 $day,\n$daynumber-$month-$year\n۞ Fajr\t\t$fajr\n۞ Sunrise\t$sunrise\n۞ Dhuhr\t$dhuhr\n۞ Asr\t\t$asr\n۞ Maghrib\t$maghrib\n۞ Isha\t\t$isha\n")"
+	
+	
+	if [[ "$XDG_SESSION_TYPE" == "x11" ]]; then
+  	yad_pid=$(xprop _NET_WM_PID -name Prayers 2>/dev/null | awk '{print $3}')
+	else
+  	yad_pid=$(hyprctl clients | awk '/title: Prayers/ {found=1} found && $0 ~ /pid/ {print $2}')
+	fi
+	
+	if [[ -z "$yad_pid" ]]; then
+		yad --no-buttons --text "<span font-size='large'>${YAD_dialog_AR}</span>" --title "Prayers"
+	else
+		kill $yad_pid
+	fi
+}
+
+add_prayers_at_jobs(){
+	echo "Creating at jobs for prayer notification..."
+	# WARNING: THIS SCRIPTS REMOVES ALL JOBS IN QUEUE "P" SCHEDULED USING AT
+	# ADJUST ACCORDINGLY
+	if [[ "$(at -q p -l | wc -l)" != "0" ]]; then
+    	for i in $(at -q p -l | awk '{ print $1 }'); do
+        	atrm $i
+    	done
+	fi
+	
+	day_idx=$(( $(date +%d | awk '/^0.*/ {sub("0","")}{print}') - 1 ))
+	fajr=$(date -d "$(jq ".data[$day_idx].timings.Fajr" $prayers | bc)" '+%H:%M %F')
+	dhuhr=$(date -d "$(jq ".data[$day_idx].timings.Dhuhr" $prayers | bc)" '+%H:%M %F')
+	asr=$(date -d "$(jq ".data[$day_idx].timings.Asr" $prayers | bc)" '+%H:%M %F')
+	maghrib=$(date -d "$(jq ".data[$day_idx].timings.Maghrib" $prayers | bc)" '+%H:%M %F')
+	isha=$(date -d "$(jq ".data[$day_idx].timings.Isha" $prayers | bc)" '+%H:%M %F')
+	
+	
+	kill_cmd="kill \$(ps aux | grep qatami | awk 'FNR==1{print \$2}')"
+	
+	fajr_cmd='[[ "$(dunstify --icon="clock-applet-symbolic" --action="Reply,reply" "Prayer Times" "It is time for Fajr prayer 🕌" -t 30000)" == "2" ]]'
+	dhuhr_cmd='[[ "$(dunstify --icon="clock-applet-symbolic" --action="Reply,reply" "Prayer Times" "It is time for Dhuhr prayer 🕌" -t 30000)" == "2" ]]'
+	asr_cmd='[[ "$(dunstify --icon="clock-applet-symbolic" --action="Reply,reply" "Prayer Times" "It is time for Asr prayer 🕌" -t 30000)" == "2" ]]'
+	maghrib_cmd='[[ "$(dunstify --icon="clock-applet-symbolic" --action="Reply,reply" "Prayer Times" "It is time for Maghrib prayer 🕌" -t 30000)" == "2" ]]'
+	isha_cmd='[[ "$(dunstify --icon="clock-applet-symbolic" --action="Reply,reply" "Prayer Times" "It is time for Isha prayer 🕌" -t 30000)" == "2" ]]'
+	
+	echo "$fajr_cmd && $kill_cmd" | at -q p "$fajr"
+	echo "$dhuhr_cmd && $kill_cmd" | at -q p "$dhuhr"
+	echo "$asr_cmd && $kill_cmd" | at -q p "$asr"
+	echo "$maghrib_cmd && $kill_cmd" | at -q p "$maghrib"
+	echo "$isha_cmd && $kill_cmd" | at -q p "$isha"
+}
+
+mpv_athan(){
+	mpv --no-audio-display --volume=100 $HOME/.local/share/qatami_takbeer.mp3 $>/dev/null
+}
+
+next_prayer_time(){
+	nextprayer=""
+	currentprayer=""
+	
+	# Get the current time
+	currenttime=$(date +%s)
+	day=$(date +%a)
+	day_idx=$(( $(date +%d | awk '/^0.*/{sub("0","")}{print}') - 1 ))
+	
+	# Parsing the data for the five salawat
+	# use epoch seconds in order to calculate time difference
+	# date -d $(jq ".data[DAY - 1].timings.PRAYER" $prayers | bc) +%s
+	fajr=$(date -d "$(jq ".data[$day_idx].timings.Fajr" $prayers | bc)" +%s)
+	dhuhr=$(date -d "$(jq ".data[$day_idx].timings.Dhuhr" $prayers | bc)" +%s)
+	asr=$(date -d "$(jq ".data[$day_idx].timings.Asr" $prayers | bc)" +%s)
+	maghrib=$(date -d "$(jq ".data[$day_idx].timings.Maghrib" $prayers | bc)" +%s)
+	isha=$(date -d "$(jq ".data[$day_idx].timings.Isha" $prayers | bc)" +%s)
+	
+	Calculate_remaining(){
+		# Calculate the remaining time to the next prayer (or iftar in ramadan and the fast duration is ramadan)
+		remain=$(date -u -d "@$(( "$nexttime" - "$currenttime" ))" "+%H:%M")
+		# Ramadan timings
+		# fast=$(date -u -d "@$(( "$maghrib" - "$fajr" ))" '+%H:%M')
+		# Tofast=$(date -u -d "@$(( "$maghrib" - "$currenttime" ))" '+%H:%M')
+		
+		# ======================= OUTPUT ======================= #
+		
+		# Get the current fard
+		#printf "$currentprayer ($remain)"
+		
+		# Get the next fard
+		if [[ "$XDG_SESSION_TYPE" == "x11" ]]; then
+  		printf "$nextprayer in $remain"
+		else
+  		printf '{ "text": "%s", "class": "%s" }\n' "$nextprayer in $remain" "$nextprayer"
+		fi
+	}
+	give_prayer_time(){
+		prayer_time=$(date -d@$nexttime -u +%H:%M)
+		if [[ "$XDG_SESSION_TYPE" == "x11" ]]; then
+  		printf "$nextprayer at $prayer_time"
+		else
+  		printf '{ "text": "%s", "class": "%s" }\n' "$nextprayer at $prayer_time" "$nextprayer"
+		fi
+	}
+	
+	if [ $currenttime -ge $fajr ] && [ $currenttime -lt $dhuhr ]; then
+    	nexttime=$dhuhr
+    	currentprayer="Fajr"
+    	if [[ "$day" == "Fri" ]]; then
+    		nextprayer="Jumuaa"
+    	else
+	    	nextprayer="Dhuhr"
+    	fi
+	
+	elif [ $currenttime -ge $dhuhr ] && [ $currenttime -lt $asr ]; then
+    	nexttime=$asr
+    	nextprayer="Asr"
+    	currentprayer="Dhuhr"
+	
+	elif [ $currenttime -ge $asr ] && [ $currenttime -lt $maghrib ]; then
+    	nexttime=$maghrib
+    	nextprayer="Maghrib"
+    	currentprayer="Asr"
+	
+	elif [ $currenttime -ge $maghrib ] && [ $currenttime -lt $isha ]; then
+    	nexttime=$isha
+    	nextprayer="Isha"
+    	currentprayer="Maghrib"
+	
+	elif [ $currenttime -ge $isha ] || [ $currenttime -lt $fajr ]; then
+    	nexttime=$fajr
+    	nextprayer="Fajr"
+    	currentprayer="Isha"
+	fi
+	
+	give_prayer_time
+}
+
+if [[ -f "$prayers" ]]; then
+	available_month=$(jq ".data[0].date.gregorian.month.number" $prayers)
+elif [[ ! -f "$prayers" || $available_month != $current_month ]]; then
+	# Documentation: https://aladhan.com/prayer-times-api#GetCalendar
+	wget -O $prayers "http://api.aladhan.com/v1/calendar/$current_year/$current_month?latitude=$lat&longitude=$long&method=$method"
+fi
+
+case $opt in
+		--job) add_prayers_at_jobs ;;
+		--mpv) mpv_athan ;;
+		--yad) prayer_times_yad ;;
+		*) next_prayer_time ;;
+esac

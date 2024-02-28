@@ -1,0 +1,7 @@
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/apps_center/Terminal_Emulators/tmux line 102:
+    	sudo cp -v "${CONF_FILE_Path}/${CONF_FILE_NAME}" "$d/.${CONF_FILE_NAME}" && sudo chown -R $(stat "$(dirname "$d/.${CONF_FILE_NAME}")" -c %u:%g) "$d/.${CONF_FILE_NAME}"
+                                                                                                  ^-- SC2046 (warning): Quote this to prevent word splitting.
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2046 -- Quote this to prevent word splitt...

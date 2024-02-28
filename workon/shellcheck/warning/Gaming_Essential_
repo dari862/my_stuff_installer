@@ -1,0 +1,23 @@
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/apps_center/Gaming_Essential_ line 61:
+	if ! $(dpkg --list 'lutris' 2>/dev/null);then
+             ^-- SC2091 (warning): Remove surrounding $() to avoid executing output (or use eval if intentional).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/apps_center/Gaming_Essential_ line 68:
+	if ! $(dpkg --list 'winehq-staging' 2>/dev/null);then
+             ^-- SC2091 (warning): Remove surrounding $() to avoid executing output (or use eval if intentional).
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/apps_center/Gaming_Essential_ line 99:
+			d="$d/Desktop/";  [ ! -d "$d" ] && sudo mkdir -v "$d" && sudo chown -R $(stat "$(dirname "$d")" -c %u:%g) "$d"
+                                                                                               ^-- SC2046 (warning): Quote this to prevent word splitting.
+
+
+In /home/dari/Desktop/my_stuff/bin/not_add_2_path/apps_center/Gaming_Essential_ line 101:
+			sudo sudo ln -sf "/usr/share/DmDmDmdMdMdM/bin/not_add_2_path/apps_center/Steam_fix" "$d" && sudo chown $(stat "$(dirname "$d")" -c %u:%g) "$d"/Steam_fix
+                                                                                                                               ^-- SC2046 (warning): Quote this to prevent word splitting.
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2046 -- Quote this to prevent word splitt...
+  https://www.shellcheck.net/wiki/SC2091 -- Remove surrounding $() to avoid e...

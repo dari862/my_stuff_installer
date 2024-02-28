@@ -1,0 +1,7 @@
+
+In /home/dari/Desktop/my_stuff/bin/apps/welcome line 68:
+text_awesome='<big><b>Welcome TO mDmDmDmDmDmDmD !</b></big>
+^----------^ SC2034 (warning): text_awesome appears unused. Verify use (or export if used externally).
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2034 -- text_awesome appears unused. Veri...

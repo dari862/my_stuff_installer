@@ -1,0 +1,27 @@
+
+In /home/dari/Desktop/my_stuff/bin/rofi/rofi-powermenu line 48:
+    $shutdown)
+    ^-------^ SC2254 (warning): Quote expansions in case patterns to match literally rather than as a glob.
+
+
+In /home/dari/Desktop/my_stuff/bin/rofi/rofi-powermenu line 58:
+    $reboot)
+    ^-----^ SC2254 (warning): Quote expansions in case patterns to match literally rather than as a glob.
+
+
+In /home/dari/Desktop/my_stuff/bin/rofi/rofi-powermenu line 68:
+    $lock)
+    ^---^ SC2254 (warning): Quote expansions in case patterns to match literally rather than as a glob.
+
+
+In /home/dari/Desktop/my_stuff/bin/rofi/rofi-powermenu line 71:
+    $suspend)
+    ^------^ SC2254 (warning): Quote expansions in case patterns to match literally rather than as a glob.
+
+
+In /home/dari/Desktop/my_stuff/bin/rofi/rofi-powermenu line 83:
+    $logout)
+    ^-----^ SC2254 (warning): Quote expansions in case patterns to match literally rather than as a glob.
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2254 -- Quote expansions in case patterns...

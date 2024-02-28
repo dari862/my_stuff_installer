@@ -1,0 +1,49 @@
+
+In /home/dari/Desktop/my_stuff/bin/bin/my-alternatives line 21:
+FILEMANAGERS=(thunar caja dolphin nautilus pcmanfm spacefm xfe)
+^----------^ SC2034 (warning): FILEMANAGERS appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/bin/my-alternatives line 22:
+IMAGEVIEWERS=(viewnior sxiv eog eom geeqie gpicview gthumb mirage)
+^----------^ SC2034 (warning): IMAGEVIEWERS appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/bin/my-alternatives line 23:
+MEDIAPLAYERS=(my-mpv vlc banshee dragonplayer celluloid gxine kaffeine parole smplayer totem)
+^----------^ SC2034 (warning): MEDIAPLAYERS appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/bin/my-alternatives line 25:
+WWWBROWSERS=(firefox-esr firefox)
+^---------^ SC2034 (warning): WWWBROWSERS appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/bin/my-alternatives line 26:
+TERMINALEMULATORS=(terminator kitty)
+^---------------^ SC2034 (warning): TERMINALEMULATORS appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/bin/my-alternatives line 28:
+OFFICES+=(${TEXTEDITORS[@]})
+          ^---------------^ SC2206 (warning): Quote to prevent word splitting/globbing, or split robustly with mapfile or read -a.
+
+
+In /home/dari/Desktop/my_stuff/bin/bin/my-alternatives line 47:
+	[ $(id -u) != 0 ] && echo "Must be superuser" >&2 && exit 0
+          ^------^ SC2046 (warning): Quote this to prevent word splitting.
+
+
+In /home/dari/Desktop/my_stuff/bin/bin/my-alternatives line 78:
+    [ $(id -u) != 0 ] && echo "Must be superuser" >&2 && exit 0
+      ^------^ SC2046 (warning): Quote this to prevent word splitting.
+
+
+In /home/dari/Desktop/my_stuff/bin/bin/my-alternatives line 84:
+	[ $(id -u) != 0 ] && echo "Must be superuser" >&2 && exit 0
+          ^------^ SC2046 (warning): Quote this to prevent word splitting.
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2034 -- FILEMANAGERS appears unused. Veri...
+  https://www.shellcheck.net/wiki/SC2046 -- Quote this to prevent word splitt...
+  https://www.shellcheck.net/wiki/SC2206 -- Quote to prevent word splitting/g...

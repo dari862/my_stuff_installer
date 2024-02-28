@@ -1,0 +1,18 @@
+
+In /home/dari/Desktop/my_stuff/bin/polybar/polybar_fixer line 68:
+		BATTERY=$(upower -i `upower -e | grep 'BAT'` | grep 'native-path' | cut -d':' -f2 | tr -d '[:blank:]')
+                                    ^----------------------^ SC2046 (warning): Quote this to prevent word splitting.
+
+
+In /home/dari/Desktop/my_stuff/bin/polybar/polybar_fixer line 69:
+		ADAPTER=$(upower -i `upower -e | grep 'AC'` | grep 'native-path' | cut -d':' -f2 | tr -d '[:blank:]')
+                                    ^---------------------^ SC2046 (warning): Quote this to prevent word splitting.
+
+
+In /home/dari/Desktop/my_stuff/bin/polybar/polybar_fixer line 75:
+	TemperaturePath="$( (for i in /sys/class/hwmon/hwmon*/temp*_input; do echo "$(<$(dirname $i)/name): $(cat ${i%_*}_label 2>/dev/null || echo $(basename ${i%_*})) $(readlink -f $i)"; done) | grep "coretemp" | grep "temp1" | awk '{print $5}')"
+                                                                                       ^-----------^ SC2046 (warning): Quote this to prevent word splitting.
+                                                                                                                                                    ^-----------------^ SC2046 (warning): Quote this to prevent word splitting.
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2046 -- Quote this to prevent word splitt...

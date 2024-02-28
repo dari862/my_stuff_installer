@@ -1,0 +1,18 @@
+
+In /home/dari/Desktop/my_stuff/bin/xsession/x-session-picker line 6:
+usr_xsessionrc="$HOME/.xsessionrc"
+^------------^ SC2034 (warning): usr_xsessionrc appears unused. Verify use (or export if used externally).
+
+
+In /home/dari/Desktop/my_stuff/bin/xsession/x-session-picker line 66:
+		. "$global_usr_xsessionrc" 
+                  ^----------------------^ SC1090 (warning): ShellCheck can't follow non-constant source. Use a directive to specify location.
+
+
+In /home/dari/Desktop/my_stuff/bin/xsession/x-session-picker line 110:
+	test -r "$usr_envfile" && . "$usr_envfile" || echo "$0: cannot source $usr_envfile" >&2
+                                    ^------------^ SC1090 (warning): ShellCheck can't follow non-constant source. Use a directive to specify location.
+
+For more information:
+  https://www.shellcheck.net/wiki/SC1090 -- ShellCheck can't follow non-const...
+  https://www.shellcheck.net/wiki/SC2034 -- usr_xsessionrc appears unused. Ve...
