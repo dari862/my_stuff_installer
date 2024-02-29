@@ -34,8 +34,8 @@ mkdir -p "${__distro_path}"/bin/not_add_2_path/hub_script
 mkdir -p "${__distro_path}"/skel/.config/mpd/playlists
 mkdir -p "${__distro_path}"/skel/.local/share/bash_history
 
-ln -sf "${__distro_path}"/bin/not_add_2_path/pmxkcd/pmxkcd "${__distro_path}"/apps/
-ln -sf "${__distro_path}"/bin/not_add_2_path/YadAppsStore/gui "${__distro_path}"/apps/YadStore
+ln -sf "${__distro_path}"/bin/not_add_2_path/pmxkcd/pmxkcd "${__distro_path}"/bin/apps/
+ln -sf "${__distro_path}"/bin/not_add_2_path/YadAppsStore/gui "${__distro_path}"/bin/apps/YadStore
 
 if [ -f "${__distro_path}/this_is_laptop" ];then
 	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/gpu-switcher-session.desktop /etc/xdg/autostart

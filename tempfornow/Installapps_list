@@ -32,7 +32,7 @@ _all_packags=(ftp ghostscript gnome-themes-standard gstreamer1.0-libav gstreamer
 ## must_install_apps_list
 #######################
 #must have apps
-install_must_have_apps=(xclip curl cbatticon xprintidle yad git lsb-release rofi picom sudo systemd-timesyncd)
+install_must_have_apps=(btop xclip curl cbatticon xprintidle yad git lsb-release rofi picom sudo systemd-timesyncd)
 install_must_have_apps2=(psmisc unzip dunst lxappearance xorg pulseaudio arandr autorandr dbus-x11 pnmixer pavucontrol diodon gparted inxi s-tui dfc htop hwinfo synaptic galternatives xdotool libnotify-bin gnome-keyring ntfs-3g acl bash-completion)
 install_openbox_=(openbox obconf xcape tint2 nitrogen) 
 install_image_viewer_apps=(viewnior)
