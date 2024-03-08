@@ -1,7 +1,0 @@
-
-In /home/dari/Desktop/my_stuff/bin/not_add_2_path/tint2-manager line 90:
-CANCEL="--button=gtk-cancel:1"
-^----^ SC2034 (warning): CANCEL appears unused. Verify use (or export if used externally).
-
-For more information:
-  https://www.shellcheck.net/wiki/SC2034 -- CANCEL appears unused. Verify use...

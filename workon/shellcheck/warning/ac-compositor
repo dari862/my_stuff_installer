@@ -1,7 +1,0 @@
-
-In /home/dari/Desktop/my_stuff/bin/openbox/pipemenu/ac-compositor line 14:
-readonly EXECXCOMP='picom'
-         ^-------^ SC2034 (warning): EXECXCOMP appears unused. Verify use (or export if used externally).
-
-For more information:
-  https://www.shellcheck.net/wiki/SC2034 -- EXECXCOMP appears unused. Verify ...

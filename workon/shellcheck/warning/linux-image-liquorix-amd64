@@ -1,7 +1,0 @@
-
-In /home/dari/Desktop/my_stuff/bin/not_add_2_path/apps_center/Gaming/Kernels/linux-image-liquorix-amd64 line 4:
-extra_apps_=()
-^---------^ SC2034 (warning): extra_apps_ appears unused. Verify use (or export if used externally).
-
-For more information:
-  https://www.shellcheck.net/wiki/SC2034 -- extra_apps_ appears unused. Verif...

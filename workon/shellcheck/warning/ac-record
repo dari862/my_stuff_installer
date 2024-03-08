@@ -1,8 +1,0 @@
-
-In /home/dari/Desktop/my_stuff/bin/openbox/pipemenu/ac-record line 54:
-	read -r X Y W H G ID < <(echo $get_win_data)
-                        ^-- SC2034 (warning): G appears unused. Verify use (or export if used externally).
-                          ^-- SC2034 (warning): ID appears unused. Verify use (or export if used externally).
-
-For more information:
-  https://www.shellcheck.net/wiki/SC2034 -- G appears unused. Verify use (or ...

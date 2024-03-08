@@ -1,9 +1,0 @@
-
-In /home/dari/Desktop/my_stuff/bin/openbox/pipemenu/bl-beepmein-pipemenu line 238:
-	trap "rm -f $res1 $res2 $out" EXIT
-                    ^---^ SC2064 (warning): Use single quotes, otherwise this expands now rather than when signalled.
-                          ^---^ SC2064 (warning): Use single quotes, otherwise this expands now rather than when signalled.
-                                ^--^ SC2064 (warning): Use single quotes, otherwise this expands now rather than when signalled.
-
-For more information:
-  https://www.shellcheck.net/wiki/SC2064 -- Use single quotes, otherwise this...

@@ -1,7 +1,0 @@
-
-In /home/dari/Desktop/my_stuff/bin/not_add_2_path/backports_install line 4:
-app_is_="${@}"
-        ^----^ SC2124 (warning): Assigning an array to a string! Assign as array, or use * instead of @ to concatenate.
-
-For more information:
-  https://www.shellcheck.net/wiki/SC2124 -- Assigning an array to a string! A...

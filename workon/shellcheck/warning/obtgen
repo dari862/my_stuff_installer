@@ -1,7 +1,0 @@
-
-In /home/dari/Desktop/my_stuff/bin/not_add_2_path/obtgen line 395:
-	elif [[ $(find /usr/lib -type d -name lxappearance | xargs ls -R | grep ob) ]]; then
-                  ^-- SC2038 (warning): Use -print0/-0 or -exec + to allow for non-alphanumeric filenames.
-
-For more information:
-  https://www.shellcheck.net/wiki/SC2038 -- Use -print0/-0 or -exec + to allo...

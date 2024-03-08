@@ -1,7 +1,0 @@
-
-In /home/dari/Desktop/my_stuff/bin/bin/update-notification line 220:
-	case $o in
-        ^-- SC2220 (warning): Invalid flags are not handled. Add a *) case.
-
-For more information:
-  https://www.shellcheck.net/wiki/SC2220 -- Invalid flags are not handled. Ad...

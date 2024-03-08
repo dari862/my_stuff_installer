@@ -41,17 +41,11 @@ bash <(curl -s https://raw.githubusercontent.com/dari862/my_stuff_installer/main
 
 		test bspwm & openbox
 		
-		code clean up
+		code clean up and shellcheck ready
 		
 		shortcut on bspwm & openbox
 		
-		gpu passthrough
-		
-		gpu switch gui
-		
 		improve virt-manager
-		
-		wayland support
 		
 		chroot steam
 		
@@ -60,6 +54,14 @@ bash <(curl -s https://raw.githubusercontent.com/dari862/my_stuff_installer/main
 		https://github.com/HikariKnight/quickpassthrough
 		
 		https://www.youtube.com/watch?v=g--fe8_kEcw
+		
+		wayland support (hyperland):
+		
+		https://github.com/prasanthrangan/hyprdots
+		
+		https://gitlab.com/SamArcade777/Hypr-Debian
+		
+		https://github.com/JaKooLit/Debian-Hyprland.git
 
 </details>
 

@@ -1,7 +1,0 @@
-
-In /home/dari/Desktop/my_stuff/bin/not_add_2_path/apps_center/vmplayer line 4:
-extra_apps_=(build-essential linux-headers-$(uname -r))
-                                           ^---------^ SC2207 (warning): Prefer mapfile or read -a to split command output (or quote to avoid splitting).
-
-For more information:
-  https://www.shellcheck.net/wiki/SC2207 -- Prefer mapfile or read -a to spli...

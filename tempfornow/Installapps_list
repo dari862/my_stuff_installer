@@ -22,17 +22,16 @@ List_of_apt_2_install_=()
 #######################
 ## need clean up
 #######################
-install_BL_apps=(wmctrl xsel gmrun xbindkeys python3-xlib xsettingsd alsa-utils)
+install_BL_apps=(xsettingsd)
+install_BL2_apps=(hwdata fuse3 cpufrequtils eject fbxkb xinput wireless-tools xdg-user-dirs xdg-utils user-setup lm-sensors lshw lvm2 pciutils lame rpl)
 
-_commen_packags=(alsa-ucm-conf anacron arj at-spi2-core btrfs-progs chntpw cpufrequtils cryptsetup crda dbus-user-session dmidecode dosfstools efibootmgr eject enchant-2 exfatprogs f2fs-tools fbxkb firmware-b43-installer firmware-b43legacy-installer fuse3 galculator gddrescue gdebi gigolo gtk2-engines-pixbuf gvfs gvfs-backends gvfs-fuse hardinfo hdparm hddtemp hfsprogs hwdata i965-va-driver libinput-tools libpam-gnome-keyring libqt5svg5 lm-sensors locales lshw lvm2 modemmanager mtools p7zip-full pciutils pcmciautils rfkill rsync rzip smartmontools unace unalz unar unrar unzip update-inetd usb-modeswitch usbutils user-setup uuid-runtime va-driver-all wireless-tools xdg-user-dirs xdg-utils xfburn xfsprogs xinput xz-utils)
-
-_all_packags=(ftp ghostscript gnome-themes-standard gstreamer1.0-libav gstreamer1.0-plugins-bad gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly gstreamer1.0-pulseaudio lame libblockdev-crypto2 libglib2.0-bin lz4 lzop mdadm rpl sensible-utils tumbler)
+install_openbox_2_=(xbindkeys)
 
 #######################
 ## must_install_apps_list
 #######################
 #must have apps
-install_must_have_apps=(btop xclip curl cbatticon xprintidle yad git lsb-release rofi picom sudo systemd-timesyncd)
+install_must_have_apps=(jq btop xclip curl cbatticon xprintidle yad git lsb-release rofi picom sudo systemd-timesyncd)
 install_must_have_apps2=(psmisc unzip dunst lxappearance xorg pulseaudio arandr autorandr dbus-x11 pnmixer pavucontrol diodon gparted inxi s-tui dfc htop hwinfo synaptic galternatives xdotool libnotify-bin gnome-keyring ntfs-3g acl bash-completion)
 install_openbox_=(openbox obconf xcape tint2 nitrogen) 
 install_image_viewer_apps=(viewnior)
@@ -41,7 +40,7 @@ install_firefox_=(firefox firefox-esr)
 install_terminal=(kitty terminator)
 install_conky_all_app=(conky-all)
 install_if_laptop=(tlp tlp-rdw powertop light upower xserver-xorg-input-synaptics acpi xbacklight)
-install_Network_apps=(network-manager network-manager-gnome)
+install_Network_apps=(rfkill network-manager network-manager-gnome)
 install_terminal_based_sound_app=(mpd mpc ncmpcpp)
 install_text_editer_app=(featherpad evince)
 install_mediaplayer_app=(mpv)
@@ -51,8 +50,9 @@ install_fonts=(fonts-noto fonts-droid-fallback fonts-cantarell fonts-liberation 
 install_themes=(papirus-icon-theme fonts-noto-color-emoji fonts-firacode fonts-font-awesome arc-theme gtk3-nocsd numix-icon-theme paper-icon-theme dmz-cursor-theme)
 install_polkit_apps=(policykit-1 policykit-1-gnome)
 
-# ffmpeg for screen recoding , maim for ac-shots
-install_for_scripts=(maim ffmpeg at)
+# ffmpeg for screen recoding , maim for ac-shots , xsel for files-uploader , wmctrl for style-manager and files-uploader
+# python3-xlib for bl-reload-gtk23
+install_for_scripts=(maim ffmpeg at xsel wmctrl python3-xlib)
 
 install_autoinstall_firmware=(isenkram)
 
@@ -144,7 +144,7 @@ sudo touch "/usr/share/${Custom_distro_dir_name}/lib/xsessions/${Custom_distro_d
 sudo ln -sf "/usr/share/${Custom_distro_dir_name}/lib/xsessions/${Custom_distro_dir_name}_bspwm.desktop" /usr/share/xsessions
 sudo rm -rdf "/usr/share/${Custom_distro_dir_name}"
 
-install_for_test=(cups shotwell xwallpaper plank flameshot xfce4-panel xfce4-settings xfce4-clipman xfce4-whiskermenu-plugin polybar libnm-dev bspwm sxhkd nsxiv qt5ct qt5-style-kvantum libqt5svg5 qml-module-qtquick-controls geany jgmenu xterm xfce4-notifyd xfce4-power-manager xmlstarlet gsimplecal calendar xinit catfish lxpolkit gmtp xautomation thunar-media-tags-plugin mlocate mailutils mtp-tools)
+install_for_test=(cups shotwell xwallpaper plank flameshot xfce4-panel xfce4-settings xfce4-clipman xfce4-whiskermenu-plugin polybar libnm-dev bspwm sxhkd qt5ct qt5-style-kvantum libqt5svg5 qml-module-qtquick-controls geany jgmenu xterm xfce4-notifyd xfce4-power-manager xmlstarlet gsimplecal calendar xinit catfish lxpolkit gmtp xautomation thunar-media-tags-plugin mlocate mailutils mtp-tools)
 add_2_apt_install_ "${install_for_test[@]}"
 
 ##################################################################

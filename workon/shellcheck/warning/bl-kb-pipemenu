@@ -1,7 +1,0 @@
-
-In /home/dari/Desktop/my_stuff/bin/openbox/pipemenu/bl-kb-pipemenu line 158:
-            line=( ${lines[i]} )
-                   ^---------^ SC2206 (warning): Quote to prevent word splitting/globbing, or split robustly with mapfile or read -a.
-
-For more information:
-  https://www.shellcheck.net/wiki/SC2206 -- Quote to prevent word splitting/g...

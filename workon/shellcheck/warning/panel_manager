@@ -1,7 +1,0 @@
-
-In /home/dari/Desktop/my_stuff/bin/bin/panel_manager line 8:
-tint2_dir="${config_dir}/tint2"
-^-------^ SC2034 (warning): tint2_dir appears unused. Verify use (or export if used externally).
-
-For more information:
-  https://www.shellcheck.net/wiki/SC2034 -- tint2_dir appears unused. Verify ...
