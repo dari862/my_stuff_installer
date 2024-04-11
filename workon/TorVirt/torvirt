@@ -1,0 +1,97 @@
+#!/bin/sh
+
+set -e
+
+PROJECT_NAME="torvirt"
+CONTAINER_RT="podman"
+IMG_NAME=$PROJECT_NAME
+GW_CONTAINER=$PROJECT_NAME
+GW_IF="$PROJECT_NAME-gw"
+NETWORK=$PROJECT_NAME
+
+GW_DIR="gateway"
+TOR_TRANS_PORT="9040"
+TOR_DNS_PORT="5353"
+TOR_VIRT_ADDR="10.192.0.0/10"
+GW_IP="10.2.2.254/24"
+
+export LIBVIRT_DEFAULT_URI=qemu:///system
+
+ERROR_INVALID_ACTION=1
+ERROR_CANNOT_PRIVESC=2
+ERROR_NOT_CONFIGURED=3
+ERROR_ALREADY_RUNNING=4
+
+exit_with() {
+	echo $2 >&2
+	exit $1
+}
+
+virsh_get_field() {
+	virsh net-info $NETWORK |awk "/^$1:/{print \$2}"
+}
+
+# find a way to elevate privileges
+if [ "$(id -u)" -eq 0 ]; then
+	AS_ROOT() { "$@"; }
+elif command -v doas >/dev/null; then
+	AS_ROOT() { doas "$@"; }
+elif command -v sudo >/dev/null; then
+	AS_ROOT() { sudo "$@"; }
+elif command -v pkexec >/dev/null; then
+	AS_ROOT() { pkexec "$@"; }
+elif command -v su >/dev/null; then
+	AS_ROOT() { su root -c "$@"; }
+else
+	exit_with $ERROR_CANNOT_PRIVESC "Error: $PROJECT_NAME needs root access, but neither doas, sudo, pkexec nor su could be found."
+fi
+
+# check whether network and gateway have been configured
+if [ -z "$(virsh net-list --all | grep $NETWORK)" ]; then
+	exit_with $ERROR_NOT_CONFIGURED "Error: network $NETWORK not found. Did you run \"$PROJECT_NAME configure\" ?"
+fi
+
+output=$($CONTAINER_RT image ls -q -f reference=$IMG_NAME)
+if [ -z "$output" ]; then
+	exit_with $ERROR_NOT_CONFIGURED "Error: OCI image $IMG_NAME not found. Did you run \"$PROJECT_NAME configure\" first ?"
+fi
+
+output=$($CONTAINER_RT ps -q -f name=$GW_CONTAINER)
+if [ "$output" ]; then
+	exit_with $ERROR_ALREADY_RUNNING "Error: conatiner $GW_CONTAINER is already running"
+fi
+
+output=$($CONTAINER_RT ps -aq -f status=exited -f name=$GW_CONTAINER)
+if [ "$output" ]; then
+	$CONTAINER_RT rm $GW_CONTAINER
+fi
+# start $NETWORK
+network_started=$(virsh_get_field "Active")
+if [ $network_started = "no" ]; then
+	virsh net-start $NETWORK
+fi
+# create gateway macvlan interface
+AS_ROOT ip link add $GW_IF link $(virsh_get_field "Bridge") type macvlan mode private
+
+# start gateway on wait.sh
+$CONTAINER_RT run --rm -itd --cap-drop=ALL --security-opt=no-new-privileges --name $GW_CONTAINER $IMG_NAME >/dev/null
+pid=$($CONTAINER_RT inspect -f '{{.State.Pid}}' $GW_CONTAINER)
+
+# setup gateway networing inside $NETWORK
+AS_ROOT ip link set netns $pid dev $GW_IF
+AS_ROOT nsenter -t $pid -n ip link set $GW_IF up
+AS_ROOT nsenter -t $pid -n ip addr add $GW_IP dev $GW_IF
+
+# allow *.onion
+AS_ROOT nsenter -t $pid -n iptables -t nat -A PREROUTING -i $GW_IF -p tcp -d $TOR_VIRT_ADDR --syn -j REDIRECT --to-ports $TOR_TRANS_PORT
+
+# redirect DNS to tor
+AS_ROOT nsenter -t $pid -n iptables -t nat -A PREROUTING -i $GW_IF -p udp --dport 53 -j REDIRECT --to-ports $TOR_DNS_PORT
+AS_ROOT nsenter -t $pid -n iptables -t nat -A PREROUTING -i $GW_IF -p udp --dport $TOR_DNS_PORT -j REDIRECT --to-ports $TOR_DNS_PORT
+
+# redirect TCP to tor
+AS_ROOT nsenter -t $pid -n iptables -t nat -A PREROUTING -i $GW_IF -p tcp --syn -j REDIRECT --to-ports $TOR_TRANS_PORT
+
+# start tor
+$CONTAINER_RT kill -s USR1 $GW_CONTAINER >/dev/null
+$CONTAINER_RT attach $GW_CONTAINER

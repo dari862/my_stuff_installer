@@ -66,6 +66,11 @@ disable_some_unnecessary_services="Y"
 update_grub_image="Y"
 autoclean_and_autoremove="Y"
 reboot_now="Y"
+install_xfce4_panel=xfce4_panel 
+install_polybar=polybar 
+install_qt5ct=qt5ct 
+install_jgmenu=jgmenu 
+install_bspwm=bspwm
 
 if [ "$auto_run_script" != "true" ];then
 	if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to purge some unnecessary pakages?')" != "Y" ];then
@@ -87,6 +92,26 @@ if [ "$auto_run_script" != "true" ];then
 	if [ "$(do_you_want_2_run_this_yes_or_no 'reboot?')" != "Y" ];then
 	reboot_now=""
 	fi
+
+	if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install xfce4-panel?')" != "Y" ];then
+	install_xfce4_panel=""
+	fi
+	
+	if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install polybar?')" != "Y" ];then
+	install_polybar=""
+	fi
+	
+	if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install qt5ct?')" != "Y" ];then
+	install_qt5ct=""
+	fi
+	
+	if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install jgmenu?')" != "Y" ];then
+	install_jgmenu=""
+	fi
+	
+	if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install bspwm?')" != "Y" ];then
+	install_bspwm=""
+	fi
 fi
 
 check_and_run_else_download_and_run "Installapps_list"
@@ -101,7 +126,7 @@ _unattended_upgrades_ stop
 $sudoaptinstall -f 2>/dev/null || show_em "failed to $sudoaptinstall -f"
 
 show_m "running Installapps_list script"
-./Installapps_list
+./Installapps_list $install_xfce4_panel $install_polybar $install_qt5ct $install_jgmenu $install_bspwm
 
 show_m "git clone distro files"
 git_clone_Array=(

@@ -38,17 +38,13 @@ bash <(curl -s https://raw.githubusercontent.com/dari862/my_stuff_installer/main
 
 <details>
 	<summary><h1>work on</h1></summary>
-
+	
 		test bspwm & openbox
 		
 		code clean up and shellcheck ready
 		
 		shortcut on bspwm & openbox
-		
-		improve virt-manager
-		
-		chroot steam
-		
+
 		https://github.com/adi1090x/dynamic-wallpaper
 		
 		https://github.com/HikariKnight/quickpassthrough
@@ -62,7 +58,19 @@ bash <(curl -s https://raw.githubusercontent.com/dari862/my_stuff_installer/main
 		https://gitlab.com/SamArcade777/Hypr-Debian
 		
 		https://github.com/JaKooLit/Debian-Hyprland.git
-
+		
+		live wallpaper 
+		
+		vpn script 
+		
+		tor script 
+		
+		improve popup_terminal
+		
+		improve setbg and pickbg
+		
+		add yadtlp_configdescriptions to yadtlp.sh 
+		
 </details>
 
 <details>	

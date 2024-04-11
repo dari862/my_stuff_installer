@@ -5,6 +5,8 @@ opt_="${1-}"
 __distro_path="/usr/share/${opt_}"
 _hub_script_dir="${__distro_path}/bin/not_add_2_path/hub_script"
 
+PATH="${__distro_path}/bin/bin:$PATH"
+
 mkdir -p "${_hub_script_dir}"
 ln -sf "${__distro_path}"/bin/not_add_2_path/pmxkcd/pmxkcd "${_hub_script_dir}"
 ln -sf ${__distro_path}/bin/not_add_2_path/utilities/* "${_hub_script_dir}"
@@ -28,6 +30,8 @@ for script in "${remove_this_script_[@]}";do
 done
 
 mkdir -p "${__distro_path}"/lib/auto_completion
+mkdir -p "${__distro_path}"/bin/not_add_2_path/distrobox_center/Apps
+mkdir -p "${__distro_path}"/bin/not_add_2_path/distrobox_center/Gaming
 mkdir -p "${__distro_path}"/opt/downloaded
 mkdir -p "${__distro_path}"/opt/git
 mkdir -p "${__distro_path}"/bin/not_add_2_path/hub_script
@@ -42,3 +46,7 @@ if [ -f "${__distro_path}/this_is_laptop" ];then
 	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/gpu-switcher-session.desktop "${__distro_path}"/skel/.config/autostart/
 	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/yadtlp.desktop "${__distro_path}"/applications/
 fi
+
+${__distro_path}/bin/not_add_2_path/create_DB.sh
+${__distro_path}/bin/not_add_2_path/YadAppsStore/tools/edite_apps_folder
+${__distro_path}/bin/not_add_2_path/YadAppsStore/tools/pre_yadstore
