@@ -121,9 +121,9 @@ check_and_run_else_download_and_run "prepare_script_"
 clear
 
 _unattended_upgrades_ stop
-
-### Fix broken packages for good measure (why not?)
-$sudoaptinstall -f 2>/dev/null || show_em "failed to $sudoaptinstall -f"
+kill_apt 
+update_and_upgrade
+kill_apt
 
 show_m "running Installapps_list script"
 ./Installapps_list $install_xfce4_panel $install_polybar $install_qt5ct $install_jgmenu $install_bspwm

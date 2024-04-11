@@ -115,17 +115,11 @@ add_2_apt_install_()
 sudo timedatectl set-timezone Asia/Kuwait
 sudo date -s "$(wget --method=HEAD -qSO- --max-redirect=0 google.com 2>&1 | sed -n 's/^ *Date: *//p')" &>/dev/null
 
-### Fix broken packages for good measure (why not?)
-$sudoaptinstall -f 2>/dev/null || show_em "failed to $aptinstall -f"
+update_and_upgrade
 
 list_of_apps_file_path="$(mktemp "${script_fullpath}"/list_of_apps_.XXXXXXXXXXXX)"
-aptupdate
 show_m "create_list_of_apps"
 apt list 2>/dev/null | awk -F"/" '{print " " $1 " "}' > "${list_of_apps_file_path}"
-
-$apt_noninteractive upgrade
-
-add_2_apt_install_ "${install_BL_apps[@]}"
 
 if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
 	add_2_apt_install_ "${install_if_laptop[@]}"
@@ -184,6 +178,8 @@ cat << 'EOF' > /tmp/envycontrol_updater_DmDmDmdMdMdM
   	| xargs wget -O envycontrol.tar.gz && tar -xvzf envycontrol.tar.gz && mv bayasdev* envycontrol
   	
   	[ -d "/usr/share/DmDmDmdMdMdM/opt/downloaded/envycontrol" ] && sudo rm -rdf "/usr/share/DmDmDmdMdMdM/opt/downloaded/envycontrol"
+  	[ ! -d "/usr/share/DmDmDmdMdMdM/opt/downloaded" ] && sudo mkdir -p /usr/share/DmDmDmdMdMdM/opt/downloaded
+  	[ ! -d "/usr/share/DmDmDmdMdMdM/opt/git" ] && sudo mkdir -p /usr/share/DmDmDmdMdMdM/opt/git
   	
   	if [ -d envycontrol ];then
   		chmod +x ./envycontrol/envycontrol.py 

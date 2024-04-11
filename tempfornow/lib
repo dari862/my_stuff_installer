@@ -92,12 +92,6 @@ show_em()
 	echo "$__massage"
 }
 
-aptupdate()
-{
-	show_m "updating your system"
-	sudo apt-get update
-}
-
 check_and_run_else_download_and_run()
 {
   check_this_file_="${1-}"
@@ -110,6 +104,25 @@ check_and_run_else_download_and_run()
 		exit 1
 	fi
 fi
+}
+
+kill_apt()
+{
+	sudo killall -9 apt $>/dev/null && sudo killall -9 apt-get $>/dev/null
+}
+
+aptupdate()
+{
+	show_m "updating your system"
+	sudo apt-get update
+}
+
+update_and_upgrade()
+{
+	aptupdate
+	sudo DEBIAN_FRONTEND=noninteractive apt-get -y upgrade
+	### Fix broken packages for good measure (why not?)
+	$sudoaptinstall -f 2>/dev/null || show_em "failed to $sudoaptinstall -f"
 }
 
 check_for_SUDO()
