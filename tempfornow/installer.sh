@@ -57,9 +57,15 @@ fi
 
 # source lib
 script_fullpath=$(dirname "$(readlink -f "$0")")
-[ "$(echo "${script_fullpath}" | grep "/proc/*")" ] && script_fullpath="/tmp"
+
+if [ "${script_fullpath}" = "/proc/"* ];then
+	script_fullpath="/tmp"
+fi
+
 cd "${script_fullpath}"
+
 if ! . lib 2>/dev/null; then
+	echo "wget lib file"
 	wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/lib
 	if ! . lib 2>/dev/null; then
 		echo "Error: Failed to locate lib from ${script_fullpath}" >&2
