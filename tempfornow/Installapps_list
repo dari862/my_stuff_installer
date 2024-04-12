@@ -35,7 +35,7 @@ for option in "${extra_apps_2_install[@]}";do
 		install_bspwm_now=true
 	fi
 done
-apt_noninteractive='sudo DEBIAN_FRONTEND=noninteractive apt-get -y'
+
 List_of_apt_2_install_=()
 
 #######################
@@ -115,7 +115,9 @@ add_2_apt_install_()
 sudo timedatectl set-timezone Asia/Kuwait
 sudo date -s "$(wget --method=HEAD -qSO- --max-redirect=0 google.com 2>&1 | sed -n 's/^ *Date: *//p')" &>/dev/null
 
-update_and_upgrade
+aptupdate
+aptfixer
+upgrade_now
 
 list_of_apps_file_path="$(mktemp "${script_fullpath}"/list_of_apps_.XXXXXXXXXXXX)"
 show_m "create_list_of_apps"

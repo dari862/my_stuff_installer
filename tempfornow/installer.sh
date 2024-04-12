@@ -5,6 +5,12 @@ auto_run_script="true" # true to enable
 sudo -v || echo "sudo does not exist."
 
 if [ "$1" == "wifi" ]; then
+	if ! command -v sudo >/dev/null
+	then
+		_SUDO=""
+	else
+		_SUDO="sudo"
+	fi
 	wifi_interface="$(ip link | awk -F: '$0 !~ "^[^0-9]"{print $2;getline}' | awk '/w/{ print $0 }')"
 	if [ -z "$wifi_interface" ]
 	then
@@ -36,8 +42,9 @@ if [ "$1" == "wifi" ]; then
 		dhclient "$wifi_interface"
 		ping -c4 google.com || (echo "no internet connection" ; exit 1)
 		[ -f "$tmpfile" ] && rm "$tmpfile"
-		sudo apt-get update
-		sudo apt-get install -y network-manager
+		$_SUDO apt-get update
+		$_SUDO apt-get install -y -f 2>/dev/null
+		$_SUDO apt-get install -y network-manager psmisc
 		killall wpa_supplicant
 		nmcli dev wifi connect "$ssid_var" password "$pass_var"	
 		unset ssid_var
@@ -57,9 +64,15 @@ if ! . lib 2>/dev/null; then
 	fi
 fi
 
+aptupdate
+
+aptfixer
+
 check_for_SUDO
 
 keep_Sudo_refresed &
+
+must_install_apps
 
 purge_some_unnecessary_pakages="Y"
 disable_some_unnecessary_services="Y"
@@ -122,7 +135,7 @@ clear
 
 _unattended_upgrades_ stop
 kill_apt 
-update_and_upgrade
+upgrade_now
 kill_apt
 
 show_m "running Installapps_list script"
@@ -332,8 +345,8 @@ fi
 ############
 # Remove "Set as wallpaper" from Thunar Context Menu and replace it with  "Set as wallpaper" from thunar config uac file
 ############
-__thunar_wall_plug="$(locate thunar | grep wall)"
-sudo mv "${__thunar_wall_plug}" "${__thunar_wall_plug}.backup"
+__thunar_wall_plug="$(locate thunar | grep wall || :)"
+[ ! -z "${__thunar_wall_plug}" ] && sudo mv "${__thunar_wall_plug}" "${__thunar_wall_plug}.backup"
 
 ##################################################################################
 

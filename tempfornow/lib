@@ -106,37 +106,55 @@ check_and_run_else_download_and_run()
 fi
 }
 
-kill_apt()
-{
-	sudo killall -9 apt $>/dev/null && sudo killall -9 apt-get $>/dev/null
-}
-
 aptupdate()
 {
 	show_m "updating your system"
-	sudo apt-get update
+	if ! command -v sudo >/dev/null
+	then
+		[ "$(find /var/cache/apt/pkgcache.bin -mtime 0 2>/dev/null)" ] || apt-get update
+		apt-get update
+	else
+		[ "$(find /var/cache/apt/pkgcache.bin -mtime 0 2>/dev/null)" ] || sudo apt-get update
+		sudo apt-get update
+	fi
 }
 
-update_and_upgrade()
+aptfixer()
 {
-	aptupdate
-	sudo DEBIAN_FRONTEND=noninteractive apt-get -y upgrade
-	### Fix broken packages for good measure (why not?)
-	$sudoaptinstall -f 2>/dev/null || show_em "failed to $sudoaptinstall -f"
+	if ! command -v sudo >/dev/null
+	then
+		### Fix broken packages for good measure (why not?)
+		$aptinstall -f 2>/dev/null || show_em "failed to $sudoaptinstall -f"
+	else
+		### Fix broken packages for good measure (why not?)
+		$sudoaptinstall -f 2>/dev/null || show_em "failed to $sudoaptinstall -f"
+	fi
 }
 
 check_for_SUDO()
 {
-if ! command -v sudo >/dev/null
-then
-	show_m "Install sudo and add user 1000 to sudo group"
-	# INFO: SUDO allow users exec commands with root privileges without login as root
-	[ "$(find /var/cache/apt/pkgcache.bin -mtime 0 2>/dev/null)" ] || aptupdate
-	$aptinstall sudo
-	user=$(cut -f 1,3 -d: /etc/passwd | grep :1000$ | cut -f1 -d:)
-	[ "$user" ] && adduser "$user" sudo
-	$aptinstall -f
-fi
+	if ! command -v sudo >/dev/null
+	then
+		show_m "Install sudo and add user 1000 to sudo group"
+		$aptinstall sudo
+		user=$(cut -f 1,3 -d: /etc/passwd | grep :1000$ | cut -f1 -d:)
+		[ "$user" ] && adduser "$user" sudo
+	fi
+}
+
+must_install_apps()
+{
+	$aptinstall psmisc locate git || (show_em "failed to install psmisc for (killall) command or locate or git." && exit 1)
+}
+
+kill_apt()
+{
+	sudo killall -9 apt &>/dev/null || sudo killall -9 apt-get &>/dev/null || :
+}
+
+upgrade_now()
+{
+	sudo DEBIAN_FRONTEND=noninteractive apt-get -y upgrade
 }
 
 _unattended_upgrades_()
@@ -146,14 +164,17 @@ _unattended_upgrades_()
 		auto_upgrades_file_bak="/etc/apt/apt.conf.d/20auto-upgrades.bak"
 		case "$1" in
 			start)
+					sudo systemctl stop unattended-upgrades || :
 				if [ ! -f "${auto_upgrades_file_bak}" ];then
-					sudo systemctl stop unattended-upgrades
 					sudo mv "${auto_upgrades_file}" "${auto_upgrades_file_bak}"
 				fi
 			;;
 			stop)
-				if [ -f /etc/apt/apt.conf.d/20auto-upgrades.bak ];then
+				if [ -f "${auto_upgrades_file}" ] && [ -f "${auto_upgrades_file_bak}" ];then
 					sudo rm "${auto_upgrades_file}"
+				fi
+					
+				if [ -f "${auto_upgrades_file_bak}" ];then
 					sudo mv "${auto_upgrades_file_bak}" "${auto_upgrades_file}"
 				fi
 			;;
