@@ -58,7 +58,7 @@ fi
 # source lib
 script_fullpath=$(dirname "$(readlink -f "$0")")
 
-if [ "${script_fullpath}" = "/proc/"* ];then
+if [[ "${script_fullpath}" = "/proc/"* ]];then
 	script_fullpath="/tmp"
 fi
 
