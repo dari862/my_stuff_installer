@@ -58,7 +58,7 @@ fi
 # source lib
 script_fullpath=$(dirname "$(readlink -f "$0")")
 
-if [[ "${script_fullpath}" = "/proc/"* ]];then
+if echo "${script_fullpath}" | grep  "/proc/" &>/dev/null ; then
 	script_fullpath="/tmp"
 fi
 
@@ -72,10 +72,6 @@ if ! . lib 2>/dev/null; then
 		exit 1
 	fi
 fi
-
-repofixer
-
-aptupdate
 
 aptfixer
 
@@ -145,9 +141,7 @@ check_and_run_else_download_and_run "prepare_script_"
 clear
 
 _unattended_upgrades_ stop
-kill_apt 
 upgrade_now
-kill_apt
 
 show_m "running Installapps_list script"
 ./Installapps_list $install_xfce4_panel $install_polybar $install_qt5ct $install_jgmenu $install_bspwm
