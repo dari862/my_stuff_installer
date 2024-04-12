@@ -153,14 +153,14 @@ Theme_Stuff
 )
 for getthis in "${git_clone_Array[@]}"; do
 	show_m "git clone ${getthis}"
-	if [ ! -d "${tmp_folder}/${getthis}" ]; then 
-		git clone --depth=1 "https://github.com/dari862/${getthis}.git" "${tmp_folder}/${getthis}"
+	if [ ! -d "${wget_git_path}/${getthis}" ]; then 
+		git clone --depth=1 "https://github.com/dari862/${getthis}.git" "${wget_git_path}/${getthis}"
 	else
 		show_m "${getthis} Folder does exsist"
 	fi
 done
 
-cd "${tmp_folder}"
+cd "${wget_git_path}"
 [ ! -d "${Custom_distro_dir_name}" ] && mv my_stuff "${Custom_distro_dir_name}"
 
 # test if in virtual machine
@@ -223,10 +223,10 @@ fi
 ##################################################################################
 #Theme_Stuff.git
 show_m "chown of Theme_Stuff to root"
-sudo chown -R root:root "${tmp_folder}"/Theme_Stuff
+sudo chown -R root:root "${wget_git_path}"/Theme_Stuff
 
 show_m "moving Theme_Stuff to /usr/share/${Custom_distro_dir_name}/Theme_Stuff"
-sudo mv "${tmp_folder}"/Theme_Stuff /usr/share/"${Custom_distro_dir_name}"
+sudo mv "${wget_git_path}"/Theme_Stuff /usr/share/"${Custom_distro_dir_name}"
 
 show_m "Moving themes from /usr/share/themes that exist in Theme_Stuff /usr/share/${Custom_distro_dir_name}/backup"
 sudo mkdir -p /usr/share/themes
@@ -358,7 +358,7 @@ __thunar_wall_plug="$(locate thunar | grep wall || :)"
 sudo sed -i 's/managed=.*/managed=true/g' /etc/NetworkManager/NetworkManager.conf
 
 show_m "prepare some script"
-sudo "${script_fullpath}"/prepare_script_ "${Custom_distro_dir_name}"
+sudo "${wget_git_path}"/prepare_script_ "${Custom_distro_dir_name}"
 
 show_m "Done"
 
