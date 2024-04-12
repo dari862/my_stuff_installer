@@ -42,6 +42,9 @@ if [ "$1" == "wifi" ]; then
 		dhclient "$wifi_interface"
 		ping -c4 google.com || (echo "no internet connection" ; exit 1)
 		[ -f "$tmpfile" ] && rm "$tmpfile"
+		if grep 'deb cdrom' /etc/apt/sources.list;then
+			$_SUDO sed -i '/deb cdrom/d' /etc/apt/sources.list
+		fi
 		$_SUDO apt-get update
 		$_SUDO apt-get install -y -f 2>/dev/null
 		$_SUDO apt-get install -y network-manager psmisc
@@ -63,6 +66,8 @@ if ! . lib 2>/dev/null; then
 		exit 1
 	fi
 fi
+
+repofixer
 
 aptupdate
 
