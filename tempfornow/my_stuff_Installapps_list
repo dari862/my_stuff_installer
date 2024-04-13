@@ -2,13 +2,18 @@
 set -e
 
 # source lib
-script_fullpath=$(dirname "$(readlink -f "$0")")
-[ "$(echo "${script_fullpath}" | grep "/proc/*")" ] && script_fullpath="/tmp"
-cd "${script_fullpath}"
-if ! . lib 2> /dev/null; then
-	wget -q https://raw.githubusercontent.com/dari862/my_linux/main/tempfornow/lib
-	if ! . lib 2> /dev/null; then
-		echo "Error: Failed to locate lib from ${script_fullpath}" >&2
+temp_path="/tmp"
+
+my_stuff_lib_location="$(find $HOME -type f -name my_stuff_lib | head -1)"
+if [[ ! -z "${my_stuff_lib_location}" ]];then
+	mv "${my_stuff_lib_location}" "${temp_path}"
+fi
+
+if ! source "${temp_path}"/my_stuff_lib 2> /dev/null; then
+	echo "wget lib file"
+	wget -q https://raw.githubusercontent.com/dari862/my_linux/main/tempfornow/my_stuff_lib
+	if ! source "${temp_path}"/my_stuff_lib 2> /dev/null; then
+		echo "Error: Failed to source my_stuff_lib from ${temp_path}" >&2
 		exit 1
 	fi
 fi
@@ -112,14 +117,14 @@ add_2_apt_install_()
 # main
 ##################################################################################
 
-sudo timedatectl set-timezone Asia/Kuwait
-sudo date -s "$(wget --method=HEAD -qSO- --max-redirect=0 google.com 2>&1 | sed -n 's/^ *Date: *//p')" &>/dev/null
+sudo timedatectl set-timezone $__timezone
+sudo date -s "$(wget --method=HEAD -qSO- --max-redirect=0 debian.com 2>&1 | sed -n 's/^ *Date: *//p')" &>/dev/null
 
 aptupdate
 aptfixer
 upgrade_now
 
-list_of_apps_file_path="$(mktemp "${script_fullpath}"/list_of_apps_.XXXXXXXXXXXX)"
+list_of_apps_file_path="$(mktemp "${temp_path}"/list_of_apps_.XXXXXXXXXXXX)"
 show_m "create_list_of_apps"
 apt list 2>/dev/null | awk -F"/" '{print " " $1 " "}' > "${list_of_apps_file_path}"
 
@@ -169,27 +174,27 @@ apt_install_
 if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
 	show_m "this is laptop"
 	show_m "create envycontrol installtion file."
-cat << 'EOF' > /tmp/envycontrol_updater_DmDmDmdMdMdM
-	cd "$(mktemp -d)" 
-	
+cat << 'EOF' > "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
+	envycontrol_updater_path="$(mktemp -d)" 
+	__Custom_distro_dir_name="DmDmDmdMdMdM"
 	wget -qO- 'https://api.github.com/repos/bayasdev/envycontrol/releases/latest' \
   	| grep '"tarball_url"' \
   	| cut -f2,3 -d':' \
   	| tr -d '"' \
   	| tr -d ',' \
-  	| xargs wget -O envycontrol.tar.gz && tar -xvzf envycontrol.tar.gz && mv bayasdev* envycontrol
+  	| xargs wget -O "${envycontrol_updater_path}"/envycontrol.tar.gz && tar -xvzf "${envycontrol_updater_path}"/envycontrol.tar.gz -C "${envycontrol_updater_path}" && mv "${envycontrol_updater_path}"/bayasdev* "${envycontrol_updater_path}"/envycontrol
   	
-  	[ -d "/usr/share/DmDmDmdMdMdM/opt/downloaded/envycontrol" ] && sudo rm -rdf "/usr/share/DmDmDmdMdMdM/opt/downloaded/envycontrol"
-  	[ ! -d "/usr/share/DmDmDmdMdMdM/opt/downloaded" ] && sudo mkdir -p /usr/share/DmDmDmdMdMdM/opt/downloaded
-  	[ ! -d "/usr/share/DmDmDmdMdMdM/opt/git" ] && sudo mkdir -p /usr/share/DmDmDmdMdMdM/opt/git
+  	[ -d "/usr/share/${__Custom_distro_dir_name}/opt/downloaded/envycontrol" ] && sudo rm -rdf "/usr/share/${__Custom_distro_dir_name}/opt/downloaded/envycontrol"
+  	[ ! -d "/usr/share/${__Custom_distro_dir_name}/opt/downloaded" ] && sudo mkdir -p /usr/share/${__Custom_distro_dir_name}/opt/downloaded
+  	[ ! -d "/usr/share/${__Custom_distro_dir_name}/opt/git" ] && sudo mkdir -p /usr/share/${__Custom_distro_dir_name}/opt/git
   	
-  	if [ -d envycontrol ];then
-  		chmod +x ./envycontrol/envycontrol.py 
-  		sudo mv envycontrol "/usr/share/DmDmDmdMdMdM/opt/git/"
-  		ln -sf "/usr/share/DmDmDmdMdMdM/opt/downloaded/envycontrol/envycontrol.py" "/usr/share/DmDmDmdMdMdM/bin/bin/envycontrol"
+  	if [ -d "${envycontrol_updater_path}"/envycontrol ];then
+  		chmod +x "${envycontrol_updater_path}"/envycontrol/envycontrol.py 
+  		sudo mv "${envycontrol_updater_path}"/envycontrol "/usr/share/${__Custom_distro_dir_name}/opt/git/"
+  		ln -sf "/usr/share/${__Custom_distro_dir_name}/opt/downloaded/envycontrol/envycontrol.py" "/usr/share/${__Custom_distro_dir_name}/bin/bin/envycontrol"
   	fi
 EOF
-	chmod +x /tmp/envycontrol_updater_DmDmDmdMdMdM
+	chmod +x "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
 fi
 
 show_m "Configer packages."

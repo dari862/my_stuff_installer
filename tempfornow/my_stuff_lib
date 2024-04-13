@@ -3,23 +3,7 @@ set -e
 
 Custom_distro_name="My Stuff"
 Custom_distro_dir_name="$(echo "$Custom_distro_name" | tr -dc '[:alnum:] \n\r' | tr '[:upper:]' '[:lower:]' | tr -s ' ' '_')"
-
-repo_name="my_stuff_installer"
-repo_name2="my_stuff"
-script_fullpath="$(dirname "$(readlink -f "$0")")"
-
-if echo "${script_fullpath}" | grep  "${repo_name}" &>/dev/null ; then
-	repo_path="$(echo "${script_fullpath}" | awk -F "${repo_name}" '{print $1}' )"
-	if [[ $(ls "$repo_path/${repo_name2}" 2>/dev/null) ]] ;then
-		wget_git_path="${repo_path}"
-	elif [[ $(ls "$repo_path"/../../"${repo_name2}" 2>/dev/null) ]] ;then
-		wget_git_path="$(cd "${repo_path}"/../.. && pwd)"
-	else
-		wget_git_path="/tmp"
-	fi
-else
-	wget_git_path="/tmp"
-fi
+temp_path="/tmp"
 
 declare -a to_be_purged=(
 aisleriot
@@ -77,6 +61,10 @@ xfce4-power-manager*
 
 sudoaptinstall='sudo apt-get install -y'
 aptinstall='apt-get install -y'
+
+#__timezone="$(curl -q https://ipinfo.io/ 2>/dev/null | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/ //g')"
+__timezone="Asia/Kuwait"
+
 ##################################################################################
 ##################################################################################
 
@@ -92,18 +80,23 @@ show_em()
 	echo "$__massage"
 }
 
-check_and_run_else_download_and_run()
+check_and_download_()
 {
-  check_this_file_="${1-}"
-  if [ ! -f "$check_this_file_" ]; then
-  	show_m "Wget $check_this_file_ file from www.github.com/dari862/my_stuff_installer ."
-	wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/"$check_this_file_" || show_em "Error: Failed to download $check_this_file_ ."
-	chmod +x "$check_this_file_"
-	if [ ! -f "$check_this_file_" ]; then
-		show_em "Error: Failed to locate $check_this_file_ ."
-		exit 1
+	check_this_file_="${1-}"
+	check_this_file_location="$(find $HOME -type f -name ${check_this_file_} | head -1)"
+	if [[ ! -z "${check_this_file_location}" ]];then
+		mv "${check_this_file_location}" "${temp_path}"
 	fi
-fi
+
+	if [[ ! -f "${temp_path}/${check_this_file_}" ]]; then
+	show_m "Wget $check_this_file_ file from www.github.com/dari862/my_stuff_installer ."
+		wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/"$check_this_file_" || show_em "Error: Failed to download $check_this_file_ ."
+		chmod +x "$check_this_file_"
+		if [[ ! -f "${temp_path}/${check_this_file_}" ]]; then
+			echo "Error: Failed to wget ${check_this_file_} from ${temp_path}" >&2
+			exit 1
+		fi
+	fi
 }
 
 aptupdate()
@@ -262,6 +255,27 @@ do_you_want_2_run_this_yes_or_no(){
 	[ "$yn" = "YES" ] && yn="Y"
 	echo "$yn"
 }
+
+git_clone_and_set_var_to_path(){
+	getthis="${1-}"
+	show_m "git clone ${getthis}"
+	getthis_location="$(find $HOME -type d -name ${getthis} | head -1)"
+	
+	if [[ -z "${getthis_location}" ]];then
+		getthis_location="${temp_path}"
+	else
+		getthis_location="$(cd "${getthis_location}" && cd .. && pwd)"
+	fi
+	
+	if [ ! -d "${getthis_location}/${getthis}" ]; then 
+		git clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}/${getthis}"
+	else
+		show_m "${getthis} Folder does exsist"
+	fi
+	
+	echo "${getthis_location}"
+}
+
 ######################################################################################################################
 ######################################################################################################################
 ######################################################################################################################

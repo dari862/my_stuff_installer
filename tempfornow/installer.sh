@@ -56,19 +56,18 @@ if [ "$1" == "wifi" ]; then
 fi
 
 # source lib
-script_fullpath=$(dirname "$(readlink -f "$0")")
+temp_path="/tmp"
 
-if echo "${script_fullpath}" | grep  "/proc/" &>/dev/null ; then
-	script_fullpath="/tmp"
+my_stuff_lib_location="$(find $HOME -type f -name my_stuff_lib | head -1)"
+if [[ ! -z "${my_stuff_lib_location}" ]];then
+	mv "${my_stuff_lib_location}" "${temp_path}"
 fi
 
-cd "${script_fullpath}"
-
-if ! . lib 2>/dev/null; then
+if ! source "${temp_path}"/my_stuff_lib 2> /dev/null; then
 	echo "wget lib file"
-	wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/lib
-	if ! . lib 2>/dev/null; then
-		echo "Error: Failed to locate lib from ${script_fullpath}" >&2
+	wget -q https://raw.githubusercontent.com/dari862/my_linux/main/tempfornow/my_stuff_lib
+	if ! source "${temp_path}"/my_stuff_lib 2> /dev/null; then
+		echo "Error: Failed to source my_stuff_lib from ${temp_path}" >&2
 		exit 1
 	fi
 fi
@@ -134,9 +133,9 @@ if [ "$auto_run_script" != "true" ];then
 	fi
 fi
 
-check_and_run_else_download_and_run "Installapps_list"
+check_and_download_ "my_stuff_Installapps_list"
 
-check_and_run_else_download_and_run "prepare_script_"
+check_and_download_ "my_stuff_prepare_script_"
 
 clear
 
@@ -144,23 +143,19 @@ _unattended_upgrades_ stop
 upgrade_now
 
 show_m "running Installapps_list script"
-./Installapps_list $install_xfce4_panel $install_polybar $install_qt5ct $install_jgmenu $install_bspwm
+"${temp_path}"/my_stuff_Installapps_list $install_xfce4_panel $install_polybar $install_qt5ct $install_jgmenu $install_bspwm
+
+################################
+# git clone
 
 show_m "git clone distro files"
-git_clone_Array=(
-my_stuff
-Theme_Stuff
-)
-for getthis in "${git_clone_Array[@]}"; do
-	show_m "git clone ${getthis}"
-	if [ ! -d "${wget_git_path}/${getthis}" ]; then 
-		git clone --depth=1 "https://github.com/dari862/${getthis}.git" "${wget_git_path}/${getthis}"
-	else
-		show_m "${getthis} Folder does exsist"
-	fi
-done
+my_stuff_location="$(git_clone_and_set_var_to_path "my_stuff" | tail -1)"
+Theme_Stuff_location="$(git_clone_and_set_var_to_path "Theme_Stuff" | tail -1)"
 
-cd "${wget_git_path}"
+################################3
+
+cd "${my_stuff_location}"
+
 [ ! -d "${Custom_distro_dir_name}" ] && mv my_stuff "${Custom_distro_dir_name}"
 
 # test if in virtual machine
@@ -186,14 +181,14 @@ mkdir -p "${Custom_distro_dir_name}"/bin/not_add_2_path/updater
 if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then 
 	show_m "this is laptop"
 	touch "${Custom_distro_dir_name}"/this_is_laptop
-	mv /tmp/envycontrol_updater_DmDmDmdMdMdM "${Custom_distro_dir_name}"/bin/not_add_2_path/updater/envycontrol_updater
+	mv "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM "${Custom_distro_dir_name}"/bin/not_add_2_path/updater/envycontrol_updater
 fi
 
 find "${Custom_distro_dir_name}"/. -type f -exec sed -i "s/DmDmDmdMdMdM/${Custom_distro_dir_name}/g" {} +
 find "${Custom_distro_dir_name}"/. -type f -exec sed -i "s/mDmDmDmDmDmDmD/${Custom_distro_name}/g" {} +
 
 ##################################################################################
-#my_linux.git
+#my_stuff.git
 
 #run_fixes_
 show_m "change ownership to root"
@@ -223,10 +218,10 @@ fi
 ##################################################################################
 #Theme_Stuff.git
 show_m "chown of Theme_Stuff to root"
-sudo chown -R root:root "${wget_git_path}"/Theme_Stuff
+sudo chown -R root:root "${Theme_Stuff_location}"/Theme_Stuff
 
 show_m "moving Theme_Stuff to /usr/share/${Custom_distro_dir_name}/Theme_Stuff"
-sudo mv "${wget_git_path}"/Theme_Stuff /usr/share/"${Custom_distro_dir_name}"
+sudo mv "${Theme_Stuff_location}"/Theme_Stuff /usr/share/"${Custom_distro_dir_name}"
 
 show_m "Moving themes from /usr/share/themes that exist in Theme_Stuff /usr/share/${Custom_distro_dir_name}/backup"
 sudo mkdir -p /usr/share/themes
@@ -305,12 +300,12 @@ fi
 show_m "clean_up_now"
 show_m "removing not needed dotfiles"
 
-mkdir -p /tmp/clean_up_now_trash_folder
+mkdir -p "${temp_path}"/clean_up_now_trash_folder
 
 move_this_Array=($(ls /usr/share/"${Custom_distro_dir_name}"/skel/.config/))
 
 for movethis in "${move_this_Array[@]}"; do
-	[ -e "${HOME}/.config/${movethis}" ] && mv "${HOME}/.config/${movethis}" /tmp/clean_up_now_trash_folder  &> /dev/null;
+	[ -e "${HOME}/.config/${movethis}" ] && mv "${HOME}/.config/${movethis}" "${temp_path}"/clean_up_now_trash_folder  &> /dev/null;
 done
 
 remove_this_Array=(
@@ -358,7 +353,7 @@ __thunar_wall_plug="$(locate thunar | grep wall || :)"
 sudo sed -i 's/managed=.*/managed=true/g' /etc/NetworkManager/NetworkManager.conf
 
 show_m "prepare some script"
-sudo "${wget_git_path}"/prepare_script_ "${Custom_distro_dir_name}"
+sudo "${temp_path}"/my_stuff_prepare_script_ "${Custom_distro_dir_name}"
 
 show_m "Done"
 
