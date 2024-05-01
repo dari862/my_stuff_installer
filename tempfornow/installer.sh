@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-auto_run_script="true" # true to enable
+auto_run_script="" # true to enable
 
 if ! command -v sudo >/dev/null;then
 	_SUDO=""
