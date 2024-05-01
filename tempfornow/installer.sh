@@ -86,7 +86,7 @@ fi
 
 if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
 	echo "wget lib file"
-	wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/${lib_file_name} -P "${temp_path}"/${lib_file_name} || echo "Error: Failed to download ${lib_file_name} ."
+	wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/${lib_file_name} -O "${temp_path}"/${lib_file_name} || echo "Error: Failed to download ${lib_file_name} ."
 	if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
 		echo "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
 		exit 1
