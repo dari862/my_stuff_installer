@@ -77,17 +77,18 @@ fi
 
 # source lib
 temp_path="/tmp"
+lib_file_name="my_stuff_lib"
+my_stuff_lib_location="$(find $HOME -type f -name ${my_stuff_lib} | head -1)"
 
-my_stuff_lib_location="$(find $HOME -type f -name my_stuff_lib | head -1)"
 if [[ ! -z "${my_stuff_lib_location}" ]];then
 	mv "${my_stuff_lib_location}" "${temp_path}"
 fi
 
-if ! source "${temp_path}"/my_stuff_lib 2> /dev/null; then
+if ! source "${temp_path}"/${my_stuff_lib} 2> /dev/null; then
 	echo "wget lib file"
-	wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/my_stuff_lib
-	if ! source "${temp_path}"/my_stuff_lib 2> /dev/null; then
-		echo "Error: Failed to source my_stuff_lib from ${temp_path}" >&2
+	wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/${my_stuff_lib} -P "${temp_path}"/${my_stuff_lib} || echo "Error: Failed to download ${my_stuff_lib} ."
+	if ! source "${temp_path}"/${my_stuff_lib} 2> /dev/null; then
+		echo "Error: Failed to source ${my_stuff_lib} from ${temp_path}" >&2
 		exit 1
 	fi
 fi
