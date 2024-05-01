@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+keep_Sudo_refresed()
+{
+	while true
+		do
+			sudo -v
+			sleep 10m
+		done
+}
+sudo -v
+
+keep_Sudo_refresed &
+
+echo "deb https://deb.debian.org/debian/ bookworm main non-free-firmware contrib non-free
+deb-src https://deb.debian.org/debian/ bookworm main non-free-firmware contrib non-free
+
+deb https://security.debian.org/debian-security bookworm-security main non-free-firmware contrib non-free
+deb-src https://security.debian.org/debian-security bookworm-security main non-free-firmware contrib non-free
+
+deb https://deb.debian.org/debian/ bookworm-updates main non-free-firmware contrib non-free
+deb-src https://deb.debian.org/debian/ bookworm-updates main non-free-firmware contrib non-free" | sudo tee /etc/apt/sources.list
+
+sudo apt-get update
+sudo apt-get -y upgrade
+
+sudo apt-get install -y git
+cd /tmp
+git clone https://gitlab.com/SamArcade777/Hypr-Debian.git
+
+cd /tmp/Hypr-Debian/Hyprland_base
+./Hypr-install.sh
+
+cd /tmp/Hypr-Debian/Hyprland_tools
+./tools_install.sh
+
+cd /tmp/Hypr-Debian/Hyprland_config
+./config_install.sh

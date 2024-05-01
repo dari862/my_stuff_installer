@@ -11,7 +11,7 @@ fi
 
 if ! source "${temp_path}"/my_stuff_lib 2> /dev/null; then
 	echo "wget lib file"
-	wget -q https://raw.githubusercontent.com/dari862/my_linux/main/tempfornow/my_stuff_lib
+	wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/my_stuff_lib
 	if ! source "${temp_path}"/my_stuff_lib 2> /dev/null; then
 		echo "Error: Failed to source my_stuff_lib from ${temp_path}" >&2
 		exit 1
@@ -42,45 +42,6 @@ for option in "${extra_apps_2_install[@]}";do
 done
 
 List_of_apt_2_install_=()
-
-#######################
-## must_install_apps_list
-#######################
-#must have apps
-install_must_have_apps=(jq btop xclip curl cbatticon xprintidle yad git lsb-release rofi picom sudo systemd-timesyncd)
-install_must_have_apps2=(psmisc unzip dunst xorg pulseaudio arandr autorandr dbus-x11 pnmixer pavucontrol diodon gparted inxi s-tui dfc htop hwinfo synaptic galternatives xdotool libnotify-bin gnome-keyring ntfs-3g acl bash-completion xinit xdg-user-dirs lm-sensors)
-install_cool_apps=(micro)
-install_openbox_=(openbox obconf xcape tint2 nitrogen)
-install_image_viewer_apps=(viewnior)
-install_files_manager_app=(thunar thunar-archive-plugin gvfs gvfs-fuse gvfs-backends file-roller ranger meld baobab)
-install_firefox_=(firefox firefox-esr)
-install_terminal=(kitty terminator)
-install_conky_all_app=(conky-all)
-install_if_laptop=(tlp tlp-rdw powertop light upower xserver-xorg-input-synaptics acpi xbacklight xinput wireless-tools)
-install_Network_apps=(rfkill network-manager network-manager-gnome)
-install_terminal_based_sound_app=(mpd mpc ncmpcpp)
-install_text_editer_app=(featherpad evince)
-install_mediaplayer_app=(mpv)
-install_x_lock_extra=(i3lock i3lock-fancy)
-install_lightdm_=(lightdm lightdm-gtk-greeter-settings)
-install_fonts=(fonts-noto fonts-droid-fallback fonts-cantarell fonts-liberation fonts-opensymbol fonts-noto-core fonts-noto-mono fonts-inconsolata)
-install_themes=(papirus-icon-theme fonts-noto-color-emoji fonts-firacode fonts-font-awesome arc-theme gtk3-nocsd numix-icon-theme paper-icon-theme dmz-cursor-theme)
-install_themes_tools=(xsettingsd lxappearance)
-install_polkit_apps=(policykit-1 policykit-1-gnome)
-
-# ffmpeg for screen recoding , maim for ac-shots , xsel for files-uploader , wmctrl for style-manager and files-uploader
-install_for_scripts=(maim ffmpeg at xsel wmctrl)
-install_for_script_bl_reload_gtk23=(python3-xlib)
-install_autoinstall_firmware=(isenkram)
-
-#######################
-## extra apps
-#######################
-install_xfce4_panel=(xfce4-panel xfce4-settings xfce4-clipman xfce4-whiskermenu-plugin)
-install_polybar=(polybar libnm-dev)
-install_qt5ct=(qt5ct qt5-style-kvantum libqt5svg5 qml-module-qtquick-controls)
-install_jgmenu=(jgmenu)
-install_bspwm=(bspwm sxhkd)
 
 ##################################################################################
 # function
@@ -114,11 +75,45 @@ add_2_apt_install_()
 }
 
 ##################################################################################
+## must_install_apps_list
+##################################################################################
+#must have apps
+install_must_have_apps=(jq btop xclip curl cbatticon xprintidle yad git lsb-release rofi picom sudo systemd-timesyncd)
+install_must_have_apps2=(psmisc unzip dunst xorg arandr autorandr dbus-x11 pnmixer diodon gparted inxi s-tui dfc htop hwinfo synaptic galternatives xdotool libnotify-bin gnome-keyring ntfs-3g acl bash-completion xinit xdg-user-dirs lm-sensors)
+install_cool_apps=(micro)
+install_openbox_=(openbox obconf xcape tint2 nitrogen)
+install_image_viewer_apps=(viewnior)
+install_files_manager_app=(thunar thunar-archive-plugin gvfs gvfs-fuse gvfs-backends file-roller ranger meld baobab)
+install_firefox_=(firefox firefox-esr)
+install_terminal=(kitty terminator)
+install_conky_all_app=(conky-all)
+install_if_laptop=(tlp tlp-rdw powertop xserver-xorg-input-synaptics xinput)
+install_terminal_based_sound_app=(mpd mpc ncmpcpp)
+install_text_editer_app=(featherpad evince)
+install_mediaplayer_app=(mpv)
+install_x_lock_extra=(i3lock i3lock-fancy)
+install_lightdm_=(lightdm lightdm-gtk-greeter-settings)
+install_fonts=(fonts-noto fonts-droid-fallback fonts-cantarell fonts-liberation fonts-opensymbol fonts-noto-core fonts-noto-mono fonts-inconsolata)
+install_themes=(papirus-icon-theme fonts-noto-color-emoji fonts-firacode fonts-font-awesome arc-theme gtk3-nocsd numix-icon-theme paper-icon-theme dmz-cursor-theme)
+install_themes_tools=(xsettingsd lxappearance)
+install_polkit_apps=(policykit-1 policykit-1-gnome)
+
+# ffmpeg for screen recoding , maim for ac-shots , xsel for files-uploader , wmctrl for style-manager and files-uploader
+install_for_scripts=(maim ffmpeg at xsel wmctrl)
+install_for_script_bl_reload_gtk23=(python3-xlib)
+
+#######################
+## extra apps
+#######################
+install_xfce4_panel=(xfce4-panel xfce4-settings xfce4-clipman xfce4-whiskermenu-plugin)
+install_polybar=(polybar libnm-dev)
+install_qt5ct=(qt5ct qt5-style-kvantum libqt5svg5 qml-module-qtquick-controls)
+install_jgmenu=(jgmenu)
+install_bspwm=(bspwm sxhkd)
+
+##################################################################################
 # main
 ##################################################################################
-
-sudo timedatectl set-timezone $__timezone
-sudo date -s "$(wget --method=HEAD -qSO- --max-redirect=0 debian.com 2>&1 | sed -n 's/^ *Date: *//p')" &>/dev/null
 
 aptupdate
 aptfixer
@@ -146,13 +141,11 @@ add_2_apt_install_ "${install_openbox_[@]}"
 add_2_apt_install_ "${install_fonts[@]}"
 add_2_apt_install_ "${install_for_scripts[@]}"
 add_2_apt_install_ "${install_for_script_bl_reload_gtk23[@]}"
-add_2_apt_install_ "${install_Network_apps[@]}"
 add_2_apt_install_ "${install_image_viewer_apps[@]}"
 add_2_apt_install_ "${install_must_have_apps[@]}"
 add_2_apt_install_ "${install_must_have_apps2[@]}"
 add_2_apt_install_ "${install_cool_apps[@]}"
 add_2_apt_install_ "${install_polkit_apps[@]}"
-add_2_apt_install_ "${install_autoinstall_firmware[@]}"
 if [[ "$install_xfce4_panel_now" = true ]];then
 	add_2_apt_install_ "${install_xfce4_panel[@]}"
 fi
@@ -222,9 +215,26 @@ then
 	sudo systemctl disable mpd.service
 fi
 
-sudo isenkram-autoinstall-firmware || : # to prevent script from exiting "isenkram-autoinstall-firmware contain exit command"
-apt_purge_with_error2info "${install_autoinstall_firmware[@]}"
-
 if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
 	show_m "some config"
+	if sudo dmesg | grep -i bluetooth 1>/dev/null || sudo lsusb | grep -i bluetooth 1>/dev/null ;then
+		[[ -f "/etc/tlp.conf" ]] && sudo sed -i 's/#DEVICES_TO_DISABLE_ON_STARTUP=.*/DEVICES_TO_DISABLE_ON_STARTUP="bluetooth"/g' /etc/tlp.conf
+	fi
+	sudo systemctl enable tlp
+	sudo  tlp start || tlp_error="true"
+	if [[ "$tlp_error" == "true" ]];then
+		sudo  tlp start | grep '>>> Invoke' >> "/tmp/tlp_error_Invoke"
+		if [[ -f "/tmp/tlp_error_Invoke" ]];then
+			sed -i "s/' to correct this.//g" "/tmp/tlp_error_Invoke"
+			sed -i "s/>>> Invoke '//g" "/tmp/tlp_error_Invoke"
+			chmod +x "/tmp/tlp_error_Invoke"
+			sudo bash /tmp/tlp_error_Invoke
+			sudo  tlp start
+		fi
+		if sudo tlp-stat |  grep '* Install' &>/dev/null ;then
+			sudo tlp-stat |  grep '* Install' | awk -F' '  '{print "apt-get install -y " $3}' >> "/tmp/tlp_install_exta_apps" 
+			chmod +x "/tmp/tlp_install_exta_apps"
+			sudo bash /tmp/tlp_error_Invoke
+		fi
+	fi
 fi

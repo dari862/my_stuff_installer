@@ -1,0 +1,172 @@
+#!/bin/bash
+set -e
+
+# source lib
+temp_path="/tmp"
+
+my_stuff_lib_location="$(find $HOME -type f -name my_stuff_lib | head -1)"
+if [[ ! -z "${my_stuff_lib_location}" ]];then
+	mv "${my_stuff_lib_location}" "${temp_path}"
+fi
+
+if ! source "${temp_path}"/my_stuff_lib 2> /dev/null; then
+	echo "wget lib file"
+	wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/my_stuff_lib
+	if ! source "${temp_path}"/my_stuff_lib 2> /dev/null; then
+		echo "Error: Failed to source my_stuff_lib from ${temp_path}" >&2
+		exit 1
+	fi
+fi
+
+##################################################################################
+# function
+##################################################################################
+
+apt_install_()
+{
+	$sudoaptinstall "${List_of_apt_2_install_[@]}"
+}
+
+add_2_apt_install_()
+{
+	localarray=("$@")
+
+	for INDEX in "${localarray[@]}"
+	do
+		if ! dpkg -s "${INDEX}" > /dev/null 2>&1; then
+			if apt list 2>/dev/null | grep "^${INDEX}/";then
+				List_of_apt_2_install_+=("$INDEX") 
+				show_m "${INDEX} added to install apps" 
+			fi
+		fi
+	done
+}
+
+##################################################################################
+# var
+##################################################################################
+
+List_of_apt_2_install_=()
+
+#######################
+## must_install_apps_list
+#######################
+#must have apps
+install_audio=(pulseaudio pavucontrol)
+install_if_laptop=(acpi light upower xbacklight)
+install_wireless=(wireless-tools)
+install_Network=(rfkill network-manager network-manager-gnome)
+install_bluetooth=(bluez blueman)
+install_autoinstall_firmware=(isenkram)
+
+##################################################################################
+# GPU Drivers
+##################################################################################
+if [[ "${1-}" = "install_GPU" ]];then
+	if [ "$(lspci | grep "VGA compatible controller" | grep VMware -c)" != "0" ];then
+		echo "This is VM"
+	else
+		if [ -f /etc/os-release ]; then
+    		# freedesktop.org and systemd
+    		. /etc/os-release
+    		version_=$(echo "${VERSION_ID//./}")
+    		distro_name_="$ID"
+    		distro_name_and_ver_=$ID$version_
+		elif [ -f /etc/lsb-release ]; then
+    		# For some versions of Debian/Ubuntu without lsb_release command
+    		. /etc/lsb-release
+    		distro_name_="$DISTRIB_ID"
+    		distro_name_and_ver_=$DISTRIB_ID$DISTRIB_RELEASE
+		else
+    		# Fall back to uname, e.g. "Linux <version>", also works for BSD, etc.
+    		distro_name_="$(uname -s)"
+    		distro_name_and_ver_=$(uname -s)$(uname -r)
+		fi
+
+		if [ "$(lspci | grep -i nvidia | grep VGA -c)" != "0" ];then
+			_cuda_="${2-}"
+			_kernel_open_dkms_="${3-}"
+			add_2_apt_install_ "nvidia-driver nvidia-smi nvidia-settings $_kernel_open_dkms_ $_cuda_"
+		fi
+		
+		if [ "$(lspci | grep -i amd | grep VGA -c)" != "0" ];then
+			add_2_apt_install_ "libgl1-mesa-dri xserver-xorg-video-ati xserver-xorg-video-amdgpu mesa-vulkan-drivers vkbasalt"
+		fi
+		
+		if [ "$(lspci | grep -i intel | grep VGA -c)" != "0" ];then
+			add_2_apt_install_ "xserver-xorg-video-intel intel-gpu-tools intel-media-va-driver"
+		fi
+	fi
+fi
+
+##################################################################################
+# main
+##################################################################################
+
+if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
+	add_2_apt_install_ "${install_if_laptop[@]}"
+fi
+
+if lspci | egrep -i 'wifi|wireless' 1>/dev/null ;then
+	add_2_apt_install_ "${install_wireless[@]}"
+fi
+
+if sudo dmesg | grep -i bluetooth 1>/dev/null || sudo lsusb | grep -i bluetooth 1>/dev/null ;then
+	add_2_apt_install_ "${install_bluetooth[@]}"
+fi
+
+add_2_apt_install_ "${install_audio[@]}"
+add_2_apt_install_ "${install_Network[@]}"
+add_2_apt_install_ "${install_autoinstall_firmware[@]}"
+
+if [ "$(lspci | grep -i nvidia | grep VGA -c)" != "0" ];then
+	if [[ ! -f "/usr/share/keyrings/nvidia-drivers.gpg" ]];then
+		curl -fSsL "https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/3bf863cc.pub" | sudo gpg --dearmor | sudo tee /usr/share/keyrings/nvidia-drivers.gpg > /dev/null 2>&1
+	fi
+	
+	if [[ ! -f "/etc/apt/sources.list.d/nvidia-drivers.list" ]];then 
+		echo "deb [signed-by=/usr/share/keyrings/nvidia-drivers.gpg] https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/ /" | sudo tee /etc/apt/sources.list.d/nvidia-drivers.list
+	fi
+fi
+		
+if [ "$distro_name_" = "ubuntu" ];then
+	sudo apt-get install -y software-properties-common
+	sudo add-apt-repository -y universe
+	sudo add-apt-repository -y multiverse
+	show_m "Running Update."
+	aptupdate
+else
+	show_m "Running Update."
+	aptupdate
+fi
+		
+apt_install_
+
+show_m "run isenkram-autoinstall-firmware."
+sudo isenkram-autoinstall-firmware || : # to prevent script from exiting "isenkram-autoinstall-firmware contain exit command"
+
+show_m "Configer packages."
+apt_purge_with_error2info "${install_autoinstall_firmware[@]}"
+
+if [ "$(lspci | grep -i intel | grep VGA -c)" != "0" ];then
+sudo mkdir -p /etc/X11/xorg.conf.d/
+sudo bash -c 'cat << EOF > /etc/X11/xorg.conf.d/20-intel.conf
+Section "Device"
+	Identifier  "Intel Graphics"
+	Driver      "Intel"
+	Option      "AccelMethod"  "sna"
+	Option      "TearFree"	"True"
+	Option      "Tiling"	"True"
+	Option      "SwapbuffersWait" "True"
+	#Option      "AccelMethod"  "uxa"
+EndSection
+EOF'
+fi
+
+if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
+	show_m "some config"
+fi
+
+if [[ "${1-}" = "install_GPU" ]];then
+	mktemp /tmp/Gaming_Drivers_ready_XXXXXX
+fi

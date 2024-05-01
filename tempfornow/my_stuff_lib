@@ -62,9 +62,6 @@ xfce4-power-manager*
 sudoaptinstall='sudo apt-get install -y'
 aptinstall='apt-get install -y'
 
-#__timezone="$(curl -q https://ipinfo.io/ 2>/dev/null | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/ //g')"
-__timezone="Asia/Kuwait"
-
 ##################################################################################
 ##################################################################################
 
@@ -182,6 +179,11 @@ kill_apt()
 upgrade_now()
 {
 	sudo DEBIAN_FRONTEND=noninteractive apt-get -y upgrade
+}
+
+full_upgrade_now()
+{
+	sudo DEBIAN_FRONTEND=noninteractive apt-get -y full-upgrade
 }
 
 _unattended_upgrades_()

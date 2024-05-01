@@ -2,15 +2,35 @@
 set -e
 auto_run_script="true" # true to enable
 
-sudo -v || echo "sudo does not exist."
+if ! command -v sudo >/dev/null;then
+	_SUDO=""
+	echo "sudo does not exist."
+else
+	_SUDO="sudo"
+	sudo -v
+fi
+
+fix_time_(){
+	get_date_from_here=""
+	list_to_test=(debian.com github.com 104.16.132.229)
+	
+	for test in "${list_to_test[@]}";do
+		ping -c 1 $test &>/dev/null && get_date_from_here="$test" && break
+	done
+		
+	if [[ -z "$get_date_from_here" ]];then 
+		echo "failed to ping $get_date_from_here" && exit 1
+	else
+		$_SUDO date -s "$(wget --method=HEAD -qSO- --max-redirect=0 $get_date_from_here 2>&1 | sed -n 's/^ *Date: *//p')" &>/dev/null
+		#__timezone="$(curl -q https://ipinfo.io/ 2>/dev/null | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/ //g')"
+		__timezone="Asia/Kuwait"
+		$_SUDO timedatectl set-timezone $__timezone	
+	fi
+}
+
+fix_time_
 
 if [ "$1" == "wifi" ]; then
-	if ! command -v sudo >/dev/null
-	then
-		_SUDO=""
-	else
-		_SUDO="sudo"
-	fi
 	wifi_interface="$(ip link | awk -F: '$0 !~ "^[^0-9]"{print $2;getline}' | awk '/w/{ print $0 }')"
 	if [ -z "$wifi_interface" ]
 	then
@@ -65,7 +85,7 @@ fi
 
 if ! source "${temp_path}"/my_stuff_lib 2> /dev/null; then
 	echo "wget lib file"
-	wget -q https://raw.githubusercontent.com/dari862/my_linux/main/tempfornow/my_stuff_lib
+	wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/my_stuff_lib
 	if ! source "${temp_path}"/my_stuff_lib 2> /dev/null; then
 		echo "Error: Failed to source my_stuff_lib from ${temp_path}" >&2
 		exit 1
@@ -80,56 +100,69 @@ keep_Sudo_refresed &
 
 must_install_apps
 
+install_GPU_Drivers="install_GPU"
+_cuda_="cuda"
+_kernel_open_dkms_="nvidia-kernel-open-dkms"
 purge_some_unnecessary_pakages="Y"
 disable_some_unnecessary_services="Y"
 update_grub_image="Y"
 autoclean_and_autoremove="Y"
-reboot_now="Y"
 install_xfce4_panel=xfce4_panel 
 install_polybar=polybar 
 install_qt5ct=qt5ct 
 install_jgmenu=jgmenu 
 install_bspwm=bspwm
+reboot_now="Y"
 
 if [ "$auto_run_script" != "true" ];then
+	if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to install GPU drivers?')" != "Y" ];then
+		install_GPU_Drivers=""
+	else
+		read -p "do you want to add Cuda Support? (Y/n)" a_Cuda;
+		[ "${a_Cuda,,}" = "y" ] && _cuda_="cuda"
+		
+		read -p "do you want to install opensource nvidia-kernel? (Y/n)" a_kernel_open_dkms_;
+		[ "${a_kernel_open_dkms_,,}" = "y" ] && _kernel_open_dkms_="nvidia-kernel-open-dkms"
+	fi
+	
 	if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to purge some unnecessary pakages?')" != "Y" ];then
-	purge_some_unnecessary_pakages=""
+		purge_some_unnecessary_pakages=""
 	fi
 	
 	if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to disable some unnecessary services?')" != "Y" ];then
-	disable_some_unnecessary_services=""
+		disable_some_unnecessary_services=""
 	fi
 	
 	if [ "$(do_you_want_2_run_this_yes_or_no 'update grub image?')" != "Y" ];then
-	update_grub_image=""
+		update_grub_image=""
 	fi
 	
 	if [ "$(do_you_want_2_run_this_yes_or_no 'run autoclean and autoremove?')" != "Y" ];then
-	autoclean_and_autoremove=""
-	fi
-	
-	if [ "$(do_you_want_2_run_this_yes_or_no 'reboot?')" != "Y" ];then
-	reboot_now=""
+		autoclean_and_autoremove=""
 	fi
 
 	if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install xfce4-panel?')" != "Y" ];then
-	install_xfce4_panel=""
+		install_xfce4_panel=""
 	fi
 	
 	if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install polybar?')" != "Y" ];then
-	install_polybar=""
+		install_polybar=""
 	fi
 	
 	if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install qt5ct?')" != "Y" ];then
-	install_qt5ct=""
+		install_qt5ct=""
 	fi
 	
 	if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install jgmenu?')" != "Y" ];then
-	install_jgmenu=""
+		install_jgmenu=""
 	fi
 	
 	if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install bspwm?')" != "Y" ];then
-	install_bspwm=""
+		install_bspwm=""
+	fi
+		
+	if [ "$(do_you_want_2_run_this_yes_or_no 'reboot?')" != "Y" ];then
+		reboot_now=""
 	fi
 fi
 
@@ -137,13 +170,19 @@ check_and_download_ "my_stuff_Installapps_list"
 
 check_and_download_ "my_stuff_prepare_script_"
 
+check_and_download_ "my_stuff_Drivers"
+
 clear
 
 _unattended_upgrades_ stop
 upgrade_now
+full_upgrade_now
 
-show_m "running Installapps_list script"
+show_m "Install apps from (my_stuff_Installapps_list)"
 "${temp_path}"/my_stuff_Installapps_list $install_xfce4_panel $install_polybar $install_qt5ct $install_jgmenu $install_bspwm
+
+show_m "Install drivers from (my_stuff_Drivers)"
+"${temp_path}"/my_stuff_Drivers ${install_GPU_Drivers} ${_cuda_} ${_kernel_open_dkms_}
 
 ################################
 # git clone
@@ -175,6 +214,7 @@ mv "${Custom_distro_dir_name}"/lib/lightdm/lightdm.conf.d/50_*.conf "${Custom_di
 mv "${Custom_distro_dir_name}"/lib/lightdm/lightdm-gtk-greeter.conf.d/50_*.conf "${Custom_distro_dir_name}"/lib/lightdm/lightdm-gtk-greeter.conf.d/50_"${Custom_distro_dir_name}".conf
 mv "${Custom_distro_dir_name}"/lib/openbox_rc/*_rc.xml "${Custom_distro_dir_name}"/lib/openbox_rc/"${Custom_distro_dir_name}"_rc.xml
 mv "${Custom_distro_dir_name}"/skel/.config/conky/scripts/DmDmDmdMdMdM_weather.sh "${Custom_distro_dir_name}"/skel/.config/conky/scripts/"${Custom_distro_dir_name}"_weather.sh
+mv "${Custom_distro_dir_name}"/bin/openbox/pipemenu/DmDmDmdMdMdM-kb-pipemenu "${Custom_distro_dir_name}"/bin/openbox/pipemenu/"${Custom_distro_dir_name}"-kb-pipemenu
 
 mkdir -p "${Custom_distro_dir_name}"/bin/not_add_2_path/updater
 
@@ -184,8 +224,18 @@ if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
 	mv "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM "${Custom_distro_dir_name}"/bin/not_add_2_path/updater/envycontrol_updater
 fi
 
+if [[ -f "$(ls /tmp/Gaming_Drivers_ready*)" ]];then 
+	touch "${Custom_distro_dir_name}"/Gaming_Drivers_ready
+fi
+
 find "${Custom_distro_dir_name}"/. -type f -exec sed -i "s/DmDmDmdMdMdM/${Custom_distro_dir_name}/g" {} +
 find "${Custom_distro_dir_name}"/. -type f -exec sed -i "s/mDmDmDmDmDmDmD/${Custom_distro_name}/g" {} +
+
+source "${Custom_distro_dir_name}/lib/common/openbox_folder_name"
+if [[ ! -d "${Custom_distro_dir_name}/skel/.config/${OB_folder_name}" ]];then
+	mv "${Custom_distro_dir_name}/skel/.config/openbox" "${Custom_distro_dir_name}/skel/.config/${OB_folder_name}"
+	find "${Custom_distro_dir_name}"/. -type f -exec sed -i "s|.config/openbox|.config/${OB_folder_name}|g" {} +
+fi
 
 ##################################################################################
 #my_stuff.git
