@@ -1,20 +1,21 @@
 #!/bin/bash
 set -e
 
-# source lib
-temp_path="/tmp"
-
-my_stuff_lib_location="$(find $HOME -type f -name my_stuff_lib | head -1)"
-if [[ ! -z "${my_stuff_lib_location}" ]];then
-	mv "${my_stuff_lib_location}" "${temp_path}"
-fi
-
-if ! source "${temp_path}"/my_stuff_lib 2> /dev/null; then
-	echo "wget lib file"
-	wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/my_stuff_lib
+if ! test_if_my_stuff_lib_sourced 2>/dev/null; then
+	# source lib
+	temp_path="/tmp"
+	my_stuff_lib_location="$(find $HOME -type f -name my_stuff_lib | head -1)"
+	if [[ ! -z "${my_stuff_lib_location}" ]];then
+		mv "${my_stuff_lib_location}" "${temp_path}"
+	fi
+	
 	if ! source "${temp_path}"/my_stuff_lib 2> /dev/null; then
-		echo "Error: Failed to source my_stuff_lib from ${temp_path}" >&2
-		exit 1
+		echo "wget lib file"
+		wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/my_stuff_lib
+		if ! source "${temp_path}"/my_stuff_lib 2> /dev/null; then
+			echo "Error: Failed to source my_stuff_lib from ${temp_path}" >&2
+			exit 1
+		fi
 	fi
 fi
 ##################################################################################
@@ -163,32 +164,6 @@ if [[ "$install_bspwm_now" = true ]];then
 fi
 
 apt_install_
-
-if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
-	show_m "this is laptop"
-	show_m "create envycontrol installtion file."
-cat << 'EOF' > "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
-	envycontrol_updater_path="$(mktemp -d)" 
-	__Custom_distro_dir_name="DmDmDmdMdMdM"
-	wget -qO- 'https://api.github.com/repos/bayasdev/envycontrol/releases/latest' \
-  	| grep '"tarball_url"' \
-  	| cut -f2,3 -d':' \
-  	| tr -d '"' \
-  	| tr -d ',' \
-  	| xargs wget -O "${envycontrol_updater_path}"/envycontrol.tar.gz && tar -xvzf "${envycontrol_updater_path}"/envycontrol.tar.gz -C "${envycontrol_updater_path}" && mv "${envycontrol_updater_path}"/bayasdev* "${envycontrol_updater_path}"/envycontrol
-  	
-  	[ -d "/usr/share/${__Custom_distro_dir_name}/opt/downloaded/envycontrol" ] && sudo rm -rdf "/usr/share/${__Custom_distro_dir_name}/opt/downloaded/envycontrol"
-  	[ ! -d "/usr/share/${__Custom_distro_dir_name}/opt/downloaded" ] && sudo mkdir -p /usr/share/${__Custom_distro_dir_name}/opt/downloaded
-  	[ ! -d "/usr/share/${__Custom_distro_dir_name}/opt/git" ] && sudo mkdir -p /usr/share/${__Custom_distro_dir_name}/opt/git
-  	
-  	if [ -d "${envycontrol_updater_path}"/envycontrol ];then
-  		chmod +x "${envycontrol_updater_path}"/envycontrol/envycontrol.py 
-  		sudo mv "${envycontrol_updater_path}"/envycontrol "/usr/share/${__Custom_distro_dir_name}/opt/git/"
-  		ln -sf "/usr/share/${__Custom_distro_dir_name}/opt/downloaded/envycontrol/envycontrol.py" "/usr/share/${__Custom_distro_dir_name}/bin/bin/envycontrol"
-  	fi
-EOF
-	chmod +x "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
-fi
 
 show_m "Configer packages."
 

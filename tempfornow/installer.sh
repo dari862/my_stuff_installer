@@ -1,6 +1,29 @@
 #!/bin/bash
 set -e
-auto_run_script="" # true to enable
+
+################################################################################################################################
+# Var
+################################################################################################################################
+
+temp_path="/tmp"
+lib_file_name="my_stuff_lib"
+my_stuff_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1)"
+
+auto_run_script="false" # true to enable
+
+install_GPU_Drivers="install_GPU"
+_cuda_="cuda"
+_kernel_open_dkms_="nvidia-kernel-open-dkms"
+purge_some_unnecessary_pakages="Y"
+disable_some_unnecessary_services="Y"
+update_grub_image="Y"
+autoclean_and_autoremove="Y"
+install_xfce4_panel=xfce4_panel 
+install_polybar=polybar 
+install_qt5ct=qt5ct 
+install_jgmenu=jgmenu 
+install_bspwm=bspwm
+reboot_now="Y"
 
 if ! command -v sudo >/dev/null;then
 	_SUDO=""
@@ -9,6 +32,79 @@ else
 	_SUDO="sudo"
 	sudo -v
 fi
+
+################################################################################################################################
+# Function
+################################################################################################################################
+
+prompt_to_ask_to_what_to_install(){
+	if [ "$(do_you_want_2_run_this_yes_or_no 'Autorun installation?')" = "Y" ];then
+		return
+	fi
+	
+	if [ "$auto_run_script" != "true" ];then
+		if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to install GPU drivers?')" != "Y" ];then
+			install_GPU_Drivers=""
+		else
+			if [ "${nvidia_gpu_exist}" = "true" ];then
+				if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to add Cuda Support?')" != "Y" ];then
+					_cuda_=""
+				else
+					_cuda_="cuda"
+				fi
+				
+				if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to install opensource nvidia-kernel?')" != "Y" ];then
+					_kernel_open_dkms_=""
+				else
+					_kernel_open_dkms_="nvidia-kernel-open-dkms"
+				fi
+			else
+				_cuda_=""
+				_kernel_open_dkms_=""
+			fi
+		fi
+		
+		if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to purge some unnecessary pakages?')" != "Y" ];then
+			purge_some_unnecessary_pakages=""
+		fi
+		
+		if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to disable some unnecessary services?')" != "Y" ];then
+			disable_some_unnecessary_services=""
+		fi
+		
+		if [ "$(do_you_want_2_run_this_yes_or_no 'update grub image?')" != "Y" ];then
+			update_grub_image=""
+		fi
+		
+		if [ "$(do_you_want_2_run_this_yes_or_no 'run autoclean and autoremove?')" != "Y" ];then
+			autoclean_and_autoremove=""
+		fi
+	
+		if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install xfce4-panel?')" != "Y" ];then
+			install_xfce4_panel=""
+		fi
+		
+		if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install polybar?')" != "Y" ];then
+			install_polybar=""
+		fi
+		
+		if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install qt5ct?')" != "Y" ];then
+			install_qt5ct=""
+		fi
+		
+		if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install jgmenu?')" != "Y" ];then
+			install_jgmenu=""
+		fi
+		
+		if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install bspwm?')" != "Y" ];then
+			install_bspwm=""
+		fi
+			
+		if [ "$(do_you_want_2_run_this_yes_or_no 'reboot?')" != "Y" ];then
+			reboot_now=""
+		fi
+	fi
+}
 
 fix_time_(){
 	get_date_from_here=""
@@ -28,58 +124,60 @@ fix_time_(){
 	fi
 }
 
-fix_time_
-
-if [ "$1" == "wifi" ]; then
-	wifi_interface="$(ip link | awk -F: '$0 !~ "^[^0-9]"{print $2;getline}' | awk '/w/{ print $0 }')"
-	if [ -z "$wifi_interface" ]
-	then
-		echo "no wifi interface"
-		exit 1
-	fi
-	
-	ip link set "$wifi_interface" up
-	
-	if command -v nmcli &> /dev/null
-	then
-		nmcli radio wifi on
-		while :
-		do
-			nmcli --ask dev wifi connect && break
-		done
-	elif command -v wpa_supplicant &> /dev/null
-	then
-		tmpfile="$(mktemp)"
-		echo -e "\n These hotspots are available \n"
-		iwlist "$wifi_interface" scan | grep ESSID | sed 's/ESSID://g;s/"//g;s/^                    //g'
-		read -p -r "ssid:" ssid_var
-		(iw "$wifi_interface" scan | grep 'SSID' | grep "$ssid_var") || (echo "wrong ssid")
-		read -p -r "pass:" pass_var 
-		wpa_passphrase "$ssid_var" "$pass_var" | tee "$tmpfile"
-		wpa_supplicant -B -c "$tmpfile" -i "$wifi_interface" &
-		echo "you will wait for few sec"
-		sleep 10 
-		dhclient "$wifi_interface"
-		ping -c4 google.com || (echo "no internet connection" ; exit 1)
-		[ -f "$tmpfile" ] && rm "$tmpfile"
-		if grep 'deb cdrom' /etc/apt/sources.list;then
-			$_SUDO sed -i '/deb cdrom/d' /etc/apt/sources.list
+wifi_mode_installation(){
+	if [ "$1" == "wifi" ]; then
+		wifi_interface="$(ip link | awk -F: '$0 !~ "^[^0-9]"{print $2;getline}' | awk '/w/{ print $0 }')"
+		if [ -z "$wifi_interface" ]
+		then
+			echo "no wifi interface"
+			exit 1
 		fi
-		$_SUDO apt-get update
-		$_SUDO apt-get install -y -f 2>/dev/null
-		$_SUDO apt-get install -y network-manager psmisc
-		killall wpa_supplicant
-		nmcli dev wifi connect "$ssid_var" password "$pass_var"	
-		unset ssid_var
-		unset pass_var
+		
+		ip link set "$wifi_interface" up
+		
+		if command -v nmcli &> /dev/null
+		then
+			nmcli radio wifi on
+			while :
+			do
+				nmcli --ask dev wifi connect && break
+			done
+		elif command -v wpa_supplicant &> /dev/null
+		then
+			tmpfile="$(mktemp)"
+			echo -e "\n These hotspots are available \n"
+			iwlist "$wifi_interface" scan | grep ESSID | sed 's/ESSID://g;s/"//g;s/^                    //g'
+			read -p -r "ssid:" ssid_var
+			(iw "$wifi_interface" scan | grep 'SSID' | grep "$ssid_var") || (echo "wrong ssid")
+			read -p -r "pass:" pass_var 
+			wpa_passphrase "$ssid_var" "$pass_var" | tee "$tmpfile"
+			wpa_supplicant -B -c "$tmpfile" -i "$wifi_interface" &
+			echo "you will wait for few sec"
+			sleep 10 
+			dhclient "$wifi_interface"
+			ping -c4 google.com || (echo "no internet connection" ; exit 1)
+			[ -f "$tmpfile" ] && rm "$tmpfile"
+			if grep 'deb cdrom' /etc/apt/sources.list;then
+				$_SUDO sed -i '/deb cdrom/d' /etc/apt/sources.list
+			fi
+			$_SUDO apt-get update || (fix_time_ && $_SUDO apt-get update )
+			$_SUDO apt-get install -y -f 2>/dev/null
+			$_SUDO apt-get install -y network-manager psmisc
+			killall wpa_supplicant
+			nmcli dev wifi connect "$ssid_var" password "$pass_var"	
+			unset ssid_var
+			unset pass_var
+		fi
 	fi
-fi
+}
 
-# source lib
-temp_path="/tmp"
-lib_file_name="my_stuff_lib"
-my_stuff_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1)"
+################################################################################################################################
+################################################################################################################################
+################################################################################################################################
 
+wifi_mode_installation
+
+# source my_stuff_lib
 if [[ ! -z "${my_stuff_lib_location}" ]];then
 	mv "${my_stuff_lib_location}" "${temp_path}"
 fi
@@ -93,6 +191,10 @@ if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
 	fi
 fi
 
+prompt_to_ask_to_what_to_install
+
+fix_time_
+
 aptfixer
 
 check_for_SUDO
@@ -100,72 +202,6 @@ check_for_SUDO
 keep_Sudo_refresed &
 
 must_install_apps
-
-install_GPU_Drivers="install_GPU"
-_cuda_="cuda"
-_kernel_open_dkms_="nvidia-kernel-open-dkms"
-purge_some_unnecessary_pakages="Y"
-disable_some_unnecessary_services="Y"
-update_grub_image="Y"
-autoclean_and_autoremove="Y"
-install_xfce4_panel=xfce4_panel 
-install_polybar=polybar 
-install_qt5ct=qt5ct 
-install_jgmenu=jgmenu 
-install_bspwm=bspwm
-reboot_now="Y"
-
-if [ "$auto_run_script" != "true" ];then
-	if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to install GPU drivers?')" != "Y" ];then
-		install_GPU_Drivers=""
-	else
-		read -p "do you want to add Cuda Support? (Y/n)" a_Cuda;
-		[ "${a_Cuda,,}" = "y" ] && _cuda_="cuda"
-		
-		read -p "do you want to install opensource nvidia-kernel? (Y/n)" a_kernel_open_dkms_;
-		[ "${a_kernel_open_dkms_,,}" = "y" ] && _kernel_open_dkms_="nvidia-kernel-open-dkms"
-	fi
-	
-	if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to purge some unnecessary pakages?')" != "Y" ];then
-		purge_some_unnecessary_pakages=""
-	fi
-	
-	if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to disable some unnecessary services?')" != "Y" ];then
-		disable_some_unnecessary_services=""
-	fi
-	
-	if [ "$(do_you_want_2_run_this_yes_or_no 'update grub image?')" != "Y" ];then
-		update_grub_image=""
-	fi
-	
-	if [ "$(do_you_want_2_run_this_yes_or_no 'run autoclean and autoremove?')" != "Y" ];then
-		autoclean_and_autoremove=""
-	fi
-
-	if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install xfce4-panel?')" != "Y" ];then
-		install_xfce4_panel=""
-	fi
-	
-	if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install polybar?')" != "Y" ];then
-		install_polybar=""
-	fi
-	
-	if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install qt5ct?')" != "Y" ];then
-		install_qt5ct=""
-	fi
-	
-	if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install jgmenu?')" != "Y" ];then
-		install_jgmenu=""
-	fi
-	
-	if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install bspwm?')" != "Y" ];then
-		install_bspwm=""
-	fi
-		
-	if [ "$(do_you_want_2_run_this_yes_or_no 'reboot?')" != "Y" ];then
-		reboot_now=""
-	fi
-fi
 
 check_and_download_ "my_stuff_Installapps_list"
 
@@ -225,8 +261,8 @@ if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
 	mv "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM "${Custom_distro_dir_name}"/bin/not_add_2_path/updater/envycontrol_updater
 fi
 
-if [[ -f "$(ls /tmp/Gaming_Drivers_ready*)" ]];then 
-	touch "${Custom_distro_dir_name}"/Gaming_Drivers_ready
+if [[ -f "$(ls /tmp/GPU_Drivers_ready*)" ]];then 
+	touch "${Custom_distro_dir_name}"/GPU_Drivers_ready
 fi
 
 find "${Custom_distro_dir_name}"/. -type f -exec sed -i "s/DmDmDmdMdMdM/${Custom_distro_dir_name}/g" {} +

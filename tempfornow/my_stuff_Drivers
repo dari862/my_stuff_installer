@@ -1,22 +1,25 @@
 #!/bin/bash
 set -e
 
-# source lib
-temp_path="/tmp"
-
-my_stuff_lib_location="$(find $HOME -type f -name my_stuff_lib | head -1)"
-if [[ ! -z "${my_stuff_lib_location}" ]];then
-	mv "${my_stuff_lib_location}" "${temp_path}"
-fi
-
-if ! source "${temp_path}"/my_stuff_lib 2> /dev/null; then
-	echo "wget lib file"
-	wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/my_stuff_lib
+if ! test_if_my_stuff_lib_sourced 2>/dev/null; then
+	# source lib
+	temp_path="/tmp"
+	my_stuff_lib_location="$(find $HOME -type f -name my_stuff_lib | head -1)"
+	if [[ ! -z "${my_stuff_lib_location}" ]];then
+		mv "${my_stuff_lib_location}" "${temp_path}"
+	fi
+	
 	if ! source "${temp_path}"/my_stuff_lib 2> /dev/null; then
-		echo "Error: Failed to source my_stuff_lib from ${temp_path}" >&2
-		exit 1
+		echo "wget lib file"
+		wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/my_stuff_lib
+		if ! source "${temp_path}"/my_stuff_lib 2> /dev/null; then
+			echo "Error: Failed to source my_stuff_lib from ${temp_path}" >&2
+			exit 1
+		fi
 	fi
 fi
+
+install_GPU_now="${1-}"
 
 ##################################################################################
 # function
@@ -62,7 +65,7 @@ install_autoinstall_firmware=(isenkram)
 ##################################################################################
 # GPU Drivers
 ##################################################################################
-if [[ "${1-}" = "install_GPU" ]];then
+if [[ "${install_GPU_now}" = "install_GPU" ]];then
 	if [ "$(lspci | grep "VGA compatible controller" | grep VMware -c)" != "0" ];then
 		echo "This is VM"
 	else
@@ -82,18 +85,18 @@ if [[ "${1-}" = "install_GPU" ]];then
     		distro_name_="$(uname -s)"
     		distro_name_and_ver_=$(uname -s)$(uname -r)
 		fi
-
-		if [ "$(lspci | grep -i nvidia | grep VGA -c)" != "0" ];then
+		
+		if [ "${nvidia_gpu_exist}" = "true" ];then
 			_cuda_="${2-}"
 			_kernel_open_dkms_="${3-}"
 			add_2_apt_install_ "nvidia-driver nvidia-smi nvidia-settings $_kernel_open_dkms_ $_cuda_"
 		fi
 		
-		if [ "$(lspci | grep -i amd | grep VGA -c)" != "0" ];then
+		if [ "${amd_gpu_exist}" = "true" ];then
 			add_2_apt_install_ "libgl1-mesa-dri xserver-xorg-video-ati xserver-xorg-video-amdgpu mesa-vulkan-drivers vkbasalt"
 		fi
 		
-		if [ "$(lspci | grep -i intel | grep VGA -c)" != "0" ];then
+		if [ "${intel_gpu_exist}" = "true" ];then
 			add_2_apt_install_ "xserver-xorg-video-intel intel-gpu-tools intel-media-va-driver"
 		fi
 	fi
@@ -119,13 +122,15 @@ add_2_apt_install_ "${install_audio[@]}"
 add_2_apt_install_ "${install_Network[@]}"
 add_2_apt_install_ "${install_autoinstall_firmware[@]}"
 
-if [ "$(lspci | grep -i nvidia | grep VGA -c)" != "0" ];then
-	if [[ ! -f "/usr/share/keyrings/nvidia-drivers.gpg" ]];then
-		curl -fSsL "https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/3bf863cc.pub" | sudo gpg --dearmor | sudo tee /usr/share/keyrings/nvidia-drivers.gpg > /dev/null 2>&1
-	fi
-	
-	if [[ ! -f "/etc/apt/sources.list.d/nvidia-drivers.list" ]];then 
-		echo "deb [signed-by=/usr/share/keyrings/nvidia-drivers.gpg] https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/ /" | sudo tee /etc/apt/sources.list.d/nvidia-drivers.list
+if [[ "${install_GPU_now}" = "install_GPU" ]];then
+	if [ "${nvidia_gpu_exist}" = "true" ];then
+		if [[ ! -f "/usr/share/keyrings/nvidia-drivers.gpg" ]];then
+			curl -fSsL "https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/3bf863cc.pub" | sudo gpg --dearmor | sudo tee /usr/share/keyrings/nvidia-drivers.gpg > /dev/null 2>&1
+		fi
+		
+		if [[ ! -f "/etc/apt/sources.list.d/nvidia-drivers.list" ]];then 
+			echo "deb [signed-by=/usr/share/keyrings/nvidia-drivers.gpg] https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/ /" | sudo tee /etc/apt/sources.list.d/nvidia-drivers.list
+		fi
 	fi
 fi
 		
@@ -142,13 +147,40 @@ fi
 		
 apt_install_
 
+if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
+	show_m "this is laptop"
+	if [ "$number_of_gpus" -gt 1 ]; then
+		show_m "create envycontrol installtion file."
+cat << 'EOF' > "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
+	envycontrol_updater_path="$(mktemp -d)" 
+	__Custom_distro_dir_name="DmDmDmdMdMdM"
+	wget -qO- 'https://api.github.com/repos/bayasdev/envycontrol/releases/latest' \
+  	| grep '"tarball_url"' \
+  	| cut -f2,3 -d':' \
+  	| tr -d '"' \
+  	| tr -d ',' \
+  	| xargs wget -O "${envycontrol_updater_path}"/envycontrol.tar.gz && tar -xvzf "${envycontrol_updater_path}"/envycontrol.tar.gz -C "${envycontrol_updater_path}" && mv "${envycontrol_updater_path}"/bayasdev* "${envycontrol_updater_path}"/envycontrol
+  	
+  	[ -d "/usr/share/${__Custom_distro_dir_name}/opt/downloaded/envycontrol" ] && sudo rm -rdf "/usr/share/${__Custom_distro_dir_name}/opt/downloaded/envycontrol"
+  	[ ! -d "/usr/share/${__Custom_distro_dir_name}/opt/downloaded" ] && sudo mkdir -p /usr/share/${__Custom_distro_dir_name}/opt/downloaded
+  	[ ! -d "/usr/share/${__Custom_distro_dir_name}/opt/git" ] && sudo mkdir -p /usr/share/${__Custom_distro_dir_name}/opt/git
+  	
+  	if [ -d "${envycontrol_updater_path}"/envycontrol ];then
+  		chmod +x "${envycontrol_updater_path}"/envycontrol/envycontrol.py 
+  		sudo mv "${envycontrol_updater_path}"/envycontrol "/usr/share/${__Custom_distro_dir_name}/opt/git/"
+  		ln -sf "/usr/share/${__Custom_distro_dir_name}/opt/downloaded/envycontrol/envycontrol.py" "/usr/share/${__Custom_distro_dir_name}/bin/bin/envycontrol"
+  	fi
+EOF
+		chmod +x "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
+	fi
+fi
 show_m "run isenkram-autoinstall-firmware."
 sudo isenkram-autoinstall-firmware || : # to prevent script from exiting "isenkram-autoinstall-firmware contain exit command"
 
 show_m "Configer packages."
 apt_purge_with_error2info "${install_autoinstall_firmware[@]}"
 
-if [ "$(lspci | grep -i intel | grep VGA -c)" != "0" ];then
+if [ "${intel_gpu_exist}" = "true" ];then
 sudo mkdir -p /etc/X11/xorg.conf.d/
 sudo bash -c 'cat << EOF > /etc/X11/xorg.conf.d/20-intel.conf
 Section "Device"
@@ -167,6 +199,6 @@ if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
 	show_m "some config"
 fi
 
-if [[ "${1-}" = "install_GPU" ]];then
-	mktemp /tmp/Gaming_Drivers_ready_XXXXXX
+if [[ "${install_GPU_now}" = "install_GPU" ]];then
+	mktemp /tmp/GPU_Drivers_ready_XXXXXX
 fi

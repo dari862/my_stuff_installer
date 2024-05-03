@@ -61,11 +61,34 @@ xfce4-power-manager*
 
 sudoaptinstall='sudo apt-get install -y'
 aptinstall='apt-get install -y'
+number_of_gpus=0
 
+if [ "$(lspci | grep -i nvidia | grep VGA -c)" != "0" ];then
+	nvidia_gpu_exist=true
+	((number_of_gpus++))
+fi
+
+if [ "$(lspci | grep -i intel | grep VGA -c)" != "0" ];then
+	intel_gpu_exist=true
+	((number_of_gpus++))
+fi
+
+if [ "$(lspci | grep -i amd | grep VGA -c)" != "0" ];then
+	amd_gpu_exist=true
+	((number_of_gpus++))
+fi
+
+if [ "$(lspci | grep -i VMware | grep VGA -c)" != "0" ];then
+	VMware_gpu_exist=true
+	((number_of_gpus++))
+fi
 ##################################################################################
 ##################################################################################
-
 ## functions
+test_if_my_stuff_lib_sourced(){  
+	: # do nothing
+}
+
 show_m()
 {
   echo -e $'\033[1;32m'"$*"$'\033[0m'
