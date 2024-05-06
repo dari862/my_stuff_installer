@@ -4,7 +4,7 @@ set -e
 ################################################################################################################################
 # Var
 ################################################################################################################################
-
+internet_status=""
 temp_path="/tmp"
 lib_file_name="my_stuff_lib"
 my_stuff_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1)"
@@ -24,6 +24,9 @@ install_qt5ct=qt5ct
 install_jgmenu=jgmenu 
 install_bspwm=bspwm
 reboot_now="Y"
+enable_contrib=false
+enable_nonfree_firmware=false
+enable_nonfree=false
 
 if ! command -v sudo >/dev/null;then
 	_SUDO=""
@@ -32,10 +35,80 @@ else
 	_SUDO="sudo"
 	sudo -v
 fi
+mirror="http://deb.debian.org/debian/"
+mirror_security="http://security.debian.org/debian-security"
+deb_lines_contrib=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v contrib || :)
+deb_lines_nonfree_firmware=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non\-free\-firmware' || :)
+deb_lines_nonfree=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non\-free ' || :)
 
+wifi_interface=""
 ################################################################################################################################
 # Function
 ################################################################################################################################
+test_internet_(){
+	tput sgr0
+	echo -e '\E[1;32m'"Testing internet connection."
+	tput sgr0	
+	
+	url_to_test=debian.org
+	test_dns="1.1.1.1"
+	if wget -O - "$url_to_test" &> /dev/null; then
+		tput sgr0
+		echo -e '\E[1;32m'"Internet connection test passed!"
+		tput sgr0
+		return 0
+	else
+		echo "Internet connection test failed!"
+		_intface=$(ip route | awk '/default/ { print $5 }')
+		_ip=$(ip addr $_intface | grep 'inet ' | awk '{print $2}' | cut -f1 -d'/')
+		if [[ $_ip != "192.168".* ]] || [[ $_ip != "10".* ]] || [[ -z $(echo $_ip | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)') ]]
+		then
+			wifi_interface="$(ip link | awk -F: '$0 !~ "^[^0-9]"{print $2;getline}' | awk '/w/{ print $0 }')"
+			if [ -z "$wifi_interface" ]
+			then
+  				tput sgr0
+            	echo -e '\E[1;33m'"Problem seems to be with your router. $_ip"
+            	tput sgr0
+            	exit 1
+            else
+            	return 1
+            fi
+		fi
+		
+		gway=$(ip route | awk '/default/ { print $3 }')
+		
+		if ! ping -q -c 5 "$test_dns" >/dev/null 2>&1; then
+            tput sgr0
+            echo -e '\E[1;33m'"Problem seems to be with your gateway. $_ip"
+            tput sgr0
+            exit 1
+        elif ! ping -q -c 5 "$gway" >/dev/null 2>&1; then
+            tput sgr0
+            echo -e '\E[1;33m'"Can not reach your gateway. $_ip"
+            tput sgr0
+            exit 1
+    	fi
+
+    	fix_time_
+    	
+    	if wget -O - "$url_to_test" &> /dev/null; then
+			tput sgr0
+			echo -e '\E[1;32m'"Internet connection test passed!"
+			tput sgr0
+			return 0
+		elif ping -q -c 5 "$test_dns" >/dev/null 2>&1; then
+            tput sgr0
+            echo -e '\E[1;33m'"Problem seems to be with your DNS. $_ip"
+            tput sgr0
+            exit 1
+        else
+        	tput sgr0
+            echo -e '\E[1;33m'"Somthing wrong with your network"
+            tput sgr0
+            exit 1
+    	fi
+    fi
+}
 
 prompt_to_ask_to_what_to_install(){
 	if [ "$(do_you_want_2_run_this_yes_or_no 'Autorun installation?')" = "Y" ];then
@@ -43,6 +116,22 @@ prompt_to_ask_to_what_to_install(){
 	fi
 	
 	if [ "$auto_run_script" != "true" ];then
+	
+		if [ "$deb_lines_contrib" != "" ];then
+			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want enable contrib repo?')" = "Y" ];then
+				enable_contrib=true
+			fi
+		fi
+		if [ "$deb_lines_nonfree_firmware" != "" ];then
+			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want enable nonfree_firmware repo?')" = "Y" ];then
+				enable_nonfree_firmware=true
+			fi
+		fi
+		if [ "$deb_lines_nonfree" != "" ];then
+			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want enable nonfree repo?')" = "Y" ];then
+				enable_nonfree=true
+			fi
+		fi
 		if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to install GPU drivers?')" != "Y" ];then
 			install_GPU_Drivers=""
 		else
@@ -106,6 +195,25 @@ prompt_to_ask_to_what_to_install(){
 	fi
 }
 
+enable_repo_(){
+	if [[ "$enable_contrib" = true ]];then
+		for l in $deb_lines_contrib; do
+			$_SUDO sed -i "s\\^$l$\\$l contrib\\" /etc/apt/sources.list
+		done
+	fi
+	if [[ "$enable_nonfree_firmware" = true ]];then
+		for l in $deb_lines_nonfree_firmware; do
+			$_SUDO sed -i "s\\^$l$\\$l non-free-firmware\\" /etc/apt/sources.list
+		done
+	fi
+	if [[ "$enable_nonfree" = true ]];then
+		for l in $deb_lines_nonfree; do
+			$_SUDO sed -i "s\\^$l$\\$l non-free\\" /etc/apt/sources.list
+		done
+	fi
+	$_SUDO apt-get update
+}
+
 fix_time_(){
 	get_date_from_here=""
 	list_to_test=(debian.com github.com 104.16.132.229)
@@ -115,7 +223,7 @@ fix_time_(){
 	done
 		
 	if [[ -z "$get_date_from_here" ]];then 
-		echo "failed to ping $get_date_from_here" && exit 1
+		echo "failed to ping all of this: ${list_to_test[@]}" && exit 1
 	else
 		$_SUDO date -s "$(wget --method=HEAD -qSO- --max-redirect=0 $get_date_from_here 2>&1 | sed -n 's/^ *Date: *//p')" &>/dev/null
 		#__timezone="$(curl -q https://ipinfo.io/ 2>/dev/null | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/ //g')"
@@ -125,57 +233,47 @@ fix_time_(){
 }
 
 wifi_mode_installation(){
-	if [ "$1" == "wifi" ]; then
-		wifi_interface="$(ip link | awk -F: '$0 !~ "^[^0-9]"{print $2;getline}' | awk '/w/{ print $0 }')"
-		if [ -z "$wifi_interface" ]
-		then
-			echo "no wifi interface"
-			exit 1
-		fi
+	ip link set "$wifi_interface" up
 		
-		ip link set "$wifi_interface" up
-		
-		if command -v nmcli &> /dev/null
-		then
-			nmcli radio wifi on
-			while :
-			do
-				nmcli --ask dev wifi connect && break
-			done
-		elif command -v wpa_supplicant &> /dev/null
-		then
-			tmpfile="$(mktemp)"
-			echo -e "\n These hotspots are available \n"
-			iwlist "$wifi_interface" scan | grep ESSID | sed 's/ESSID://g;s/"//g;s/^                    //g'
-			read -p -r "ssid:" ssid_var
-			(iw "$wifi_interface" scan | grep 'SSID' | grep "$ssid_var") || (echo "wrong ssid")
-			read -p -r "pass:" pass_var 
-			wpa_passphrase "$ssid_var" "$pass_var" | tee "$tmpfile"
-			wpa_supplicant -B -c "$tmpfile" -i "$wifi_interface" &
-			echo "you will wait for few sec"
-			sleep 10 
-			dhclient "$wifi_interface"
-			ping -c4 google.com || (echo "no internet connection" ; exit 1)
-			[ -f "$tmpfile" ] && rm "$tmpfile"
-			if grep 'deb cdrom' /etc/apt/sources.list;then
-				$_SUDO sed -i '/deb cdrom/d' /etc/apt/sources.list
-			fi
-			$_SUDO apt-get update || (fix_time_ && $_SUDO apt-get update )
-			$_SUDO apt-get install -y -f 2>/dev/null
-			$_SUDO apt-get install -y network-manager psmisc
-			killall wpa_supplicant
-			nmcli dev wifi connect "$ssid_var" password "$pass_var"	
-			unset ssid_var
-			unset pass_var
+	if command -v nmcli &> /dev/null
+	then
+		nmcli radio wifi on
+		while :
+		do
+			nmcli --ask dev wifi connect && break
+		done
+	elif command -v wpa_supplicant &> /dev/null
+	then
+		tmpfile="$(mktemp)"
+		echo -e "\n These hotspots are available \n"
+		iwlist "$wifi_interface" scan | grep ESSID | sed 's/ESSID://g;s/"//g;s/^                    //g'
+		read -p -r "ssid:" ssid_var
+		(iw "$wifi_interface" scan | grep 'SSID' | grep "$ssid_var") || (echo "wrong ssid")
+		read -p -r "pass:" pass_var 
+		wpa_passphrase "$ssid_var" "$pass_var" | tee "$tmpfile"
+		wpa_supplicant -B -c "$tmpfile" -i "$wifi_interface" &
+		echo "you will wait for few sec"
+		sleep 10 
+		dhclient "$wifi_interface"
+		ping -c4 google.com || (echo "no internet connection" ; exit 1)
+		[ -f "$tmpfile" ] && rm "$tmpfile"
+		if grep 'deb cdrom' /etc/apt/sources.list;then
+			$_SUDO sed -i '/deb cdrom/d' /etc/apt/sources.list
 		fi
+		$_SUDO apt-get update || (fix_time_ && $_SUDO apt-get update )
+		$_SUDO apt-get install -y -f 2>/dev/null
+		$_SUDO apt-get install -y network-manager psmisc
+		killall wpa_supplicant
+		nmcli dev wifi connect "$ssid_var" password "$pass_var"	
+		unset ssid_var
+		unset pass_var
 	fi
 }
 
 ################################################################################################################################
 ################################################################################################################################
 ################################################################################################################################
-
-wifi_mode_installation
+test_internet_ || wifi_mode_installation
 
 # source my_stuff_lib
 if [[ ! -z "${my_stuff_lib_location}" ]];then

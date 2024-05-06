@@ -14,8 +14,19 @@ if [ "$UID" -ne "0" ]; then
   exit
 fi
 
-echo -e "Checking if TOR and Systemd are installed..."
-if command -v tor >/dev/null && command -v systemctl >/dev/null; then
+echo -e "Checking if tor are installed..."
+if command -v tor >/dev/null; then
+	echo -e "tor are installed..."
+else
+	echo -e "tor are not installed..."
+	echo -e "installing tor ..."
+	sudo apt-get update
+	sudo apt-get upgrade -y
+	sudo apt-get install -y tor  
+	echo -e "tor are installed..."
+fi
+echo -e "Checking if Systemd are installed..."
+if command -v tor >/dev/null; then
   if grep -iq "# Seting up TOR transparent proxy for tor-router" "$torconfig"; then
     echo -e "\ntor-router is already configured in $torconfig"
   else
@@ -45,6 +56,6 @@ if command -v tor >/dev/null && command -v systemctl >/dev/null; then
     fi
   fi
 else
-  echo -e "Systemd or TOR are not installed, the script dont work."
+  echo -e "Systemd are not installed, the script dont work."
   exit
 fi
