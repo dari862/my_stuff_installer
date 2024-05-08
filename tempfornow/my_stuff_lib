@@ -1,0 +1,380 @@
+#!/bin/bash
+set -e
+
+Custom_distro_name="My Stuff"
+Custom_distro_dir_name="$(echo "$Custom_distro_name" | tr -dc '[:alnum:] \n\r' | tr '[:upper:]' '[:lower:]' | tr -s ' ' '_')"
+temp_path="/tmp"
+
+declare -a to_be_purged=(
+aisleriot
+anthy
+kasumi
+aspell
+debian-reference-common
+fcitx
+fcitx-bin
+fcitx-frontend-gtk2
+fcitx-frontend-gtk3
+fcitx-mozc
+five-or-more
+four-in-a-row
+gnome-chess
+gnome-klotski
+gnome-mahjongg
+gnome-mines
+gnome-music
+gnome-nibbles
+gnome-robots
+gnome-sudoku
+gnome-taquin
+gnome-tetravex
+gnote
+goldendict
+hamster-applet
+hdate-applet
+hexchat
+hitori
+iagno
+khmerconverter
+lightsoff
+mate-themes
+malcontent
+mlterm
+mlterm-tiny
+mozc-utils-gui
+quadrapassel
+reportbug
+rhythmbox
+scim
+simple-scan
+sound-juicer
+swell-foop
+tali
+uim
+xboard
+xiterm+thai
+xterm
+im-config
+xfce4-notifyd
+xfce4-power-manager*
+)
+
+sudoaptinstall='sudo apt-get install -y'
+aptinstall='apt-get install -y'
+number_of_gpus=0
+
+if [ "$(lspci | grep -i nvidia | grep VGA -c)" != "0" ];then
+	nvidia_gpu_exist=true
+	((number_of_gpus++))
+fi
+
+if [ "$(lspci | grep -i intel | grep VGA -c)" != "0" ];then
+	intel_gpu_exist=true
+	((number_of_gpus++))
+fi
+
+if [ "$(lspci | grep -i amd | grep VGA -c)" != "0" ];then
+	amd_gpu_exist=true
+	((number_of_gpus++))
+fi
+
+if [ "$(lspci | grep -i VMware | grep VGA -c)" != "0" ];then
+	VMware_gpu_exist=true
+	((number_of_gpus++))
+fi
+
+##################################################################################
+# function
+##################################################################################
+
+test_if_my_stuff_lib_sourced(){  
+	: # do nothing
+}
+
+show_m()
+{
+  echo -e $'\033[1;32m'"$*"$'\033[0m'
+}
+
+show_em()
+{
+	__massage="${1-}"
+	echo "$__massage"
+}
+
+check_and_download_()
+{
+	check_this_file_="${1-}"
+	new_check_this_file_="${temp_path}/${check_this_file_}"
+	check_this_file_location="$(find $HOME -type f -name ${check_this_file_} | head -1)"
+	
+	if [[ ! -z "${check_this_file_location}" ]];then
+		mv "${check_this_file_location}" "${temp_path}"
+	fi
+	
+	if [[ ! -f "${new_check_this_file_}" ]]; then
+	show_m "Wget $check_this_file_ file from www.github.com/dari862/my_stuff_installer ."
+		wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/"$check_this_file_" -O "${new_check_this_file_}" || show_em "Error: Failed to download $check_this_file_ ."
+		chmod +x "${new_check_this_file_}"
+		if [[ ! -f "${new_check_this_file_}" ]]; then
+			echo "Error: Failed to wget ${check_this_file_} from ${new_check_this_file_} " >&2
+			exit 1
+		fi
+	fi
+}
+
+aptupdate()
+{
+	show_m "updating your system"
+	if ! command -v sudo >/dev/null
+	then
+		[ "$(find /var/cache/apt/pkgcache.bin -mtime 0 2>/dev/null)" ] || apt-get update
+		apt-get update
+	else
+		[ "$(find /var/cache/apt/pkgcache.bin -mtime 0 2>/dev/null)" ] || sudo apt-get update
+		sudo apt-get update
+	fi
+}
+
+aptfixer()
+{
+	if ! command -v sudo >/dev/null
+	then
+		if grep 'deb cdrom' /etc/apt/sources.list;then
+			sed -i '/deb cdrom/d' /etc/apt/sources.list
+		fi
+	else
+		if grep 'deb cdrom' /etc/apt/sources.list;then
+			sudo sed -i '/deb cdrom/d' /etc/apt/sources.list
+		fi
+	fi
+	
+	aptupdate
+	
+	if ! command -v sudo >/dev/null
+	then
+		### Fix broken packages for good measure (why not?)
+		$aptinstall -f 2>/dev/null || show_em "failed to $aptinstall -f"
+	else
+		### Fix broken packages for good measure (why not?)
+		$sudoaptinstall -f 2>/dev/null || show_em "failed to $sudoaptinstall -f"
+	fi
+}
+
+check_for_SUDO()
+{
+	if ! command -v sudo >/dev/null;then
+		show_m "Install sudo and add user 1000 to sudo group"
+		kill_apt && $aptinstall sudo || (kill_apt && $aptinstall sudo) || (show_em "failed to install sudo" && exit 1)
+		user=$(cut -f 1,3 -d: /etc/passwd | grep :1000$ | cut -f1 -d:)
+		[ "$user" ] && adduser "$user" sudo
+	fi
+}
+
+must_install_apps()
+{
+	if ! command -v killall >/dev/null;then
+		($sudoaptinstall psmisc && kill_apt) || ($sudoaptinstall psmisc && kill_apt) || $sudoaptinstall psmisc
+		exval=$?
+		if [ "$exval" == "1" ]; then
+			(show_em "failed to install psmisc for (killall).")
+		fi
+	fi
+	
+	if ! command -v locate >/dev/null;then
+		($sudoaptinstall locate && kill_apt) || ($sudoaptinstall locate && kill_apt) || $sudoaptinstall locate
+		exval=$?
+		if [ "$exval" == "1" ]; then
+			(show_em "failed to install locate.")
+		fi
+	fi
+	
+	if ! command -v git >/dev/null;then
+		($sudoaptinstall git && kill_apt) || ($sudoaptinstall git && kill_apt) || $sudoaptinstall git
+		exval=$?
+		if [ "$exval" == "1" ]; then
+			(show_em "failed to install git.")
+		fi
+	fi
+}
+
+kill_apt()
+{
+	sudo killall -9 apt &>/dev/null || sudo killall -9 apt-get &>/dev/null || :
+}
+
+upgrade_now()
+{
+	sudo DEBIAN_FRONTEND=noninteractive apt-get -y upgrade
+}
+
+full_upgrade_now()
+{
+	sudo DEBIAN_FRONTEND=noninteractive apt-get -y full-upgrade
+}
+
+_unattended_upgrades_()
+{
+	auto_upgrades_file="/etc/apt/apt.conf.d/20auto-upgrades"
+	if [ -f "${auto_upgrades_file}" ];then
+		auto_upgrades_file_bak="/etc/apt/apt.conf.d/20auto-upgrades.bak"
+		case "$1" in
+			start)
+					sudo systemctl stop unattended-upgrades || :
+				if [ ! -f "${auto_upgrades_file_bak}" ];then
+					sudo mv "${auto_upgrades_file}" "${auto_upgrades_file_bak}"
+				fi
+			;;
+			stop)
+				if [ -f "${auto_upgrades_file}" ] && [ -f "${auto_upgrades_file_bak}" ];then
+					sudo rm "${auto_upgrades_file}"
+				fi
+					
+				if [ -f "${auto_upgrades_file_bak}" ];then
+					sudo mv "${auto_upgrades_file_bak}" "${auto_upgrades_file}"
+				fi
+			;;
+		esac
+	fi
+}
+
+rm_if_link()
+{ 
+_arg="${}"
+_arg2="${}"
+	if [ -L "$1" ]; then
+		rm "$1";
+	fi 
+}
+
+apt_purge_with_error2info()
+{
+	localarray=("$@")
+	for package in "${localarray[@]}"
+	do
+		if dpkg -s "${package}" &>/dev/null; then
+			show_m "Purging ${package}."
+			sudo apt-get -y purge "$package"
+		fi
+	done
+}
+
+keep_Sudo_refresed()
+{
+	while true
+		do
+			sudo -v
+			sleep 10m
+		done
+}
+
+run_fixes_()
+{
+	#fix xfce4-panel workspace settings error in openbox
+	[ -L "$1" ] &&  sudo rm "/usr/bin/xfwm4-workspace-settings"
+	[ -f /usr/bin/xfwm4-workspace-settings ] && sudo rm /usr/bin/xfwm4-workspace-settings
+	sudo ln -s /usr/bin/obconf /usr/bin/xfwm4-workspace-settings
+}
+
+do_you_want_2_run_this_yes_or_no(){
+	massage_is_="${1}"
+	yn=""
+	read -r -p "${massage_is_} (yes/no) " yn
+	yn="${yn^^}"
+	[ "$yn" = "YES" ] && yn="Y"
+	echo "$yn"
+}
+
+git_clone_and_set_var_to_path(){
+	getthis="${1-}"
+	show_m "git clone ${getthis}"
+	getthis_location="$(find $HOME -type d -name ${getthis} | head -1)"
+	
+	if [[ -z "${getthis_location}" ]];then
+		getthis_location="${temp_path}"
+	else
+		getthis_location="$(cd "${getthis_location}" && cd .. && pwd)"
+	fi
+	
+	if [ ! -d "${getthis_location}/${getthis}" ]; then 
+		git clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}/${getthis}"
+	else
+		show_m "${getthis} Folder does exsist"
+	fi
+	
+	echo "${getthis_location}"
+}
+
+######################################################################################################################
+######################################################################################################################
+######################################################################################################################
+######################################################################################################################
+######################################################################################################################
+
+CHECK_IF_THIS_LAPTOP(){
+	# Are we a mac?
+	if test -d /proc/pmu; then
+        	batteries=$(grep Battery /proc/pmu/info | cut -f2 -d:)
+        	if test "$batteries" -ne 0; then
+            	echo true
+        	fi
+	fi
+	
+	if dmidecode="$(command -v dmidecode)" && [ -r /dev/mem -a -x "$dmidecode" ]
+	then
+        	# dmidecode to grab the Chassis type
+        	dmitype=$("$dmidecode" --string chassis-type)
+	
+        	if test "$dmitype" = "Notebook" || \
+           	test "$dmitype" = "Portable" || \
+           	test "$dmitype" = "Laptop"   || \
+           	test "$dmitype" = "Hand Held"; then
+            	echo true
+        	fi
+	
+        	# turn back on for debugging
+        	#echo "$dmitype"
+	fi
+	
+	if [ -e /sys/devices/virtual/dmi/id/chassis_type ] ; then
+    	chassis_type="$(cat /sys/devices/virtual/dmi/id/chassis_type)"
+    	case "$chassis_type" in
+        	8|9|10|11) # Portable
+            	echo true
+            	;;
+    	esac
+	fi
+	
+	# check for non device ACPI batteries
+	/sbin/modprobe battery 2> /dev/null || true
+	sysfs_power_supply=/sys/class/power_supply
+	if [ -d "$sysfs_power_supply" ]; then
+		for power_supply in "$sysfs_power_supply"/*
+		do
+			if (
+				grep -q Battery "$power_supply"/type 2>/dev/null
+			) && (
+				! grep -q Device "$power_supply"/scope 2>/dev/null
+			)
+			then
+				echo true
+			fi
+		done
+	fi
+	# old interface:
+	if [ -d /proc/acpi/battery ]; then
+        	results=$(find /proc/acpi/battery -mindepth 1 -type d)
+        	if [ -n "$results" ]; then
+            	echo true
+        	fi
+	fi
+
+	# check for APM batteries. This sucks, because we'll only get a valid response
+	# if the laptop has a battery fitted at the time
+	if [ -f /proc/apm ]; then
+    	battery=$(awk '{print $6}' </proc/apm)
+    	if [ "$battery" != "0xff" ] && [ "$battery" != "0x80" ]; then
+        	echo true
+    	fi
+	fi
+}

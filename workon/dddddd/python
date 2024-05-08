@@ -1,0 +1,3 @@
+bin/bl-reload-gtk23:#!/usr/bin/env python3
+bin/ps_mem.py:#!/usr/bin/env python3
+openbox/pipemenu/ac-randr:#!/usr/bin/env python3

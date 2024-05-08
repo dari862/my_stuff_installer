@@ -47,6 +47,6 @@ if [ -f "${__distro_path}/this_is_laptop" ];then
 	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/yadtlp.desktop "${__distro_path}"/applications/
 fi
 
-${__distro_path}/bin/not_add_2_path/create_DB.sh
+${__distro_path}/bin/not_add_2_path/create_DB.sh --all
 ${__distro_path}/bin/not_add_2_path/YadAppsStore/tools/edite_apps_folder
 ${__distro_path}/bin/not_add_2_path/YadAppsStore/tools/pre_yadstore

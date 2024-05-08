@@ -20,10 +20,14 @@ if ! test_if_my_stuff_lib_sourced 2>/dev/null; then
 fi
 
 install_GPU_now="${1-}"
+list_of_apps_file_path="$(mktemp "${temp_path}"/list_of_apps_.XXXXXXXXXXXX)"
 
 ##################################################################################
 # function
 ##################################################################################
+create_apt_list(){
+	apt list 2>/dev/null > "${list_of_apps_file_path}" 
+}
 
 apt_install_()
 {
@@ -37,7 +41,7 @@ add_2_apt_install_()
 	for INDEX in "${localarray[@]}"
 	do
 		if ! dpkg -s "${INDEX}" > /dev/null 2>&1; then
-			if apt list 2>/dev/null | grep "^${INDEX}/";then
+			if grep "^${INDEX}/" ${list_of_apps_file_path};then
 				List_of_apt_2_install_+=("$INDEX") 
 				show_m "${INDEX} added to install apps" 
 			fi
@@ -56,7 +60,12 @@ List_of_apt_2_install_=()
 #######################
 #must have apps
 install_audio=(pulseaudio pavucontrol)
-install_if_laptop=(acpi light upower xbacklight)
+install_if_laptop=(light upower)
+if [[ "$(ls /sys/class/backlight | head -n 1)" == *"intel_"* ]]; then
+	install_if_laptop+=(xbacklight)
+else
+	install_if_laptop+=(light)
+fi
 install_wireless=(wireless-tools)
 install_Network=(rfkill network-manager network-manager-gnome)
 install_bluetooth=(bluez blueman)

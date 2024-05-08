@@ -1,0 +1,326 @@
+#!/usr/bin/env python3
+#
+#    bl-reload-gtk23: Make GTK2/3 reload settings file changes
+#    Copyright (C) 2020 2ion <dev@2ion.de>
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter, Namespace
+from configparser import ConfigParser
+from pathlib import Path
+from typing import Any, Iterator, Tuple, AbstractSet
+import logging
+import os
+import shutil
+import signal
+import subprocess
+
+import Xlib.display # type: ignore
+import Xlib.protocol # type: ignore
+import psutil # type: ignore
+import gi # type: ignore
+import xdg.BaseDirectory # type: ignore
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk # type: ignore
+
+DESCRIPTION = ("""
+After changing GTK2 and GTK3 configuration files, notify running GTK2 and GTK3 clients to apply
+those changes. The notification mechanism used by GTK3 requires that xsettingsd is running. If it is
+installed and not running, the program will launch it.
+
+EXIT CODES:
+
+   0 - both gtk2 and gtk3 clients notified successfully
+   1 - failed to notify gtk2 clients
+   2 - failed to notify gtk3 clients
+   3 - failed to notify gtk2 and gtk3 clients
+
+""")
+
+LOG_FORMAT = "%(asctime)s %(levelname)s %(module)s %(funcName)s() : %(message)s"
+
+# This set of supported xettingsd keys is lifted from the source code of gtk 2.24.23 file
+# gdk/x11/gdksettings.c. See:
+#
+#   * https://www.freedesktop.org/wiki/Specifications/XSettingsRegistry/
+#   * https://developer.gnome.org/gtk3/stable/GtkSettings.html
+#
+# NOTE: There *are* GTK properties that are NOT part of the xsettings client in gtk and have no
+# place (yet) xsettingsd, for example gtk-application-prefer-dark-theme.
+XSETTINGSD_MAPPINGS = {
+   "gtk-button-images"                : "Gtk/ButtonImages",
+   "gtk-color-palette"                : "Gtk/ColorPalette",
+   "gtk-cursor-blink"                 : "Net/CursorBlink",
+   "gtk-cursor-blink-time"            : "Net/CursorBlinkTime",
+   "gtk-cursor-blink-timeout"         : "Gtk/CursorBlinkTimeout",
+   "gtk-cursor-theme-name"            : "Gtk/CursorThemeName",
+   "gtk-cursor-theme-size"            : "Gtk/CursorThemeSize",
+   "gtk-decoration-layout"            : "Gtk/DecorationLayout",
+   "gtk-dialogs-use-header"           : "Gtk/DialogsUseHeader",
+   "gtk-dnd-drag-threshold"           : "Net/DndDragThreshold",
+   "gtk-double-click-distance"        : "Net/DoubleClickDistance",
+   "gtk-double-click-time"            : "Net/DoubleClickTime",
+   "gtk-enable-accels"                : "Gtk/EnableAccels",
+   "gtk-enable-animations"            : "Gtk/EnableAnimations",
+   "gtk-enable-event-sounds"          : "Net/EnableEventSounds",
+   "gtk-enable-input-feedback-sounds" : "Net/EnableInputFeedbackSounds",
+   "gtk-enable-primary-paste"         : "Gtk/EnablePrimaryPaste",
+   "gtk-font-name"                    : "Gtk/FontName",
+   "gtk-fontconfig-timestamp"         : "Fontconfig/Timestamp",
+   "gtk-icon-theme-name"              : "Net/IconThemeName",
+   "gtk-im-module"                    : "Gtk/IMModule",
+   "gtk-key-theme-name"               : "Gtk/KeyThemeName",
+   "gtk-keynav-use-caret"             : "Gtk/KeynavUseCaret",
+   "gtk-menu-images"                  : "Gtk/MenuImages",
+   "gtk-modules"                      : "Gtk/Modules",
+   "gtk-overlay-scrolling"            : "Gtk/OverlayScrolling",
+   "gtk-primary-button-warps-slider"  : "Gtk/PrimaryButtonWarpsSlider",
+   "gtk-recent-files-enabled"         : "Gtk/RecentFilesEnabled",
+   "gtk-recent-files-max-age"         : "Gtk/RecentFilesMaxAge",
+   "gtk-session-bus-id"               : "Gtk/SessionBusId",
+   "gtk-shell-shows-app-menu"         : "Gtk/ShellShowsAppMenu",
+   "gtk-shell-shows-desktop"          : "Gtk/ShellShowsDesktop",
+   "gtk-shell-shows-menubar"          : "Gtk/ShellShowsMenubar",
+   "gtk-sound-theme-name"             : "Net/SoundThemeName",
+   "gtk-theme-name"                   : "Net/ThemeName",
+   "gtk-titlebar-double-click"        : "Gtk/TitlebarDoubleClick",
+   "gtk-titlebar-middle-click"        : "Gtk/TitlebarMiddleClick",
+   "gtk-titlebar-right-click"         : "Gtk/TitlebarRightClick",
+   "gtk-xft-antialias"                : "Xft/Antialias",
+   "gtk-xft-dpi"                      : "Xft/DPI",
+   "gtk-xft-hinting"                  : "Xft/Hinting",
+   "gtk-xft-hintstyle"                : "Xft/HintStyle",
+   "gtk-xft-rgba"                     : "Xft/RGBA",
+}
+
+# Values seen by GTK's settings parser as truthy as far as booleans are concerned. It is unknown if
+# this list is complete...
+TRUTHY = { "1", "true", "TRUE" }
+
+# These are GTK enum types as exposed by the GI GTK repository. They can be cast to the values
+# expected in xsettingsd and gtk INI config by casting them to int.
+GTK_ENUMS = {
+   gi.repository.Gtk.ToolbarStyle,
+   gi.repository.Gtk.IconSize,
+   gi.repository.Gtk.CornerType,
+   gi.repository.Gtk.IMStatusStyle,
+   gi.repository.Gtk.IMPreeditStyle
+}
+
+def getopts() -> Namespace:
+   ap = ArgumentParser(description=DESCRIPTION, formatter_class=ArgumentDefaultsHelpFormatter)
+   ap.add_argument("-d", "--debug", action="store_true", default=False, help="print debug information")
+   ap.add_argument("--debug-gtk-mappings", action="store_true", default=False,
+         help="debug action without side effects: dump the would-be GTK property type mappings and exit")
+   ap.add_argument("-f", "--force", action="store_true", default=False, help="ignore all errors")
+   ap.add_argument("-s", "--sync-xsettingsd-from", type=Path, default=Path(xdg.BaseDirectory.save_config_path("gtk-3.0")) / "settings.ini",
+         help="Path of GTK3 settings.ini file to sync settings for xsettingsd from", metavar="FILE")
+   ap.add_argument("-n", "--no-sync", action="store_true", default=False,
+         help="Do not modify xsettingsd config based on current GTK3 settings but still send SIGHUP to xsettingsd")
+   ap.add_argument("-S", "--no-signal", action="store_true", default=False,
+         help="Do not signal xsettingsd SIGHUP after rewriting its config file on --sync-xsettingsd-from")
+   opts = ap.parse_args()
+   if opts.debug or opts.debug_gtk_mappings:
+       logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
+   else:
+       logging.basicConfig(level=logging.WARNING, format=LOG_FORMAT)
+   return opts
+
+def debug_gtk_mappings() -> None:
+   settings = Gtk.Settings.get_default()
+   align = max(len(k) for k in XSETTINGSD_MAPPINGS) + 1
+   for gtk_property in XSETTINGSD_MAPPINGS:
+      try:
+         gtk_value = settings.get_property(gtk_property)
+         logging.info(f"%-{align}s = %s (%s)", gtk_property, gtk_value, type(gtk_value))
+      except TypeError:
+         logging.info(f"%-{align}s = ****************** does not exist **************************", gtk_property)
+
+def sync_gtk2() -> None:
+   """ Tell GTK2 X11 clients to reload the GTK RC files and update their
+   appearance/settings if required. This implements this process without GTK/GDK
+   in order to be able to drop the dependency on the obsolete pygtk library.
+   GTK3/pygobject does not support GTK2.
+
+   This function will always fail on non-X11 platforms as the GTK2 client
+   notification mechanism is based on X.
+
+   This implementation is based on the following resources:
+      * From libgtk2 2.24.18:
+         * gdk_event_send_client_message_to_all_recurse()
+         * gdk_screen_broadcast_client_message()
+      * From kde-gtk-config https://github.com/KDE/kde-gtk-config/blob/a5d4ddb3b1a27ec2ee4e1b6957a98a57ad56d39c/gtkproxies/reload.c
+   """
+   display = Xlib.display.Display(display=os.getenv("DISPLAY"))
+   wm_state_atom = display.intern_atom("WM_STATE", False)
+   gtkrc_atom = display.intern_atom("_GTK_READ_RCFILES", False)
+
+   def send_event(window) -> bool:
+      """ Send a _GTK_READ_RCFILES client message to the given X window.
+      Returns true unless an exception occurs. """
+      window.send_event(
+         Xlib.protocol.event.ClientMessage(
+            window      = window,
+            client_type = gtkrc_atom,
+            data        = (8, b"\0" * 20),
+         ),
+         propagate = 0,
+         event_mask = 0
+      )
+      return True
+
+   def recurse_windows(window, parents) -> bool:
+      """ Given a X window, recurse over all its children and selectively
+      apply the send_event function to them. Returns true if an event got sent
+      to at least one window equal or below the given one. """
+      sent = False
+      wm_state = window.get_property(wm_state_atom, wm_state_atom, 0, 0)
+      name = window.get_wm_name()
+      level = len(parents)
+      if wm_state is not None:
+         sent = send_event(window)
+      else:
+         tree = window.query_tree()
+         for child in tree.children:
+            if not recurse_windows(child, parents + [window.id]) and level == 1:
+               sent = send_event(window)
+      logging.debug("%10s %s %s [%24s] [%s]",
+            hex(window.id),
+            "W" if not not wm_state else " ",
+            "S" if sent else " ",
+            name[:24] if name else "",
+            ",".join(map(hex, parents)))
+      return sent
+
+   for sno in range(0, display.screen_count()):
+      screen = display.screen(sno)
+      recurse_windows(screen.root, [])
+
+def sync_gtk3(opts: Namespace) -> None:
+   """ GTK3 applications can be notified of changes to their theming via
+   xsettingsd. This requires that the GTK3 theming information has been updated
+   in settings.ini as well as the gsettings schema, managed either by a
+   standalone xettingsd implementation or the gnome-settings-daemon. As for now,
+   we only support reloading `xsettingsd`: Send SIGHUP if we find it running, or
+   start it if it is installed and not running.
+      * https://www.freedesktop.org/wiki/Specifications/XSettingsRegistry/
+      * https://github.com/swaywm/sway/wiki/GTK-3-settings-on-Wayland
+      * https://github.com/KDE/kde-gtk-config/blob/a5d4ddb3b1a27ec2ee4e1b6957a98a57ad56d39c/kded/configeditor.cpp#L285
+   """
+
+   def map_gtk_to_xsettingsd(pairs: AbstractSet[Tuple[str, str]]) -> Iterator[str]:
+      """ Takes a key-value pair from settings.ini, and generates a line for xsettingsd.conf if
+      there is a valid mapping. """
+      settings = Gtk.Settings.get_default()
+      for key, value in pairs:
+         # Use PyGObject as a reference for the property type.
+         target_key = XSETTINGSD_MAPPINGS.get(key, None)
+         if target_key:
+            try:
+               value_type = type(settings.get_property(key))
+            except TypeError:
+               logging.warning("Found setting %s in settings which is not known to the currently installed GTK3 version, ignoring.", key)
+               continue
+            target_value: Any = None
+            if value_type is bool:
+               target_value = 1 if value in TRUTHY else 0
+            elif value_type is str:
+               target_value = '"' + value.replace('"', '\\"') + '"'
+            elif value_type is int:
+               target_value = int(value)
+            # Enum types, see --debug-gtk-mappings output for reference
+            elif value_type in GTK_ENUMS:
+               target_value = int(value)
+            else:
+               logging.warning("Ignoring source key of unhandled type: %s (%s)", value, value_type)
+               continue
+            logging.debug("Mapping FROM %s = %s (%s)", key, value, value_type)
+            logging.debug("        TO   %s %s (%s)", target_key, target_value, type(target_value))
+            yield f"{target_key} {target_value}"
+         else:
+            logging.debug("Ignoring key without defined mapping: %s", key)
+
+   xsettingsd_process_found = False
+   try:
+      # save_config_path() has the side effect of creating the path if it does not already exist.
+      # This can of course fail.
+      xsettingsd_config_dir = Path(xdg.BaseDirectory.save_config_path("xsettingsd"))
+      xsettingsd_config_file = xsettingsd_config_dir / "xsettingsd.conf"
+   except Exception as err:
+      raise RuntimeError("XDG failed to create the current user's xsettingsd directory")
+
+   if not opts.no_sync:
+      if opts.sync_xsettingsd_from.is_file() and os.access(opts.sync_xsettingsd_from, os.F_OK | os.R_OK):
+         logging.debug("Loading GTK3 settings from: %s", opts.sync_xsettingsd_from)
+         ini = ConfigParser()
+         lines = [
+            "# This configuration file is managed by bl-reload-gtk23",
+            "# Any changes made to this file may be overwritten",
+         ]
+         with opts.sync_xsettingsd_from.open("r") as IN:
+            ini.read_file(IN)
+            if "Settings" in ini:
+               lines.extend(map_gtk_to_xsettingsd(ini["Settings"].items()))
+               with xsettingsd_config_file.open("w") as OUT:
+                  OUT.write("\n".join(lines + [""]))
+            else:
+               logging.warning("GTK3 config without [Settings] section, ignoring file")
+      else:
+         logging.warning("Argument to -s is not a file or inaccessible, ignoring: %s", opts.sync_xsettingsd_from)
+   else:
+      logging.debug("Skipping syncing of xsettingsd config as requested")
+
+   if not opts.no_signal:
+      for proc in psutil.process_iter():
+         if proc.name() == "xsettingsd":
+            proc.send_signal(signal.SIGHUP)
+            xsettingsd_process_found = True
+            logging.debug("Found xsettingsd process and sent SIGHUP: PID %d", proc.pid)
+            break
+      if not xsettingsd_process_found:
+         xsettingsd_binary = shutil.which("xsettingsd")
+         if xsettingsd_binary is not None:
+            proc = subprocess.Popen([xsettingsd_binary], cwd="/", start_new_session=True)
+            logging.debug("xsettingsd not running; started from %s; PID: %d", xsettingsd_binary, proc.pid)
+         else:
+            raise RuntimeError("xsettingsd not running and not in PATH, no settings changes propagated")
+   else:
+      logging.debug("Skipping sending of SIGHUP to xsettingsd as requested")
+
+def main() -> int:
+   opts = getopts()
+   ret = 0
+
+   if opts.debug_gtk_mappings:
+      try:
+         debug_gtk_mappings()
+      except Exception as err:
+         logging.warning("debug_gtk_mappings() failed: %s", err)
+         ret |= 1 << 2
+      return 0 if opts.force else ret
+
+   try:
+      sync_gtk2()
+   except Exception as err:
+      logging.warning("Failed to reload GTK2 settings: %s", err)
+      ret |= 1 << 0
+   try:
+      sync_gtk3(opts)
+   except Exception as err:
+      logging.warning("Failed to reload GTK3 settings: %s", err)
+      ret |= 1 << 1
+   return 0 if opts.force else ret
+
+if __name__ == "__main__":
+   raise SystemExit(main())
