@@ -3,7 +3,7 @@ push_now(){
 	git remote set-url origin git@github.com:dari862/$(basename "$PWD").git
 	git add -A
 	if git commit -am "Update README.md";then
-		git push --set-upstream origin main
+		git push --set-upstream origin main --force
 	fi
 }
 
