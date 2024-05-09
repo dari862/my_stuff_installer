@@ -1,6 +1,7 @@
 #!/bin/bash
 push_now(){
-	git remote set-url origin git@github.com:dari862/$(basename "$PWD").git
+	git_this_repo="${1-}"
+	git remote set-url origin git@github.com:dari862/${git_this_repo}.git
 	git add -A
 	if git commit -am "Update README.md";then
 		if ! git push --set-upstream origin main;then
@@ -22,5 +23,5 @@ for getthis in "${git_repo_Array[@]}"; do
 	echo "###############################################"
 	echo "#		pushing $getthis repo"
 	echo "###############################################"
-	push_now
+	push_now $getthis
 done
