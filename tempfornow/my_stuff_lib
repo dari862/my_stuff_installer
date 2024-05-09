@@ -65,22 +65,22 @@ number_of_gpus=0
 
 if [ "$(lspci | grep -i nvidia | grep VGA -c)" != "0" ];then
 	nvidia_gpu_exist=true
-	((number_of_gpus++))
+	number_of_gpus=$((number_of_gpus++))
 fi
 
 if [ "$(lspci | grep -i intel | grep VGA -c)" != "0" ];then
 	intel_gpu_exist=true
-	((number_of_gpus++))
+	number_of_gpus=$((number_of_gpus++))
 fi
 
 if [ "$(lspci | grep -i amd | grep VGA -c)" != "0" ];then
 	amd_gpu_exist=true
-	((number_of_gpus++))
+	number_of_gpus=$((number_of_gpus++))
 fi
 
 if [ "$(lspci | grep -i VMware | grep VGA -c)" != "0" ];then
 	VMware_gpu_exist=true
-	((number_of_gpus++))
+	number_of_gpus=$((number_of_gpus++))
 fi
 
 ##################################################################################
