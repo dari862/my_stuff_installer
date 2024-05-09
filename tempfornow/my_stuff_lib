@@ -312,11 +312,12 @@ git_clone_and_set_var_to_path(){
 ######################################################################################################################
 
 CHECK_IF_THIS_LAPTOP(){
+	is_this_laptop=""
 	# Are we a mac?
 	if test -d /proc/pmu; then
         	batteries=$(grep Battery /proc/pmu/info | cut -f2 -d:)
         	if test "$batteries" -ne 0; then
-            	echo true && return
+            	is_this_laptop=true
         	fi
 	fi
 	
@@ -329,7 +330,7 @@ CHECK_IF_THIS_LAPTOP(){
            	test "$dmitype" = "Portable" || \
            	test "$dmitype" = "Laptop"   || \
            	test "$dmitype" = "Hand Held"; then
-            	echo true && return
+            	is_this_laptop=true
         	fi
 	
         	# turn back on for debugging
@@ -340,7 +341,7 @@ CHECK_IF_THIS_LAPTOP(){
     	chassis_type="$(cat /sys/devices/virtual/dmi/id/chassis_type)"
     	case "$chassis_type" in
         	8|9|10|11) # Portable
-            	echo true && return
+            	is_this_laptop=true
             	;;
     	esac
 	fi
@@ -357,7 +358,7 @@ CHECK_IF_THIS_LAPTOP(){
 				! grep -q Device "$power_supply"/scope 2>/dev/null
 			)
 			then
-				echo true && return
+				is_this_laptop=true
 			fi
 		done
 	fi
@@ -365,7 +366,7 @@ CHECK_IF_THIS_LAPTOP(){
 	if [ -d /proc/acpi/battery ]; then
         	results=$(find /proc/acpi/battery -mindepth 1 -type d)
         	if [ -n "$results" ]; then
-            	echo true && return
+            	is_this_laptop=true
         	fi
 	fi
 
@@ -374,7 +375,8 @@ CHECK_IF_THIS_LAPTOP(){
 	if [ -f /proc/apm ]; then
     	battery=$(awk '{print $6}' </proc/apm)
     	if [ "$battery" != "0xff" ] && [ "$battery" != "0x80" ]; then
-        	echo true && return
+        	is_this_laptop=true
     	fi
 	fi
+	echo ${is_this_laptop}
 }
