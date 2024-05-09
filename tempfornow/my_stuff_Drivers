@@ -60,7 +60,7 @@ List_of_apt_2_install_=()
 #######################
 #must have apps
 install_audio=(pulseaudio pavucontrol)
-install_if_laptop=(light upower)
+install_if_laptop=(acpi upower)
 if [[ "$(ls /sys/class/backlight | head -n 1)" == *"intel_"* ]]; then
 	install_if_laptop+=(xbacklight)
 else
@@ -114,6 +114,7 @@ fi
 ##################################################################################
 # main
 ##################################################################################
+create_apt_list # needed for add_2_apt_install_
 
 if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
 	add_2_apt_install_ "${install_if_laptop[@]}"
