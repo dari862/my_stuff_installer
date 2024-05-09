@@ -4,7 +4,7 @@ set -e
 if ! test_if_my_stuff_lib_sourced 2>/dev/null; then
 	# source lib
 	temp_path="/tmp"
-	my_stuff_lib_location="$(find $HOME -type f -name my_stuff_lib | head -1)"
+	my_stuff_lib_location="$(find $HOME -type f -name my_stuff_lib | head -1 || :)"
 	if [[ ! -z "${my_stuff_lib_location}" ]];then
 		mv "${my_stuff_lib_location}" "${temp_path}"
 	fi
