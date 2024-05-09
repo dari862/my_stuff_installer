@@ -15,7 +15,7 @@ Theme_Stuff
 my_stuff_installer
 )
 
-cd my_stuff_installer
+cd "$(find $HOME -type d -name my_stuff_installer)"
 for getthis in "${git_repo_Array[@]}"; do
 	cd ..
 	cd $getthis
