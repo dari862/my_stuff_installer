@@ -356,7 +356,9 @@ mkdir -p "${Custom_distro_dir_name}"/bin/not_add_2_path/updater
 if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then 
 	show_m "this is laptop"
 	touch "${Custom_distro_dir_name}"/this_is_laptop
-	mv "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM "${Custom_distro_dir_name}"/bin/not_add_2_path/updater/envycontrol_updater
+ 	if [[ -f "${temp_path}/envycontrol_updater_DmDmDmdMdMdM" ]];then
+		mv "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM "${Custom_distro_dir_name}"/bin/not_add_2_path/updater/envycontrol_updater
+ 	fi
 fi
 
 if [[ -f "$(ls /tmp/GPU_Drivers_ready*)" ]];then 
