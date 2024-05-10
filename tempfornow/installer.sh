@@ -5,9 +5,9 @@ set -e
 # Var
 ################################################################################################################################
 internet_status=""
-temp_path="/tmp"
+temp_path="/tmp/my_stuff"
 lib_file_name="my_stuff_lib"
-my_stuff_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1)"
+my_stuff_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1 || :)"
 
 auto_run_script="false" # true to enable
 
@@ -332,6 +332,8 @@ cd "${my_stuff_location}"
 
 [ ! -d "${Custom_distro_dir_name}" ] && mv my_stuff "${Custom_distro_dir_name}"
 
+[ -d "/usr/share/${Custom_distro_dir_name}" ] && sudo rm -rdf "/usr/share/${Custom_distro_dir_name}"
+
 # test if in virtual machine
 if [ "$(hostnamectl | grep "Chassis:" | grep -o "vm")" == "vm" ]
 then
@@ -343,25 +345,46 @@ then
 	sed -i 's|vsync = true;|# vsync = true|g' "${Custom_distro_dir_name}"/skel/.config/picom.conf.bunsenlab
 fi
 
-mv "${Custom_distro_dir_name}"/lib/xsessions/*_openbox.desktop "${Custom_distro_dir_name}"/lib/xsessions/"${Custom_distro_dir_name}"_openbox.desktop
-mv "${Custom_distro_dir_name}"/lib/xsessions/*_bspwm.desktop "${Custom_distro_dir_name}"/lib/xsessions/"${Custom_distro_dir_name}"_bspwm.desktop
-mv "${Custom_distro_dir_name}"/lib/lightdm/lightdm.conf.d/50_*.conf "${Custom_distro_dir_name}"/lib/lightdm/lightdm.conf.d/50_"${Custom_distro_dir_name}".conf
-mv "${Custom_distro_dir_name}"/lib/lightdm/lightdm-gtk-greeter.conf.d/50_*.conf "${Custom_distro_dir_name}"/lib/lightdm/lightdm-gtk-greeter.conf.d/50_"${Custom_distro_dir_name}".conf
-mv "${Custom_distro_dir_name}"/lib/openbox_rc/*_rc.xml "${Custom_distro_dir_name}"/lib/openbox_rc/"${Custom_distro_dir_name}"_rc.xml
-mv "${Custom_distro_dir_name}"/skel/.config/conky/scripts/DmDmDmdMdMdM_weather.sh "${Custom_distro_dir_name}"/skel/.config/conky/scripts/"${Custom_distro_dir_name}"_weather.sh
-mv "${Custom_distro_dir_name}"/bin/openbox/pipemenu/DmDmDmdMdMdM-kb-pipemenu "${Custom_distro_dir_name}"/bin/openbox/pipemenu/"${Custom_distro_dir_name}"-kb-pipemenu
+if [ ! -f "${Custom_distro_dir_name}/lib/xsessions/${Custom_distro_dir_name}_openbox.desktop" ];then
+	mv "${Custom_distro_dir_name}"/lib/xsessions/*_openbox.desktop "${Custom_distro_dir_name}"/lib/xsessions/"${Custom_distro_dir_name}"_openbox.desktop
+fi
+
+if [ ! -f "${Custom_distro_dir_name}/lib/xsessions/${Custom_distro_dir_name}_bspwm.desktop" ];then
+	mv "${Custom_distro_dir_name}"/lib/xsessions/*_bspwm.desktop "${Custom_distro_dir_name}"/lib/xsessions/"${Custom_distro_dir_name}"_bspwm.desktop
+fi
+
+if [ ! -f "${Custom_distro_dir_name}/lib/lightdm/lightdm.conf.d/50_${Custom_distro_dir_name}.conf" ];then
+	mv "${Custom_distro_dir_name}"/lib/lightdm/lightdm.conf.d/50_*.conf "${Custom_distro_dir_name}"/lib/lightdm/lightdm.conf.d/50_"${Custom_distro_dir_name}".conf
+fi
+
+if [ ! -f "${Custom_distro_dir_name}/lib/lightdm/lightdm-gtk-greeter.conf.d/50_${Custom_distro_dir_name}.conf" ];then
+	mv "${Custom_distro_dir_name}"/lib/lightdm/lightdm-gtk-greeter.conf.d/50_*.conf "${Custom_distro_dir_name}"/lib/lightdm/lightdm-gtk-greeter.conf.d/50_"${Custom_distro_dir_name}".conf
+fi
+
+if [ ! -f "${Custom_distro_dir_name}/lib/openbox_rc/${Custom_distro_dir_name}_rc.xml" ];then
+	mv "${Custom_distro_dir_name}"/lib/openbox_rc/*_rc.xml "${Custom_distro_dir_name}"/lib/openbox_rc/"${Custom_distro_dir_name}"_rc.xml
+fi
+
+if [ ! -f "${Custom_distro_dir_name}/skel/.config/conky/scripts/${Custom_distro_dir_name}_weather.sh" ];then
+	mv "${Custom_distro_dir_name}"/skel/.config/conky/scripts/DmDmDmdMdMdM_weather.sh "${Custom_distro_dir_name}"/skel/.config/conky/scripts/"${Custom_distro_dir_name}"_weather.sh
+fi
+
+if [ ! -f "${Custom_distro_dir_name}/bin/openbox/pipemenu/${Custom_distro_dir_name}-kb-pipemenu" ];then
+	mv "${Custom_distro_dir_name}"/bin/openbox/pipemenu/DmDmDmdMdMdM-kb-pipemenu "${Custom_distro_dir_name}"/bin/openbox/pipemenu/"${Custom_distro_dir_name}"-kb-pipemenu
+fi
 
 mkdir -p "${Custom_distro_dir_name}"/bin/not_add_2_path/updater
 
 if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then 
 	show_m "this is laptop"
 	touch "${Custom_distro_dir_name}"/this_is_laptop
- 	if [[ -f "${temp_path}/envycontrol_updater_DmDmDmdMdMdM" ]];then
-		mv "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM "${Custom_distro_dir_name}"/bin/not_add_2_path/updater/envycontrol_updater
- 	fi
 fi
 
-if [[ -f "$(ls /tmp/GPU_Drivers_ready*)" ]];then 
+if [[ -f "${temp_path}/envycontrol_updater_DmDmDmdMdMdM" ]];then
+	mv "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM "${Custom_distro_dir_name}"/bin/not_add_2_path/updater/envycontrol_updater
+fi
+ 	
+if [[ -f "$(ls ${temp_path}/GPU_Drivers_ready*)" ]];then 
 	touch "${Custom_distro_dir_name}"/GPU_Drivers_ready
 fi
 
@@ -369,6 +392,7 @@ find "${Custom_distro_dir_name}"/. -type f -exec sed -i "s/DmDmDmdMdMdM/${Custom
 find "${Custom_distro_dir_name}"/. -type f -exec sed -i "s/mDmDmDmDmDmDmD/${Custom_distro_name}/g" {} +
 
 source "${Custom_distro_dir_name}/lib/common/openbox_folder_name"
+
 if [[ ! -d "${Custom_distro_dir_name}/skel/.config/${OB_folder_name}" ]];then
 	mv "${Custom_distro_dir_name}/skel/.config/openbox" "${Custom_distro_dir_name}/skel/.config/${OB_folder_name}"
 	find "${Custom_distro_dir_name}"/. -type f -exec sed -i "s|.config/openbox|.config/${OB_folder_name}|g" {} +
@@ -398,7 +422,7 @@ show_m "update alternatives apps"
 sudo /usr/share/"${Custom_distro_dir_name}"/bin/bin/my-alternatives install
 show_m "installing update-notification"
 sudo /usr/share/"${Custom_distro_dir_name}"/bin/bin/update-notification -I
-if [ -f /usr/share/"${Custom_distro_dir_name}"/this_is_laptop ]; then 
+if [[ -f "/usr/share/${Custom_distro_dir_name}/bin/not_add_2_path/updater/envycontrol_updater" ]];then 
 	show_m "runing envycontrol_updater"
 	sudo /usr/share/"${Custom_distro_dir_name}"/bin/not_add_2_path/updater/envycontrol_updater
 fi
