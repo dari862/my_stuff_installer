@@ -168,25 +168,35 @@ prompt_to_ask_to_what_to_install(){
 		if [ "$(do_you_want_2_run_this_yes_or_no 'run autoclean and autoremove?')" != "Y" ];then
 			autoclean_and_autoremove=""
 		fi
-	
-		if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install xfce4-panel?')" != "Y" ];then
-			install_xfce4_panel=""
+		
+		if ! command -v xfce4-panel >/dev/null;then
+			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install xfce4-panel?')" != "Y" ];then
+				install_xfce4_panel=""
+			fi
 		fi
 		
-		if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install polybar?')" != "Y" ];then
-			install_polybar=""
+		if ! command -v polybar >/dev/null;then
+			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install polybar?')" != "Y" ];then
+				install_polybar=""
+			fi
 		fi
 		
-		if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install qt5ct?')" != "Y" ];then
-			install_qt5ct=""
+		if ! command -v qt5ct >/dev/null;then
+			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install qt5ct?')" != "Y" ];then
+				install_qt5ct=""
+			fi
 		fi
 		
-		if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install jgmenu?')" != "Y" ];then
-			install_jgmenu=""
+		if ! command -v jgmenu >/dev/null;then
+			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install jgmenu?')" != "Y" ];then
+				install_jgmenu=""
+			fi
 		fi
 		
-		if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install bspwm?')" != "Y" ];then
-			install_bspwm=""
+		if ! command -v bspwm >/dev/null && ! command -v sxhkd >/dev/null;then
+			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install bspwm?')" != "Y" ];then
+				install_bspwm=""
+			fi
 		fi
 			
 		if [ "$(do_you_want_2_run_this_yes_or_no 'reboot?')" != "Y" ];then
