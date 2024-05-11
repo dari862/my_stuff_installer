@@ -71,7 +71,6 @@ install_wireless=(wireless-tools)
 install_Network=(rfkill network-manager network-manager-gnome)
 install_bluetooth=(bluez blueman)
 install_autoinstall_firmware=(isenkram)
-install_test=(avahi-utils coinor-libcbc3 coinor-libcgl1 coinor-libclp1 coinor-libcoinmp1v5 coinor-libcoinutils3v5 coinor-libosi1v5 cups-pk-helper espeak-ng-data exfalso fonts-font-awesome fonts-lato fonts-opensymbol gimp-data gir1.2-atspi-2.0 gir1.2-gst-plugins-base-1.0 gir1.2-gstreamer-1.0 gir1.2-gtksource-3.0 gir1.2-handy-1 gir1.2-javascriptcoregtk-4.0 gir1.2-packagekitglib-1.0 gir1.2-polkit-1.0 gir1.2-secret-1 gir1.2-soup-2.4 gir1.2-webkit2-4.0 gir1.2-wnck-3.0 gstreamer1.0-gtk3 hyphen-en-us libabw-0.1-1 libamd2 libatk-adaptor libbabl-0.1-0 libboost-iostreams1.74.0 libbox2d2 libbrlapi0.8 libcamd2 libccolamd2 libcdr-0.1-1 libcholmod3 libclucene-contribs1v5 libclucene-core1v5 libcolamd2 libdotconf0 libe-book-0.1-1 libeot0 libepubgen-0.1-1 libespeak-ng1 libetonyek-0.1-1 libexttextcat-2.0-0 libexttextcat-data libfreehand-0.1-1 libgegl-0.4-0 libgegl-common libgexiv2-2 libgimp2.0 libgpgmepp6 libgtksourceview-3.0-1 libgtksourceview-3.0-common libjavascriptcoregtk-4.0-18 liblangtag-common liblangtag1 libmetis5 libmhash2 libmspub-0.1-1 libmwaw-0.3-3 libmythes-1.2-0 libnma-common libnma0 libnumbertext-1.0-0 libnumbertext-data libodfgen-0.1-1 liborcus-0.17-0 liborcus-parser-0.17-0 libpackagekit-glib2-18 libpagemaker-0.0-0 libpcaudio0 libqxp-0.0-0 librasqal3 libraw20 librdf0 libreoffice-base-core libreoffice-calc libreoffice-common libreoffice-core libreoffice-draw libreoffice-gtk3 libreoffice-help-common libreoffice-help-en-us libreoffice-impress libreoffice-math libreoffice-style-colibre libreoffice-writer librevenge-0.0-0 libsonic0 libsoup-gnome2.4-1 libspeechd2 libstaroffice-0.0-0 libsuitesparseconfig5 libumfpack5 libuno-cppu3 libuno-cppuhelpergcc3-3 libuno-purpenvhelpergcc3-3 libuno-sal3 libuno-salhelpergcc3-3 libvisio-0.1-1 libwebkit2gtk-4.0-37 libwpd-0.10-10 libwpg-0.3-3 libwps-0.4-4 libxmlsec1 libxmlsec1-nss libzmf-0.0-0 lp-solve mobile-broadband-provider-info mythes-en-us network-manager-gnome node-clipboard node-normalize.css node-prismjs orca perl-tk python3-brlapi python3-cups python3-cupshelpers python3-feedparser python3-louis python3-musicbrainzngs python3-pyatspi python3-pyinotify python3-sgmllib3k python3-smbc python3-speechd python3-uno quodlibet sound-icons speech-dispatcher speech-dispatcher-audio-plugins speech-dispatcher-espeak-ng sphinx-rtd-theme-common system-config-printer system-config-printer-common system-config-printer-udev uno-libs-private ure xbrlapi xkbset xsane xsane-common)
 
 ##################################################################################
 # GPU Drivers
@@ -133,7 +132,6 @@ fi
 add_2_apt_install_ "${install_audio[@]}"
 add_2_apt_install_ "${install_Network[@]}"
 add_2_apt_install_ "${install_autoinstall_firmware[@]}"
-add_2_apt_install_ "${install_test[@]}"
 
 if [[ "${install_GPU_now}" = "install_GPU" ]];then
 	if [ "${nvidia_gpu_exist}" = "true" ];then

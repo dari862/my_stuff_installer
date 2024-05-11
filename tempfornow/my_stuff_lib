@@ -173,6 +173,13 @@ check_for_SUDO()
 
 must_install_apps()
 {
+	install_lightdm_=(lightdm lightdm-gtk-greeter-settings)
+	if [ -f "/etc/X11/default-display-manager" ]; then
+		d_d_m="$(basename "$(cat /etc/X11/default-display-manager)")"
+		[ "$d_d_m" != "lightdm"  ] && apt-get purge -y "$d_d_m"
+	fi
+	($sudoaptinstall ${install_lightdm_[@]} && kill_apt) || ($sudoaptinstall ${install_lightdm_[@]} && kill_apt) || $sudoaptinstall ${install_lightdm_[@]}
+	
 	if ! command -v killall >/dev/null;then
 		($sudoaptinstall psmisc && kill_apt) || ($sudoaptinstall psmisc && kill_apt) || $sudoaptinstall psmisc
 		exval=$?
