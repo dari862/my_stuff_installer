@@ -32,7 +32,7 @@ create_apt_list(){
 
 apt_install_()
 {
-	$sudoaptinstall "${List_of_apt_2_install_[@]}"
+	$_SUDO $__install "${List_of_apt_2_install_[@]}"
 }
 
 add_2_apt_install_()
@@ -67,10 +67,15 @@ if [[ "$(ls /sys/class/backlight | head -n 1)" == *"intel_"* ]]; then
 else
 	install_if_laptop+=(light)
 fi
+install_fingerprint=(fprintd libpam-fprintd)
 install_wireless=(wireless-tools)
 install_Network=(rfkill network-manager network-manager-gnome)
 install_bluetooth=(bluez blueman)
 install_autoinstall_firmware=(isenkram)
+
+if lsusb | grep -i fingerprint >/dev/null || lspci | grep -i fingerprint >/dev/null || ls /sys/bus/usb/devices/* | grep -i fingerprint >/dev/null; then
+    fingerprint_exist=true
+fi
 
 ##################################################################################
 # GPU Drivers
@@ -119,6 +124,10 @@ create_apt_list # needed for add_2_apt_install_
 
 if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
 	add_2_apt_install_ "${install_if_laptop[@]}"
+fi
+
+if [[ "$fingerprint_exist" = true ]];then
+    add_2_apt_install_ "${install_fingerprint[@]}"
 fi
 
 if lspci | egrep -i 'wifi|wireless' 1>/dev/null ;then
@@ -191,6 +200,10 @@ sudo isenkram-autoinstall-firmware || : # to prevent script from exiting "isenkr
 show_m "Configer packages."
 apt_purge_with_error2info "${install_autoinstall_firmware[@]}"
 
+if [[ "$fingerprint_exist" = true ]];then
+    ln -sf /usr/share/${__Custom_distro_dir_name}/bin/not_add_2_path/fingerprint_gui /usr/share/${__Custom_distro_dir_name}/bin/apps
+fi
+
 if [ "${intel_gpu_exist}" = "true" ];then
 sudo mkdir -p /etc/X11/xorg.conf.d/
 sudo bash -c 'cat << EOF > /etc/X11/xorg.conf.d/20-intel.conf
@@ -212,4 +225,8 @@ fi
 
 if [[ "${install_GPU_now}" = "install_GPU" ]];then
 	mktemp /tmp/GPU_Drivers_ready_XXXXXX
+fi
+
+if command -v fprintd-verify > /dev/null ;then
+	sudo pam-auth-update --enable fprintd
 fi

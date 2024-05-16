@@ -51,7 +51,7 @@ List_of_apt_2_install_=()
 
 apt_install_()
 {
-	$sudoaptinstall "${List_of_apt_2_install_[@]}"
+	$$_SUDO $__install "${List_of_apt_2_install_[@]}"
 }
 
 add_2_apt_install_()

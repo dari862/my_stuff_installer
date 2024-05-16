@@ -59,8 +59,13 @@ xfce4-notifyd
 xfce4-power-manager*
 )
 
-sudoaptinstall='sudo apt-get install -y'
-aptinstall='apt-get install -y'
+if ! command -v sudo >/dev/null;then
+	_SUDO="sudo"
+fi
+
+__noninteractive='DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true'
+__install='apt-get install -y'
+__purge='apt-get purge -y'
 number_of_gpus=0
 
 if [ "$(lspci | grep -i nvidia | grep VGA -c)" != "0" ];then
@@ -157,7 +162,7 @@ aptfixer()
 		$aptinstall -f 2>/dev/null || show_em "failed to $aptinstall -f"
 	else
 		### Fix broken packages for good measure (why not?)
-		$sudoaptinstall -f 2>/dev/null || show_em "failed to $sudoaptinstall -f"
+		$_SUDO $__install -f 2>/dev/null || show_em "failed to $_SUDO $__install -f"
 	fi
 }
 
@@ -176,12 +181,15 @@ must_install_apps()
 	install_lightdm_=(lightdm lightdm-gtk-greeter-settings)
 	if [ -f "/etc/X11/default-display-manager" ]; then
 		d_d_m="$(basename "$(cat /etc/X11/default-display-manager)")"
-		[ "$d_d_m" != "lightdm"  ] && apt-get purge -y "$d_d_m"
+		if [ "$d_d_m" != "lightdm"  ];then
+			($_SUDO $__noninteractive $__install ${install_lightdm_[@]} && kill_apt) || ($_SUDO $__noninteractive $__install ${install_lightdm_[@]} && kill_apt) || $_SUDO $__noninteractive $__install ${install_lightdm_[@]}
+			echo "/usr/sbin/lightdm" | $_SUDO tee /etc/X11/default-display-manager
+			$_SUDO $__noninteractive dpkg-reconfigure lightdm
+		fi
 	fi
-	($sudoaptinstall ${install_lightdm_[@]} && kill_apt) || ($sudoaptinstall ${install_lightdm_[@]} && kill_apt) || $sudoaptinstall ${install_lightdm_[@]}
-	
+		
 	if ! command -v killall >/dev/null;then
-		($sudoaptinstall psmisc && kill_apt) || ($sudoaptinstall psmisc && kill_apt) || $sudoaptinstall psmisc
+		($_SUDO $__install psmisc && kill_apt) || ($_SUDO $__install psmisc && kill_apt) || $_SUDO $__install psmisc
 		exval=$?
 		if [ "$exval" == "1" ]; then
 			(show_em "failed to install psmisc for (killall).")
@@ -189,7 +197,7 @@ must_install_apps()
 	fi
 	
 	if ! command -v locate >/dev/null;then
-		($sudoaptinstall locate && kill_apt) || ($sudoaptinstall locate && kill_apt) || $sudoaptinstall locate
+		($_SUDO $__install locate && kill_apt) || ($_SUDO $__install locate && kill_apt) || $_SUDO $__install locate
 		exval=$?
 		if [ "$exval" == "1" ]; then
 			(show_em "failed to install locate.")
@@ -197,7 +205,7 @@ must_install_apps()
 	fi
 	
 	if ! command -v git >/dev/null;then
-		($sudoaptinstall git && kill_apt) || ($sudoaptinstall git && kill_apt) || $sudoaptinstall git
+		($_SUDO $__install git && kill_apt) || ($_SUDO $__install git && kill_apt) || $_SUDO $__install git
 		exval=$?
 		if [ "$exval" == "1" ]; then
 			(show_em "failed to install git.")
@@ -261,7 +269,7 @@ apt_purge_with_error2info()
 	do
 		if dpkg -s "${package}" &>/dev/null; then
 			show_m "Purging ${package}."
-			sudo apt-get -y purge "$package"
+			$_SUDO $__purge "$package"
 		fi
 	done
 }
@@ -286,9 +294,10 @@ run_fixes_()
 do_you_want_2_run_this_yes_or_no(){
 	massage_is_="${1}"
 	yn=""
-	read -r -p "${massage_is_} (yes/no) " yn
+	read -r -p "${massage_is_} (yes/no) (default: yes)" yn
 	yn="${yn^^}"
 	[ "$yn" = "YES" ] && yn="Y"
+	[ "$yn" = "" ] && yn="Y"
 	echo "$yn"
 }
 

@@ -208,20 +208,20 @@ prompt_to_ask_to_what_to_install(){
 enable_repo_(){
 	if [[ "$enable_contrib" = true ]];then
 		for l in $deb_lines_contrib; do
-			$_SUDO sed -i "s\\^$l$\\$l contrib\\" /etc/apt/sources.list
+			sudo sed -i "s\\^$l$\\$l contrib\\" /etc/apt/sources.list
 		done
 	fi
 	if [[ "$enable_nonfree_firmware" = true ]];then
 		for l in $deb_lines_nonfree_firmware; do
-			$_SUDO sed -i "s\\^$l$\\$l non-free-firmware\\" /etc/apt/sources.list
+			sudo sed -i "s\\^$l$\\$l non-free-firmware\\" /etc/apt/sources.list
 		done
 	fi
 	if [[ "$enable_nonfree" = true ]];then
 		for l in $deb_lines_nonfree; do
-			$_SUDO sed -i "s\\^$l$\\$l non-free\\" /etc/apt/sources.list
+			sudo sed -i "s\\^$l$\\$l non-free\\" /etc/apt/sources.list
 		done
 	fi
-	$_SUDO apt-get update
+	aptupdate
 }
 
 fix_time_(){
@@ -309,6 +309,8 @@ aptfixer
 check_for_SUDO
 
 keep_Sudo_refresed &
+
+enable_repo_
 
 must_install_apps
 
