@@ -184,7 +184,7 @@ show_m "Configer packages."
 apt_purge_with_error2info "${install_autoinstall_firmware[@]}"
 
 if [[ "$fingerprint_exist" = true ]];then
-    ln -sf /usr/share/${Custom_distro_dir_name}/bin/not_add_2_path/fingerprint_gui /usr/share/${Custom_distro_dir_name}/bin/apps
+	mktemp "${temp_path}"/fingerprint_exist_XXXXXX
 fi
 
 if [ "${intel_gpu_exist}" = "true" ];then

@@ -442,6 +442,10 @@ if [[ -f "/usr/share/${Custom_distro_dir_name}/bin/not_add_2_path/updater/envyco
 	show_m "runing envycontrol_updater"
 	sudo /usr/share/"${Custom_distro_dir_name}"/bin/not_add_2_path/updater/envycontrol_updater
 fi
+
+if [[ -f "$(ls ${temp_path}/fingerprint_exist_XXXXXX* 2>/dev/null)" ]];then 
+    ln -sf /usr/share/${Custom_distro_dir_name}/bin/not_add_2_path/fingerprint_gui /usr/share/${Custom_distro_dir_name}/bin/apps
+fi
 ##################################################################################
 #Theme_Stuff.git
 show_m "chown of Theme_Stuff to root"
