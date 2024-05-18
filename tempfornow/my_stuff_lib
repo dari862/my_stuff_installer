@@ -89,6 +89,27 @@ if [ "$(lspci | grep -i VMware | grep VGA -c)" != "0" ];then
 	number_of_gpus=$((number_of_gpus++))
 fi
 
+this_is_ubuntu=false
+# distro 
+if [ -f /etc/os-release ]; then
+	# freedesktop.org and systemd
+	. /etc/os-release
+	version_=$(echo "${VERSION_ID//./}")
+	distro_name_="$ID"
+	distro_name_and_ver_=$ID$version_
+elif [ -f /etc/lsb-release ]; then
+	# For some versions of Debian/Ubuntu without lsb_release command
+	. /etc/lsb-release
+	distro_name_="$DISTRIB_ID"
+	distro_name_and_ver_=$DISTRIB_ID$DISTRIB_RELEASE
+else
+	# Fall back to uname, e.g. "Linux <version>", also works for BSD, etc.
+	distro_name_="$(uname -s)"
+	distro_name_and_ver_=$(uname -s)$(uname -r)
+fi
+if [ "$distro_name_" = "ubuntu" ];then
+	this_is_ubuntu=true
+fi
 ##################################################################################
 # function
 ##################################################################################
@@ -120,10 +141,10 @@ check_and_download_()
 	
 	if [[ ! -f "${new_check_this_file_}" ]]; then
 	show_m "Wget $check_this_file_ file from www.github.com/dari862/my_stuff_installer ."
-		wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/"$check_this_file_" -O "${new_check_this_file_}" || show_em "Error: Failed to download $check_this_file_ ."
+		if wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/"$check_this_file_" -O "${new_check_this_file_}" ;then
 		chmod +x "${new_check_this_file_}"
-		if [[ ! -f "${new_check_this_file_}" ]]; then
-			echo "Error: Failed to wget ${check_this_file_} from ${new_check_this_file_} " >&2
+		else
+			show_em "Error: Failed to wget ${check_this_file_} from ${new_check_this_file_} "
 			exit 1
 		fi
 	fi

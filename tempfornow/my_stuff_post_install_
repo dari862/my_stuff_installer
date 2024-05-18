@@ -68,3 +68,19 @@ fi
 ${__distro_path}/bin/not_add_2_path/create_DB.sh --all
 ${__distro_path}/bin/not_add_2_path/YadAppsStore/tools/edite_apps_folder
 ${__distro_path}/bin/not_add_2_path/YadAppsStore/tools/pre_yadstore
+
+cat << 'EOF' > "${temp_path}"/interfaces
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+source /etc/network/interfaces.d/*
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+EOF
+
+chmod 644 "${temp_path}"/interfaces
+sudo chown root:root "${temp_path}"/interfaces
+sudo mv /etc/network/interfaces /etc/network/interfaces.old
+sudo mv "${temp_path}"/interfaces /etc/network/interfaces 

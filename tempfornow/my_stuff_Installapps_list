@@ -194,18 +194,20 @@ if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
 	sudo systemctl enable tlp
 	sudo  tlp start || tlp_error="true"
 	if [[ "$tlp_error" == "true" ]];then
-		sudo  tlp start | grep '>>> Invoke' >> "/tmp/tlp_error_Invoke"
-		if [[ -f "/tmp/tlp_error_Invoke" ]];then
-			sed -i "s/' to correct this.//g" "/tmp/tlp_error_Invoke"
-			sed -i "s/>>> Invoke '//g" "/tmp/tlp_error_Invoke"
-			chmod +x "/tmp/tlp_error_Invoke"
-			sudo bash /tmp/tlp_error_Invoke
+		sudo  tlp start | grep '>>> Invoke' >> "${temp_path}"/tlp_error_Invoke
+		if [[ -f "${temp_path}/tlp_error_Invoke" ]];then
+			sed -i "s/' to correct this.//g" "${temp_path}"/tlp_error_Invoke
+			sed -i "s/>>> Invoke '//g" "${temp_path}"/tlp_error_Invoke
+			chmod +x "${temp_path}"/tlp_error_Invoke
+			sudo bash "${temp_path}"/tlp_error_Invoke
 			sudo  tlp start
 		fi
 		if sudo tlp-stat |  grep '* Install' &>/dev/null ;then
-			sudo tlp-stat |  grep '* Install' | awk -F' '  '{print "apt-get install -y " $3}' >> "/tmp/tlp_install_exta_apps" 
-			chmod +x "/tmp/tlp_install_exta_apps"
-			sudo bash /tmp/tlp_error_Invoke
+			sudo tlp-stat |  grep '* Install' | awk -F' '  '{print "apt-get install -y " $3}' >> "${temp_path}"/tlp_install_exta_apps
+			if [[ -f "${temp_path}/tlp_install_exta_apps" ]];then
+				chmod +x "${temp_path}"/tlp_install_exta_apps
+				sudo bash "${temp_path}"/tlp_install_exta_apps
+			fi
 		fi
 	fi
 fi

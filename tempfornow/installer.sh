@@ -286,13 +286,19 @@ mkdir -p "${temp_path}"
 # source my_stuff_lib
 if [[ ! -z "${my_stuff_lib_location}" ]];then
 	mv "${my_stuff_lib_location}" "${temp_path}"
-fi
-
-if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
-	echo "wget lib file"
-	wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/${lib_file_name} -O "${temp_path}"/${lib_file_name} || echo "Error: Failed to download ${lib_file_name} ."
 	if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
-		echo "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
+		echo "Error: Failed to source ${lib_file_name} from ${temp_path} but ${lib_file_name} exist in ${temp_path}" >&2
+		exit 1
+	fi
+else
+	echo "wget lib file"
+	if wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/${lib_file_name} -O "${temp_path}"/${lib_file_name}; then
+		if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
+			echo "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
+			exit 1
+		fi
+	else
+		echo "Error: Failed to download ${lib_file_name} ."
 		exit 1
 	fi
 fi
@@ -313,7 +319,7 @@ must_install_apps
 
 check_and_download_ "my_stuff_Installapps_list"
 
-check_and_download_ "my_stuff_prepare_script_"
+check_and_download_ "my_stuff_post_install_"
 
 check_and_download_ "my_stuff_Drivers"
 
@@ -394,7 +400,7 @@ if [[ -f "${temp_path}/envycontrol_updater_DmDmDmdMdMdM" ]];then
 	mv "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM "${Custom_distro_dir_name}"/bin/not_add_2_path/updater/envycontrol_updater
 fi
  	
-if [[ -f "$(ls ${temp_path}/GPU_Drivers_ready*)" ]];then 
+if [[ -f "$(ls ${temp_path}/GPU_Drivers_ready* 2>/dev/null)" ]];then 
 	touch "${Custom_distro_dir_name}"/GPU_Drivers_ready
 fi
 
