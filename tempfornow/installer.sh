@@ -342,6 +342,15 @@ check_and_download_ "my_stuff_post_install_"
 
 check_and_download_ "my_stuff_Drivers"
 
+################################
+# git clone
+
+show_m "git clone distro files"
+my_stuff_location="$(git_clone_and_set_var_to_path "my_stuff" | tail -1)"
+Theme_Stuff_location="$(git_clone_and_set_var_to_path "Theme_Stuff" | tail -1)"
+
+################################
+
 clear
 
 _unattended_upgrades_ stop
@@ -355,14 +364,8 @@ show_m "Install apps from (my_stuff_Installapps_list)"
 "${temp_path}"/my_stuff_Installapps_list $install_xfce4_panel $install_polybar $install_qt5ct $install_jgmenu $install_bspwm
 
 ################################
-# git clone
-
-show_m "git clone distro files"
-my_stuff_location="$(git_clone_and_set_var_to_path "my_stuff" | tail -1)"
-Theme_Stuff_location="$(git_clone_and_set_var_to_path "Theme_Stuff" | tail -1)"
-
-################################3
-
+# no internet needed  part
+################################
 cd "${my_stuff_location}"
 
 [ ! -d "${Custom_distro_dir_name}" ] && mv my_stuff "${Custom_distro_dir_name}"

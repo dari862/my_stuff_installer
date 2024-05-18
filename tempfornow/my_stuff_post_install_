@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
-opt_="${1-}"
+Custom_distro_dir_name="${1-}"
 
-__distro_path="/usr/share/${opt_}"
+__distro_path="/usr/share/${Custom_distro_dir_name}"
 _hub_script_dir="${__distro_path}/bin/not_add_2_path/hub_script"
 
 PATH="${__distro_path}/bin/bin:$PATH"
