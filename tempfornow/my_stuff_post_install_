@@ -7,6 +7,24 @@ _hub_script_dir="${__distro_path}/bin/not_add_2_path/hub_script"
 
 PATH="${__distro_path}/bin/bin:$PATH"
 
+############
+# terminator
+############
+if [ -d "/etc/xdg" ];then
+	[ ! -d "/etc/xdg/terminator" ] && sudo mkdir -p "/etc/xdg/terminator"
+	[ ! -f "/etc/xdg/terminator/config" ] && sudo cp -r /usr/share/"${Custom_distro_dir_name}"/skel/.config/terminator /etc/xdg/terminator
+fi
+
+############
+# Remove "Set as wallpaper" from Thunar Context Menu and replace it with  "Set as wallpaper" from thunar config uac file
+############
+__thunar_wall_plug="$(locate thunar | grep wall || :)"
+[ ! -z "${__thunar_wall_plug}" ] && sudo mv "${__thunar_wall_plug}" "${__thunar_wall_plug}.backup"
+
+##################################################################################
+
+sudo sed -i 's/managed=.*/managed=true/g' /etc/NetworkManager/NetworkManager.conf
+
 mkdir -p "${_hub_script_dir}"
 ln -sf "${__distro_path}"/bin/not_add_2_path/pmxkcd/pmxkcd "${_hub_script_dir}"
 ln -sf ${__distro_path}/bin/not_add_2_path/utilities/* "${_hub_script_dir}"

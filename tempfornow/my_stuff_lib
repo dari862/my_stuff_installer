@@ -58,8 +58,9 @@ im-config
 xfce4-notifyd
 xfce4-power-manager*
 )
+_SUDO=""
 
-if ! command -v sudo >/dev/null;then
+if command -v sudo >/dev/null;then
 	_SUDO="sudo"
 fi
 
@@ -174,6 +175,7 @@ check_for_SUDO()
 		user=$(cut -f 1,3 -d: /etc/passwd | grep :1000$ | cut -f1 -d:)
 		[ "$user" ] && adduser "$user" sudo
 	fi
+	_SUDO="sudo"
 }
 
 must_install_apps()

@@ -53,7 +53,7 @@ add_2_apt_install_()
 ##################################################################################
 # var
 ##################################################################################
-
+fingerprint_exist=false
 List_of_apt_2_install_=()
 
 #######################
@@ -173,7 +173,7 @@ if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
 		show_m "create envycontrol installtion file."
 cat << 'EOF' > "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
 	envycontrol_updater_path="$(mktemp -d)" 
-	__Custom_distro_dir_name="DmDmDmdMdMdM"
+	distroname="DmDmDmdMdMdM"
 	wget -qO- 'https://api.github.com/repos/bayasdev/envycontrol/releases/latest' \
   	| grep '"tarball_url"' \
   	| cut -f2,3 -d':' \
@@ -181,14 +181,14 @@ cat << 'EOF' > "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
   	| tr -d ',' \
   	| xargs wget -O "${envycontrol_updater_path}"/envycontrol.tar.gz && tar -xvzf "${envycontrol_updater_path}"/envycontrol.tar.gz -C "${envycontrol_updater_path}" && mv "${envycontrol_updater_path}"/bayasdev* "${envycontrol_updater_path}"/envycontrol
   	
-  	[ -d "/usr/share/${__Custom_distro_dir_name}/opt/downloaded/envycontrol" ] && sudo rm -rdf "/usr/share/${__Custom_distro_dir_name}/opt/downloaded/envycontrol"
-  	[ ! -d "/usr/share/${__Custom_distro_dir_name}/opt/downloaded" ] && sudo mkdir -p /usr/share/${__Custom_distro_dir_name}/opt/downloaded
-  	[ ! -d "/usr/share/${__Custom_distro_dir_name}/opt/git" ] && sudo mkdir -p /usr/share/${__Custom_distro_dir_name}/opt/git
+  	[ -d "/usr/share/${distroname}/opt/downloaded/envycontrol" ] && sudo rm -rdf "/usr/share/${distroname}/opt/downloaded/envycontrol"
+  	[ ! -d "/usr/share/${distroname}/opt/downloaded" ] && sudo mkdir -p /usr/share/${distroname}/opt/downloaded
+  	[ ! -d "/usr/share/${distroname}/opt/git" ] && sudo mkdir -p /usr/share/${distroname}/opt/git
   	
   	if [ -d "${envycontrol_updater_path}"/envycontrol ];then
   		chmod +x "${envycontrol_updater_path}"/envycontrol/envycontrol.py 
-  		sudo mv "${envycontrol_updater_path}"/envycontrol "/usr/share/${__Custom_distro_dir_name}/opt/git/"
-  		ln -sf "/usr/share/${__Custom_distro_dir_name}/opt/downloaded/envycontrol/envycontrol.py" "/usr/share/${__Custom_distro_dir_name}/bin/bin/envycontrol"
+  		sudo mv "${envycontrol_updater_path}"/envycontrol "/usr/share/${distroname}/opt/git/"
+  		ln -sf "/usr/share/${distroname}/opt/downloaded/envycontrol/envycontrol.py" "/usr/share/${distroname}/bin/bin/envycontrol"
   	fi
 EOF
 		chmod +x "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
@@ -201,7 +201,7 @@ show_m "Configer packages."
 apt_purge_with_error2info "${install_autoinstall_firmware[@]}"
 
 if [[ "$fingerprint_exist" = true ]];then
-    ln -sf /usr/share/${__Custom_distro_dir_name}/bin/not_add_2_path/fingerprint_gui /usr/share/${__Custom_distro_dir_name}/bin/apps
+    ln -sf /usr/share/${Custom_distro_dir_name}/bin/not_add_2_path/fingerprint_gui /usr/share/${Custom_distro_dir_name}/bin/apps
 fi
 
 if [ "${intel_gpu_exist}" = "true" ];then

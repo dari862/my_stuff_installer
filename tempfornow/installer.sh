@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+if command -v sudo >/dev/null;then
+	sudo -v
+fi
+
 ################################################################################################################################
 # Var
 ################################################################################################################################
@@ -28,13 +32,6 @@ enable_contrib=false
 enable_nonfree_firmware=false
 enable_nonfree=false
 
-if ! command -v sudo >/dev/null;then
-	_SUDO=""
-	echo "sudo does not exist."
-else
-	_SUDO="sudo"
-	sudo -v
-fi
 mirror="http://deb.debian.org/debian/"
 mirror_security="http://security.debian.org/debian-security"
 deb_lines_contrib=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v contrib || :)
@@ -326,11 +323,11 @@ _unattended_upgrades_ stop
 upgrade_now
 full_upgrade_now
 
-show_m "Install apps from (my_stuff_Installapps_list)"
-"${temp_path}"/my_stuff_Installapps_list $install_xfce4_panel $install_polybar $install_qt5ct $install_jgmenu $install_bspwm
-
 show_m "Install drivers from (my_stuff_Drivers)"
 "${temp_path}"/my_stuff_Drivers ${install_GPU_Drivers} ${_cuda_} ${_kernel_open_dkms_}
+
+show_m "Install apps from (my_stuff_Installapps_list)"
+"${temp_path}"/my_stuff_Installapps_list $install_xfce4_panel $install_polybar $install_qt5ct $install_jgmenu $install_bspwm
 
 ################################
 # git clone
@@ -556,28 +553,8 @@ if [ "$autoclean_and_autoremove" = "Y" ];then
 fi
 _unattended_upgrades_ start
 
-##################################################################################
-# fix
-##################################################################################
-# terminator
-############
-if [ -d "/etc/xdg" ];then
-	[ ! -d "/etc/xdg/terminator" ] && sudo mkdir -p "/etc/xdg/terminator"
-	[ ! -f "/etc/xdg/terminator/config" ] && sudo cp -r /usr/share/"${Custom_distro_dir_name}"/skel/.config/terminator /etc/xdg/terminator
-fi
-
-############
-# Remove "Set as wallpaper" from Thunar Context Menu and replace it with  "Set as wallpaper" from thunar config uac file
-############
-__thunar_wall_plug="$(locate thunar | grep wall || :)"
-[ ! -z "${__thunar_wall_plug}" ] && sudo mv "${__thunar_wall_plug}" "${__thunar_wall_plug}.backup"
-
-##################################################################################
-
-sudo sed -i 's/managed=.*/managed=true/g' /etc/NetworkManager/NetworkManager.conf
-
 show_m "prepare some script"
-sudo "${temp_path}"/my_stuff_prepare_script_ "${Custom_distro_dir_name}"
+sudo "${temp_path}"/my_stuff_post_install_ "${Custom_distro_dir_name}"
 
 show_m "Done"
 
