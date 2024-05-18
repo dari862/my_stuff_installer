@@ -56,13 +56,27 @@ test_internet_(){
 		return 0
 	else
 		echo "Internet connection test failed!"
-		_intface=$(ip route | awk '/default/ { print $5 }')
-		_ip=$(ip addr $_intface | grep 'inet ' | awk '{print $2}' | cut -f1 -d'/')
-		if [[ $_ip != "192.168".* ]] || [[ $_ip != "10".* ]] || [[ -z $(echo $_ip | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)') ]]
+		_intface="$(ip route | awk '/default/ { print $5 }')"
+		if [ -z "$_intface" ];then
+			for intf in /sys/class/net/*; do
+				intf_name="$(basename $intf)"
+				if [ "$intf_name" != "lo" ];then
+    				sudo ip link set dev $intf_name up
+    			fi
+			done
+			_intface="$(ip route | awk '/default/ { print $5 }')"
+			if [ -z "$_intface" ];then
+				tput sgr0
+            	echo -e '\E[1;33m'"Problem seems to be with your interface. not connected"
+            	tput sgr0
+            	exit 1
+            fi
+		fi
+		_ip="$(ip address show dev $_intface | grep 'inet ' | awk '{print $2}' | cut -f1 -d'/')"
+		if [[ ! -z "$(echo $_ip | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]]
 		then
 			wifi_interface="$(ip link | awk -F: '$0 !~ "^[^0-9]"{print $2;getline}' | awk '/w/{ print $0 }')"
-			if [ -z "$wifi_interface" ]
-			then
+			if [ -z "$wifi_interface" ];then
   				tput sgr0
             	echo -e '\E[1;33m'"Problem seems to be with your router. $_ip"
             	tput sgr0
@@ -70,6 +84,11 @@ test_internet_(){
             else
             	return 1
             fi
+        else
+        	tput sgr0
+            echo -e '\E[1;33m'"Problem seems to be with your interface. $_intface ip is $_ip"
+            tput sgr0
+            exit 1
 		fi
 		
 		gway=$(ip route | awk '/default/ { print $3 }')
