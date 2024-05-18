@@ -429,8 +429,8 @@ for f in /usr/share/"${Custom_distro_dir_name}"/applications/* ; do
 	sudo ln -sf "$f" /usr/share/applications
 done
 
-mkdir -p "/usr/share/lightdm/lightdm.conf.d"
-mkdir -p "/usr/share/lightdm/lightdm-gtk-greeter.conf.d"
+sudo mkdir -p "/usr/share/lightdm/lightdm.conf.d"
+sudo mkdir -p "/usr/share/lightdm/lightdm-gtk-greeter.conf.d"
 sudo ln -sf /usr/share/"${Custom_distro_dir_name}"/lib/lightdm/lightdm.conf.d/50_"${Custom_distro_dir_name}".conf /usr/share/lightdm/lightdm.conf.d
 sudo ln -sf /usr/share/"${Custom_distro_dir_name}"/lib/lightdm/lightdm-gtk-greeter.conf.d/50_"${Custom_distro_dir_name}".conf /usr/share/lightdm/lightdm-gtk-greeter.conf.d
 
@@ -511,10 +511,10 @@ if [ "$disable_some_unnecessary_services" = "Y" ];then
 	sudo systemctl disable pppd-dns.service || show_m "fail to disable pppd-dns.service"
 	
 	# Disable tracker (Data indexing for GNOME mostly)
-	systemctl --user mask tracker-store.service tracker-miner-fs.service tracker-miner-rss.service tracker-extract.service tracker-miner-apps.service tracker-writeback.service || show_m "fail to disable tracker services"
+	sudo systemctl --user mask tracker-store.service tracker-miner-fs.service tracker-miner-rss.service tracker-extract.service tracker-miner-apps.service tracker-writeback.service || show_m "fail to disable tracker services"
 	#systemctl --user mask gvfs-udisks2-volume-monitor.service gvfs-metadata.service gvfs-daemon.service || show_m "fail to disable gvfs.service"
 	
-	if systemctl status NetworkManager.service &>/dev/null; then
+	if sudo systemctl status NetworkManager.service &>/dev/null; then
 		#apt-get purge ifupdown; rm -rf /etc/network/*
 		sudo systemctl networking disable || show_m "fail to disable networking"
 	
