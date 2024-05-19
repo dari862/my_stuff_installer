@@ -124,7 +124,6 @@ if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
 	add_2_apt_install_ "${install_if_laptop[@]}"
 fi
 
-add_2_apt_install_ "${install_lightdm_[@]}"
 add_2_apt_install_ "${install_themes[@]}"
 add_2_apt_install_ "${install_terminal[@]}"
 add_2_apt_install_ "${install_files_manager_app[@]}"

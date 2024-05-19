@@ -278,24 +278,51 @@ wifi_mode_installation(){
 		read -p -r "pass:" pass_var 
 		wpa_passphrase "$ssid_var" "$pass_var" | tee "$tmpfile"
 		wpa_supplicant -B -c "$tmpfile" -i "$wifi_interface" &
+		unset ssid_var
+		unset pass_var
 		echo "you will wait for few sec"
 		sleep 10 
 		dhclient "$wifi_interface"
 		ping -c4 google.com || (echo "no internet connection" ; exit 1)
 		[ -f "$tmpfile" ] && rm "$tmpfile"
-		if grep 'deb cdrom' /etc/apt/sources.list;then
-			$_SUDO sed -i '/deb cdrom/d' /etc/apt/sources.list
-		fi
-		$_SUDO apt-get update || (fix_time_ && $_SUDO apt-get update )
-		$_SUDO apt-get install -y -f 2>/dev/null
-		$_SUDO apt-get install -y network-manager psmisc
-		killall wpa_supplicant
-		nmcli dev wifi connect "$ssid_var" password "$pass_var"	
-		unset ssid_var
-		unset pass_var
+		test_internet_
 	fi
 }
 
+switch_to_network_manager(){
+	network_manager_name="network-manager"
+	if ! dpkg -s ${network_manager_name} > /dev/null 2>&1; then
+		$_SUDO $__install ${network_manager_name}
+		sudo sed -i 's/managed=.*/managed=true/g' /etc/NetworkManager/NetworkManager.conf
+cat << 'EOF' > "${temp_path}"/interfaces
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+	
+source /etc/network/interfaces.d/*
+	
+# The loopback network interface
+auto lo
+iface lo inet loopback
+EOF
+	
+		chmod 644 "${temp_path}"/interfaces
+		sudo chown root:root "${temp_path}"/interfaces
+		sudo mv /etc/network/interfaces /etc/network/interfaces.old
+		sudo mv "${temp_path}"/interfaces /etc/network/interfaces
+	fi
+	
+	install_extra_Network_tools=(rfkill network-manager-gnome)
+	for INDEX in "${install_extra_Network_tools[@]}"
+	do
+		if ! dpkg -s "${INDEX}" > /dev/null 2>&1; then
+			if grep "^${INDEX}/" ${list_of_apps_file_path};then
+				List_2_install+=("$INDEX") 
+				show_m "${INDEX} added to install apps" 
+			fi
+		fi
+		$_SUDO $__install "${List_2_install[@]}"
+	done
+}
 ################################################################################################################################
 ################################################################################################################################
 ################################################################################################################################
@@ -362,6 +389,8 @@ show_m "Install drivers from (my_stuff_Drivers)"
 
 show_m "Install apps from (my_stuff_Installapps_list)"
 "${temp_path}"/my_stuff_Installapps_list $install_xfce4_panel $install_polybar $install_qt5ct $install_jgmenu $install_bspwm
+
+switch_to_network_manager
 
 ################################
 # no internet needed  part

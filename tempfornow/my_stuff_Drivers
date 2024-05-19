@@ -69,7 +69,6 @@ else
 fi
 install_fingerprint=(fprintd libpam-fprintd)
 install_wireless=(wireless-tools)
-install_Network=(rfkill network-manager network-manager-gnome)
 install_bluetooth=(bluez blueman)
 install_autoinstall_firmware=(isenkram)
 

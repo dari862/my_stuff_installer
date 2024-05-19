@@ -209,6 +209,10 @@ must_install_apps()
 			echo "/usr/sbin/lightdm" | $_SUDO tee /etc/X11/default-display-manager
 			$_SUDO $__noninteractive dpkg-reconfigure lightdm
 		fi
+	else
+		($_SUDO $__noninteractive $__install ${install_lightdm_[@]} && kill_apt) || ($_SUDO $__noninteractive $__install ${install_lightdm_[@]} && kill_apt) || $_SUDO $__noninteractive $__install ${install_lightdm_[@]}
+		echo "/usr/sbin/lightdm" | $_SUDO tee /etc/X11/default-display-manager
+		$_SUDO $__noninteractive dpkg-reconfigure lightdm
 	fi
 		
 	if ! command -v killall >/dev/null;then
