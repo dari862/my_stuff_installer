@@ -5,59 +5,6 @@ Custom_distro_name="My Stuff"
 Custom_distro_dir_name="$(echo "$Custom_distro_name" | tr -dc '[:alnum:] \n\r' | tr '[:upper:]' '[:lower:]' | tr -s ' ' '_')"
 temp_path="/tmp/my_stuff"
 
-declare -a to_be_purged=(
-aisleriot
-anthy
-kasumi
-aspell
-debian-reference-common
-fcitx
-fcitx-bin
-fcitx-frontend-gtk2
-fcitx-frontend-gtk3
-fcitx-mozc
-five-or-more
-four-in-a-row
-gnome-chess
-gnome-klotski
-gnome-mahjongg
-gnome-mines
-gnome-music
-gnome-nibbles
-gnome-robots
-gnome-sudoku
-gnome-taquin
-gnome-tetravex
-gnote
-goldendict
-hamster-applet
-hdate-applet
-hexchat
-hitori
-iagno
-khmerconverter
-lightsoff
-mate-themes
-malcontent
-mlterm
-mlterm-tiny
-mozc-utils-gui
-quadrapassel
-reportbug
-rhythmbox
-scim
-simple-scan
-sound-juicer
-swell-foop
-tali
-uim
-xboard
-xiterm+thai
-xterm
-im-config
-xfce4-notifyd
-xfce4-power-manager*
-)
 _SUDO=""
 
 if command -v sudo >/dev/null;then

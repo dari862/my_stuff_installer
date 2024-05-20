@@ -1,0 +1,174 @@
+#!/bin/bash
+set -e
+################################################################################################################################
+# Var
+################################################################################################################################
+my_stuff_location="${1-}"
+Theme_Stuff_location="${2-}"
+
+lib_file_name="my_stuff_lib"
+if ! test_if_my_stuff_lib_sourced 2>/dev/null; then
+	# source lib
+	temp_path="/tmp/my_stuff"
+	mkdir -p "${temp_path}"
+	my_stuff_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1 || :)"
+	if [[ ! -z "${my_stuff_lib_location}" ]];then
+		mv "${my_stuff_lib_location}" "${temp_path}"
+		source "${temp_path}"/${lib_file_name}
+	else
+		echo "wget lib file"
+		if wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/${lib_file_name} -O "${temp_path}"/${lib_file_name}; then
+			if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
+				echo "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
+				exit 1
+			fi
+		else
+			echo "Error: Failed to download ${lib_file_name} ."
+			exit 1
+		fi
+	fi
+fi
+################################################################################################################################
+# main
+################################################################################################################################
+cd "${my_stuff_location}"
+
+[ ! -d "${Custom_distro_dir_name}" ] && mv my_stuff "${Custom_distro_dir_name}"
+
+[ -d "/usr/share/${Custom_distro_dir_name}" ] && sudo rm -rdf "/usr/share/${Custom_distro_dir_name}"
+
+# test if in virtual machine
+if [ "$(hostnamectl | grep "Chassis:" | grep -o "vm")" == "vm" ]
+then
+	# disable vsync from picom (vsync in virtual machine make issues)
+	show_m "picom vm"
+	sed -i 's|# vsync = false|vsync = false;|g' "${Custom_distro_dir_name}"/skel/.config/picom.conf
+	sed -i 's|# vsync = false|vsync = false;|g' "${Custom_distro_dir_name}"/skel/.config/picom.conf.bunsenlab
+	sed -i 's|vsync = true;|# vsync = true|g' "${Custom_distro_dir_name}"/skel/.config/picom.conf
+	sed -i 's|vsync = true;|# vsync = true|g' "${Custom_distro_dir_name}"/skel/.config/picom.conf.bunsenlab
+fi
+
+if [ ! -f "${Custom_distro_dir_name}/lib/xsessions/${Custom_distro_dir_name}_openbox.desktop" ];then
+	mv "${Custom_distro_dir_name}"/lib/xsessions/*_openbox.desktop "${Custom_distro_dir_name}"/lib/xsessions/"${Custom_distro_dir_name}"_openbox.desktop
+fi
+
+if [ ! -f "${Custom_distro_dir_name}/lib/xsessions/${Custom_distro_dir_name}_bspwm.desktop" ];then
+	mv "${Custom_distro_dir_name}"/lib/xsessions/*_bspwm.desktop "${Custom_distro_dir_name}"/lib/xsessions/"${Custom_distro_dir_name}"_bspwm.desktop
+fi
+
+if [ ! -f "${Custom_distro_dir_name}/lib/lightdm/lightdm.conf.d/50_${Custom_distro_dir_name}.conf" ];then
+	mv "${Custom_distro_dir_name}"/lib/lightdm/lightdm.conf.d/50_*.conf "${Custom_distro_dir_name}"/lib/lightdm/lightdm.conf.d/50_"${Custom_distro_dir_name}".conf
+fi
+
+if [ ! -f "${Custom_distro_dir_name}/lib/lightdm/lightdm-gtk-greeter.conf.d/50_${Custom_distro_dir_name}.conf" ];then
+	mv "${Custom_distro_dir_name}"/lib/lightdm/lightdm-gtk-greeter.conf.d/50_*.conf "${Custom_distro_dir_name}"/lib/lightdm/lightdm-gtk-greeter.conf.d/50_"${Custom_distro_dir_name}".conf
+fi
+
+if [ ! -f "${Custom_distro_dir_name}/lib/openbox_rc/${Custom_distro_dir_name}_rc.xml" ];then
+	mv "${Custom_distro_dir_name}"/lib/openbox_rc/*_rc.xml "${Custom_distro_dir_name}"/lib/openbox_rc/"${Custom_distro_dir_name}"_rc.xml
+fi
+
+if [ ! -f "${Custom_distro_dir_name}/skel/.config/conky/scripts/${Custom_distro_dir_name}_weather.sh" ];then
+	mv "${Custom_distro_dir_name}"/skel/.config/conky/scripts/DmDmDmdMdMdM_weather.sh "${Custom_distro_dir_name}"/skel/.config/conky/scripts/"${Custom_distro_dir_name}"_weather.sh
+fi
+
+if [ ! -f "${Custom_distro_dir_name}/bin/openbox/pipemenu/${Custom_distro_dir_name}-kb-pipemenu" ];then
+	mv "${Custom_distro_dir_name}"/bin/openbox/pipemenu/DmDmDmdMdMdM-kb-pipemenu "${Custom_distro_dir_name}"/bin/openbox/pipemenu/"${Custom_distro_dir_name}"-kb-pipemenu
+fi
+
+mkdir -p "${Custom_distro_dir_name}"/bin/not_add_2_path/updater
+
+if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then 
+	show_m "this is laptop"
+	touch "${Custom_distro_dir_name}"/this_is_laptop
+fi
+
+if [[ -f "${temp_path}/envycontrol_updater_DmDmDmdMdMdM" ]];then
+	mv "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM "${Custom_distro_dir_name}"/bin/not_add_2_path/updater/envycontrol_updater
+fi
+ 	
+if [[ -f "$(ls ${temp_path}/GPU_Drivers_ready* 2>/dev/null)" ]];then 
+	touch "${Custom_distro_dir_name}"/GPU_Drivers_ready
+fi
+
+find "${Custom_distro_dir_name}"/. -type f -exec sed -i "s/DmDmDmdMdMdM/${Custom_distro_dir_name}/g" {} +
+find "${Custom_distro_dir_name}"/. -type f -exec sed -i "s/mDmDmDmDmDmDmD/${Custom_distro_name}/g" {} +
+
+source "${Custom_distro_dir_name}/lib/common/openbox_folder_name"
+
+if [[ ! -d "${Custom_distro_dir_name}/skel/.config/${OB_folder_name}" ]];then
+	mv "${Custom_distro_dir_name}/skel/.config/openbox" "${Custom_distro_dir_name}/skel/.config/${OB_folder_name}"
+	find "${Custom_distro_dir_name}"/. -type f -exec sed -i "s|.config/openbox|.config/${OB_folder_name}|g" {} +
+fi
+
+##################################################################################
+#my_stuff.git
+
+#run_fixes_
+show_m "change ownership to root"
+sudo chown -R root:root "${Custom_distro_dir_name}"
+
+show_m "moving usr_share"
+sudo mv "${Custom_distro_dir_name}" /usr/share/
+sudo ln -sf /usr/share/"${Custom_distro_dir_name}"/lib/xsessions/*_openbox.desktop /usr/share/xsessions
+
+for f in /usr/share/"${Custom_distro_dir_name}"/applications/* ; do
+	sudo ln -sf "$f" /usr/share/applications
+done
+
+sudo mkdir -p "/usr/share/lightdm/lightdm.conf.d"
+sudo mkdir -p "/usr/share/lightdm/lightdm-gtk-greeter.conf.d"
+sudo ln -sf /usr/share/"${Custom_distro_dir_name}"/lib/lightdm/lightdm.conf.d/50_"${Custom_distro_dir_name}".conf /usr/share/lightdm/lightdm.conf.d
+sudo ln -sf /usr/share/"${Custom_distro_dir_name}"/lib/lightdm/lightdm-gtk-greeter.conf.d/50_"${Custom_distro_dir_name}".conf /usr/share/lightdm/lightdm-gtk-greeter.conf.d
+
+show_m "update alternatives apps"
+sudo /usr/share/"${Custom_distro_dir_name}"/bin/bin/my-alternatives install
+show_m "installing update-notification"
+sudo /usr/share/"${Custom_distro_dir_name}"/bin/bin/update-notification -I
+if [[ -f "/usr/share/${Custom_distro_dir_name}/bin/not_add_2_path/updater/envycontrol_updater" ]];then 
+	show_m "runing envycontrol_updater"
+	sudo /usr/share/"${Custom_distro_dir_name}"/bin/not_add_2_path/updater/envycontrol_updater
+fi
+
+if [[ -f "$(ls ${temp_path}/fingerprint_exist_XXXXXX* 2>/dev/null)" ]];then 
+    ln -sf /usr/share/${Custom_distro_dir_name}/bin/not_add_2_path/fingerprint_gui /usr/share/${Custom_distro_dir_name}/bin/apps
+fi
+##################################################################################
+#Theme_Stuff.git
+show_m "chown of Theme_Stuff to root"
+sudo chown -R root:root "${Theme_Stuff_location}"/Theme_Stuff
+
+show_m "moving Theme_Stuff to /usr/share/${Custom_distro_dir_name}/Theme_Stuff"
+sudo mv "${Theme_Stuff_location}"/Theme_Stuff /usr/share/"${Custom_distro_dir_name}"
+
+show_m "Moving themes from /usr/share/themes that exist in Theme_Stuff /usr/share/${Custom_distro_dir_name}/backup"
+sudo mkdir -p /usr/share/themes
+sudo mkdir -p /usr/share/"${Custom_distro_dir_name}"/backup/themes
+for d in /usr/share/"${Custom_distro_dir_name}"/Theme_Stuff/themes/* ; do
+	Directory_name=${d##*/}
+	[ -d "/usr/share/themes/${Directory_name}" ] && sudo mv "/usr/share/themes/${Directory_name}" /usr/share/"${Custom_distro_dir_name}"/backup/themes
+	sudo ln -sf "$d" /usr/share/themes
+done
+
+show_m "Moving icons from /usr/share/icons that exist in Theme_Stuff /usr/share/${Custom_distro_dir_name}/backup"
+sudo mkdir -p /usr/share/icons
+sudo mkdir -p /usr/share/"${Custom_distro_dir_name}"/backup/icons
+for d in /usr/share/"${Custom_distro_dir_name}"/Theme_Stuff/icons/* ; do
+	Directory_name=${d##*/}
+	[ -d "/usr/share/icons/${Directory_name}" ] && sudo mv "/usr/share/icons/${Directory_name}" /usr/share/"${Custom_distro_dir_name}"/backup/icons
+	sudo ln -sf "$d" /usr/share/icons
+done
+
+show_m "Moving fonts from /usr/share/fonts that exist in Theme_Stuff /usr/share/${Custom_distro_dir_name}/backup"
+sudo mkdir -p /usr/share/fonts
+sudo mkdir -p /usr/share/"${Custom_distro_dir_name}"/backup/fonts
+for e in /usr/share/"${Custom_distro_dir_name}"/Theme_Stuff/fonts/* ; do
+	Directory_name=${e##*/}
+	[ -d "/usr/share/fonts/${Directory_name}" ] && sudo mv "/usr/share/fonts/${Directory_name}" /usr/share/"${Custom_distro_dir_name}"/backup/fonts
+	sudo ln -sf "$e" /usr/share/fonts
+done
+
+show_m "update fonts cache"
+sudo fc-cache -vf
+show_m "update icons cache"
+sudo gtk-update-icon-cache

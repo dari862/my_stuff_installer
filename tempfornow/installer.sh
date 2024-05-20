@@ -18,9 +18,9 @@ auto_run_script="false" # true to enable
 install_GPU_Drivers="install_GPU"
 _cuda_="cuda"
 _kernel_open_dkms_="nvidia-kernel-open-dkms"
-purge_some_unnecessary_pakages="Y"
-disable_some_unnecessary_services="Y"
-update_grub_image="Y"
+run_purge_some_unnecessary_pakages="Y"
+run_disable_some_unnecessary_services="Y"
+run_update_grub_image="Y"
 autoclean_and_autoremove="Y"
 install_xfce4_panel=xfce4_panel 
 install_polybar=polybar 
@@ -170,15 +170,15 @@ prompt_to_ask_to_what_to_install(){
 		fi
 		
 		if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to purge some unnecessary pakages?')" != "Y" ];then
-			purge_some_unnecessary_pakages=""
+			run_purge_some_unnecessary_pakages=""
 		fi
 		
 		if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to disable some unnecessary services?')" != "Y" ];then
-			disable_some_unnecessary_services=""
+			run_disable_some_unnecessary_services=""
 		fi
 		
 		if [ "$(do_you_want_2_run_this_yes_or_no 'update grub image?')" != "Y" ];then
-			update_grub_image=""
+			run_update_grub_image=""
 		fi
 		
 		if [ "$(do_you_want_2_run_this_yes_or_no 'run autoclean and autoremove?')" != "Y" ];then
@@ -323,8 +323,91 @@ EOF
 		$_SUDO $__install "${List_2_install[@]}"
 	done
 }
+
+purge_some_unnecessary_pakages(){
+# fonts-linuxlibertine break polybar 
+# fonts-linuxlibertine installed from libreoffice
+	if [ "$run_purge_some_unnecessary_pakages" = "Y" ];then
+		declare -a to_be_purged=( aisleriot anthy kasumi aspell debian-reference-common fcitx fcitx-bin fcitx-frontend-gtk2 fcitx-frontend-gtk3 fcitx-mozc five-or-more four-in-a-row gnome-chess gnome-klotski gnome-mahjongg gnome-mines gnome-music gnome-nibbles gnome-robots gnome-sudoku gnome-taquin gnome-tetravex gnote goldendict hamster-applet hdate-applet hexchat hitori iagno khmerconverter lightsoff mate-themes malcontent mlterm mlterm-tiny mozc-utils-gui quadrapassel reportbug rhythmbox scim simple-scan sound-juicer swell-foop tali uim xboard xiterm+thai xterm im-config xfce4-notifyd xfce4-power-manager* )
+		
+		show_m "adding fonts-linuxlibertine to purging list (fonts-linuxlibertine break polybar) "
+		to_be_purged+=("linuxlibertine")
+		show_m "purging apps"
+		apt_purge_with_error2info "${to_be_purged[@]}"
+	fi
+}
+
+disable_some_unnecessary_services(){
+	if [ "$run_disable_some_unnecessary_services" = "Y" ];then
+		show_m "Disable some unnecessary services"
+		
+		# INFO: Some boot services included in Debian are unnecesary for most usres (like NetworkManager-wait-online.service, ModemManager.service or pppd-dns.service)
+		
+		sudo systemctl stop NetworkManager-wait-online.service || show_m "fail to stop NetworkManager-wait-online.service"
+		sudo systemctl mask NetworkManager-wait-online.service || show_m "fail to mask NetworkManager-wait-online.service"
+		
+		sudo systemctl stop wpa_supplicant || show_m "fail to stop wpa_supplicant"
+		sudo systemctl disable wpa_supplicant || show_m "fail to disable wpa_supplicant"	# No mask, may be needed by network manager
+		
+		sudo systemctl stop ModemManager.service || show_m "fail to stop ModemManager.service"
+		sudo systemctl disable ModemManager.service || show_m "fail to disable ModemManager.service"
+		
+		sudo systemctl stop pppd-dns.service || show_m "fail to stop pppd-dns.service"
+		sudo systemctl disable pppd-dns.service || show_m "fail to disable pppd-dns.service"
+		
+		# Disable tracker (Data indexing for GNOME mostly)
+		sudo systemctl --user mask tracker-store.service tracker-miner-fs.service tracker-miner-rss.service tracker-extract.service tracker-miner-apps.service tracker-writeback.service || show_m "fail to disable tracker services"
+		#systemctl --user mask gvfs-udisks2-volume-monitor.service gvfs-metadata.service gvfs-daemon.service || show_m "fail to disable gvfs.service"
+		
+		if sudo systemctl status NetworkManager.service &>/dev/null; then
+			#apt-get purge ifupdown; rm -rf /etc/network/*
+			sudo systemctl networking disable || show_m "fail to disable networking"
+		
+			#apt-get purge network-dispacher
+			sudo systemctl stop systemd-networkd.service || show_m "fail to stop systemd-networkd.service"
+			sudo systemctl disable systemd-networkd.service || show_m "fail to disable systemd-networkd.service"
+		fi
+	fi
+}
+clean_up_now(){
+	show_m "clean_up_now"
+	show_m "removing not needed dotfiles"
+	
+	mkdir -p "${temp_path}"/clean_up_now_trash_folder
+	
+	move_this_Array=($(ls /usr/share/"${Custom_distro_dir_name}"/skel/.config/))
+	
+	for movethis in "${move_this_Array[@]}"; do
+		[ -e "${HOME}/.config/${movethis}" ] && mv "${HOME}/.config/${movethis}" "${temp_path}"/clean_up_now_trash_folder  &> /dev/null;
+	done
+	
+	remove_this_Array=(
+	.xsession-error*
+	)
+	for removethis in "${remove_this_Array[@]}"; do
+		[ -f "${HOME}/${removethis}" ] && rm -f "${HOME}/${removethis}" &> /dev/null;
+	done
+	if [ "$autoclean_and_autoremove" = "Y" ];then
+		show_m "autoremove unwanted pakages"
+		sudo apt-get autoremove -y
+		sudo apt-get autoclean -y
+	fi
+}
+
+update_grub_image(){
+	if [ "$run_update_grub_image" = "Y" ];then
+		show_m "update grub"
+		sudo ln -sf /usr/share/"${Custom_distro_dir_name}"/images/wallpapers/default/Networks.png /boot/grub/
+		# this package added some grub config
+		sudo sync
+		sudo update-grub
+	fi
+	# install Themes
+	sudo gtk-update-icon-cache
+}
+
 ################################################################################################################################
-################################################################################################################################
+# main
 ################################################################################################################################
 test_internet_ || wifi_mode_installation
 mkdir -p "${temp_path}"
@@ -369,6 +452,8 @@ check_and_download_ "my_stuff_post_install_"
 
 check_and_download_ "my_stuff_Drivers"
 
+check_and_download_ "my_stuff_configer"
+
 ################################
 # git clone
 
@@ -392,233 +477,29 @@ show_m "Install apps from (my_stuff_Installapps_list)"
 
 switch_to_network_manager
 
-################################
+##################################################################################
+##################################################################################
 # no internet needed  part
-################################
-cd "${my_stuff_location}"
-
-[ ! -d "${Custom_distro_dir_name}" ] && mv my_stuff "${Custom_distro_dir_name}"
-
-[ -d "/usr/share/${Custom_distro_dir_name}" ] && sudo rm -rdf "/usr/share/${Custom_distro_dir_name}"
-
-# test if in virtual machine
-if [ "$(hostnamectl | grep "Chassis:" | grep -o "vm")" == "vm" ]
-then
-	# disable vsync from picom (vsync in virtual machine make issues)
-	show_m "picom vm"
-	sed -i 's|# vsync = false|vsync = false;|g' "${Custom_distro_dir_name}"/skel/.config/picom.conf
-	sed -i 's|# vsync = false|vsync = false;|g' "${Custom_distro_dir_name}"/skel/.config/picom.conf.bunsenlab
-	sed -i 's|vsync = true;|# vsync = true|g' "${Custom_distro_dir_name}"/skel/.config/picom.conf
-	sed -i 's|vsync = true;|# vsync = true|g' "${Custom_distro_dir_name}"/skel/.config/picom.conf.bunsenlab
-fi
-
-if [ ! -f "${Custom_distro_dir_name}/lib/xsessions/${Custom_distro_dir_name}_openbox.desktop" ];then
-	mv "${Custom_distro_dir_name}"/lib/xsessions/*_openbox.desktop "${Custom_distro_dir_name}"/lib/xsessions/"${Custom_distro_dir_name}"_openbox.desktop
-fi
-
-if [ ! -f "${Custom_distro_dir_name}/lib/xsessions/${Custom_distro_dir_name}_bspwm.desktop" ];then
-	mv "${Custom_distro_dir_name}"/lib/xsessions/*_bspwm.desktop "${Custom_distro_dir_name}"/lib/xsessions/"${Custom_distro_dir_name}"_bspwm.desktop
-fi
-
-if [ ! -f "${Custom_distro_dir_name}/lib/lightdm/lightdm.conf.d/50_${Custom_distro_dir_name}.conf" ];then
-	mv "${Custom_distro_dir_name}"/lib/lightdm/lightdm.conf.d/50_*.conf "${Custom_distro_dir_name}"/lib/lightdm/lightdm.conf.d/50_"${Custom_distro_dir_name}".conf
-fi
-
-if [ ! -f "${Custom_distro_dir_name}/lib/lightdm/lightdm-gtk-greeter.conf.d/50_${Custom_distro_dir_name}.conf" ];then
-	mv "${Custom_distro_dir_name}"/lib/lightdm/lightdm-gtk-greeter.conf.d/50_*.conf "${Custom_distro_dir_name}"/lib/lightdm/lightdm-gtk-greeter.conf.d/50_"${Custom_distro_dir_name}".conf
-fi
-
-if [ ! -f "${Custom_distro_dir_name}/lib/openbox_rc/${Custom_distro_dir_name}_rc.xml" ];then
-	mv "${Custom_distro_dir_name}"/lib/openbox_rc/*_rc.xml "${Custom_distro_dir_name}"/lib/openbox_rc/"${Custom_distro_dir_name}"_rc.xml
-fi
-
-if [ ! -f "${Custom_distro_dir_name}/skel/.config/conky/scripts/${Custom_distro_dir_name}_weather.sh" ];then
-	mv "${Custom_distro_dir_name}"/skel/.config/conky/scripts/DmDmDmdMdMdM_weather.sh "${Custom_distro_dir_name}"/skel/.config/conky/scripts/"${Custom_distro_dir_name}"_weather.sh
-fi
-
-if [ ! -f "${Custom_distro_dir_name}/bin/openbox/pipemenu/${Custom_distro_dir_name}-kb-pipemenu" ];then
-	mv "${Custom_distro_dir_name}"/bin/openbox/pipemenu/DmDmDmdMdMdM-kb-pipemenu "${Custom_distro_dir_name}"/bin/openbox/pipemenu/"${Custom_distro_dir_name}"-kb-pipemenu
-fi
-
-mkdir -p "${Custom_distro_dir_name}"/bin/not_add_2_path/updater
-
-if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then 
-	show_m "this is laptop"
-	touch "${Custom_distro_dir_name}"/this_is_laptop
-fi
-
-if [[ -f "${temp_path}/envycontrol_updater_DmDmDmdMdMdM" ]];then
-	mv "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM "${Custom_distro_dir_name}"/bin/not_add_2_path/updater/envycontrol_updater
-fi
- 	
-if [[ -f "$(ls ${temp_path}/GPU_Drivers_ready* 2>/dev/null)" ]];then 
-	touch "${Custom_distro_dir_name}"/GPU_Drivers_ready
-fi
-
-find "${Custom_distro_dir_name}"/. -type f -exec sed -i "s/DmDmDmdMdMdM/${Custom_distro_dir_name}/g" {} +
-find "${Custom_distro_dir_name}"/. -type f -exec sed -i "s/mDmDmDmDmDmDmD/${Custom_distro_name}/g" {} +
-
-source "${Custom_distro_dir_name}/lib/common/openbox_folder_name"
-
-if [[ ! -d "${Custom_distro_dir_name}/skel/.config/${OB_folder_name}" ]];then
-	mv "${Custom_distro_dir_name}/skel/.config/openbox" "${Custom_distro_dir_name}/skel/.config/${OB_folder_name}"
-	find "${Custom_distro_dir_name}"/. -type f -exec sed -i "s|.config/openbox|.config/${OB_folder_name}|g" {} +
-fi
-
 ##################################################################################
-#my_stuff.git
-
-#run_fixes_
-show_m "change ownership to root"
-sudo chown -R root:root "${Custom_distro_dir_name}"
-
-show_m "moving usr_share"
-sudo mv "${Custom_distro_dir_name}" /usr/share/
-sudo ln -sf /usr/share/"${Custom_distro_dir_name}"/lib/xsessions/*_openbox.desktop /usr/share/xsessions
-
-for f in /usr/share/"${Custom_distro_dir_name}"/applications/* ; do
-	sudo ln -sf "$f" /usr/share/applications
-done
-
-sudo mkdir -p "/usr/share/lightdm/lightdm.conf.d"
-sudo mkdir -p "/usr/share/lightdm/lightdm-gtk-greeter.conf.d"
-sudo ln -sf /usr/share/"${Custom_distro_dir_name}"/lib/lightdm/lightdm.conf.d/50_"${Custom_distro_dir_name}".conf /usr/share/lightdm/lightdm.conf.d
-sudo ln -sf /usr/share/"${Custom_distro_dir_name}"/lib/lightdm/lightdm-gtk-greeter.conf.d/50_"${Custom_distro_dir_name}".conf /usr/share/lightdm/lightdm-gtk-greeter.conf.d
-
-show_m "update alternatives apps"
-sudo /usr/share/"${Custom_distro_dir_name}"/bin/bin/my-alternatives install
-show_m "installing update-notification"
-sudo /usr/share/"${Custom_distro_dir_name}"/bin/bin/update-notification -I
-if [[ -f "/usr/share/${Custom_distro_dir_name}/bin/not_add_2_path/updater/envycontrol_updater" ]];then 
-	show_m "runing envycontrol_updater"
-	sudo /usr/share/"${Custom_distro_dir_name}"/bin/not_add_2_path/updater/envycontrol_updater
-fi
-
-if [[ -f "$(ls ${temp_path}/fingerprint_exist_XXXXXX* 2>/dev/null)" ]];then 
-    ln -sf /usr/share/${Custom_distro_dir_name}/bin/not_add_2_path/fingerprint_gui /usr/share/${Custom_distro_dir_name}/bin/apps
-fi
-##################################################################################
-#Theme_Stuff.git
-show_m "chown of Theme_Stuff to root"
-sudo chown -R root:root "${Theme_Stuff_location}"/Theme_Stuff
-
-show_m "moving Theme_Stuff to /usr/share/${Custom_distro_dir_name}/Theme_Stuff"
-sudo mv "${Theme_Stuff_location}"/Theme_Stuff /usr/share/"${Custom_distro_dir_name}"
-
-show_m "Moving themes from /usr/share/themes that exist in Theme_Stuff /usr/share/${Custom_distro_dir_name}/backup"
-sudo mkdir -p /usr/share/themes
-sudo mkdir -p /usr/share/"${Custom_distro_dir_name}"/backup/themes
-for d in /usr/share/"${Custom_distro_dir_name}"/Theme_Stuff/themes/* ; do
-	Directory_name=${d##*/}
-	[ -d "/usr/share/themes/${Directory_name}" ] && sudo mv "/usr/share/themes/${Directory_name}" /usr/share/"${Custom_distro_dir_name}"/backup/themes
-	sudo ln -sf "$d" /usr/share/themes
-done
-
-show_m "Moving icons from /usr/share/icons that exist in Theme_Stuff /usr/share/${Custom_distro_dir_name}/backup"
-sudo mkdir -p /usr/share/icons
-sudo mkdir -p /usr/share/"${Custom_distro_dir_name}"/backup/icons
-for d in /usr/share/"${Custom_distro_dir_name}"/Theme_Stuff/icons/* ; do
-	Directory_name=${d##*/}
-	[ -d "/usr/share/icons/${Directory_name}" ] && sudo mv "/usr/share/icons/${Directory_name}" /usr/share/"${Custom_distro_dir_name}"/backup/icons
-	sudo ln -sf "$d" /usr/share/icons
-done
-
-show_m "Moving fonts from /usr/share/fonts that exist in Theme_Stuff /usr/share/${Custom_distro_dir_name}/backup"
-sudo mkdir -p /usr/share/fonts
-sudo mkdir -p /usr/share/"${Custom_distro_dir_name}"/backup/fonts
-for e in /usr/share/"${Custom_distro_dir_name}"/Theme_Stuff/fonts/* ; do
-	Directory_name=${e##*/}
-	[ -d "/usr/share/fonts/${Directory_name}" ] && sudo mv "/usr/share/fonts/${Directory_name}" /usr/share/"${Custom_distro_dir_name}"/backup/fonts
-	sudo ln -sf "$e" /usr/share/fonts
-done
-
-show_m "update fonts cache"
-sudo fc-cache -vf
-show_m "update icons cache"
-sudo gtk-update-icon-cache
-
-##################################################################################
-# fonts-linuxlibertine break polybar 
-# fonts-linuxlibertine installed from libreoffice
-if [ "$purge_some_unnecessary_pakages" = "Y" ];then
-	show_m "adding fonts-linuxlibertine to purging list (fonts-linuxlibertine break polybar) "
-	to_be_purged+=("linuxlibertine")
-	show_m "purging apps"
-	apt_purge_with_error2info "${to_be_purged[@]}"
-fi
 ##################################################################################
 
-if [ "$disable_some_unnecessary_services" = "Y" ];then
-	show_m "Disable some unnecessary services"
-	
-	# INFO: Some boot services included in Debian are unnecesary for most usres (like NetworkManager-wait-online.service, ModemManager.service or pppd-dns.service)
-	
-	sudo systemctl stop NetworkManager-wait-online.service || show_m "fail to stop NetworkManager-wait-online.service"
-	sudo systemctl mask NetworkManager-wait-online.service || show_m "fail to mask NetworkManager-wait-online.service"
-	
-	sudo systemctl stop wpa_supplicant || show_m "fail to stop wpa_supplicant"
-	sudo systemctl disable wpa_supplicant || show_m "fail to disable wpa_supplicant"	# No mask, may be needed by network manager
-	
-	sudo systemctl stop ModemManager.service || show_m "fail to stop ModemManager.service"
-	sudo systemctl disable ModemManager.service || show_m "fail to disable ModemManager.service"
-	
-	sudo systemctl stop pppd-dns.service || show_m "fail to stop pppd-dns.service"
-	sudo systemctl disable pppd-dns.service || show_m "fail to disable pppd-dns.service"
-	
-	# Disable tracker (Data indexing for GNOME mostly)
-	sudo systemctl --user mask tracker-store.service tracker-miner-fs.service tracker-miner-rss.service tracker-extract.service tracker-miner-apps.service tracker-writeback.service || show_m "fail to disable tracker services"
-	#systemctl --user mask gvfs-udisks2-volume-monitor.service gvfs-metadata.service gvfs-daemon.service || show_m "fail to disable gvfs.service"
-	
-	if sudo systemctl status NetworkManager.service &>/dev/null; then
-		#apt-get purge ifupdown; rm -rf /etc/network/*
-		sudo systemctl networking disable || show_m "fail to disable networking"
-	
-		#apt-get purge network-dispacher
-		sudo systemctl stop systemd-networkd.service || show_m "fail to stop systemd-networkd.service"
-		sudo systemctl disable systemd-networkd.service || show_m "fail to disable systemd-networkd.service"
-	fi
-fi
+show_m "Configering ${Custom_distro_name}."
+"${temp_path}"/my_stuff_configer "${my_stuff_location}" "${Theme_Stuff_location}"
 
-show_m "clean_up_now"
-show_m "removing not needed dotfiles"
+purge_some_unnecessary_pakages
 
-mkdir -p "${temp_path}"/clean_up_now_trash_folder
+disable_some_unnecessary_services
 
-move_this_Array=($(ls /usr/share/"${Custom_distro_dir_name}"/skel/.config/))
+clean_up_now
 
-for movethis in "${move_this_Array[@]}"; do
-	[ -e "${HOME}/.config/${movethis}" ] && mv "${HOME}/.config/${movethis}" "${temp_path}"/clean_up_now_trash_folder  &> /dev/null;
-done
+update_grub_image
 
-remove_this_Array=(
-.xsession-error*
-)
-for removethis in "${remove_this_Array[@]}"; do
-	[ -f "${HOME}/${removethis}" ] && rm -f "${HOME}/${removethis}" &> /dev/null;
-done
-
-if [ "$update_grub_image" = "Y" ];then
-	show_m "update grub"
-	sudo ln -sf /usr/share/"${Custom_distro_dir_name}"/images/wallpapers/default/Networks.png /boot/grub/
-	# this package added some grub config
-	sudo sync
-	sudo update-grub
-fi
-# install Themes
-sudo gtk-update-icon-cache
-
-if [ "$autoclean_and_autoremove" = "Y" ];then
-	show_m "autoremove unwanted pakages"
-	sudo apt-get autoremove -y
-	sudo apt-get autoclean -y
-fi
 _unattended_upgrades_ start
 
 show_m "prepare some script"
 sudo "${temp_path}"/my_stuff_post_install_ "${Custom_distro_dir_name}"
 
 show_m "Done"
-
 if [ "$reboot_now" = "Y" ];then
 	sudo reboot
 fi

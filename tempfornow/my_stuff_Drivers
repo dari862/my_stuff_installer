@@ -1,20 +1,24 @@
 #!/bin/bash
 set -e
 
+lib_file_name="my_stuff_lib"
 if ! test_if_my_stuff_lib_sourced 2>/dev/null; then
 	# source lib
 	temp_path="/tmp/my_stuff"
 	mkdir -p "${temp_path}"
-	my_stuff_lib_location="$(find $HOME -type f -name my_stuff_lib | head -1 || :)"
+	my_stuff_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1 || :)"
 	if [[ ! -z "${my_stuff_lib_location}" ]];then
 		mv "${my_stuff_lib_location}" "${temp_path}"
-	fi
-	
-	if ! source "${temp_path}"/my_stuff_lib 2> /dev/null; then
+		source "${temp_path}"/${lib_file_name}
+	else
 		echo "wget lib file"
-		wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/my_stuff_lib
-		if ! source "${temp_path}"/my_stuff_lib 2> /dev/null; then
-			echo "Error: Failed to source my_stuff_lib from ${temp_path}" >&2
+		if wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/${lib_file_name} -O "${temp_path}"/${lib_file_name}; then
+			if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
+				echo "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
+				exit 1
+			fi
+		else
+			echo "Error: Failed to download ${lib_file_name} ."
 			exit 1
 		fi
 	fi
@@ -50,6 +54,23 @@ add_2_apt_install_()
 	done
 }
 
+create_20_intel_conf_file()
+	show_m "Create 20-intel.conf file."
+	if [ "${intel_gpu_exist}" = "true" ];then
+	sudo mkdir -p /etc/X11/xorg.conf.d/
+sudo bash -c 'cat << EOF > /etc/X11/xorg.conf.d/20-intel.conf
+Section "Device"
+	Identifier  "Intel Graphics"
+	Driver      "Intel"
+	Option      "AccelMethod"  "sna"
+	Option      "TearFree"	"True"
+	Option      "Tiling"	"True"
+	Option      "SwapbuffersWait" "True"
+	#Option      "AccelMethod"  "uxa"
+EndSection
+EOF'
+	fi
+}
 ##################################################################################
 # var
 ##################################################################################
@@ -179,26 +200,15 @@ fi
 show_m "run isenkram-autoinstall-firmware."
 sudo isenkram-autoinstall-firmware || : # to prevent script from exiting "isenkram-autoinstall-firmware contain exit command"
 
-show_m "Configer packages."
+show_m "Remove isenkram package."
 apt_purge_with_error2info "${install_autoinstall_firmware[@]}"
+
+show_m "Configer packages."
+
+#create_20_intel_conf_file
 
 if [[ "$fingerprint_exist" = true ]];then
 	mktemp "${temp_path}"/fingerprint_exist_XXXXXX
-fi
-
-if [ "${intel_gpu_exist}" = "true" ];then
-sudo mkdir -p /etc/X11/xorg.conf.d/
-sudo bash -c 'cat << EOF > /etc/X11/xorg.conf.d/20-intel.conf
-Section "Device"
-	Identifier  "Intel Graphics"
-	Driver      "Intel"
-	Option      "AccelMethod"  "sna"
-	Option      "TearFree"	"True"
-	Option      "Tiling"	"True"
-	Option      "SwapbuffersWait" "True"
-	#Option      "AccelMethod"  "uxa"
-EndSection
-EOF'
 fi
 
 if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
