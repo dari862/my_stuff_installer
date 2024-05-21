@@ -144,12 +144,14 @@ check_for_SUDO()
 		[ "$user" ] && adduser "$user" sudo
 	fi
 	_SUDO="sudo"
-	# keep sudo refresed
-	while true
-	do
-			sudo -v
-			sleep 10m
-	done
+	keep_sudo_refresed(){
+		while true
+		do
+				sudo -v
+				sleep 10m
+		done
+	}
+	keep_sudo_refresed &
 }
 
 must_install_apps()

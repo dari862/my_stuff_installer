@@ -443,6 +443,11 @@ if [[ ! -z "${my_stuff_lib_location}" ]];then
 		echo "Error: Failed to source ${lib_file_name} from ${temp_path} but ${lib_file_name} exist in ${temp_path}" >&2
 		exit 1
 	fi
+elif [[ -f "${temp_path}"/${lib_file_name} ]];then
+	if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
+		echo "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
+		exit 1
+	fi
 else
 	echo "wget lib file"
 	if wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/${lib_file_name} -O "${temp_path}"/${lib_file_name}; then
