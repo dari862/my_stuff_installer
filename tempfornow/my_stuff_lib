@@ -144,24 +144,16 @@ check_for_SUDO()
 		[ "$user" ] && adduser "$user" sudo
 	fi
 	_SUDO="sudo"
+	# keep sudo refresed
+	while true
+	do
+			sudo -v
+			sleep 10m
+	done
 }
 
 must_install_apps()
 {
-	install_lightdm_=(lightdm lightdm-gtk-greeter-settings)
-	if [ -f "/etc/X11/default-display-manager" ]; then
-		d_d_m="$(basename "$(cat /etc/X11/default-display-manager)")"
-		if [ "$d_d_m" != "lightdm"  ];then
-			($_SUDO $__noninteractive $__install ${install_lightdm_[@]} && kill_apt) || ($_SUDO $__noninteractive $__install ${install_lightdm_[@]} && kill_apt) || $_SUDO $__noninteractive $__install ${install_lightdm_[@]}
-			echo "/usr/sbin/lightdm" | $_SUDO tee /etc/X11/default-display-manager
-			$_SUDO $__noninteractive dpkg-reconfigure lightdm
-		fi
-	else
-		($_SUDO $__noninteractive $__install ${install_lightdm_[@]} && kill_apt) || ($_SUDO $__noninteractive $__install ${install_lightdm_[@]} && kill_apt) || $_SUDO $__noninteractive $__install ${install_lightdm_[@]}
-		echo "/usr/sbin/lightdm" | $_SUDO tee /etc/X11/default-display-manager
-		$_SUDO $__noninteractive dpkg-reconfigure lightdm
-	fi
-		
 	if ! command -v killall >/dev/null;then
 		($_SUDO $__install psmisc && kill_apt) || ($_SUDO $__install psmisc && kill_apt) || $_SUDO $__install psmisc
 		exval=$?
@@ -246,15 +238,6 @@ apt_purge_with_error2info()
 			$_SUDO $__purge "$package"
 		fi
 	done
-}
-
-keep_Sudo_refresed()
-{
-	while true
-		do
-			sudo -v
-			sleep 10m
-		done
 }
 
 run_fixes_()

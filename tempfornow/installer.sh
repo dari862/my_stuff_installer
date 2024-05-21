@@ -1,20 +1,21 @@
 #!/bin/bash
 set -e
 
-if command -v sudo >/dev/null;then
-	sudo -v
-fi
-
 ################################################################################################################################
 # Var
 ################################################################################################################################
+lib_file_name="my_stuff_lib"
+auto_run_script="false" # true to enable
+mirror="http://deb.debian.org/debian/"
+mirror_security="http://security.debian.org/debian-security"
+deb_lines_contrib=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v contrib || :)
+deb_lines_nonfree_firmware=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non\-free\-firmware' || :)
+deb_lines_nonfree=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non\-free ' || :)
+
+
 internet_status=""
 temp_path="/tmp/my_stuff"
-lib_file_name="my_stuff_lib"
 my_stuff_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1 || :)"
-
-auto_run_script="false" # true to enable
-
 install_GPU_Drivers="install_GPU"
 _cuda_="cuda"
 _kernel_open_dkms_="nvidia-kernel-open-dkms"
@@ -32,17 +33,12 @@ enable_contrib=false
 enable_nonfree_firmware=false
 enable_nonfree=false
 
-mirror="http://deb.debian.org/debian/"
-mirror_security="http://security.debian.org/debian-security"
-deb_lines_contrib=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v contrib || :)
-deb_lines_nonfree_firmware=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non\-free\-firmware' || :)
-deb_lines_nonfree=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non\-free ' || :)
-
-wifi_interface=""
 ################################################################################################################################
 # Function
 ################################################################################################################################
 test_internet_(){
+	local wifi_interface=""
+	
 	tput sgr0
 	echo -e '\E[1;32m'"Testing internet connection."
 	tput sgr0	
@@ -60,8 +56,8 @@ test_internet_(){
 		if [ -z "$_intface" ];then
 			for intf in /sys/class/net/*; do
 				intf_name="$(basename $intf)"
-				if [ "$intf_name" != "lo" ];then
-    				sudo ip link set dev $intf_name up
+				if [[ "$intf_name" != "lo" ]] || [[ "$intf_name" != "w"* ]];then
+    				$_SUDO ip link set dev $intf_name up
     			fi
 			done
 			_intface="$(ip route | awk '/default/ { print $5 }')"
@@ -75,18 +71,22 @@ test_internet_(){
 		_ip="$(ip address show dev $_intface | grep 'inet ' | awk '{print $2}' | cut -f1 -d'/')"
 		if [[ ! -z "$(echo $_ip | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]]
 		then
-			wifi_interface="$(ip link | awk -F: '$0 !~ "^[^0-9]"{print $2;getline}' | awk '/w/{ print $0 }')"
-			if [ -z "$wifi_interface" ];then
-  				tput sgr0
-            	echo -e '\E[1;33m'"Problem seems to be with your router. $_ip"
-            	tput sgr0
-            	exit 1
+			if ls /sys/class/net/w* 2>/dev/null;then
+				wifi_interface="$(ip link | awk -F: '$0 !~ "^[^0-9]"{print $2;getline}' | awk '/w/{ print $0 }')"
+				if [ -z "$wifi_interface" ];then
+  					tput sgr0
+            		echo -e '\E[1;33m'"Problem seems to be with your router. $_ip"
+            		tput sgr0
+            		exit 1
+            	else
+            		wifi_mode_installation "$wifi_interface"
+            	fi
             else
-            	return 1
+            	echo -e '\E[1;33m'"Problem seems to be with your router. $_ip"
             fi
         else
         	tput sgr0
-            echo -e '\E[1;33m'"Problem seems to be with your interface. $_intface ip is $_ip"
+            echo -e '\E[1;33m'"Problem seems to be with your interface or there is no DHCP server. $_intface ip is $_ip"
             tput sgr0
             exit 1
 		fi
@@ -259,6 +259,8 @@ fix_time_(){
 }
 
 wifi_mode_installation(){
+	local wifi_interface="${1-}"
+	
 	ip link set "$wifi_interface" up
 		
 	if command -v nmcli &> /dev/null
@@ -272,17 +274,17 @@ wifi_mode_installation(){
 	then
 		tmpfile="$(mktemp)"
 		echo -e "\n These hotspots are available \n"
-		iwlist "$wifi_interface" scan | grep ESSID | sed 's/ESSID://g;s/"//g;s/^                    //g'
+		$_SUDO iwlist "$wifi_interface" scan | grep ESSID | sed 's/ESSID://g;s/"//g;s/^                    //g'
 		read -p -r "ssid:" ssid_var
 		(iw "$wifi_interface" scan | grep 'SSID' | grep "$ssid_var") || (echo "wrong ssid")
 		read -p -r "pass:" pass_var 
 		wpa_passphrase "$ssid_var" "$pass_var" | tee "$tmpfile"
-		wpa_supplicant -B -c "$tmpfile" -i "$wifi_interface" &
+		$_SUDO wpa_supplicant -B -c "$tmpfile" -i "$wifi_interface" &
 		unset ssid_var
 		unset pass_var
 		echo "you will wait for few sec"
 		sleep 10 
-		dhclient "$wifi_interface"
+		$_SUDO dhclient "$wifi_interface"
 		ping -c4 google.com || (echo "no internet connection" ; exit 1)
 		[ -f "$tmpfile" ] && rm "$tmpfile"
 		test_internet_
@@ -292,7 +294,7 @@ wifi_mode_installation(){
 switch_to_network_manager(){
 	network_manager_name="network-manager"
 	if ! dpkg -s ${network_manager_name} > /dev/null 2>&1; then
-		$_SUDO $__install ${network_manager_name}
+		sudo $__install ${network_manager_name}
 		sudo sed -i 's/managed=.*/managed=true/g' /etc/NetworkManager/NetworkManager.conf
 cat << 'EOF' > "${temp_path}"/interfaces
 # This file describes the network interfaces available on your system
@@ -320,7 +322,7 @@ EOF
 				show_m "${INDEX} added to install apps" 
 			fi
 		fi
-		$_SUDO $__install "${List_2_install[@]}"
+		sudo $__install "${List_2_install[@]}"
 	done
 }
 
@@ -406,10 +408,29 @@ update_grub_image(){
 	sudo gtk-update-icon-cache
 }
 
+install_lightdm_now(){
+	install_lightdm_=(lightdm lightdm-gtk-greeter-settings)
+	if [ -f "/etc/X11/default-display-manager" ]; then
+		d_d_m="$(basename "$(cat /etc/X11/default-display-manager)")"
+		if [ "$d_d_m" != "lightdm"  ];then
+			($_SUDO $__noninteractive $__install ${install_lightdm_[@]} && kill_apt) || ($_SUDO $__noninteractive $__install ${install_lightdm_[@]} && kill_apt) || $_SUDO $__noninteractive $__install ${install_lightdm_[@]}
+			echo "/usr/sbin/lightdm" | $_SUDO tee /etc/X11/default-display-manager
+			$_SUDO $__noninteractive dpkg-reconfigure lightdm
+		fi
+	else
+		($_SUDO $__noninteractive $__install ${install_lightdm_[@]} && kill_apt) || ($_SUDO $__noninteractive $__install ${install_lightdm_[@]} && kill_apt) || $_SUDO $__noninteractive $__install ${install_lightdm_[@]}
+		echo "/usr/sbin/lightdm" | $_SUDO tee /etc/X11/default-display-manager
+		$_SUDO $__noninteractive dpkg-reconfigure lightdm
+	fi
+}
 ################################################################################################################################
 # main
 ################################################################################################################################
-test_internet_ || wifi_mode_installation
+if command -v sudo >/dev/null;then
+	sudo -v
+fi
+
+test_internet_
 mkdir -p "${temp_path}"
 
 # source my_stuff_lib
@@ -439,8 +460,6 @@ fix_time_
 aptfixer
 
 check_for_SUDO
-
-keep_Sudo_refresed &
 
 enable_repo_
 
@@ -474,6 +493,8 @@ show_m "Install drivers from (my_stuff_Drivers)"
 
 show_m "Install apps from (my_stuff_Installapps_list)"
 "${temp_path}"/my_stuff_Installapps_list $install_xfce4_panel $install_polybar $install_qt5ct $install_jgmenu $install_bspwm
+
+install_lightdm_now
 
 switch_to_network_manager
 
