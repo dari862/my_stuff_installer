@@ -9,8 +9,8 @@ auto_run_script="false" # true to enable
 mirror="http://deb.debian.org/debian/"
 mirror_security="http://security.debian.org/debian-security"
 deb_lines_contrib=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v contrib || :)
-deb_lines_nonfree_firmware=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non\-free\-firmware' || :)
-deb_lines_nonfree=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non\-free ' || :)
+deb_lines_nonfree_firmware=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non-free-firmware' || :)
+deb_lines_nonfree=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v "non-free[[:blank:]]" || :)
 
 
 internet_status=""
@@ -222,6 +222,8 @@ prompt_to_ask_to_what_to_install(){
 }
 
 enable_repo_(){
+(
+IFS=$'\n'
 	if [[ "$enable_contrib" = true ]];then
 		for l in $deb_lines_contrib; do
 			sudo sed -i "s\\^$l$\\$l contrib\\" /etc/apt/sources.list
@@ -237,6 +239,7 @@ enable_repo_(){
 			sudo sed -i "s\\^$l$\\$l non-free\\" /etc/apt/sources.list
 		done
 	fi
+)
 	aptupdate
 }
 
