@@ -14,6 +14,7 @@ deb_lines_nonfree=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/a
 
 
 internet_status=""
+# this temp_path if changed all temp_path will be equal to this value because of next if statment  in all of other files [[ -z "${temp_path}" ]] && temp_path="/tmp/my_stuff"
 temp_path="/tmp/my_stuff"
 my_stuff_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1 || :)"
 install_GPU_Drivers="install_GPU"
@@ -221,26 +222,49 @@ prompt_to_ask_to_what_to_install(){
 	fi
 }
 
-enable_repo_(){
+enable_repo_contrib(){
 (
 IFS=$'\n'
+	for l in $deb_lines_contrib; do
+		sudo sed -i "s\\^$l$\\$l contrib\\" /etc/apt/sources.list
+	done
+)
+}
+
+enable_repo_nonfree_firmware(){
+(
+IFS=$'\n'
+	for l in $deb_lines_nonfree_firmware; do
+		sudo sed -i "s\\^$l$\\$l nonfreefirmware\\" /etc/apt/sources.list
+	done
+	sudo sed -i 's/nonfreefirmware/non-free-firmware/g'  /etc/apt/sources.list
+)
+}
+
+enable_repo_nonfree(){
+(
+IFS=$'\n'
+	for l in $deb_lines_nonfree; do
+		sudo sed -i "s\\^$l$\\$l nonfreeonly\\" /etc/apt/sources.list
+	done
+	sudo sed -i 's/nonfreeonly/non-free/g'  /etc/apt/sources.list
+)
+}
+
+enable_repo_(){
+	local update_now=false
 	if [[ "$enable_contrib" = true ]];then
-		for l in $deb_lines_contrib; do
-			sudo sed -i "s\\^$l$\\$l contrib\\" /etc/apt/sources.list
-		done
+		enable_repo_contrib && update_now=true
 	fi
 	if [[ "$enable_nonfree_firmware" = true ]];then
-		for l in $deb_lines_nonfree_firmware; do
-			sudo sed -i "s\\^$l$\\$l non-free-firmware\\" /etc/apt/sources.list
-		done
+		enable_repo_nonfree_firmware && update_now=true
 	fi
 	if [[ "$enable_nonfree" = true ]];then
-		for l in $deb_lines_nonfree; do
-			sudo sed -i "s\\^$l$\\$l non-free\\" /etc/apt/sources.list
-		done
+		enable_repo_nonfree && update_now=true
 	fi
-)
-	aptupdate
+	if [[ "$update_now" = true ]];then
+		aptupdate
+	fi
 }
 
 fix_time_(){
@@ -276,11 +300,15 @@ wifi_mode_installation(){
 	elif command -v wpa_supplicant &> /dev/null
 	then
 		tmpfile="$(mktemp)"
-		echo -e "\n These hotspots are available \n"
-		$_SUDO iwlist "$wifi_interface" scan | grep ESSID | sed 's/ESSID://g;s/"//g;s/^                    //g'
-		read -p -r "ssid:" ssid_var
-		(iw "$wifi_interface" scan | grep 'SSID' | grep "$ssid_var") || (echo "wrong ssid")
-		read -p -r "pass:" pass_var 
+		while :
+		do
+			echo -e "\n These hotspots are available \n"
+			$_SUDO iwlist "$wifi_interface" scan | grep ESSID | sed 's/ESSID://g;s/"//g;s/^                    //g'
+			read -p -r "ssid:" ssid_var
+			if iw "$wifi_interface" scan | grep 'SSID' | grep "$ssid_var" >/dev/null;then
+				read -p -r "pass:" pass_var
+			fi
+		done
 		wpa_passphrase "$ssid_var" "$pass_var" | tee "$tmpfile"
 		$_SUDO wpa_supplicant -B -c "$tmpfile" -i "$wifi_interface" &
 		unset ssid_var
@@ -297,7 +325,9 @@ wifi_mode_installation(){
 switch_to_network_manager(){
 	network_manager_name="network-manager"
 	if ! dpkg -s ${network_manager_name} > /dev/null 2>&1; then
-		sudo $__install ${network_manager_name}
+		if apt list 2>/dev/null | grep "^${INDEX}/" >/dev/null;then
+			sudo $__install ${network_manager_name}
+		fi
 		sudo sed -i 's/managed=.*/managed=true/g' /etc/NetworkManager/NetworkManager.conf
 cat << 'EOF' > "${temp_path}"/interfaces
 # This file describes the network interfaces available on your system
@@ -320,7 +350,7 @@ EOF
 	for INDEX in "${install_extra_Network_tools[@]}"
 	do
 		if ! dpkg -s "${INDEX}" > /dev/null 2>&1; then
-			if grep "^${INDEX}/" ${list_of_apps_file_path};then
+			if apt list 2>/dev/null | grep "^${INDEX}/" >/dev/null;then
 				List_2_install+=("$INDEX") 
 				show_m "${INDEX} added to install apps" 
 			fi

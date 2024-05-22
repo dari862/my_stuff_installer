@@ -3,7 +3,7 @@ set -e
 
 Custom_distro_name="My Stuff"
 Custom_distro_dir_name="$(echo "$Custom_distro_name" | tr -dc '[:alnum:] \n\r' | tr '[:upper:]' '[:lower:]' | tr -s ' ' '_')"
-temp_path="/tmp/my_stuff"
+[[ -z "${temp_path}" ]] && temp_path="/tmp/my_stuff"
 
 _SUDO=""
 
