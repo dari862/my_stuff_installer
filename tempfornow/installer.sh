@@ -346,7 +346,7 @@ EOF
 		sudo mv "${temp_path}"/interfaces /etc/network/interfaces
 	fi
 	
-	install_extra_Network_tools=(rfkill network-manager-gnome)
+	install_extra_Network_tools=(rfkill)
 	for INDEX in "${install_extra_Network_tools[@]}"
 	do
 		if ! dpkg -s "${INDEX}" > /dev/null 2>&1; then

@@ -112,7 +112,7 @@ install_for_script_bl_reload_gtk23=(python3-xlib)
 #######################
 ## extra apps
 #######################
-install_xfce4_panel=(xfce4-panel xfce4-settings xfce4-clipman xfce4-whiskermenu-plugin)
+install_xfce4_panel=(xfce4-panel xfce4-settings xfce4-clipman xfce4-whiskermenu-plugin network-manager-gnome)
 install_polybar=(polybar libnm-dev)
 install_qt5ct=(qt5ct qt5-style-kvantum libqt5svg5 qml-module-qtquick-controls)
 install_jgmenu=(jgmenu)
