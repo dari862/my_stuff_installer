@@ -34,9 +34,14 @@ enable_contrib=false
 enable_nonfree_firmware=false
 enable_nonfree=false
 
+RC='\e[0m'
+RED='\e[31m'
+YELLOW='\e[33m'
+GREEN='\e[32m'
 ################################################################################################################################
 # Function
 ################################################################################################################################
+
 test_internet_(){
 	local wifi_interface=""
 	
@@ -456,12 +461,31 @@ install_lightdm_now(){
 		$_SUDO $__noninteractive dpkg-reconfigure lightdm
 	fi
 }
+
+check_if_user_has_root_access(){
+    ## Check SuperUser Group
+    SUPERUSERGROUP='wheel sudo root'
+    for sug in ${SUPERUSERGROUP}; do
+        if groups | grep ${sug}; then
+            SUGROUP=${sug}
+            echo -e "Super user group ${SUGROUP}"
+        fi
+    done
+
+    ## Check if member of the sudo group.
+    if ! groups | grep ${SUGROUP} >/dev/null; then
+        echo -e "\e[31m You need to be a member of the sudo group to run me!"
+        exit 1
+    fi
+}
 ################################################################################################################################
 # main
 ################################################################################################################################
 if command -v sudo >/dev/null;then
 	sudo -v
 fi
+
+check_if_user_has_root_access
 
 test_internet_
 mkdir -p "${temp_path}"

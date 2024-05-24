@@ -57,6 +57,46 @@ fi
 if [ "$distro_name_" = "ubuntu" ];then
 	this_is_ubuntu=true
 fi
+
+# work on this
+set_PACKAGE_MANAGER() {
+	PACKAGER=""
+	
+	## Check Package Handeler
+    PACKAGEMANAGER='apt yum dnf pacman zypper'
+    for pgm in ${PACKAGEMANAGER}; do
+        if command -v ${pgm} >/dev/null; then
+            PACKAGER=${pgm}
+            echo -e "Using ${pgm}"
+        fi
+    done
+
+    if [ -z "${PACKAGER}" ]; then
+        echo -e "${RED}Can't find a supported package manager"
+        exit 1
+    fi
+    
+    if [[ $PACKAGER == "pacman" ]]; then
+        if ! command -v yay >/dev/null && ! command -v paru >/dev/null; then
+            echo "Installing yay as AUR helper..."
+            sudo ${PACKAGER} --noconfirm -S base-devel
+            cd /opt && sudo git clone https://aur.archlinux.org/yay-git.git && sudo chown -R ${USER}:${USER} ./yay-git
+            cd yay-git && makepkg --noconfirm -si
+        else
+            echo "Aur helper already installed"
+        fi
+        if command -v yay >/dev/null; then
+            AUR_HELPER="yay --noconfirm -S"
+        elif command -v paru >/dev/null; then
+            AUR_HELPER="paru --noconfirm -S"
+        else
+            echo "No AUR helper found. Please install yay or paru."
+            exit 1
+        fi
+    else
+        sudo ${PACKAGER} install -yq ${DEPENDENCIES}
+    fi
+}
 ##################################################################################
 # function
 ##################################################################################

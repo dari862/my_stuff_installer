@@ -86,9 +86,8 @@ add_2_apt_install_()
 ## must_install_apps_list
 ##################################################################################
 #must have apps
-install_must_have_apps=(jq btop xclip curl cbatticon xprintidle yad git lsb-release rofi picom sudo systemd-timesyncd)
-install_must_have_apps2=(psmisc unzip dunst xorg arandr autorandr dbus-x11 pnmixer diodon gparted inxi s-tui dfc htop hwinfo synaptic galternatives xdotool libnotify-bin gnome-keyring ntfs-3g acl bash-completion xinit xdg-user-dirs lm-sensors)
-install_cool_apps=(micro)
+install_must_have_apps=(jq btop xclip curl cbatticon xprintidle yad git lsb-release rofi picom groups sudo systemd-timesyncd)
+install_must_have_apps2=(psmisc unzip dunst xorg arandr autorandr dbus-x11 pnmixer diodon gparted inxi s-tui dfc htop hwinfo synaptic galternatives xdotool libnotify-bin gnome-keyring ntfs-3g acl xinit xdg-user-dirs lm-sensors)
 install_openbox_=(openbox obconf xcape tint2 nitrogen)
 install_image_viewer_apps=(viewnior)
 install_files_manager_app=(thunar thunar-archive-plugin gvfs gvfs-fuse gvfs-backends file-roller ranger meld baobab)
@@ -96,7 +95,7 @@ install_firefox_=(firefox firefox-esr)
 install_terminal=(kitty terminator)
 install_conky_all_app=(conky-all)
 install_if_laptop=(tlp tlp-rdw powertop xserver-xorg-input-synaptics xinput)
-install_terminal_based_sound_app=(mpd mpc ncmpcpp)
+install_cli_sound_app=(mpd mpc ncmpcpp)
 install_text_editer_app=(featherpad evince)
 install_mediaplayer_app=(mpv)
 install_x_lock_extra=(i3lock i3lock-fancy)
@@ -108,6 +107,12 @@ install_polkit_apps=(policykit-1 policykit-1-gnome)
 # ffmpeg for screen recoding , maim for ac-shots , xsel for files-uploader , wmctrl for style-manager and files-uploader
 install_for_scripts=(maim ffmpeg at xsel wmctrl)
 install_for_script_bl_reload_gtk23=(python3-xlib)
+
+#######################
+## better bash
+#######################
+install_better_bash=(bash bash-completion)
+install_cli_apps=(micro tar bat tree multitail fzf zoxide trash-cli)
 
 #######################
 ## extra apps
@@ -133,13 +138,12 @@ apt list 2>/dev/null | awk -F"/" '{print " " $1 " "}' > "${list_of_apps_file_pat
 if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
 	add_2_apt_install_ "${install_if_laptop[@]}"
 fi
-
 add_2_apt_install_ "${install_themes[@]}"
 add_2_apt_install_ "${install_terminal[@]}"
 add_2_apt_install_ "${install_files_manager_app[@]}"
 add_2_apt_install_ "${install_x_lock_extra[@]}"
 add_2_apt_install_ "${install_firefox_[@]}"
-add_2_apt_install_ "${install_terminal_based_sound_app[@]}"
+add_2_apt_install_ "${install_cli_sound_app[@]}"
 add_2_apt_install_ "${install_conky_all_app[@]}"
 add_2_apt_install_ "${install_text_editer_app[@]}"
 add_2_apt_install_ "${install_mediaplayer_app[@]}"
@@ -150,8 +154,9 @@ add_2_apt_install_ "${install_for_script_bl_reload_gtk23[@]}"
 add_2_apt_install_ "${install_image_viewer_apps[@]}"
 add_2_apt_install_ "${install_must_have_apps[@]}"
 add_2_apt_install_ "${install_must_have_apps2[@]}"
-add_2_apt_install_ "${install_cool_apps[@]}"
 add_2_apt_install_ "${install_polkit_apps[@]}"
+add_2_apt_install_ "${install_better_bash[@]}"
+add_2_apt_install_ "${install_cli_apps[@]}"
 if [[ "$install_xfce4_panel_now" = true ]];then
 	add_2_apt_install_ "${install_xfce4_panel[@]}"
 fi
