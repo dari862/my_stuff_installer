@@ -24,6 +24,7 @@ run_purge_some_unnecessary_pakages="Y"
 run_disable_some_unnecessary_services="Y"
 run_update_grub_image="Y"
 autoclean_and_autoremove="Y"
+install_zsh_now=""
 install_xfce4_panel=xfce4_panel 
 install_polybar=polybar 
 install_qt5ct=qt5ct 
@@ -191,6 +192,22 @@ prompt_to_ask_to_what_to_install(){
 			autoclean_and_autoremove=""
 		fi
 		
+		if ! command -v zsh >/dev/null;then
+			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install zsh?')" = "Y" ];then
+				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to set zsh as default shell?')" = "Y" ];then
+					install_zsh_now=zsh_default
+				else
+					install_zsh_now=zsh
+				fi
+			fi
+		else
+			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to set zsh as default shell?')" = "Y" ];then
+				install_zsh_now=zsh_default
+			else
+				install_zsh_now=zsh
+			fi
+		fi
+		
 		if ! command -v xfce4-panel >/dev/null;then
 			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install xfce4-panel?')" != "Y" ];then
 				install_xfce4_panel=""
@@ -329,11 +346,7 @@ wifi_mode_installation(){
 
 switch_to_network_manager(){
 	network_manager_name="network-manager"
-	if ! dpkg -s ${network_manager_name} > /dev/null 2>&1; then
-		if apt list 2>/dev/null | grep "^${INDEX}/" >/dev/null;then
-			sudo $__install ${network_manager_name}
-		fi
-		sudo sed -i 's/managed=.*/managed=true/g' /etc/NetworkManager/NetworkManager.conf
+	sudo $__install ${network_manager_name}
 cat << 'EOF' > "${temp_path}"/interfaces
 # This file describes the network interfaces available on your system
 # and how to activate them. For more information, see interfaces(5).
@@ -344,13 +357,11 @@ source /etc/network/interfaces.d/*
 auto lo
 iface lo inet loopback
 EOF
-	
-		chmod 644 "${temp_path}"/interfaces
-		sudo chown root:root "${temp_path}"/interfaces
-		sudo mv /etc/network/interfaces /etc/network/interfaces.old
-		sudo mv "${temp_path}"/interfaces /etc/network/interfaces
-	fi
-	
+	chmod 644 "${temp_path}"/interfaces
+	sudo chown root:root "${temp_path}"/interfaces
+	sudo mv /etc/network/interfaces /etc/network/interfaces.old
+	sudo mv "${temp_path}"/interfaces /etc/network/interfaces
+	sudo sed -i 's/managed=.*/managed=true/g' /etc/NetworkManager/NetworkManager.conf
 	install_extra_Network_tools=(rfkill)
 	for INDEX in "${install_extra_Network_tools[@]}"
 	do
@@ -466,7 +477,7 @@ check_if_user_has_root_access(){
     ## Check SuperUser Group
     SUPERUSERGROUP='wheel sudo root'
     for sug in ${SUPERUSERGROUP}; do
-        if groups | grep ${sug}; then
+        if groups | grep ${sug} >/dev/null; then
             SUGROUP=${sug}
             echo -e "Super user group ${SUGROUP}"
         fi
@@ -477,43 +488,49 @@ check_if_user_has_root_access(){
         echo -e "\e[31m You need to be a member of the sudo group to run me!"
         exit 1
     fi
+    
+    if command -v sudo >/dev/null;then
+		sudo -v
+	fi
 }
-################################################################################################################################
-# main
-################################################################################################################################
-if command -v sudo >/dev/null;then
-	sudo -v
-fi
 
-check_if_user_has_root_access
-
-test_internet_
-mkdir -p "${temp_path}"
-
-# source my_stuff_lib
-if [[ ! -z "${my_stuff_lib_location}" ]];then
-	mv "${my_stuff_lib_location}" "${temp_path}"
-	if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
-		echo "Error: Failed to source ${lib_file_name} from ${temp_path} but ${lib_file_name} exist in ${temp_path}" >&2
-		exit 1
-	fi
-elif [[ -f "${temp_path}"/${lib_file_name} ]];then
-	if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
-		echo "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
-		exit 1
-	fi
-else
-	echo "wget lib file"
-	if wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/${lib_file_name} -O "${temp_path}"/${lib_file_name}; then
+source_my_lib_file(){
+	# source my_stuff_lib
+	if [[ ! -z "${my_stuff_lib_location}" ]];then
+		mv "${my_stuff_lib_location}" "${temp_path}"
+		if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
+			echo "Error: Failed to source ${lib_file_name} from ${temp_path} but ${lib_file_name} exist in ${temp_path}" >&2
+			exit 1
+		fi
+	elif [[ -f "${temp_path}"/${lib_file_name} ]];then
 		if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
 			echo "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
 			exit 1
 		fi
 	else
-		echo "Error: Failed to download ${lib_file_name} ."
-		exit 1
+		echo "wget lib file"
+		if wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/${lib_file_name} -O "${temp_path}"/${lib_file_name}; then
+			if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
+				echo "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
+				exit 1
+			fi
+		else
+			echo "Error: Failed to download ${lib_file_name} ."
+			exit 1
+		fi
 	fi
-fi
+}
+################################################################################################################################
+# main
+################################################################################################################################
+
+check_if_user_has_root_access
+
+test_internet_
+
+mkdir -p "${temp_path}"
+
+source_my_lib_file
 
 prompt_to_ask_to_what_to_install
 
@@ -554,7 +571,7 @@ show_m "Install drivers from (my_stuff_Drivers)"
 "${temp_path}"/my_stuff_Drivers ${install_GPU_Drivers} ${_cuda_} ${_kernel_open_dkms_}
 
 show_m "Install apps from (my_stuff_Installapps_list)"
-"${temp_path}"/my_stuff_Installapps_list $install_xfce4_panel $install_polybar $install_qt5ct $install_jgmenu $install_bspwm
+"${temp_path}"/my_stuff_Installapps_list $install_xfce4_panel $install_polybar $install_qt5ct $install_jgmenu $install_bspwm $install_zsh_now
 
 install_lightdm_now
 

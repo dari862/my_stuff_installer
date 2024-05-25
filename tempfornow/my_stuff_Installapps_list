@@ -37,7 +37,9 @@ install_polybar_now=false
 install_qt5ct_now=false
 install_jgmenu_now=false
 install_bspwm_now=false
- 
+install_zsh_now=false
+zsh_default_shell=false
+
 extra_apps_2_install=("$@")
 for option in "${extra_apps_2_install[@]}";do
 	if [[ "$option" = "xfce4_panel" ]];then
@@ -50,6 +52,11 @@ for option in "${extra_apps_2_install[@]}";do
 		install_jgmenu_now=true
 	elif [[ "$option" = "bspwm" ]];then
 		install_bspwm_now=true
+	elif [[ "$option" = "zsh" ]];then
+		install_zsh_now=true
+	elif [[ "$option" = "zsh_default" ]];then
+		install_zsh_now=true
+		zsh_default_shell=true
 	fi
 done
 
@@ -111,8 +118,8 @@ install_for_script_bl_reload_gtk23=(python3-xlib)
 #######################
 ## better bash
 #######################
-install_better_bash=(bash bash-completion)
-install_cli_apps=(micro tar bat tree multitail fzf zoxide trash-cli)
+install_better_bash=(bash bash-completion command-not-found thefuck)
+install_cli_apps=(micro tar bat tree multitail fzf zoxide trash-cli screen ncdu dos2unix)
 
 #######################
 ## extra apps
@@ -122,6 +129,7 @@ install_polybar=(polybar libnm-dev)
 install_qt5ct=(qt5ct qt5-style-kvantum libqt5svg5 qml-module-qtquick-controls)
 install_jgmenu=(jgmenu)
 install_bspwm=(bspwm sxhkd)
+install_zsh=(zsh zsh-antigen zsh-autosuggestions zsh-syntax-highlighting)
 
 ##################################################################################
 # main
@@ -172,7 +180,9 @@ fi
 if [[ "$install_bspwm_now" = true ]];then
 	add_2_apt_install_ "${install_bspwm[@]}"
 fi
-
+if [[ "$install_zsh_now" = true ]];then
+	add_2_apt_install_ "${install_zsh[@]}"
+fi
 apt_install_
 
 show_m "Configer packages."
@@ -187,6 +197,24 @@ if [[ "$install_bspwm_now" = true ]];then
 	sudo touch "/usr/share/${Custom_distro_dir_name}/lib/xsessions/${Custom_distro_dir_name}_bspwm.desktop"
 	sudo ln -sf "/usr/share/${Custom_distro_dir_name}/lib/xsessions/${Custom_distro_dir_name}_bspwm.desktop" /usr/share/xsessions
 	sudo rm -rdf "/usr/share/${Custom_distro_dir_name}"
+fi
+
+if [[ -d "/usr/share/zsh-antigen" ]];then
+	does_antigen_env_setup_works=$(grep -c antigen-env-setup /usr/share/zsh-antigen/antigen.zsh)
+	if [ "$does_antigen_env_setup_works" -gt "1" ]
+	then
+		echo "antigen works fine"
+	else
+		sudo wget -P "${temp_path}" "https://raw.githubusercontent.com/zsh-users/antigen/develop/bin/antigen.zsh"
+		sudo chmod +x "${temp_path}"/antigen.zsh
+		sudo mv /usr/share/zsh-antigen/antigen.zsh /usr/share/zsh-antigen/antigen.zsh.backup
+		sudo mv "${temp_path}"/antigen.zsh /usr/share/zsh-antigen/
+	fi
+fi
+
+if [[ "$zsh_default_shell" = true ]];then
+	show_m "make zsh default shell "
+	sudo chsh -s $(command -v zsh) $(whoami)
 fi
 
 if command -v mpd >/dev/null
