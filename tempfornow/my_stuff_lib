@@ -11,9 +11,9 @@ if command -v sudo >/dev/null;then
 	_SUDO="sudo"
 fi
 
-__noninteractive='DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true'
-__install='apt-get install -y'
-__purge='apt-get purge -y'
+__noninteractive_install=""
+__install=""
+__purge=""
 number_of_gpus=0
 
 if [ "$(lspci | grep -i nvidia | grep VGA -c)" != "0" ];then
@@ -58,45 +58,6 @@ if [ "$distro_name_" = "ubuntu" ];then
 	this_is_ubuntu=true
 fi
 
-# work on this
-set_PACKAGE_MANAGER() {
-	PACKAGER=""
-	
-	## Check Package Handeler
-    PACKAGEMANAGER='apt yum dnf pacman zypper'
-    for pgm in ${PACKAGEMANAGER}; do
-        if command -v ${pgm} >/dev/null; then
-            PACKAGER=${pgm}
-            echo -e "Using ${pgm}"
-        fi
-    done
-
-    if [ -z "${PACKAGER}" ]; then
-        echo -e "${RED}Can't find a supported package manager"
-        exit 1
-    fi
-    
-    if [[ $PACKAGER == "pacman" ]]; then
-        if ! command -v yay >/dev/null && ! command -v paru >/dev/null; then
-            echo "Installing yay as AUR helper..."
-            sudo ${PACKAGER} --noconfirm -S base-devel
-            cd /opt && sudo git clone https://aur.archlinux.org/yay-git.git && sudo chown -R ${USER}:${USER} ./yay-git
-            cd yay-git && makepkg --noconfirm -si
-        else
-            echo "Aur helper already installed"
-        fi
-        if command -v yay >/dev/null; then
-            AUR_HELPER="yay --noconfirm -S"
-        elif command -v paru >/dev/null; then
-            AUR_HELPER="paru --noconfirm -S"
-        else
-            echo "No AUR helper found. Please install yay or paru."
-            exit 1
-        fi
-    else
-        sudo ${PACKAGER} install -yq ${DEPENDENCIES}
-    fi
-}
 ##################################################################################
 # function
 ##################################################################################
@@ -165,21 +126,16 @@ aptfixer()
 	
 	aptupdate
 	
-	if ! command -v sudo >/dev/null
-	then
-		### Fix broken packages for good measure (why not?)
-		$aptinstall -f 2>/dev/null || show_em "failed to $aptinstall -f"
-	else
-		### Fix broken packages for good measure (why not?)
-		$_SUDO $__install -f 2>/dev/null || show_em "failed to $_SUDO $__install -f"
-	fi
+	### Fix broken packages for good measure (why not?)
+	$__install -f 2>/dev/null || show_em "failed to $__install -f"
 }
 
 check_for_SUDO()
 {
 	if ! command -v sudo >/dev/null;then
 		show_m "Install sudo and add user 1000 to sudo group"
-		kill_apt && $aptinstall sudo || (kill_apt && $aptinstall sudo) || (show_em "failed to install sudo" && exit 1)
+		set_PACKAGE_MANAGER
+		kill_PACKAGE_MANAGER && $__install sudo || (kill_PACKAGE_MANAGER && $__install sudo) || (show_em "failed to install sudo" && exit 1)
 		user=$(cut -f 1,3 -d: /etc/passwd | grep :1000$ | cut -f1 -d:)
 		[ "$user" ] && adduser "$user" sudo
 	fi
@@ -197,7 +153,7 @@ check_for_SUDO()
 must_install_apps()
 {
 	if ! command -v killall >/dev/null;then
-		($_SUDO $__install psmisc && kill_apt) || ($_SUDO $__install psmisc && kill_apt) || $_SUDO $__install psmisc
+		($__install psmisc && kill_PACKAGE_MANAGER) || ($__install psmisc && kill_PACKAGE_MANAGER) || $__install psmisc
 		exval=$?
 		if [ "$exval" == "1" ]; then
 			(show_em "failed to install psmisc for (killall).")
@@ -205,7 +161,7 @@ must_install_apps()
 	fi
 	
 	if ! command -v locate >/dev/null;then
-		($_SUDO $__install locate && kill_apt) || ($_SUDO $__install locate && kill_apt) || $_SUDO $__install locate
+		($__install locate && kill_PACKAGE_MANAGER) || ($__install locate && kill_PACKAGE_MANAGER) || $__install locate
 		exval=$?
 		if [ "$exval" == "1" ]; then
 			(show_em "failed to install locate.")
@@ -213,7 +169,7 @@ must_install_apps()
 	fi
 	
 	if ! command -v git >/dev/null;then
-		($_SUDO $__install git && kill_apt) || ($_SUDO $__install git && kill_apt) || $_SUDO $__install git
+		($__install git && kill_PACKAGE_MANAGER) || ($__install git && kill_PACKAGE_MANAGER) || $__install git
 		exval=$?
 		if [ "$exval" == "1" ]; then
 			(show_em "failed to install git.")
@@ -221,7 +177,7 @@ must_install_apps()
 	fi
 }
 
-kill_apt()
+kill_PACKAGE_MANAGER()
 {
 	sudo killall -9 apt &>/dev/null || sudo killall -9 apt-get &>/dev/null || :
 }
@@ -277,7 +233,7 @@ apt_purge_with_error2info()
 	do
 		if dpkg -s "${package}" &>/dev/null; then
 			show_m "Purging ${package}."
-			$_SUDO $__purge "$package"
+			$__purge "$package"
 		fi
 	done
 }
@@ -320,6 +276,48 @@ git_clone_and_set_var_to_path(){
 	echo "${getthis_location}"
 }
 
+set_PACKAGE_MANAGER() {
+	PACKAGER=""
+	## Check Package Handeler
+    PACKAGEMANAGER='apt-get yum dnf pacman zypper'
+    for pgm in ${PACKAGEMANAGER}; do
+        if command -v ${pgm} >/dev/null; then
+            PACKAGER=${pgm}
+            echo -e "Using ${pgm}"
+            break
+        fi
+    done
+
+    if [ -z "${PACKAGER}" ]; then
+        echo -e "${RED}Can't find a supported package manager"
+        exit 1
+    fi
+    
+    if [[ $PACKAGER == "pacman" ]]; then
+        if ! command -v yay >/dev/null && ! command -v paru >/dev/null; then
+            echo "Installing yay as AUR helper..."
+            $_SUDO ${PACKAGER} --noconfirm -S base-devel
+            cd /opt && sudo git clone https://aur.archlinux.org/yay-git.git && sudo chown -R ${USER}:${USER} ./yay-git
+            cd yay-git && makepkg --noconfirm -si
+        else
+            echo "Aur helper already installed"
+        fi
+        if command -v yay >/dev/null; then
+            AUR_HELPER="yay --noconfirm -S"
+        elif command -v paru >/dev/null; then
+            AUR_HELPER="paru --noconfirm -S"
+        else
+            echo "No AUR helper found. Please install yay or paru."
+            exit 1
+        fi
+    else
+    	__noninteractive="DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true"
+    	__noninteractive_install='$_SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true ${PACKAGER} install -yq'
+		__install="$_SUDO ${PACKAGER} install -yq "
+		__purge="$_SUDO apt-get purge -y"
+		aptfixer
+    fi
+}
 ######################################################################################################################
 ######################################################################################################################
 ######################################################################################################################

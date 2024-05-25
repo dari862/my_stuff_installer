@@ -27,6 +27,8 @@ if ! test_if_my_stuff_lib_sourced 2>/dev/null; then
 			exit 1
 		fi
 	fi
+	fix_time_
+	set_PACKAGE_MANAGER
 fi
 
 ##################################################################################
@@ -68,7 +70,7 @@ List_of_apt_2_install_=()
 
 apt_install_()
 {
-	$_SUDO $__install "${List_of_apt_2_install_[@]}"
+	$__install "${List_of_apt_2_install_[@]}"
 }
 
 add_2_apt_install_()
@@ -136,7 +138,6 @@ install_zsh=(zsh zsh-antigen zsh-autosuggestions zsh-syntax-highlighting)
 ##################################################################################
 
 aptupdate
-aptfixer
 upgrade_now
 
 list_of_apps_file_path="$(mktemp "${temp_path}"/list_of_apps_.XXXXXXXXXXXX)"

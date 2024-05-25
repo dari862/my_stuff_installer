@@ -27,6 +27,8 @@ if ! test_if_my_stuff_lib_sourced 2>/dev/null; then
 			exit 1
 		fi
 	fi
+	fix_time_
+	set_PACKAGE_MANAGER
 fi
 
 install_GPU_now="${1-}"
@@ -40,7 +42,7 @@ create_apt_list(){
 }
 
 apt_install_(){
-	$_SUDO $__install "${List_of_apt_2_install_[@]}"
+	$__install "${List_of_apt_2_install_[@]}"
 }
 
 add_2_apt_install_(){

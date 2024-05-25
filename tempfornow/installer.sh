@@ -346,7 +346,7 @@ wifi_mode_installation(){
 
 switch_to_network_manager(){
 	network_manager_name="network-manager"
-	sudo $__install ${network_manager_name}
+	$__install ${network_manager_name}
 cat << 'EOF' > "${temp_path}"/interfaces
 # This file describes the network interfaces available on your system
 # and how to activate them. For more information, see interfaces(5).
@@ -371,7 +371,7 @@ EOF
 				show_m "${INDEX} added to install apps" 
 			fi
 		fi
-		sudo $__install "${List_2_install[@]}"
+		$__install "${List_2_install[@]}"
 	done
 }
 
@@ -461,13 +461,13 @@ install_lightdm_now(){
 	install_lightdm_=(lightdm lightdm-gtk-greeter-settings)
 	if [ -f "/etc/X11/default-display-manager" ]; then
 		d_d_m="$(basename "$(cat /etc/X11/default-display-manager)")"
-		if [ "$d_d_m" != "lightdm"  ];then
-			($_SUDO $__noninteractive $__install ${install_lightdm_[@]} && kill_apt) || ($_SUDO $__noninteractive $__install ${install_lightdm_[@]} && kill_apt) || $_SUDO $__noninteractive $__install ${install_lightdm_[@]}
-			echo "/usr/sbin/lightdm" | $_SUDO tee /etc/X11/default-display-manager
-			$_SUDO $__noninteractive dpkg-reconfigure lightdm
-		fi
+		[ "$d_d_m" != "lightdm"  ] && lightdm_does_not_exist=true
 	else
-		($_SUDO $__noninteractive $__install ${install_lightdm_[@]} && kill_apt) || ($_SUDO $__noninteractive $__install ${install_lightdm_[@]} && kill_apt) || $_SUDO $__noninteractive $__install ${install_lightdm_[@]}
+		lightdm_does_not_exist=true
+	fi
+	
+	if [ "$lightdm_does_not_exist" = true  ];then
+		($__noninteractive_install ${install_lightdm_[@]} && kill_PACKAGE_MANAGER) || ($__noninteractive_install ${install_lightdm_[@]} && kill_PACKAGE_MANAGER) || $__noninteractive_install ${install_lightdm_[@]}
 		echo "/usr/sbin/lightdm" | $_SUDO tee /etc/X11/default-display-manager
 		$_SUDO $__noninteractive dpkg-reconfigure lightdm
 	fi
@@ -530,13 +530,13 @@ test_internet_
 
 mkdir -p "${temp_path}"
 
-source_my_lib_file
-
-prompt_to_ask_to_what_to_install
-
 fix_time_
 
-aptfixer
+source_my_lib_file
+
+set_PACKAGE_MANAGER
+
+prompt_to_ask_to_what_to_install
 
 check_for_SUDO
 
