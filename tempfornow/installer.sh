@@ -6,16 +6,16 @@ set -e
 ################################################################################################################################
 lib_file_name="my_stuff_lib"
 auto_run_script="false" # true to enable
+# global_temp_path if changed all temp_path will be equal to this value because of next if statment  in all of other files [[ -z "${temp_path}" ]] && temp_path="/tmp/my_stuff"
+global_temp_path="/tmp/my_stuff"
 mirror="http://deb.debian.org/debian/"
 mirror_security="http://security.debian.org/debian-security"
 deb_lines_contrib=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v contrib || :)
 deb_lines_nonfree_firmware=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non-free-firmware' || :)
 deb_lines_nonfree=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v "non-free[[:blank:]]" || :)
 
-
+temp_path=""
 internet_status=""
-# this temp_path if changed all temp_path will be equal to this value because of next if statment  in all of other files [[ -z "${temp_path}" ]] && temp_path="/tmp/my_stuff"
-temp_path="/tmp/my_stuff"
 my_stuff_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1 || :)"
 install_GPU_Drivers="install_GPU"
 _cuda_="cuda"
@@ -34,6 +34,8 @@ reboot_now="Y"
 enable_contrib=false
 enable_nonfree_firmware=false
 enable_nonfree=false
+_SUDO=""
+command -v sudo >/dev/null && _SUDO="sudo"
 
 RC='\e[0m'
 RED='\e[31m'
@@ -495,34 +497,29 @@ check_if_user_has_root_access(){
 }
 
 source_my_lib_file(){
+	export temp_path="${global_temp_path}"
 	# source my_stuff_lib
 	if [[ ! -z "${my_stuff_lib_location}" ]];then
 		mv "${my_stuff_lib_location}" "${temp_path}"
-		if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
-			echo "Error: Failed to source ${lib_file_name} from ${temp_path} but ${lib_file_name} exist in ${temp_path}" >&2
-			exit 1
-		fi
-	elif [[ -f "${temp_path}"/${lib_file_name} ]];then
-		if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
-			echo "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
-			exit 1
-		fi
 	else
 		echo "wget lib file"
-		if wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/${lib_file_name} -O "${temp_path}"/${lib_file_name}; then
-			if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
-				echo "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
-				exit 1
-			fi
-		else
+		if ! wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/${lib_file_name} -O "${temp_path}"/${lib_file_name}; then
 			echo "Error: Failed to download ${lib_file_name} ."
 			exit 1
 		fi
 	fi
+	set -a
+	if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
+		echo "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
+		exit 1
+	fi
+	set +a
 }
 ################################################################################################################################
 # main
 ################################################################################################################################
+
+export temp_path="${global_temp_path}"
 
 check_if_user_has_root_access
 
