@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-
+echo "Loading Script ....."
 ################################################################################################################################
 # Var
 ################################################################################################################################
@@ -246,52 +246,8 @@ prompt_to_ask_to_what_to_install(){
 	fi
 }
 
-enable_repo_contrib(){
-(
-IFS=$'\n'
-	for l in $deb_lines_contrib; do
-		sudo sed -i "s\\^$l$\\$l contrib\\" /etc/apt/sources.list
-	done
-)
-}
-
-enable_repo_nonfree_firmware(){
-(
-IFS=$'\n'
-	for l in $deb_lines_nonfree_firmware; do
-		sudo sed -i "s\\^$l$\\$l nonfreefirmware\\" /etc/apt/sources.list
-	done
-	sudo sed -i 's/nonfreefirmware/non-free-firmware/g'  /etc/apt/sources.list
-)
-}
-
-enable_repo_nonfree(){
-(
-IFS=$'\n'
-	for l in $deb_lines_nonfree; do
-		sudo sed -i "s\\^$l$\\$l nonfreeonly\\" /etc/apt/sources.list
-	done
-	sudo sed -i 's/nonfreeonly/non-free/g'  /etc/apt/sources.list
-)
-}
-
-enable_repo_(){
-	local update_now=false
-	if [[ "$enable_contrib" = true ]];then
-		enable_repo_contrib && update_now=true
-	fi
-	if [[ "$enable_nonfree_firmware" = true ]];then
-		enable_repo_nonfree_firmware && update_now=true
-	fi
-	if [[ "$enable_nonfree" = true ]];then
-		enable_repo_nonfree && update_now=true
-	fi
-	if [[ "$update_now" = true ]];then
-		aptupdate
-	fi
-}
-
 fix_time_(){
+	echo "runing fix_time_ function"
 	get_date_from_here=""
 	list_to_test=(debian.com github.com 104.16.132.229)
 	
@@ -476,6 +432,7 @@ install_lightdm_now(){
 }
 
 check_if_user_has_root_access(){
+	echo "check if user has root access."
     ## Check SuperUser Group
     SUPERUSERGROUP='wheel sudo root'
     for sug in ${SUPERUSERGROUP}; do
@@ -501,13 +458,14 @@ source_my_lib_file(){
 	# source my_stuff_lib
 	if [[ ! -z "${my_stuff_lib_location}" ]];then
 		mv "${my_stuff_lib_location}" "${temp_path}"
-	else
+	elif [[ ! -f "${temp_path}/${lib_file_name}" ]];then 
 		echo "wget lib file"
 		if ! wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/${lib_file_name} -O "${temp_path}"/${lib_file_name}; then
 			echo "Error: Failed to download ${lib_file_name} ."
 			exit 1
 		fi
 	fi
+		
 	set -a
 	if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
 		echo "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
@@ -531,13 +489,7 @@ fix_time_
 
 source_my_lib_file
 
-set_PACKAGE_MANAGER
-
 prompt_to_ask_to_what_to_install
-
-check_for_SUDO
-
-enable_repo_
 
 must_install_apps
 
@@ -562,7 +514,6 @@ clear
 
 _unattended_upgrades_ stop
 upgrade_now
-full_upgrade_now
 
 show_m "Install drivers from (my_stuff_Drivers)"
 "${temp_path}"/my_stuff_Drivers ${install_GPU_Drivers} ${_cuda_} ${_kernel_open_dkms_}

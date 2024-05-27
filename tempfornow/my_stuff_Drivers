@@ -9,55 +9,29 @@ if ! test_if_my_stuff_lib_sourced 2>/dev/null; then
 	my_stuff_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1 || :)"
 	if [[ ! -z "${my_stuff_lib_location}" ]];then
 		mv "${my_stuff_lib_location}" "${temp_path}"
-		source "${temp_path}"/${lib_file_name}
-	elif [[ -f "${temp_path}"/${lib_file_name} ]];then
-		if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
-			echo "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
-			exit 1
-		fi
-	else
+	elif [[ ! -f "${temp_path}"/${lib_file_name} ]];then
 		echo "wget lib file"
-		if wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/${lib_file_name} -O "${temp_path}"/${lib_file_name}; then
-			if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
-				echo "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
-				exit 1
-			fi
-		else
+		if ! wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/${lib_file_name} -O "${temp_path}"/${lib_file_name}; then
 			echo "Error: Failed to download ${lib_file_name} ."
 			exit 1
 		fi
 	fi
+	if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
+		echo "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
+		exit 1
+	fi
+	check_if_user_has_root_access
 	fix_time_
-	set_PACKAGE_MANAGER
+	must_install_apps
 fi
 
 install_GPU_now="${1-}"
-list_of_apps_file_path="$(mktemp "${temp_path}"/list_of_apps_.XXXXXXXXXXXX)"
+List_of_apt_2_install_=()
+list_of_apps_file_path=""
 
 ##################################################################################
 # function
 ##################################################################################
-create_apt_list(){
-	apt list 2>/dev/null > "${list_of_apps_file_path}" 
-}
-
-apt_install_(){
-	$__install "${List_of_apt_2_install_[@]}"
-}
-
-add_2_apt_install_(){
-	localarray=("$@")
-
-	for INDEX in "${localarray[@]}"
-	do
-		if ! dpkg -s "${INDEX}" > /dev/null 2>&1; then
-			if grep "^${INDEX}/" ${list_of_apps_file_path};then
-				List_of_apt_2_install_+=("$INDEX") 
-				show_m "${INDEX} added to install apps" 
-			fi
-		fi
-	done
-}
 
 create_20_intel_conf_file(){
 	show_m "Create 20-intel.conf file."
@@ -112,15 +86,15 @@ if [[ "${install_GPU_now}" = "install_GPU" ]];then
 		if [ "${nvidia_gpu_exist}" = "true" ];then
 			_cuda_="${2-}"
 			_kernel_open_dkms_="${3-}"
-			add_2_apt_install_ "nvidia-driver nvidia-smi nvidia-settings $_kernel_open_dkms_ $_cuda_"
+			add_packages_2_install_list "nvidia-driver nvidia-smi nvidia-settings $_kernel_open_dkms_ $_cuda_"
 		fi
 		
 		if [ "${amd_gpu_exist}" = "true" ];then
-			add_2_apt_install_ "libgl1-mesa-dri xserver-xorg-video-ati xserver-xorg-video-amdgpu mesa-vulkan-drivers vkbasalt"
+			add_packages_2_install_list "libgl1-mesa-dri xserver-xorg-video-ati xserver-xorg-video-amdgpu mesa-vulkan-drivers vkbasalt"
 		fi
 		
 		if [ "${intel_gpu_exist}" = "true" ];then
-			add_2_apt_install_ "xserver-xorg-video-intel intel-gpu-tools intel-media-va-driver"
+			add_packages_2_install_list "xserver-xorg-video-intel intel-gpu-tools intel-media-va-driver"
 		fi
 	fi
 fi
@@ -128,52 +102,51 @@ fi
 ##################################################################################
 # main
 ##################################################################################
-create_apt_list # needed for add_2_apt_install_
 
 if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
-	add_2_apt_install_ "${install_if_laptop[@]}"
+	add_packages_2_install_list "${install_if_laptop[@]}"
 fi
 
 if [[ "$fingerprint_exist" = true ]];then
-    add_2_apt_install_ "${install_fingerprint[@]}"
+    add_packages_2_install_list "${install_fingerprint[@]}"
 fi
 
 if lspci | egrep -i 'wifi|wireless' 1>/dev/null ;then
-	add_2_apt_install_ "${install_wireless[@]}"
+	add_packages_2_install_list "${install_wireless[@]}"
 fi
 
 if sudo dmesg | grep -i bluetooth 1>/dev/null || sudo lsusb | grep -i bluetooth 1>/dev/null ;then
-	add_2_apt_install_ "${install_bluetooth[@]}"
+	add_packages_2_install_list "${install_bluetooth[@]}"
 fi
 
-add_2_apt_install_ "${install_audio[@]}"
-add_2_apt_install_ "${install_Network[@]}"
-add_2_apt_install_ "${install_autoinstall_firmware[@]}"
+add_packages_2_install_list "${install_audio[@]}"
+add_packages_2_install_list "${install_Network[@]}"
+add_packages_2_install_list "${install_autoinstall_firmware[@]}"
 
 if [[ "${install_GPU_now}" = "install_GPU" ]];then
-	if [ "${nvidia_gpu_exist}" = "true" ];then
-		if [[ ! -f "/usr/share/keyrings/nvidia-drivers.gpg" ]];then
-			curl -fSsL "https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/3bf863cc.pub" | sudo gpg --dearmor | sudo tee /usr/share/keyrings/nvidia-drivers.gpg > /dev/null 2>&1
-		fi
-		
-		if [[ ! -f "/etc/apt/sources.list.d/nvidia-drivers.list" ]];then 
-			echo "deb [signed-by=/usr/share/keyrings/nvidia-drivers.gpg] https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/ /" | sudo tee /etc/apt/sources.list.d/nvidia-drivers.list
+	if [[ $PACKAGER == "apt-get" ]]; then
+		if [ "${nvidia_gpu_exist}" = "true" ];then
+			if [[ ! -f "/usr/share/keyrings/nvidia-drivers.gpg" ]];then
+				curl -fSsL "https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/3bf863cc.pub" | sudo gpg --dearmor | sudo tee /usr/share/keyrings/nvidia-drivers.gpg > /dev/null 2>&1
+			fi
+			
+			if [[ ! -f "/etc/apt/sources.list.d/nvidia-drivers.list" ]];then 
+				echo "deb [signed-by=/usr/share/keyrings/nvidia-drivers.gpg] https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/ /" | sudo tee /etc/apt/sources.list.d/nvidia-drivers.list
+			fi
 		fi
 	fi
 fi
-		
-if [ "$this_is_ubuntu" = true ];then
-	sudo apt-get install -y software-properties-common
-	sudo add-apt-repository -y universe
-	sudo add-apt-repository -y multiverse
+
+if [[ $PACKAGER == "apt-get" ]]; then		
+	if [ "$this_is_ubuntu" = true ];then
+		sudo apt-get install -y software-properties-common
+		sudo add-apt-repository -y universe
+		sudo add-apt-repository -y multiverse
+	fi
 	show_m "Running Update."
-	aptupdate
-else
-	show_m "Running Update."
-	aptupdate
+	aptupdate	
 fi
-		
-apt_install_
+install_packages
 
 if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
 	show_m "this is laptop"

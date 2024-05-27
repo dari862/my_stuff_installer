@@ -9,26 +9,20 @@ if ! test_if_my_stuff_lib_sourced 2>/dev/null; then
 	my_stuff_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1 || :)"
 	if [[ ! -z "${my_stuff_lib_location}" ]];then
 		mv "${my_stuff_lib_location}" "${temp_path}"
-		source "${temp_path}"/${lib_file_name}
-	elif [[ -f "${temp_path}"/${lib_file_name} ]];then
-		if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
-			echo "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
-			exit 1
-		fi
-	else
+	elif [[ ! -f "${temp_path}"/${lib_file_name} ]];then
 		echo "wget lib file"
-		if wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/${lib_file_name} -O "${temp_path}"/${lib_file_name}; then
-			if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
-				echo "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
-				exit 1
-			fi
-		else
+		if ! wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/${lib_file_name} -O "${temp_path}"/${lib_file_name}; then
 			echo "Error: Failed to download ${lib_file_name} ."
 			exit 1
 		fi
 	fi
+	if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
+		echo "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
+		exit 1
+	fi
+	check_if_user_has_root_access
 	fix_time_
-	set_PACKAGE_MANAGER
+	must_install_apps
 fi
 
 ##################################################################################
@@ -63,33 +57,9 @@ for option in "${extra_apps_2_install[@]}";do
 done
 
 List_of_apt_2_install_=()
-
-##################################################################################
-# Functions
-##################################################################################
-
-apt_install_()
-{
-	$__install "${List_of_apt_2_install_[@]}"
-}
-
-add_2_apt_install_()
-{
-	localarray=("$@")
-	
-	for INDEX in "${localarray[@]}"
-	do
-		if ! dpkg -s "${INDEX}" > /dev/null 2>&1; then
-			check_apps_in_cache="$(grep " $INDEX " "${list_of_apps_file_path}" 2>/dev/null || :)"
-			if [ -n "${check_apps_in_cache}" ];then
-				List_of_apt_2_install_+=("$INDEX") 
-				show_m "${INDEX} added to install apps" 
-			else
-				[ "${localarray[0]}" != "firefox" ] && show_em "failed ${INDEX}."
-			fi
-		fi
-	done
-}
+list_of_apps_file_path=""
+package_firefox="$(check_if_package_exist_in_repo firefox)"
+package_firefox_esr="$(check_if_package_exist_in_repo firefox-esr)"
 
 ##################################################################################
 ## must_install_apps_list
@@ -100,7 +70,7 @@ install_must_have_apps2=(psmisc unzip dunst xorg arandr autorandr dbus-x11 pnmix
 install_openbox_=(openbox obconf xcape tint2 nitrogen)
 install_image_viewer_apps=(viewnior)
 install_files_manager_app=(thunar thunar-archive-plugin gvfs gvfs-fuse gvfs-backends file-roller ranger meld baobab)
-install_firefox_=(firefox firefox-esr)
+install_firefox_=($package_firefox $package_firefox_esr)
 install_terminal=(kitty terminator)
 install_conky_all_app=(conky-all)
 install_if_laptop=(tlp tlp-rdw powertop xserver-xorg-input-synaptics xinput)
@@ -137,54 +107,49 @@ install_zsh=(zsh zsh-antigen zsh-autosuggestions zsh-syntax-highlighting)
 # main
 ##################################################################################
 
-aptupdate
 upgrade_now
 
-list_of_apps_file_path="$(mktemp "${temp_path}"/list_of_apps_.XXXXXXXXXXXX)"
-show_m "create_list_of_apps"
-apt list 2>/dev/null | awk -F"/" '{print " " $1 " "}' > "${list_of_apps_file_path}"
-
 if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
-	add_2_apt_install_ "${install_if_laptop[@]}"
+	add_packages_2_install_list "${install_if_laptop[@]}"
 fi
-add_2_apt_install_ "${install_themes[@]}"
-add_2_apt_install_ "${install_terminal[@]}"
-add_2_apt_install_ "${install_files_manager_app[@]}"
-add_2_apt_install_ "${install_x_lock_extra[@]}"
-add_2_apt_install_ "${install_firefox_[@]}"
-add_2_apt_install_ "${install_cli_sound_app[@]}"
-add_2_apt_install_ "${install_conky_all_app[@]}"
-add_2_apt_install_ "${install_text_editer_app[@]}"
-add_2_apt_install_ "${install_mediaplayer_app[@]}"
-add_2_apt_install_ "${install_openbox_[@]}"
-add_2_apt_install_ "${install_fonts[@]}"
-add_2_apt_install_ "${install_for_scripts[@]}"
-add_2_apt_install_ "${install_for_script_bl_reload_gtk23[@]}"
-add_2_apt_install_ "${install_image_viewer_apps[@]}"
-add_2_apt_install_ "${install_must_have_apps[@]}"
-add_2_apt_install_ "${install_must_have_apps2[@]}"
-add_2_apt_install_ "${install_polkit_apps[@]}"
-add_2_apt_install_ "${install_better_bash[@]}"
-add_2_apt_install_ "${install_cli_apps[@]}"
+add_packages_2_install_list "${install_themes[@]}"
+add_packages_2_install_list "${install_terminal[@]}"
+add_packages_2_install_list "${install_files_manager_app[@]}"
+add_packages_2_install_list "${install_x_lock_extra[@]}"
+add_packages_2_install_list "${install_firefox_[@]}"
+add_packages_2_install_list "${install_cli_sound_app[@]}"
+add_packages_2_install_list "${install_conky_all_app[@]}"
+add_packages_2_install_list "${install_text_editer_app[@]}"
+add_packages_2_install_list "${install_mediaplayer_app[@]}"
+add_packages_2_install_list "${install_openbox_[@]}"
+add_packages_2_install_list "${install_fonts[@]}"
+add_packages_2_install_list "${install_for_scripts[@]}"
+add_packages_2_install_list "${install_for_script_bl_reload_gtk23[@]}"
+add_packages_2_install_list "${install_image_viewer_apps[@]}"
+add_packages_2_install_list "${install_must_have_apps[@]}"
+add_packages_2_install_list "${install_must_have_apps2[@]}"
+add_packages_2_install_list "${install_polkit_apps[@]}"
+add_packages_2_install_list "${install_better_bash[@]}"
+add_packages_2_install_list "${install_cli_apps[@]}"
 if [[ "$install_xfce4_panel_now" = true ]];then
-	add_2_apt_install_ "${install_xfce4_panel[@]}"
+	add_packages_2_install_list "${install_xfce4_panel[@]}"
 fi
 if [[ "$install_polybar_now" = true ]];then
-	add_2_apt_install_ "${install_polybar[@]}"
+	add_packages_2_install_list "${install_polybar[@]}"
 fi
 if [[ "$install_qt5ct_now" = true ]];then
-	add_2_apt_install_ "${install_qt5ct[@]}"
+	add_packages_2_install_list "${install_qt5ct[@]}"
 fi
 if [[ "$install_jgmenu_now" = true ]];then
-	add_2_apt_install_ "${install_jgmenu[@]}"
+	add_packages_2_install_list "${install_jgmenu[@]}"
 fi
 if [[ "$install_bspwm_now" = true ]];then
-	add_2_apt_install_ "${install_bspwm[@]}"
+	add_packages_2_install_list "${install_bspwm[@]}"
 fi
 if [[ "$install_zsh_now" = true ]];then
-	add_2_apt_install_ "${install_zsh[@]}"
+	add_packages_2_install_list "${install_zsh[@]}"
 fi
-apt_install_
+install_packages
 
 show_m "Configer packages."
 
