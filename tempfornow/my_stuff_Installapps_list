@@ -83,15 +83,8 @@ install_themes=(papirus-icon-theme fonts-noto-color-emoji fonts-firacode fonts-f
 install_themes_tools=(xsettingsd lxappearance)
 install_polkit_apps=(policykit-1 policykit-1-gnome)
 
-# ffmpeg for screen recoding , maim for ac-shots , xsel for files-uploader , wmctrl for style-manager and files-uploader
+# maim for ac-shots , ffmpeg for screen recoding , at for bl-beepmein , xsel for files-uploader , wmctrl for style-manager and files-uploader
 install_for_scripts=(maim ffmpeg at xsel wmctrl)
-install_for_script_bl_reload_gtk23=(python3-xlib)
-
-#######################
-## better bash
-#######################
-install_better_bash=(bash bash-completion command-not-found thefuck)
-install_cli_apps=(micro tar bat tree multitail fzf zoxide trash-cli screen ncdu dos2unix)
 
 #######################
 ## extra apps
@@ -102,6 +95,11 @@ install_qt5ct=(qt5ct qt5-style-kvantum libqt5svg5 qml-module-qtquick-controls)
 install_jgmenu=(jgmenu)
 install_bspwm=(bspwm sxhkd)
 install_zsh=(zsh zsh-antigen zsh-autosuggestions zsh-syntax-highlighting)
+#######################
+## better bash
+#######################
+install_better_bash=(bash bash-completion command-not-found thefuck)
+install_cli_apps=(micro tar bat tree multitail fzf zoxide trash-cli screen ncdu dos2unix)
 
 ##################################################################################
 # main
@@ -124,7 +122,6 @@ add_packages_2_install_list "${install_mediaplayer_app[@]}"
 add_packages_2_install_list "${install_openbox_[@]}"
 add_packages_2_install_list "${install_fonts[@]}"
 add_packages_2_install_list "${install_for_scripts[@]}"
-add_packages_2_install_list "${install_for_script_bl_reload_gtk23[@]}"
 add_packages_2_install_list "${install_image_viewer_apps[@]}"
 add_packages_2_install_list "${install_must_have_apps[@]}"
 add_packages_2_install_list "${install_must_have_apps2[@]}"

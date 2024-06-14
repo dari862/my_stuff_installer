@@ -253,23 +253,25 @@ fix_time_(){
 }
 
 check_if_user_has_root_access(){
-    ## Check SuperUser Group
-    SUPERUSERGROUP='wheel sudo root'
-    for sug in ${SUPERUSERGROUP}; do
-        if groups | grep ${sug} >/dev/null; then
-            SUGROUP=${sug}
-            echo -e "Super user group ${SUGROUP}"
-        fi
-    done
-
-    ## Check if member of the sudo group.
-    if ! groups | grep ${SUGROUP} >/dev/null; then
-        echo -e "\e[31m You need to be a member of the sudo group to run me!"
-        exit 1
-    fi
-    
-    if command -v sudo >/dev/null;then
-		sudo -v
+    if [[ -z $SUGROUP ]];then
+    	## Check SuperUser Group
+    	SUPERUSERGROUP='wheel sudo root'
+    	for sug in ${SUPERUSERGROUP}; do
+        	if groups | grep ${sug} >/dev/null; then
+            	SUGROUP=${sug}
+            	echo -e "Super user group ${SUGROUP}"
+        	fi
+    	done
+	
+    	## Check if member of the sudo group.
+    	if ! groups | grep ${SUGROUP} >/dev/null; then
+        	echo -e "\e[31m You need to be a member of the sudo group to run me!"
+        	exit 1
+    	fi
+    	
+    	if command -v sudo >/dev/null;then
+			sudo -v
+		fi
 	fi
 }
 ######################################################################################################################

@@ -14,6 +14,7 @@ deb_lines_contrib=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/a
 deb_lines_nonfree_firmware=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non-free-firmware' || :)
 deb_lines_nonfree=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v "non-free[[:blank:]]" || :)
 
+SUGROUP=""
 temp_path=""
 internet_status=""
 my_stuff_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1 || :)"
@@ -35,7 +36,6 @@ enable_contrib=false
 enable_nonfree_firmware=false
 enable_nonfree=false
 _SUDO=""
-command -v sudo >/dev/null && _SUDO="sudo"
 
 RC='\e[0m'
 RED='\e[31m'
@@ -449,6 +449,7 @@ check_if_user_has_root_access(){
     fi
     
     if command -v sudo >/dev/null;then
+    	_SUDO="sudo"
 		sudo -v
 	fi
 }

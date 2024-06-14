@@ -38,7 +38,9 @@ bash <(curl -s https://raw.githubusercontent.com/dari862/my_stuff_installer/main
 
 <details>
 	<summary><h1>work on</h1></summary>
-	
+		
+		pipmenu for change font and icon size
+		
 		test bspwm & openbox
 		
 		code clean up and shellcheck ready
