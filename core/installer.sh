@@ -14,6 +14,7 @@ deb_lines_contrib=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/a
 deb_lines_nonfree_firmware=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non-free-firmware' || :)
 deb_lines_nonfree=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v "non-free[[:blank:]]" || :)
 
+arg_="${1-}"
 SUGROUP=""
 temp_path=""
 internet_status=""
@@ -141,107 +142,117 @@ prompt_to_ask_to_what_to_install(){
 	fi
 	
 	if [ "$auto_run_script" != "true" ];then
-	
-		if [ "$deb_lines_contrib" != "" ];then
-			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want enable contrib repo?')" = "Y" ];then
-				enable_contrib=true
-			fi
-		fi
-		if [ "$deb_lines_nonfree_firmware" != "" ];then
-			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want enable nonfree_firmware repo?')" = "Y" ];then
-				enable_nonfree_firmware=true
-			fi
-		fi
-		if [ "$deb_lines_nonfree" != "" ];then
-			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want enable nonfree repo?')" = "Y" ];then
-				enable_nonfree=true
-			fi
-		fi
-		if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to install GPU drivers?')" != "Y" ];then
-			install_GPU_Drivers=""
-		else
-			if [ "${nvidia_gpu_exist}" = "true" ];then
-				if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to add Cuda Support?')" != "Y" ];then
-					_cuda_=""
-				else
-					_cuda_="cuda"
+		if [[ -z "$arg_" ]];then
+			if [ "$deb_lines_contrib" != "" ];then
+				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want enable contrib repo?')" = "Y" ];then
+					enable_contrib=true
 				fi
-				
-				if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to install opensource nvidia-kernel?')" != "Y" ];then
-					_kernel_open_dkms_=""
+			fi
+			if [ "$deb_lines_nonfree_firmware" != "" ];then
+				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want enable nonfree_firmware repo?')" = "Y" ];then
+					enable_nonfree_firmware=true
+				fi
+			fi
+			if [ "$deb_lines_nonfree" != "" ];then
+				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want enable nonfree repo?')" = "Y" ];then
+					enable_nonfree=true
+				fi
+			fi
+		fi
+		
+		if [[ -z "$arg_" ]] || [[ "$arg_" = "drivers" ]];then
+			if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to install GPU drivers?')" != "Y" ];then
+				install_GPU_Drivers=""
+			else
+				if [ "${nvidia_gpu_exist}" = "true" ];then
+					if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to add Cuda Support?')" != "Y" ];then
+						_cuda_=""
+					else
+						_cuda_="cuda"
+					fi
+					
+					if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to install opensource nvidia-kernel?')" != "Y" ];then
+						_kernel_open_dkms_=""
+					else
+						_kernel_open_dkms_="nvidia-kernel-open-dkms"
+					fi
 				else
-					_kernel_open_dkms_="nvidia-kernel-open-dkms"
+					_cuda_=""
+					_kernel_open_dkms_=""
+				fi
+			fi
+		fi
+		
+		if [[ -z "$arg_" ]];then
+			if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to purge some unnecessary pakages?')" != "Y" ];then
+				run_purge_some_unnecessary_pakages=""
+			fi
+			
+			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to disable some unnecessary services?')" != "Y" ];then
+				run_disable_some_unnecessary_services=""
+			fi
+			
+			if [ "$(do_you_want_2_run_this_yes_or_no 'update grub image?')" != "Y" ];then
+				run_update_grub_image=""
+			fi
+			
+			if [ "$(do_you_want_2_run_this_yes_or_no 'run autoclean and autoremove?')" != "Y" ];then
+				autoclean_and_autoremove=""
+			fi
+		fi
+		
+		if [[ -z "$arg_" ]] || [[ "$arg_" = "apps" ]];then
+			if ! command -v zsh >/dev/null;then
+				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install zsh?')" = "Y" ];then
+					if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to set zsh as default shell?')" = "Y" ];then
+						install_zsh_now=zsh_default
+					else
+						install_zsh_now=zsh
+					fi
 				fi
 			else
-				_cuda_=""
-				_kernel_open_dkms_=""
-			fi
-		fi
-		
-		if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to purge some unnecessary pakages?')" != "Y" ];then
-			run_purge_some_unnecessary_pakages=""
-		fi
-		
-		if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to disable some unnecessary services?')" != "Y" ];then
-			run_disable_some_unnecessary_services=""
-		fi
-		
-		if [ "$(do_you_want_2_run_this_yes_or_no 'update grub image?')" != "Y" ];then
-			run_update_grub_image=""
-		fi
-		
-		if [ "$(do_you_want_2_run_this_yes_or_no 'run autoclean and autoremove?')" != "Y" ];then
-			autoclean_and_autoremove=""
-		fi
-		
-		if ! command -v zsh >/dev/null;then
-			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install zsh?')" = "Y" ];then
 				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to set zsh as default shell?')" = "Y" ];then
 					install_zsh_now=zsh_default
 				else
 					install_zsh_now=zsh
 				fi
 			fi
-		else
-			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to set zsh as default shell?')" = "Y" ];then
-				install_zsh_now=zsh_default
-			else
-				install_zsh_now=zsh
-			fi
-		fi
-		
-		if ! command -v xfce4-panel >/dev/null;then
-			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install xfce4-panel?')" != "Y" ];then
-				install_xfce4_panel=""
-			fi
-		fi
-		
-		if ! command -v polybar >/dev/null;then
-			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install polybar?')" != "Y" ];then
-				install_polybar=""
-			fi
-		fi
-		
-		if ! command -v qt5ct >/dev/null;then
-			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install qt5ct?')" != "Y" ];then
-				install_qt5ct=""
-			fi
-		fi
-		
-		if ! command -v jgmenu >/dev/null;then
-			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install jgmenu?')" != "Y" ];then
-				install_jgmenu=""
-			fi
-		fi
-		
-		if ! command -v bspwm >/dev/null && ! command -v sxhkd >/dev/null;then
-			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install bspwm?')" != "Y" ];then
-				install_bspwm=""
-			fi
-		fi
 			
-		if [ "$(do_you_want_2_run_this_yes_or_no 'reboot?')" != "Y" ];then
-			reboot_now=""
+			if ! command -v xfce4-panel >/dev/null;then
+				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install xfce4-panel?')" != "Y" ];then
+					install_xfce4_panel=""
+				fi
+			fi
+			
+			if ! command -v polybar >/dev/null;then
+				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install polybar?')" != "Y" ];then
+					install_polybar=""
+				fi
+			fi
+			
+			if ! command -v qt5ct >/dev/null;then
+				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install qt5ct?')" != "Y" ];then
+					install_qt5ct=""
+				fi
+			fi
+			
+			if ! command -v jgmenu >/dev/null;then
+				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install jgmenu?')" != "Y" ];then
+					install_jgmenu=""
+				fi
+			fi
+			
+			if ! command -v bspwm >/dev/null && ! command -v sxhkd >/dev/null;then
+				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install bspwm?')" != "Y" ];then
+					install_bspwm=""
+				fi
+			fi
+		fi
+		
+		if [[ -z "$arg_" ]];then
+			if [ "$(do_you_want_2_run_this_yes_or_no 'reboot?')" != "Y" ];then
+				reboot_now=""
+			fi
 		fi
 	fi
 }
@@ -461,7 +472,7 @@ source_my_lib_file(){
 		mv "${my_stuff_lib_location}" "${temp_path}"
 	elif [[ ! -f "${temp_path}/${lib_file_name}" ]];then 
 		echo "wget lib file"
-		if ! wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/${lib_file_name} -O "${temp_path}"/${lib_file_name}; then
+		if ! wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${lib_file_name} -O "${temp_path}"/${lib_file_name}; then
 			echo "Error: Failed to download ${lib_file_name} ."
 			exit 1
 		fi
@@ -494,37 +505,46 @@ prompt_to_ask_to_what_to_install
 
 must_install_apps
 
-check_and_download_ "my_stuff_Installapps_list"
+if [[ "$arg_" = "drivers" ]] || [[ -z "$arg_" ]];then
+	check_and_download_ "my_stuff_Drivers"
+elif [[ "$arg_" = "apps" ]] || [[ -z "$arg_" ]];then
+	check_and_download_ "my_stuff_Installapps_list"
+fi
 
-check_and_download_ "my_stuff_post_install_"
-
-check_and_download_ "my_stuff_Drivers"
-
-check_and_download_ "my_stuff_configer"
-
+if [[ -z "$arg_" ]];then
+	check_and_download_ "my_stuff_configer"
+	
+	check_and_download_ "my_stuff_post_install_"
 ################################
 # git clone
-
-show_m "git clone distro files"
-my_stuff_location="$(git_clone_and_set_var_to_path "my_stuff" | tail -1)"
-Theme_Stuff_location="$(git_clone_and_set_var_to_path "Theme_Stuff" | tail -1)"
-
+	show_m "git clone distro files"
+	my_stuff_location="$(git_clone_and_set_var_to_path "my_stuff" | tail -1)"
+	Theme_Stuff_location="$(git_clone_and_set_var_to_path "Theme_Stuff" | tail -1)"
 ################################
-
+fi
 clear
 
 _unattended_upgrades_ stop
 upgrade_now
 
-show_m "Install drivers from (my_stuff_Drivers)"
-"${temp_path}"/my_stuff_Drivers ${install_GPU_Drivers} ${_cuda_} ${_kernel_open_dkms_}
-
-show_m "Install apps from (my_stuff_Installapps_list)"
-"${temp_path}"/my_stuff_Installapps_list $install_xfce4_panel $install_polybar $install_qt5ct $install_jgmenu $install_bspwm $install_zsh_now
+if [[ "$arg_" = "" ]] || [[ -z "$arg_" ]];then
+	show_m "Install drivers from (my_stuff_Drivers)"
+	"${temp_path}"/my_stuff_Drivers ${install_GPU_Drivers} ${_cuda_} ${_kernel_open_dkms_}
+elif [[ "$arg_" = "" ]] || [[ -z "$arg_" ]];then
+	show_m "Install apps from (my_stuff_Installapps_list)"
+	"${temp_path}"/my_stuff_Installapps_list $install_xfce4_panel $install_polybar $install_qt5ct $install_jgmenu $install_bspwm $install_zsh_now
+fi
 
 install_lightdm_now
 
 switch_to_network_manager
+
+_unattended_upgrades_ start
+
+if [[ ! -z "$arg_" ]];then
+	show_m "Done"
+	exit
+fi
 
 ##################################################################################
 ##################################################################################
@@ -542,8 +562,6 @@ disable_some_unnecessary_services
 clean_up_now
 
 update_grub_image
-
-_unattended_upgrades_ start
 
 show_m "prepare some script"
 sudo "${temp_path}"/my_stuff_post_install_ "${Custom_distro_dir_name}"

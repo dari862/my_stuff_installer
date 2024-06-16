@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-set -e
-sudo apt-get -y install sway swaybg swayidle swayimg swaylock waybar wofi fonts-font-awesome
-cp -r "$(dirname "$(readlink -f "$0")")"/config/* $HOME/.config

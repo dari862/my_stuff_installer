@@ -1,30 +1,6 @@
 #!/bin/bash
 set -e
 
-if ! test_if_my_stuff_lib_sourced 2>/dev/null; then
-	# source lib
-	lib_file_name="my_stuff_lib"
-	[[ -z "${temp_path}" ]] && temp_path="/tmp/my_stuff"
-	mkdir -p "${temp_path}"
-	my_stuff_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1 || :)"
-	if [[ ! -z "${my_stuff_lib_location}" ]];then
-		mv "${my_stuff_lib_location}" "${temp_path}"
-	elif [[ ! -f "${temp_path}"/${lib_file_name} ]];then
-		echo "wget lib file"
-		if ! wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/${lib_file_name} -O "${temp_path}"/${lib_file_name}; then
-			echo "Error: Failed to download ${lib_file_name} ."
-			exit 1
-		fi
-	fi
-	if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
-		echo "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
-		exit 1
-	fi
-	check_if_user_has_root_access
-	fix_time_
-	must_install_apps
-fi
-
 ##################################################################################
 # var
 ##################################################################################

@@ -5,8 +5,6 @@ Custom_distro_name="My Stuff"
 [[ -z "${temp_path}" ]] && temp_path="/tmp/my_stuff"
 list_of_apps_file_path="${temp_path}/list_of_apps"
 
-
-
 Custom_distro_dir_name="$(echo "$Custom_distro_name" | tr -dc '[:alnum:] \n\r' | tr '[:upper:]' '[:lower:]' | tr -s ' ' '_')"
 _SUDO=""
 command -v sudo >/dev/null && _SUDO="sudo"
@@ -90,7 +88,7 @@ check_and_download_()
 	
 	if [[ ! -f "${new_check_this_file_}" ]]; then
 	show_m "Wget $check_this_file_ file from www.github.com/dari862/my_stuff_installer ."
-		if wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/"$check_this_file_" -O "${new_check_this_file_}" ;then
+		if wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/"$check_this_file_" -O "${new_check_this_file_}" ;then
 		chmod +x "${new_check_this_file_}"
 		else
 			show_em "Error: Failed to wget ${check_this_file_} from ${new_check_this_file_} "

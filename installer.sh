@@ -1,1 +1,1 @@
-tempfornow/installer.sh
+core/installer.sh

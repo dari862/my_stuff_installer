@@ -36,45 +36,6 @@ bash <(curl -s https://raw.githubusercontent.com/dari862/my_stuff_installer/main
 		
 </details>
 
-<details>
-	<summary><h1>work on</h1></summary>
-		
-		pipmenu for change font and icon size
-		
-		test bspwm & openbox
-		
-		code clean up and shellcheck ready
-		
-		shortcut on bspwm & openbox
-
-		https://github.com/adi1090x/dynamic-wallpaper
-		
-		https://github.com/HikariKnight/quickpassthrough
-		
-		https://www.youtube.com/watch?v=g--fe8_kEcw
-		
-		wayland support (hyperland):
-		
-		https://github.com/prasanthrangan/hyprdots
-		
-		https://gitlab.com/SamArcade777/Hypr-Debian
-		
-		https://github.com/JaKooLit/Debian-Hyprland.git
-		
-		live wallpaper 
-		
-		vpn script 
-		
-		tor script 
-		
-		improve popup_terminal
-		
-		improve setbg and pickbg
-		
-		add yadtlp_configdescriptions to yadtlp.sh 
-		
-</details>
-
 <details>	
 	<summary><h1>bugges</h1></summary>
 
