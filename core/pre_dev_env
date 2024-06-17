@@ -1,0 +1,35 @@
+#!/usr/bin/bash
+if ! command -v sudo >/dev/null
+then
+	__sudo="sudo"
+fi
+get_date_from_here=""
+list_to_test=(debian.com github.com 104.16.132.229)
+	
+for test in "${list_to_test[@]}";do
+	ping -c 1 $test &>/dev/null && get_date_from_here="$test" && break
+done
+		
+if [[ -z "$get_date_from_here" ]];then 
+	echo "failed to ping all of this: ${list_to_test[@]}" && exit 1
+fi
+
+$__sudo date -s "$(wget --method=HEAD -qSO- --max-redirect=0 $get_date_from_here 2>&1 | sed -n 's/^ *Date: *//p')" &>/dev/null
+
+__timezone="$(wget -O- https://ipinfo.io/ 2>/dev/null | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/ //g')"
+$__sudo timedatectl set-timezone $__timezone
+
+if grep 'deb cdrom' /etc/apt/sources.list;then
+	$__sudo sed -i '/deb cdrom/d' /etc/apt/sources.list
+fi
+
+$__sudo apt-get update
+$__sudo apt-get -y upgrade
+$__sudo apt-get -y install featherpad git openssh-server
+$__sudo systemctl start ssh
+$__sudo systemctl enable ssh
+cd $HOME/Desktop
+git clone https://github.com/dari862/my_stuff_installer.git
+git clone https://github.com/dari862/my_stuff.git
+git clone https://github.com/dari862/Theme_Stuff.git
+ln -sf my_stuff_installer/core/push_to_git .

@@ -10,14 +10,15 @@ bash <(wget -q -O - https://raw.githubusercontent.com/dari862/my_stuff_installer
 bash <(curl -s https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/installer.sh)
 ```
 
-# my-linux-script (Wifi)
+# my-linux-script (deploy dev env)
 
 ```
-./installer.sh wifi
+
+bash <(curl -s https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/pre_dev_env)
 ```
 
 ```
-./installer.sh wifi
+bash <(wget -q -O - https://raw.githubusercontent.com/dari862/my_stuff_installer/main/tempfornow/pre_dev_env)
 ```
 
 <details>

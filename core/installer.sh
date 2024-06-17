@@ -270,7 +270,7 @@ fix_time_(){
 		echo "failed to ping all of this: ${list_to_test[@]}" && exit 1
 	else
 		$_SUDO date -s "$(wget --method=HEAD -qSO- --max-redirect=0 $get_date_from_here 2>&1 | sed -n 's/^ *Date: *//p')" &>/dev/null
-		#__timezone="$(curl -q https://ipinfo.io/ 2>/dev/null | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/ //g')"
+		#__timezone="$(wget -O- https://ipinfo.io/ 2>/dev/null | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/ //g')"
 		__timezone="Asia/Kuwait"
 		$_SUDO timedatectl set-timezone $__timezone	
 	fi

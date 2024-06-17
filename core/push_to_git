@@ -17,7 +17,7 @@ my_stuff_installer
 )
 
 eval "$(ssh-agent -s)"
-ssh-add ~/.ssh/github
+ssh-add ~/.ssh/id_rsa
 
 cd "$(find $HOME -type d -name my_stuff_installer)"
 for getthis in "${git_repo_Array[@]}"; do
