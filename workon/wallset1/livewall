@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+if ! command -v ffmpeg &>/dev/null ;then
+	echo "ffmpeg not installed."
+	exit 1
+fi
+
+if ! command -v feh &>/dev/null ;then
+	echo "feh not installed."
+	exit 1
+fi
+
+shopt -s extglob
+
+Use_numbers="Use numbers indicated by"
+Preparing_video="Preparing the video..."
+Use_numbers_from="Use numbers numbers from 1 to"
+Invalid_format="Invalid format."
+mp4_only="MP4 format only"
+Report_Video="Report Video"
+no_videos="No videos."
+
+_quit_loop(){
+    #kill -9 $$
+    killall -q bash 2>/dev/null >/dev/null
+}
+_video(){
+    a=1     
+    for i in $(ls -d $_dir_vid/*/ 2>/dev/null); do
+       if [[ -d "$_dir_vid/$a" ]]; then
+           let a=a+1
+       fi
+    done
+
+    mkdir -p "$_dir_vid/$a"
+
+    echo -e "${Preparing_video}...\r"
+    ffmpeg -y -ss 00:00 -i ${1} -t 10 "${_dir_vid}/${a}/filename%05d.jpg" > ${_dir_vid}/${a}/video.info 2>&1
+    t=$(ls ${_dir_vid}/${a}/* | wc -l)
+    let t=t-1
+    echo ${1} > ${_dir_vid}/${a}/video.info
+
+    i=1
+    # ctrl_c
+    while : ; do
+        feh --bg-scale $(ls -1 ${_dir_vid}/${a}/* | sed -n "${i}p")
+        sleep 0.01
+        let i=i+1
+        [[ "${i}" -gt "${t}" ]] && i=1              
+    done &
+}
+
+_list_vid(){
+    ls -d ${_dir_vid}/* 2>/dev/null >/dev/null
+    if [[ "$?" != "0" ]]; then
+        echo ${no_videos}
+        exit 1
+    fi
+    for i in $(ls -1 ${_dir_vid}/*/video.info); do
+        echo $i | awk 'BEGIN { FS = "/" } ; { print $6 }'
+        cat $i
+    done | paste - - | sed 's/\t/ → /g'
+}
+
+_set_video(){
+    ls -d ${_dir_vid}/* 2>/dev/null >/dev/null
+    if [[ "$?" != "0" ]]; then
+        echo ${no_videos}
+        exit 1
+    fi
+    if [[ $(echo "$1" | sed -n -r '/^[0-9]+$/p') == "" ]]; then
+        echo "${Use_numbers} '${0##*/} --list-videos'."
+    else
+        if [[ "$1" -gt "$(ls -d1 ${_dir_vid}/* | wc -l)" ]]; then
+            echo "${Use_numbers_from} $(ls -d1 ${_dir_vid}/* | wc -l)"
+            exit 1
+        else
+            t=$(ls ${_dir_vid}/${1}/* | wc -l)
+            let t=t-1
+            i=1
+            # ctrl_c
+            while : ; do
+                feh --bg-scale $(ls -1 ${_dir_vid}/${1}/* | sed -n "${i}p")
+                sleep 0.01
+                let i=i+1
+                [[ "${i}" -gt "${t}" ]] && i=1              
+            done &
+        fi
+    fi
+}
+
+while [[ "$1" ]]; do
+  case "${1}" in
+    -q|--quit) _quit_loop;;
+    --video|-V) shift;
+            [[ -z "$1" ]] && { echo "${Report_Video}"; exit 1; }
+            [[ $(file -b --mime-type ${1} | cut -d"/" -f1) != 'video' ]] && { echo "${Invalid_format}"; exit 1; }
+            [[ $(file -b --mime-type ${1} | cut -d"/" -f2) != @(mp4|x-m4v) ]] && { echo "${mp4_only}"; exit 1; }
+            _video "${1}"
+    ;;
+    -L|--list-videos) _list_vid ;;
+    -I|--set-video) shift; _set_video "${1}";;
+  esac
+  shift
+done
