@@ -33,7 +33,6 @@ for option in "${extra_apps_2_install[@]}";do
 done
 
 List_of_apt_2_install_=()
-list_of_apps_file_path=""
 package_firefox="$(check_if_package_exist_in_repo firefox)"
 package_firefox_esr="$(check_if_package_exist_in_repo firefox-esr)"
 

@@ -124,28 +124,18 @@ must_install_apps()
 	check_for_SUDO
 	
 	if ! command -v killall >/dev/null;then
-		($__install psmisc && kill_PACKAGE_MANAGER) || ($__install psmisc && kill_PACKAGE_MANAGER) || $__install psmisc
-		exval=$?
-		if [ "$exval" == "1" ]; then
-			(show_em "failed to install psmisc for (killall).")
-		fi
+		add_packages_2_install_list "killall"
 	fi
 	
 	if ! command -v locate >/dev/null;then
-		($__install locate && kill_PACKAGE_MANAGER) || ($__install locate && kill_PACKAGE_MANAGER) || $__install locate
-		exval=$?
-		if [ "$exval" == "1" ]; then
-			(show_em "failed to install locate.")
-		fi
+		add_packages_2_install_list "locate"
 	fi
 	
 	if ! command -v git >/dev/null;then
-		($__install git && kill_PACKAGE_MANAGER) || ($__install git && kill_PACKAGE_MANAGER) || $__install git
-		exval=$?
-		if [ "$exval" == "1" ]; then
-			(show_em "failed to install git.")
-		fi
+		add_packages_2_install_list "git"
 	fi
+	
+	install_packages
 }
 
 rm_if_link()
@@ -410,20 +400,17 @@ set_package_manager(){
 set_package_manager
 
 if [[ $PACKAGER == "apt-get" ]]; then
-	# create list_of_apps file
-	show_m "create_list_of_apps"
-	apt list 2>/dev/null > "${list_of_apps_file_path}"
 	# functions
 	create_package_list(){
-		if [[ -z "${list_of_apps_file_path}" ]];then
+		# create list_of_apps file
+		if [[ ! -f "${list_of_apps_file_path}" ]];then
 			show_m "create_list_of_apps"
-			list_of_apps_file_path="$(mktemp "${temp_path}"/list_of_apps_.XXXXXXXXXXXX)"
-			apt list 2>/dev/null | awk -F/ '{print " " $1 " " }' > "${list_of_apps_file_path}" 
+			apt list 2>/dev/null > "${list_of_apps_file_path}" 
 		fi
 	}
 	
 	install_packages(){
-		$__install "${List_of_apt_2_install_[@]}"
+		($__install "${List_of_apt_2_install_[@]}" && kill_PACKAGE_MANAGER) || ($__install "${List_of_apt_2_install_[@]}" && kill_PACKAGE_MANAGER) || $__install "${List_of_apt_2_install_[@]}"
 	}
 	
 	check_if_package_exist_in_repo(){
@@ -521,19 +508,41 @@ if [[ $PACKAGER == "apt-get" ]]; then
 	aptfixer
 	enable_repo_
 elif [[ $PACKAGER == "yay" ]] || [[ $PACKAGER == "paru" ]]; then
-	# create list_of_apps file
-	show_m "create_list_of_apps"
-	apt list 2>/dev/null > "${list_of_apps_file_path}"
+	# functions
+	create_package_list(){
+		# create list_of_apps file
+		if [[ ! -f "${list_of_apps_file_path}" ]];then
+			show_m "create_list_of_apps"
+			apt list 2>/dev/null > "${list_of_apps_file_path}" 
+		fi
+	}
 elif [[ $PACKAGER == "yum" ]]; then
-	# create list_of_apps file
-	show_m "create_list_of_apps"
-	apt list 2>/dev/null > "${list_of_apps_file_path}"
+	# functions
+	create_package_list(){
+		# create list_of_apps file
+		if [[ ! -f "${list_of_apps_file_path}" ]];then
+			show_m "create_list_of_apps"
+			apt list 2>/dev/null > "${list_of_apps_file_path}" 
+		fi
+	}
 elif [[ $PACKAGER == "dnf" ]]; then
-	# create list_of_apps file
-	show_m "create_list_of_apps"
-	apt list 2>/dev/null > "${list_of_apps_file_path}"
+	# functions
+	create_package_list(){
+		# create list_of_apps file
+		if [[ ! -f "${list_of_apps_file_path}" ]];then
+			show_m "create_list_of_apps"
+			apt list 2>/dev/null > "${list_of_apps_file_path}" 
+		fi
+	}
 elif [[ $PACKAGER == "zypper" ]]; then
-	# create list_of_apps file
-	show_m "create_list_of_apps"
-	apt list 2>/dev/null > "${list_of_apps_file_path}"
+	# functions
+	create_package_list(){
+		# create list_of_apps file
+		if [[ ! -f "${list_of_apps_file_path}" ]];then
+			show_m "create_list_of_apps"
+			apt list 2>/dev/null > "${list_of_apps_file_path}" 
+		fi
+	}
 fi
+
+create_package_list

@@ -1,9 +1,31 @@
 #!/bin/bash
 set -e
-
+##################################################################################
+# var
+##################################################################################
 install_GPU_now="${1-}"
 List_of_apt_2_install_=()
-list_of_apps_file_path=""
+fingerprint_exist=false
+
+#######################
+## must_install_apps_list
+#######################
+#must have apps
+install_audio=(pulseaudio pavucontrol)
+install_if_laptop=(acpi upower)
+if [[ "$(ls /sys/class/backlight | head -n 1)" == *"intel_"* ]]; then
+	install_if_laptop+=(xbacklight)
+else
+	install_if_laptop+=(light)
+fi
+install_fingerprint=(fprintd libpam-fprintd)
+install_wireless=(wireless-tools)
+install_bluetooth=(bluez blueman)
+install_autoinstall_firmware=(isenkram)
+
+if lsusb | grep -i fingerprint >/dev/null || lspci | grep -i fingerprint >/dev/null || ls /sys/bus/usb/devices/* | grep -i fingerprint >/dev/null; then
+    fingerprint_exist=true
+fi
 
 ##################################################################################
 # function
@@ -26,31 +48,6 @@ EndSection
 EOF'
 	fi
 }
-##################################################################################
-# var
-##################################################################################
-fingerprint_exist=false
-List_of_apt_2_install_=()
-
-#######################
-## must_install_apps_list
-#######################
-#must have apps
-install_audio=(pulseaudio pavucontrol)
-install_if_laptop=(acpi upower)
-if [[ "$(ls /sys/class/backlight | head -n 1)" == *"intel_"* ]]; then
-	install_if_laptop+=(xbacklight)
-else
-	install_if_laptop+=(light)
-fi
-install_fingerprint=(fprintd libpam-fprintd)
-install_wireless=(wireless-tools)
-install_bluetooth=(bluez blueman)
-install_autoinstall_firmware=(isenkram)
-
-if lsusb | grep -i fingerprint >/dev/null || lspci | grep -i fingerprint >/dev/null || ls /sys/bus/usb/devices/* | grep -i fingerprint >/dev/null; then
-    fingerprint_exist=true
-fi
 
 ##################################################################################
 # GPU Drivers

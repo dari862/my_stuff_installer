@@ -332,16 +332,8 @@ EOF
 	sudo mv "${temp_path}"/interfaces /etc/network/interfaces
 	sudo sed -i 's/managed=.*/managed=true/g' /etc/NetworkManager/NetworkManager.conf
 	install_extra_Network_tools=(rfkill)
-	for INDEX in "${install_extra_Network_tools[@]}"
-	do
-		if ! dpkg -s "${INDEX}" > /dev/null 2>&1; then
-			if apt list 2>/dev/null | grep "^${INDEX}/" >/dev/null;then
-				List_2_install+=("$INDEX") 
-				show_m "${INDEX} added to install apps" 
-			fi
-		fi
-		$__install "${List_2_install[@]}"
-	done
+	add_packages_2_install_list "${install_extra_Network_tools[@]}"
+	install_packages
 }
 
 purge_some_unnecessary_pakages(){
@@ -507,7 +499,9 @@ must_install_apps
 
 if [[ "$arg_" = "drivers" ]] || [[ -z "$arg_" ]];then
 	check_and_download_ "my_stuff_Drivers"
-elif [[ "$arg_" = "apps" ]] || [[ -z "$arg_" ]];then
+fi
+
+if [[ "$arg_" = "apps" ]] || [[ -z "$arg_" ]];then
 	check_and_download_ "my_stuff_Installapps_list"
 fi
 
@@ -527,10 +521,12 @@ clear
 _unattended_upgrades_ stop
 upgrade_now
 
-if [[ "$arg_" = "" ]] || [[ -z "$arg_" ]];then
+if [[ "$arg_" = "drivers" ]] || [[ -z "$arg_" ]];then
 	show_m "Install drivers from (my_stuff_Drivers)"
 	"${temp_path}"/my_stuff_Drivers ${install_GPU_Drivers} ${_cuda_} ${_kernel_open_dkms_}
-elif [[ "$arg_" = "" ]] || [[ -z "$arg_" ]];then
+fi
+
+if [[ "$arg_" = "apps" ]] || [[ -z "$arg_" ]];then
 	show_m "Install apps from (my_stuff_Installapps_list)"
 	"${temp_path}"/my_stuff_Installapps_list $install_xfce4_panel $install_polybar $install_qt5ct $install_jgmenu $install_bspwm $install_zsh_now
 fi
