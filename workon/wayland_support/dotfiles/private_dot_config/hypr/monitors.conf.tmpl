@@ -1,0 +1,42 @@
+{{ define "monitor_cmd" -}}
+{{ $environment_monitor := or (index .monitor .environment) .monitor -}}
+{{ $scale := pluck "scale" $environment_monitor .monitor | first -}}
+{{ $transform := pluck "transform" $environment_monitor .monitor | first -}}
+
+desc:{{ pluck "name" $environment_monitor .monitor | first -}}
+{{- if (pluck "disable" $environment_monitor .monitor | first) -}}
+, disable
+{{- else -}}
+, {{ pluck "mode" $environment_monitor .monitor | first -}}
+, {{ pluck "position" $environment_monitor .monitor | first -}}
+{{- if $scale -}}
+, {{ $scale -}}
+{{- end -}}
+{{- if $transform -}}
+, transform, {{ $transform -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+# See https://wiki.hyprland.org/Configuring/Monitors/
+monitor=,preferred,auto,1
+
+{{ $environment := .environment -}}
+{{ $selected_monitors := index .monitors .monitors.selected -}}
+{{- range $selected_monitor_position, $selected_monitor := $selected_monitors -}}
+{{- if not (kindIs "map" $selected_monitor) -}}
+    {{ continue }}
+{{- end -}}
+# {{ $selected_monitor_position }}
+monitor={{ template "monitor_cmd" dict "monitor" $selected_monitor "environment" $environment }}
+{{ if index $selected_monitor "background" -}}
+exec = swaybg --output "{{ index $selected_monitor "name" }}" --image {{ index $selected_monitor "background" }} --mode fill
+{{ end -}}
+{{ if index $selected_monitor "has_lid" -}}
+# Turn on when lid opens.
+bindl = , switch:off:Lid Switch,exec,hyprctl keyword monitor "{{ template "monitor_cmd" dict "monitor" $selected_monitor "environment" $environment }}"
+# Turn off when lid closes.
+bindl = , switch:on:Lid Switch,exec,hyprctl keyword monitor "desc:{{ index $selected_monitor "name" }}, disable"
+{{ end }}
+{{ end -}}
+

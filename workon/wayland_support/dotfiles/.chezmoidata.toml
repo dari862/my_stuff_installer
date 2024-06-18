@@ -1,0 +1,89 @@
+[monitors]
+[monitors.work]
+screen_timeout = 360
+lock_timeout = 300
+
+[monitors.work.left]
+name = "Dell Inc. DELL U3219Q F2XWXV2"
+mode = "3840x2160@60Hz"
+position = "0x0"
+scale = "1.25"
+transform = 1
+background = "~/.config/wallpapers/dark/2160x3840/ren-ran-HG5QX-GXV5A-unsplash.jpg"
+
+[monitors.work.center]
+name = "Acer Technologies XV340CK P T5Y000013E00"
+mode = "3440x1440@144Hz"
+position = "1728x786"
+scale = "1"
+transform = 0
+background = "~/.config/wallpapers/dark/2560x1440/jaime-lannister.jpg"
+
+[monitors.work.right]
+name = "Dell Inc. DELL U2515H 9X2VY6A80A8L"
+mode = "2560x1440@60Hz"
+position = "5168x226"
+scale = "1"
+transform = 3
+background = "~/.config/wallpapers/dark/2160x3840/eberhard-grossgasteiger-7ZxpAr4cZ-U-unsplash.jpg"
+
+[monitors.work.laptop]
+name = "Samsung Display Corp. 0x4193"
+mode = "2880x1800@90Hz"
+position = "2648x2226"
+scale = "1.8"
+background = "~/.config/wallpapers/dark/2560x1440/jaime-lannister.jpg"
+has_lid = true
+
+[monitors.home]
+screen_timeout = 120
+lock_timeout = 300
+
+[monitors.home.left]
+name = "Lenovo Group Limited Y32p-30 U1HMF6PT"
+mode = "3840x2160@144Hz"
+position = "0x0"
+scale = "1.25"
+transform = 1
+background = "~/.config/wallpapers/dark/2160x3840/ren-ran-HG5QX-GXV5A-unsplash.jpg"
+
+[monitors.home.center]
+name = "Dell Inc. AW3225QF GZ00YZ3"
+mode = "3840x2160@240Hz"
+position = "1728x865"
+scale = "1.25"
+transform = 0
+color = "#000000"
+
+[monitors.home.center.personal]
+mode = "3840x2160@240Hz"
+
+[monitors.home.center.work]
+mode = "3840x2160@120Hz"
+
+[monitors.home.right]
+name = "Lenovo Group Limited Y32p-30 U1HMF6PN"
+position = "4800x0"
+scale = "1.25"
+transform = 3
+background = "~/.config/wallpapers/dark/2160x3840/eberhard-grossgasteiger-7ZxpAr4cZ-U-unsplash.jpg"
+
+[monitors.home.right.personal]
+mode = "3840x2160@120Hz"
+
+[monitors.home.right.work]
+mode = "3840x2160@144Hz"
+
+[monitors.home.tv]
+name = "LG Electronics LG TV 0x01010101"
+mode = "3840x2160@120Hz"
+position = "6560x0"
+scale = "1.5"
+disable = true
+
+[monitors.home.laptop]
+name = "LG Display 0x0662"
+mode = "1920x1080@60Hz"
+position = "3181x1905"
+scale = "1"
+has_lid = true

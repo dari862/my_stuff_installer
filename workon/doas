@@ -1,0 +1,21 @@
+#!/bin/sh
+set -e
+sudo apt-get -y install doas
+echo 'permit persist setenv {PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin} :sudo' > /tmp/doas.conf
+echo 'permit setenv { XAUTHORITY LANG LC_ALL } :sudo' >> /tmp/doas.conf
+echo '' >> /tmp/doas.conf
+
+if doas -C /tmp/doas.conf;then
+	echo "config ok"
+else 
+	echo "config error"
+	exit 1
+fi
+
+sudo chown -c root:root /tmp/doas.conf
+sudo chmod -c 0400 /tmp/doas.conf
+sudo mv /tmp/doas.conf /etc
+
+echo "alias sudo='doas'" | sudo tee -a /etc/bash.bashrc
+echo "alias sudoedit='doas rnano'"  | sudo tee -a /etc/bash.bashrc
+complete -F _command doas | sudo tee -a /etc/bash.bashrc
