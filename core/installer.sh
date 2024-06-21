@@ -136,6 +136,16 @@ test_internet_(){
     fi
 }
 
+do_you_want_2_run_this_yes_or_no(){
+	massage_is_="${1}"
+	yn=""
+	read -r -p "${massage_is_} (yes/no) (default: yes)" yn
+	yn="${yn^^}"
+	[ "$yn" = "YES" ] && yn="Y"
+	[ "$yn" = "" ] && yn="Y"
+	echo "$yn"
+}
+
 prompt_to_ask_to_what_to_install(){
 	if [ "$(do_you_want_2_run_this_yes_or_no 'Autorun installation?')" = "Y" ];then
 		return
@@ -487,13 +497,13 @@ check_if_user_has_root_access
 
 test_internet_
 
+prompt_to_ask_to_what_to_install
+
 mkdir -p "${temp_path}"
 
 fix_time_
 
 source_my_lib_file
-
-prompt_to_ask_to_what_to_install
 
 must_install_apps
 

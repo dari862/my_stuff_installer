@@ -167,16 +167,6 @@ run_fixes_()
 	sudo ln -s /usr/bin/obconf /usr/bin/xfwm4-workspace-settings
 }
 
-do_you_want_2_run_this_yes_or_no(){
-	massage_is_="${1}"
-	yn=""
-	read -r -p "${massage_is_} (yes/no) (default: yes)" yn
-	yn="${yn^^}"
-	[ "$yn" = "YES" ] && yn="Y"
-	[ "$yn" = "" ] && yn="Y"
-	echo "$yn"
-}
-
 git_clone_and_set_var_to_path(){
 	getthis="${1-}"
 	show_m "git clone ${getthis}"
