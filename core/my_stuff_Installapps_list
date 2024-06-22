@@ -86,6 +86,7 @@ if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
 	add_packages_2_install_list "${install_if_laptop[@]}"
 fi
 add_packages_2_install_list "${install_themes[@]}"
+add_packages_2_install_list "${install_themes_tools[@]}"
 add_packages_2_install_list "${install_terminal[@]}"
 add_packages_2_install_list "${install_files_manager_app[@]}"
 add_packages_2_install_list "${install_x_lock_extra[@]}"
