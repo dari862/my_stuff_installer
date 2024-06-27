@@ -52,6 +52,8 @@ mkdir -p "${__distro_path}"/opt/git
 mkdir -p "${__distro_path}"/bin/not_add_2_path/hub_script
 mkdir -p "${__distro_path}"/skel/.config/mpd/playlists
 mkdir -p "${__distro_path}"/skel/.local/share/bash_history
+mkdir -p "${__distro_path}"/bin/not_add_2_path/containers_center/deploy
+mkdir -p "${__distro_path}"/bin/not_add_2_path/containers_center/deployed
 
 ln -sf "${__distro_path}"/bin/not_add_2_path/pmxkcd/pmxkcd "${__distro_path}"/bin/apps/
 ln -sf "${__distro_path}"/bin/not_add_2_path/YadAppsStore/gui "${__distro_path}"/bin/apps/YadStore
