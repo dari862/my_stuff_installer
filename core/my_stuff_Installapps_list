@@ -40,7 +40,7 @@ package_firefox_esr="$(check_if_package_exist_in_repo firefox-esr)"
 ## must_install_apps_list
 ##################################################################################
 #must have apps
-install_must_have_apps=(jq btop xclip curl cbatticon xprintidle yad git lsb-release rofi picom groups sudo systemd-timesyncd)
+install_must_have_apps=(jq btop xclip curl cbatticon xprintidle yad git lsb-release rofi picom groups sudo systemd-timesyncd mlocate)
 install_must_have_apps2=(psmisc unzip dunst xorg arandr autorandr dbus-x11 pnmixer diodon gparted inxi s-tui dfc htop hwinfo synaptic galternatives xdotool libnotify-bin gnome-keyring ntfs-3g acl xinit xdg-user-dirs lm-sensors)
 install_openbox_=(openbox obconf xcape tint2 nitrogen)
 install_image_viewer_apps=(viewnior)

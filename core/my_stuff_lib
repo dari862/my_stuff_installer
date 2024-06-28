@@ -128,7 +128,7 @@ must_install_apps()
 	fi
 	
 	if ! command -v locate >/dev/null;then
-		add_packages_2_install_list "locate"
+		add_packages_2_install_list "mlocate"
 	fi
 	
 	if ! command -v git >/dev/null;then

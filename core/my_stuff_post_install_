@@ -6,22 +6,30 @@ __distro_path="/usr/share/${Custom_distro_dir_name}"
 _hub_script_dir="${__distro_path}/bin/not_add_2_path/hub_script"
 
 PATH="${__distro_path}/bin/bin:$PATH"
+##################################################################################
+echo "update Databases ex: locate"
+updatedb
 
 ############
 # terminator
 ############
+echo "fix terminator"
+
 if [ -d "/etc/xdg" ];then
-	[ ! -d "/etc/xdg/terminator" ] && sudo mkdir -p "/etc/xdg/terminator"
-	[ ! -f "/etc/xdg/terminator/config" ] && sudo cp -r /usr/share/"${Custom_distro_dir_name}"/skel/.config/terminator /etc/xdg/terminator
+	[ ! -d "/etc/xdg/terminator" ] && mkdir -p "/etc/xdg/terminator"
+	[ ! -f "/etc/xdg/terminator/config" ] && cp -r /usr/share/"${Custom_distro_dir_name}"/skel/.config/terminator /etc/xdg/terminator
 fi
 
 ############
 # Remove "Set as wallpaper" from Thunar Context Menu and replace it with  "Set as wallpaper" from thunar config uac file
 ############
+echo "fix thunar"
+
 __thunar_wall_plug="$(locate thunar | grep wall || :)"
-[ ! -z "${__thunar_wall_plug}" ] && sudo mv "${__thunar_wall_plug}" "${__thunar_wall_plug}.backup"
+[ ! -z "${__thunar_wall_plug}" ] && mv "${__thunar_wall_plug}" "${__thunar_wall_plug}.backup"
 
 ##################################################################################
+echo "prepares for hub script"
 mkdir -p "${_hub_script_dir}"
 ln -sf "${__distro_path}"/bin/not_add_2_path/pmxkcd/pmxkcd "${_hub_script_dir}"
 ln -sf ${__distro_path}/bin/not_add_2_path/utilities/* "${_hub_script_dir}"
@@ -44,6 +52,8 @@ for script in "${remove_this_script_[@]}";do
 	rm "${_hub_script_dir}"/"$script"
 done
 
+echo "creating missing dir"
+
 mkdir -p "${__distro_path}"/lib/auto_completion
 mkdir -p "${__distro_path}"/bin/not_add_2_path/distrobox_center/Apps
 mkdir -p "${__distro_path}"/bin/not_add_2_path/distrobox_center/Gaming
@@ -64,6 +74,7 @@ if [ -f "${__distro_path}/this_is_laptop" ];then
 	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/yadtlp.desktop "${__distro_path}"/applications/
 fi
 
+echo "runing script to popluate some needed files"
 ${__distro_path}/bin/not_add_2_path/create_DB.sh --all
 ${__distro_path}/bin/not_add_2_path/YadAppsStore/tools/edite_apps_folder
 ${__distro_path}/bin/not_add_2_path/YadAppsStore/tools/pre_yadstore
