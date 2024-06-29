@@ -370,12 +370,12 @@ set_package_manager(){
 	
 	if [[ $PACKAGER == "apt-get" ]]; then
 		__noninteractive="DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true"
-		__noninteractive_install='$_SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true ${PACKAGER} install -yq'
+		__noninteractive_install="$_SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true ${PACKAGER} install -yq"
 		__install="$_SUDO ${PACKAGER} install -yq"
 		__purge="$_SUDO ${PACKAGER} purge -y"
 	elif [[ $PACKAGER == "yay" ]] || [[ $PACKAGER == "paru" ]]; then
 		__noninteractive="DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true"
-		__noninteractive_install='$_SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true ${PACKAGER} install -yq'
+		__noninteractive_install="$_SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true ${PACKAGER} install -yq"
 		__install="${PACKAGER} --noconfirm -S"
 		__purge="$_SUDO ${PACKAGER} purge -y"
 	elif [[ $PACKAGER == "yum" ]]; then
