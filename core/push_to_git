@@ -20,7 +20,6 @@ eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/id_rsa
 
 for getthis in "${git_repo_Array[@]}"; do
-	echo pwd
 	cd $HOME/Desktop/$getthis
 	echo "###############################################"
 	echo "#		pushing $getthis repo"
