@@ -1,8 +1,10 @@
 #!/usr/bin/bash
-if ! command -v sudo >/dev/null
+
+if command -v sudo >/dev/null
 then
 	__sudo="sudo"
 fi
+
 get_date_from_here=""
 list_to_test=(debian.com github.com 104.16.132.229)
 	
