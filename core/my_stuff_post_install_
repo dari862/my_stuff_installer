@@ -1,0 +1,81 @@
+#!/bin/bash
+set -e
+Custom_distro_dir_name="${1-}"
+
+__distro_path="/usr/share/${Custom_distro_dir_name}"
+_hub_script_dir="${__distro_path}/bin/not_add_2_path/hub_script"
+
+PATH="${__distro_path}/bin/bin:$PATH"
+##################################################################################
+echo "update Databases ex: locate"
+updatedb
+
+############
+# terminator
+############
+echo "fix terminator"
+
+if [ -d "/etc/xdg" ];then
+	[ ! -d "/etc/xdg/terminator" ] && mkdir -p "/etc/xdg/terminator"
+	[ ! -f "/etc/xdg/terminator/config" ] && cp -r /usr/share/"${Custom_distro_dir_name}"/skel/.config/terminator /etc/xdg/terminator
+fi
+
+############
+# Remove "Set as wallpaper" from Thunar Context Menu and replace it with  "Set as wallpaper" from thunar config uac file
+############
+echo "fix thunar"
+
+__thunar_wall_plug="$(locate thunar | grep wall || :)"
+[ ! -z "${__thunar_wall_plug}" ] && mv "${__thunar_wall_plug}" "${__thunar_wall_plug}.backup"
+
+##################################################################################
+echo "prepares for hub script"
+mkdir -p "${_hub_script_dir}"
+ln -sf "${__distro_path}"/bin/not_add_2_path/pmxkcd/pmxkcd "${_hub_script_dir}"
+ln -sf ${__distro_path}/bin/not_add_2_path/utilities/* "${_hub_script_dir}"
+ln -sf ${__distro_path}/bin/rofi/* "${_hub_script_dir}" 
+ln -sf ${__distro_path}/bin/bin/displayselect "${_hub_script_dir}"
+ln -sf ${__distro_path}/bin/bin/full-upgrade "${_hub_script_dir}"
+ln -sf ${__distro_path}/bin/apps/* "${_hub_script_dir}"
+ln -sf ${__distro_path}/bin/not_add_2_path/pmxkcd/pmxkcd "${_hub_script_dir}"
+
+if [ ! -f "${__distro_path}/this_is_laptop" ];then
+	if [ -d "${_hub_script_dir}" ];then
+		rm "${_hub_script_dir}/toggletouch"
+		rm "${_hub_script_dir}/wifimenu"
+		rm "${_hub_script_dir}/wifi"
+	fi
+fi
+
+remove_this_script_=(hub rofi-powermenu rofi-launcher rofi-runner unmounter)
+for script in "${remove_this_script_[@]}";do
+	rm "${_hub_script_dir}"/"$script"
+done
+
+echo "creating missing dir"
+
+mkdir -p "${__distro_path}"/lib/auto_completion
+mkdir -p "${__distro_path}"/bin/not_add_2_path/distrobox_center/Apps
+mkdir -p "${__distro_path}"/bin/not_add_2_path/distrobox_center/Gaming
+mkdir -p "${__distro_path}"/opt/downloaded
+mkdir -p "${__distro_path}"/opt/git
+mkdir -p "${__distro_path}"/bin/not_add_2_path/hub_script
+mkdir -p "${__distro_path}"/skel/.config/mpd/playlists
+mkdir -p "${__distro_path}"/skel/.local/share/bash_history
+mkdir -p "${__distro_path}"/bin/not_add_2_path/containers_center/deploy
+mkdir -p "${__distro_path}"/bin/not_add_2_path/containers_center/deployed
+
+ln -sf "${__distro_path}"/bin/not_add_2_path/pmxkcd/pmxkcd "${__distro_path}"/bin/apps/
+ln -sf "${__distro_path}"/bin/not_add_2_path/YadAppsStore/gui "${__distro_path}"/bin/apps/YadStore
+
+if [ -f "${__distro_path}/this_is_laptop" ];then
+	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/gpu-switcher-session.desktop /etc/xdg/autostart
+	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/gpu-switcher-session.desktop "${__distro_path}"/skel/.config/autostart/
+	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/yadtlp.desktop "${__distro_path}"/applications/
+fi
+
+echo "runing script to popluate some needed files"
+${__distro_path}/bin/not_add_2_path/create_DB.sh --all
+${__distro_path}/bin/not_add_2_path/YadAppsStore/tools/edite_apps_folder
+${__distro_path}/bin/not_add_2_path/YadAppsStore/tools/pre_yadstore
+

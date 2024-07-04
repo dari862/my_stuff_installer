@@ -1,0 +1,89 @@
+lscpu | grep Virtualization
+if ! AMD-V or VT-x
+	hardware virtualization extension is most likely disabled in the BIOS/UEFI. enable it.
+	exit
+fi
+
+zgrep CONFIG_KVM /boot/config-$(uname -r) | grep -v "^#"
+
+if end of every line is not =y or =m
+	krenal doest not support virtualization
+	exit
+fi
+
+sudo apt install qemu-system-x86 libvirt-daemon-system virtinst \
+    virt-manager virt-viewer ovmf swtpm qemu-utils guestfs-tools \
+    libosinfo-bin
+
+wget https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/latest-virtio/virtio-win.iso
+
+if -f /etc/libvirt/virtqemud
+	for drv in qemu interface network nodedev nwfilter secret storage; do \
+		sudo systemctl enable virt${drv}d.service; \
+		sudo systemctl enable virt${drv}d{,-ro,-admin}.socket; \
+	done
+else
+	sudo systemctl enable libvirtd.service
+fi
+
+sudo reboot
+
+sudo virt-host-validate qemu | grep ": WARN"
+
+for each line
+if amd and "QEMU: Checking for secure guest support"
+	this is a bug visit this link https://bugzilla.redhat.com/show_bug.cgi?id=1850351#c5 and https://libvirt.org/kbase/launch_security_sev.html links to resolve this issue.
+fi
+
+if "QEMU: Checking for device assignment IOMMU support"
+	if grep "GRUB_CMDLINE_LINUX=" /etc/default/grub | grep "intel_iommu=on"
+		add at the end of line
+	fi
+	
+	if grep "GRUB_CMDLINE_LINUX=" /etc/default/grub | grep "iommu=pt"
+		add at the end of line
+	fi
+fi
+
+sudo update-grub
+
+sudo reboot
+
+sudo virt-host-validate qemu | grep ": WARN" | grep "IOMMU" 
+if there is output
+	failed IOMMU not enable 
+	exit
+fi
+
+sudo apt install -y tuned
+sudo systemctl enable --now tuned
+sudo tuned-adm profile virtual-host
+tuned-adm active | grep virtual-host 
+if failed
+	failed to enable virtual-host  profile
+fi
+
+sudo tuned-adm verify | grep "Verfication succeeded"
+if failed
+	failed to verify tuned
+fi
+interface_name=enp2s0
+sudo virsh net-start default
+sudo virsh net-autostart default
+sudo nmcli connection add type bridge con-name bridge0 ifname bridge0
+sudo nmcli connection add type ethernet slave-type bridge \
+    con-name 'Bridge connection 1' ifname $interface_name master bridge0
+sudo nmcli connection up bridge0
+sudo nmcli connection modify bridge0 connection.autoconnect-slaves 1
+sudo nmcli connection up bridge0
+cat << 'EOF' > nwbridge.xml
+<network>
+  <name>nwbridge</name>
+  <forward mode='bridge'/>
+  <bridge name='bridge0'/>
+</network>
+EOF
+sudo virsh net-define nwbridge.xml
+sudo virsh net-start nwbridge
+sudo virsh net-autostart nwbridge
+rm nwbridge.xml

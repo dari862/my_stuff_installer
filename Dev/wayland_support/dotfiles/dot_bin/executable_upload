@@ -1,0 +1,91 @@
+#!/usr/bin/env zsh
+
+set -eo pipefail
+
+source ~/.config/.secrets
+source ~/.config/.variables
+
+on_error() {
+    notify-send "An error occured! ☹" "Error at $1" --category transfer.error
+    exit 1
+}
+
+trap 'on_error ${funcstack[1]}:$LINENO' ERR
+
+types=$(wl-paste --list-types)
+if [[ $types == *image* ]]; then
+    if [[ $CHEZMOI_DATA_ENVIRONMENT == "work" ]]; then
+        service_name="Pixelcloud"
+    else
+        service_name="Imgur"
+    fi
+
+    notification_id=$(notify-send "⏳ Uploading to $service_name" --print-id --category transfer)
+
+    if [[ $CHEZMOI_DATA_ENVIRONMENT == "work" ]]; then
+        tmpfile=$(mktemp --suffix .png)
+        wl-paste > $tmpfile
+        link=$(px upload "$tmpfile")
+    else
+        imgur_output=$(wl-paste | imgur.sh)
+        echo "BEFORE"
+        echo "$imgur_output"
+        echo "AFTER"
+        link=$(echo "$imgur_output" | head -1)
+        delete_link=$(echo "$imgur_output" | tail -1)
+    fi
+
+    echo $link | wl-copy --trim-newline
+    notify_output_lines=($(notify-send "🎉 Uploaded to $service_name" "Link copied to clipboard, click here to delete."  --print-id --replace-id=$notification_id --category transfer.complete --action=default=delete --expire-time 15000 ))
+    notification_id=$notify_output_lines[1]
+    action=$notify_output_lines[2]
+
+    if [[ $action == "default" ]]; then
+        # It means it was clicked.
+        if [[ $CHEZMOI_DATA_ENVIRONMENT == "work" ]]; then
+            notify-send "😫 You cannot delete pixelcloud images." --category transfer.error --replace-id=$notification_id
+        else
+            (
+                xdg-open "$delete_link" && \
+                notify-send "🗑 Opened the delete link!" "Confirm the deletion on Imgur." --replace-id=$notification_id --category transfer.complete
+            ) || notify-send "😫 Could not delete Imgur image!" "The delete link is in your clipboard." --replace-id=$notification_id --category transfer.error
+        fi
+    fi
+else
+    if [[ $CHEZMOI_DATA_ENVIRONMENT == "work" ]]; then
+        service_name="Pastry"
+    else
+        service_name="GitHub Gist"
+    fi
+
+    notification_id=$(notify-send "⏳ Uploading to $service_name" --print-id --category transfer)
+
+    if [[ $CHEZMOI_DATA_ENVIRONMENT == "work" ]]; then
+        pastry_output=$(wl-paste | pastry | sed 's/://g')
+        pastry_output_parts=(${(@s/ /)pastry_output})
+        pastry_id=${pastry_output_parts[1]}
+        pastry_link=${pastry_output_parts[2]}
+
+        to_copy="$pastry_id"
+    else
+        service_name="GitHub Gist"
+        to_copy=$(wl-paste | gh gist create -)
+    fi
+
+    echo $to_copy | wl-copy --trim-newline
+    notify_output_lines=($(notify-send "🎉 Uploaded to $service_name" "Link copied to clipboard, click here to delete." --print-id --replace-id=$notification_id --category transfer.complete --action=default=delete --expire-time 15000 ))
+    notification_id=$notify_output_lines[1]
+    action=$notify_output_lines[2]
+
+    if [[ $action == "default" ]]; then
+        # It means it was clicked.
+        if [[ $CHEZMOI_DATA_ENVIRONMENT == "work" ]]; then
+            notify-send "😫 You cannot delete pastries." --category transfer.error --replace-id=$notification_id
+        else
+            (
+                gh gist delete $to_copy && \
+                notify-send "🗑 Deleted GitHub Gist!" "The original link remains in the clipboard." --replace-id=$notification_id --category transfer.complete
+            ) || notify-send "😫 Could not delete GitHub Gist!" "Try to delete it manually, it's still in your clipboard." --replace-id=$notification_id --category transfer.error
+        fi
+    fi
+fi

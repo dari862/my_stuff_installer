@@ -1,0 +1,11 @@
+{
+  "IS_MAXIMIZED": true,
+  "IS_MINIMIZED": false,
+  "WINDOW_BOUNDS": {
+    "x": 2560,
+    "y": 0,
+    "width": 1440,
+    "height": 2520
+  },
+  "chromiumSwitches": {}
+}

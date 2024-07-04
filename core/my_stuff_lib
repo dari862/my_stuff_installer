@@ -1,0 +1,538 @@
+#!/bin/bash
+set -e
+
+Custom_distro_name="My Stuff"
+[[ -z "${temp_path}" ]] && temp_path="/tmp/my_stuff"
+list_of_apps_file_path="${temp_path}/list_of_apps"
+
+Custom_distro_dir_name="$(echo "$Custom_distro_name" | tr -dc '[:alnum:] \n\r' | tr '[:upper:]' '[:lower:]' | tr -s ' ' '_')"
+_SUDO=""
+command -v sudo >/dev/null && _SUDO="sudo"
+PACKAGER=""
+__noninteractive=""
+__noninteractive_install=""
+__install=""
+__purge=""
+number_of_gpus=0
+
+if [ "$(lspci | grep -i nvidia | grep VGA -c)" != "0" ];then
+	nvidia_gpu_exist=true
+	number_of_gpus=$((number_of_gpus++))
+fi
+
+if [ "$(lspci | grep -i intel | grep VGA -c)" != "0" ];then
+	intel_gpu_exist=true
+	number_of_gpus=$((number_of_gpus++))
+fi
+
+if [ "$(lspci | grep -i amd | grep VGA -c)" != "0" ];then
+	amd_gpu_exist=true
+	number_of_gpus=$((number_of_gpus++))
+fi
+
+if [ "$(lspci | grep -i VMware | grep VGA -c)" != "0" ];then
+	VMware_gpu_exist=true
+	number_of_gpus=$((number_of_gpus++))
+fi
+
+this_is_ubuntu=false
+# distro 
+if [ -f /etc/os-release ]; then
+	# freedesktop.org and systemd
+	. /etc/os-release
+	version_=$(echo "${VERSION_ID//./}")
+	distro_name_="$ID"
+	distro_name_and_ver_=$ID$version_
+elif [ -f /etc/lsb-release ]; then
+	# For some versions of Debian/Ubuntu without lsb_release command
+	. /etc/lsb-release
+	distro_name_="$DISTRIB_ID"
+	distro_name_and_ver_=$DISTRIB_ID$DISTRIB_RELEASE
+else
+	# Fall back to uname, e.g. "Linux <version>", also works for BSD, etc.
+	distro_name_="$(uname -s)"
+	distro_name_and_ver_=$(uname -s)$(uname -r)
+fi
+if [ "$distro_name_" = "ubuntu" ];then
+	this_is_ubuntu=true
+fi
+
+##################################################################################
+# function
+##################################################################################
+
+test_if_my_stuff_lib_sourced(){  
+	: # do nothing
+}
+
+show_m()
+{
+  echo -e $'\033[1;32m'"$*"$'\033[0m'
+}
+
+show_em()
+{
+	__massage="${1-}"
+	echo "$__massage"
+}
+
+check_and_download_()
+{
+	check_this_file_="${1-}"
+	new_check_this_file_="${temp_path}/${check_this_file_}"
+	check_this_file_location="$(find $HOME -type f -name ${check_this_file_} | head -1)"
+	
+	if [[ ! -z "${check_this_file_location}" ]];then
+		mv "${check_this_file_location}" "${temp_path}"
+	fi
+	
+	if [[ ! -f "${new_check_this_file_}" ]]; then
+	show_m "Wget $check_this_file_ file from www.github.com/dari862/my_stuff_installer ."
+		if wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/"$check_this_file_" -O "${new_check_this_file_}" ;then
+		chmod +x "${new_check_this_file_}"
+		else
+			show_em "Error: Failed to wget ${check_this_file_} from ${new_check_this_file_} "
+			exit 1
+		fi
+	fi
+}
+
+check_for_SUDO()
+{
+	if ! command -v sudo >/dev/null;then
+		show_m "Install sudo and add user 1000 to sudo group"
+		kill_PACKAGE_MANAGER && $__install sudo || (kill_PACKAGE_MANAGER && $__install sudo) || (show_em "failed to install sudo" && exit 1)
+		user=$(cut -f 1,3 -d: /etc/passwd | grep :1000$ | cut -f1 -d:)
+		[ "$user" ] && adduser "$user" sudo
+	fi
+	_SUDO="sudo"
+	
+	set_package_manager
+	
+	keep_sudo_refresed(){
+		while true
+		do
+				sudo -v
+				sleep 10m
+		done
+	}
+	keep_sudo_refresed &
+}
+
+must_install_apps()
+{
+	check_for_SUDO
+	
+	if ! command -v killall >/dev/null;then
+		add_packages_2_install_list "killall"
+	fi
+	
+	if ! command -v locate >/dev/null;then
+		add_packages_2_install_list "mlocate"
+	fi
+	
+	if ! command -v git >/dev/null;then
+		add_packages_2_install_list "git"
+	fi
+	
+	install_packages
+}
+
+rm_if_link()
+{ 
+_arg="${}"
+_arg2="${}"
+	if [ -L "$1" ]; then
+		rm "$1";
+	fi 
+}
+
+apt_purge_with_error2info()
+{
+	localarray=("$@")
+	for package in "${localarray[@]}"
+	do
+		if dpkg -s "${package}" &>/dev/null; then
+			show_m "Purging ${package}."
+			$__purge "$package"
+		fi
+	done
+}
+
+run_fixes_()
+{
+	#fix xfce4-panel workspace settings error in openbox
+	[ -L "$1" ] &&  sudo rm "/usr/bin/xfwm4-workspace-settings"
+	[ -f /usr/bin/xfwm4-workspace-settings ] && sudo rm /usr/bin/xfwm4-workspace-settings
+	sudo ln -s /usr/bin/obconf /usr/bin/xfwm4-workspace-settings
+}
+
+git_clone_and_set_var_to_path(){
+	getthis="${1-}"
+	show_m "git clone ${getthis}"
+	getthis_location="$(find $HOME -type d -name ${getthis} | head -1)"
+	
+	if [[ -z "${getthis_location}" ]];then
+		getthis_location="${temp_path}"
+	else
+		getthis_location="$(cd "${getthis_location}" && cd .. && pwd)"
+	fi
+	
+	if [ ! -d "${getthis_location}/${getthis}" ]; then 
+		git clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}/${getthis}"
+	else
+		show_m "${getthis} Folder does exsist"
+	fi
+	
+	echo "${getthis_location}"
+}
+
+_unattended_upgrades_()
+{
+	auto_upgrades_file="/etc/apt/apt.conf.d/20auto-upgrades"
+	if [ -f "${auto_upgrades_file}" ];then
+		auto_upgrades_file_bak="/etc/apt/apt.conf.d/20auto-upgrades.bak"
+		case "$1" in
+			start)
+				sudo systemctl stop unattended-upgrades || :
+				if [ ! -f "${auto_upgrades_file_bak}" ];then
+					sudo mv "${auto_upgrades_file}" "${auto_upgrades_file_bak}"
+				fi
+			;;
+			stop)
+				if [ -f "${auto_upgrades_file}" ] && [ -f "${auto_upgrades_file_bak}" ];then
+					sudo rm "${auto_upgrades_file}"
+				fi
+					
+				if [ -f "${auto_upgrades_file_bak}" ];then
+					sudo mv "${auto_upgrades_file_bak}" "${auto_upgrades_file}"
+				fi
+			;;
+		esac
+	fi
+}
+
+fix_time_(){
+	get_date_from_here=""
+	list_to_test=(debian.com github.com 104.16.132.229)
+	
+	for test in "${list_to_test[@]}";do
+		ping -c 1 $test &>/dev/null && get_date_from_here="$test" && break
+	done
+		
+	if [[ -z "$get_date_from_here" ]];then 
+		echo "failed to ping all of this: ${list_to_test[@]}" && exit 1
+	else
+		$_SUDO date -s "$(wget --method=HEAD -qSO- --max-redirect=0 $get_date_from_here 2>&1 | sed -n 's/^ *Date: *//p')" &>/dev/null
+		#__timezone="$(curl -q https://ipinfo.io/ 2>/dev/null | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/ //g')"
+		__timezone="Asia/Kuwait"
+		$_SUDO timedatectl set-timezone $__timezone	
+	fi
+}
+
+check_if_user_has_root_access(){
+    if [[ -z $SUGROUP ]];then
+    	## Check SuperUser Group
+    	SUPERUSERGROUP='wheel sudo root'
+    	for sug in ${SUPERUSERGROUP}; do
+        	if groups | grep ${sug} >/dev/null; then
+            	SUGROUP=${sug}
+            	echo -e "Super user group ${SUGROUP}"
+        	fi
+    	done
+	
+    	## Check if member of the sudo group.
+    	if ! groups | grep ${SUGROUP} >/dev/null; then
+        	echo -e "\e[31m You need to be a member of the sudo group to run me!"
+        	exit 1
+    	fi
+    	
+    	if command -v sudo >/dev/null;then
+			sudo -v
+		fi
+	fi
+}
+######################################################################################################################
+######################################################################################################################
+######################################################################################################################
+######################################################################################################################
+######################################################################################################################
+
+CHECK_IF_THIS_LAPTOP(){
+	is_this_laptop=""
+	# Are we a mac?
+	if test -d /proc/pmu; then
+        	batteries=$(grep Battery /proc/pmu/info | cut -f2 -d:)
+        	if test "$batteries" -ne 0; then
+            	is_this_laptop=true
+        	fi
+	fi
+	
+	if dmidecode="$(command -v dmidecode)" && [ -r /dev/mem -a -x "$dmidecode" ]
+	then
+        	# dmidecode to grab the Chassis type
+        	dmitype=$("$dmidecode" --string chassis-type)
+	
+        	if test "$dmitype" = "Notebook" || \
+           	test "$dmitype" = "Portable" || \
+           	test "$dmitype" = "Laptop"   || \
+           	test "$dmitype" = "Hand Held"; then
+            	is_this_laptop=true
+        	fi
+	
+        	# turn back on for debugging
+        	#echo "$dmitype"
+	fi
+	
+	if [ -e /sys/devices/virtual/dmi/id/chassis_type ] ; then
+    	chassis_type="$(cat /sys/devices/virtual/dmi/id/chassis_type)"
+    	case "$chassis_type" in
+        	8|9|10|11) # Portable
+            	is_this_laptop=true
+            	;;
+    	esac
+	fi
+	
+	# check for non device ACPI batteries
+	/sbin/modprobe battery 2> /dev/null || true
+	sysfs_power_supply=/sys/class/power_supply
+	if [ -d "$sysfs_power_supply" ]; then
+		for power_supply in "$sysfs_power_supply"/*
+		do
+			if (
+				grep -q Battery "$power_supply"/type 2>/dev/null
+			) && (
+				! grep -q Device "$power_supply"/scope 2>/dev/null
+			)
+			then
+				is_this_laptop=true
+			fi
+		done
+	fi
+	# old interface:
+	if [ -d /proc/acpi/battery ]; then
+        	results=$(find /proc/acpi/battery -mindepth 1 -type d)
+        	if [ -n "$results" ]; then
+            	is_this_laptop=true
+        	fi
+	fi
+
+	# check for APM batteries. This sucks, because we'll only get a valid response
+	# if the laptop has a battery fitted at the time
+	if [ -f /proc/apm ]; then
+    	battery=$(awk '{print $6}' </proc/apm)
+    	if [ "$battery" != "0xff" ] && [ "$battery" != "0x80" ]; then
+        	is_this_laptop=true
+    	fi
+	fi
+	echo ${is_this_laptop}
+}
+
+######################################################################################################################
+# set package manager var and functions
+######################################################################################################################
+
+set_package_manager(){
+	## Check Package Handeler
+	PACKAGEMANAGER='apt-get yum dnf pacman zypper'
+	for pgm in ${PACKAGEMANAGER}; do
+		if command -v ${pgm} >/dev/null; then
+			PACKAGER=${pgm}
+			echo -e "Using ${pgm}"
+			break
+		fi
+	done
+	
+	if [ -z "${PACKAGER}" ]; then
+		echo -e "${RED}Can't find a supported package manager"
+		exit 1
+	fi
+    	
+	if [[ $PACKAGER == "pacman" ]]; then
+		if ! command -v yay >/dev/null && ! command -v paru >/dev/null; then
+			echo "Installing yay as AUR helper..."
+			$_SUDO ${PACKAGER} --noconfirm -S base-devel
+			cd /opt && sudo git clone https://aur.archlinux.org/yay-git.git && sudo chown -R ${USER}:${USER} ./yay-git
+			cd yay-git && makepkg --noconfirm -si
+		else
+			echo "Aur helper already installed"
+		fi
+		if command -v yay >/dev/null; then
+			PACKAGER="yay"
+		elif command -v paru >/dev/null; then
+			PACKAGER="paru"
+		else
+			echo "No AUR helper found. Please install yay or paru."
+			exit 1
+		fi
+		echo -e "switching ${PACKAGER}"
+	fi
+	
+	if [[ $PACKAGER == "apt-get" ]]; then
+		__noninteractive="DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true"
+		__noninteractive_install='$_SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true ${PACKAGER} install -yq'
+		__install="$_SUDO ${PACKAGER} install -yq"
+		__purge="$_SUDO ${PACKAGER} purge -y"
+	elif [[ $PACKAGER == "yay" ]] || [[ $PACKAGER == "paru" ]]; then
+		__noninteractive="DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true"
+		__noninteractive_install='$_SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true ${PACKAGER} install -yq'
+		__install="${PACKAGER} --noconfirm -S"
+		__purge="$_SUDO ${PACKAGER} purge -y"
+	elif [[ $PACKAGER == "yum" ]]; then
+		__install="$_SUDO ${PACKAGER} install -yq"
+	elif [[ $PACKAGER == "dnf" ]]; then
+		__install="$_SUDO ${PACKAGER} install -yq"
+	elif [[ $PACKAGER == "zypper" ]]; then
+		__install="$_SUDO ${PACKAGER} install -yq"
+	fi
+}
+
+set_package_manager
+
+if [[ $PACKAGER == "apt-get" ]]; then
+	# functions
+	create_package_list(){
+		# create list_of_apps file
+		if [[ ! -f "${list_of_apps_file_path}" ]];then
+			show_m "create_list_of_apps"
+			apt list 2>/dev/null > "${list_of_apps_file_path}" 
+		fi
+	}
+	
+	install_packages(){
+		($__install "${List_of_apt_2_install_[@]}" && kill_PACKAGE_MANAGER) || ($__install "${List_of_apt_2_install_[@]}" && kill_PACKAGE_MANAGER) || $__install "${List_of_apt_2_install_[@]}"
+	}
+	
+	check_if_package_exist_in_repo(){
+		local package_name="${1-}"
+		if ! dpkg -s "${package_name}" > /dev/null 2>&1; then
+			check_apps_in_cache="$(grep "^$package_name/" "${list_of_apps_file_path}" 2>/dev/null || :)"
+			if [ -n "${check_apps_in_cache}" ];then
+				echo "${package_name}" 
+			fi
+		fi
+	}
+	
+	add_packages_2_install_list()
+	{
+		localarray=("$@")
+		
+		for INDEX in "${localarray[@]}"
+		do
+			if ! dpkg -s "${INDEX}" > /dev/null 2>&1; then
+				check_apps_in_cache="$(grep "^$INDEX/" "${list_of_apps_file_path}" 2>/dev/null || :)"
+				if [ -n "${check_apps_in_cache}" ];then
+					List_of_apt_2_install_+=("$INDEX") 
+					show_m "${INDEX} added to install apps" 
+				fi
+			fi
+		done
+	}
+	aptupdate(){
+		show_m "updating your system"
+		[ "$(find /var/cache/apt/pkgcache.bin -mtime 0 2>/dev/null)" ] || $_SUDO ${PACKAGER} update
+	}
+	aptfixer(){
+			if ! command -v sudo >/dev/null
+			then
+				if grep 'deb cdrom' /etc/apt/sources.list;then
+					sed -i '/deb cdrom/d' /etc/apt/sources.list
+				fi
+			else
+				if grep 'deb cdrom' /etc/apt/sources.list;then
+					$_SUDO sed -i '/deb cdrom/d' /etc/apt/sources.list
+				fi
+			fi
+			aptupdate
+			### Fix broken packages for good measure (why not?)
+			$__install -f 2>/dev/null || show_em "failed to $__install -f"
+	}	
+		
+	kill_PACKAGE_MANAGER(){
+		$_SUDO killall -9 apt &>/dev/null || $_SUDO killall -9 ${PACKAGER} &>/dev/null || :
+	}
+		
+	upgrade_now()
+	{
+		$_SUDO ${__noninteractive} ${PACKAGER} -y upgrade
+		$_SUDO ${__noninteractive} ${PACKAGER} -y full-upgrade
+	}
+	enable_repo_contrib(){
+	(
+	IFS=$'\n'
+		for l in $deb_lines_contrib; do
+			$_SUDO sed -i "s\\^$l$\\$l contrib\\" /etc/apt/sources.list
+		done
+	)
+	}
+	enable_repo_nonfree_firmware(){
+	(
+	IFS=$'\n'
+		for l in $deb_lines_nonfree_firmware; do
+			$_SUDO sed -i "s\\^$l$\\$l nonfreefirmware\\" /etc/apt/sources.list
+		done
+		$_SUDO sed -i 's/nonfreefirmware/non-free-firmware/g'  /etc/apt/sources.list
+	)
+	}
+	enable_repo_nonfree(){
+	(
+	IFS=$'\n'
+		for l in $deb_lines_nonfree; do
+			$_SUDO sed -i "s\\^$l$\\$l nonfreeonly\\" /etc/apt/sources.list
+		done
+		$_SUDO sed -i 's/nonfreeonly/non-free/g'  /etc/apt/sources.list
+	)
+	}
+	enable_repo_(){
+		local update_now=false
+		if [[ "$enable_contrib" = true ]];then
+			enable_repo_contrib && update_now=true
+		fi
+		if [[ "$enable_nonfree_firmware" = true ]];then
+			enable_repo_nonfree_firmware && update_now=true
+		fi
+		if [[ "$enable_nonfree" = true ]];then
+			enable_repo_nonfree && update_now=true
+		fi
+	}
+	aptfixer
+	enable_repo_
+elif [[ $PACKAGER == "yay" ]] || [[ $PACKAGER == "paru" ]]; then
+	# functions
+	create_package_list(){
+		# create list_of_apps file
+		if [[ ! -f "${list_of_apps_file_path}" ]];then
+			show_m "create_list_of_apps"
+			apt list 2>/dev/null > "${list_of_apps_file_path}" 
+		fi
+	}
+elif [[ $PACKAGER == "yum" ]]; then
+	# functions
+	create_package_list(){
+		# create list_of_apps file
+		if [[ ! -f "${list_of_apps_file_path}" ]];then
+			show_m "create_list_of_apps"
+			apt list 2>/dev/null > "${list_of_apps_file_path}" 
+		fi
+	}
+elif [[ $PACKAGER == "dnf" ]]; then
+	# functions
+	create_package_list(){
+		# create list_of_apps file
+		if [[ ! -f "${list_of_apps_file_path}" ]];then
+			show_m "create_list_of_apps"
+			apt list 2>/dev/null > "${list_of_apps_file_path}" 
+		fi
+	}
+elif [[ $PACKAGER == "zypper" ]]; then
+	# functions
+	create_package_list(){
+		# create list_of_apps file
+		if [[ ! -f "${list_of_apps_file_path}" ]];then
+			show_m "create_list_of_apps"
+			apt list 2>/dev/null > "${list_of_apps_file_path}" 
+		fi
+	}
+fi
+
+create_package_list
