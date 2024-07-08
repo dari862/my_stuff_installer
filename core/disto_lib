@@ -348,5 +348,11 @@ set_package_manager(){
 	
 	check_and_download_ "disto_package_manager_${pgm}"
 	
-	source "${temp_path}/disto_package_manager_${pgm}"
+	set -a
+	if ! source "${temp_path}/disto_package_manager_${pgm}" 2> /dev/null; then
+		echo "Error: Failed to source disto_package_manager_${pgm} from ${temp_path}" >&2
+		exit 1
+	fi
+	set +a
+	
 }
