@@ -1,0 +1,6 @@
+#!/bin/bash
+Custom_distro_name="My Stuff"
+Custom_distro_dir_name="$(echo "$Custom_distro_name" | tr -dc '[:alnum:] \n\r' | tr '[:upper:]' '[:lower:]' | tr -s ' ' '_')"
+
+find . -type f -exec sed -i "s/My Stuff/${Custom_distro_name}/g" {} +
+find . -type f -exec sed -i "s/my_stuff/${Custom_distro_dir_name}/g" {} +

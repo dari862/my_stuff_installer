@@ -127,15 +127,15 @@ install_packages
 show_m "Configer packages."
 
 if [[ "$install_bspwm_now" = true ]];then
-	show_m "adding ${Custom_distro_dir_name}_bspwm to xsessions."
-	if [ -z "${Custom_distro_dir_name}" ];then
+	show_m "adding my_stuff_bspwm to xsessions."
+	if [ -z "my_stuff" ];then
 		echo "var Custom_distro_dir_name is empty"
 		exit 1
 	fi
-	sudo mkdir -p "/usr/share/${Custom_distro_dir_name}/lib/xsessions"
-	sudo touch "/usr/share/${Custom_distro_dir_name}/lib/xsessions/${Custom_distro_dir_name}_bspwm.desktop"
-	sudo ln -sf "/usr/share/${Custom_distro_dir_name}/lib/xsessions/${Custom_distro_dir_name}_bspwm.desktop" /usr/share/xsessions
-	sudo rm -rdf "/usr/share/${Custom_distro_dir_name}"
+	sudo mkdir -p "/usr/share/my_stuff/lib/xsessions"
+	sudo touch "/usr/share/my_stuff/lib/xsessions/my_stuff_bspwm.desktop"
+	sudo ln -sf "/usr/share/my_stuff/lib/xsessions/my_stuff_bspwm.desktop" /usr/share/xsessions
+	sudo rm -rdf "/usr/share/my_stuff"
 fi
 
 if [[ -d "/usr/share/zsh-antigen" ]];then

@@ -1,0 +1,31 @@
+#!/bin/bash
+set -e
+
+if ! command -v yay >/dev/null && ! command -v paru >/dev/null; then
+	echo "Installing yay as AUR helper..."
+	$_SUDO ${PACKAGER} --noconfirm -S base-devel
+	cd /opt && sudo git clone https://aur.archlinux.org/yay-git.git && sudo chown -R ${USER}:${USER} ./yay-git
+	cd yay-git && makepkg --noconfirm -si
+else
+	echo "Aur helper already installed"
+fi
+if command -v yay >/dev/null; then
+	PACKAGER="yay"
+elif command -v paru >/dev/null; then
+	PACKAGER="paru"
+else
+	echo "No AUR helper found. Please install yay or paru."
+	exit 1
+fi
+echo -e "switching ${PACKAGER}"
+
+# functions
+create_package_list(){
+	# create list_of_apps file
+	if [[ ! -f "${list_of_apps_file_path}" ]];then
+		show_m "create_list_of_apps"
+		apt list 2>/dev/null > "${list_of_apps_file_path}" 
+	fi
+}
+
+create_package_list

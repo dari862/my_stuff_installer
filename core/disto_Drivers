@@ -167,7 +167,7 @@ if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
 fi
 
 if [[ "${install_GPU_now}" = "install_GPU" ]];then
-	mktemp "${temp_path}"/GPU_Drivers_ready_XXXXXX
+	mktemp "${temp_path}"/system_files/GPU_Drivers_ready_XXXXXX
 fi
 
 if command -v fprintd-verify > /dev/null ;then

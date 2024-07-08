@@ -2,7 +2,7 @@
 set -e
 Custom_distro_dir_name="${1-}"
 
-__distro_path="/usr/share/${Custom_distro_dir_name}"
+__distro_path="/usr/share/my_stuff"
 _hub_script_dir="${__distro_path}/bin/not_add_2_path/hub_script"
 
 PATH="${__distro_path}/bin/bin:$PATH"
@@ -17,7 +17,7 @@ echo "fix terminator"
 
 if [ -d "/etc/xdg" ];then
 	[ ! -d "/etc/xdg/terminator" ] && mkdir -p "/etc/xdg/terminator"
-	[ ! -f "/etc/xdg/terminator/config" ] && cp -r /usr/share/"${Custom_distro_dir_name}"/skel/.config/terminator /etc/xdg/terminator
+	[ ! -f "/etc/xdg/terminator/config" ] && cp -r /usr/share/my_stuff/skel/.config/terminator /etc/xdg/terminator
 fi
 
 ############
@@ -39,7 +39,7 @@ ln -sf ${__distro_path}/bin/bin/full-upgrade "${_hub_script_dir}"
 ln -sf ${__distro_path}/bin/apps/* "${_hub_script_dir}"
 ln -sf ${__distro_path}/bin/not_add_2_path/pmxkcd/pmxkcd "${_hub_script_dir}"
 
-if [ ! -f "${__distro_path}/this_is_laptop" ];then
+if [ ! -f "${__distro_path}/system_files/this_is_laptop" ];then
 	if [ -d "${_hub_script_dir}" ];then
 		rm "${_hub_script_dir}/toggletouch"
 		rm "${_hub_script_dir}/wifimenu"
@@ -68,7 +68,7 @@ mkdir -p "${__distro_path}"/bin/not_add_2_path/containers_center/deployed
 ln -sf "${__distro_path}"/bin/not_add_2_path/pmxkcd/pmxkcd "${__distro_path}"/bin/apps/
 ln -sf "${__distro_path}"/bin/not_add_2_path/YadAppsStore/gui "${__distro_path}"/bin/apps/YadStore
 
-if [ -f "${__distro_path}/this_is_laptop" ];then
+if [ -f "${__distro_path}/system_files/this_is_laptop" ];then
 	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/gpu-switcher-session.desktop /etc/xdg/autostart
 	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/gpu-switcher-session.desktop "${__distro_path}"/skel/.config/autostart/
 	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/yadtlp.desktop "${__distro_path}"/applications/

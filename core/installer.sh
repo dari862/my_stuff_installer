@@ -4,7 +4,7 @@ echo "Loading Script ....."
 ################################################################################################################################
 # Var
 ################################################################################################################################
-lib_file_name="my_stuff_lib"
+lib_file_name="disto_lib"
 auto_run_script="false" # true to enable
 # global_temp_path if changed all temp_path will be equal to this value because of next if statment  in all of other files [[ -z "${temp_path}" ]] && temp_path="/tmp/my_stuff"
 global_temp_path="/tmp/my_stuff"
@@ -18,7 +18,7 @@ arg_="${1-}"
 SUGROUP=""
 temp_path=""
 internet_status=""
-my_stuff_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1 || :)"
+disto_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1 || :)"
 install_GPU_Drivers="install_GPU"
 _cuda_="cuda"
 _kernel_open_dkms_="nvidia-kernel-open-dkms"
@@ -397,7 +397,7 @@ clean_up_now(){
 	
 	mkdir -p "${temp_path}"/clean_up_now_trash_folder
 	
-	move_this_Array=($(ls /usr/share/"${Custom_distro_dir_name}"/skel/.config/))
+	move_this_Array=($(ls /usr/share/"my_stuff"/skel/.config/))
 	
 	for movethis in "${move_this_Array[@]}"; do
 		[ -e "${HOME}/.config/${movethis}" ] && mv "${HOME}/.config/${movethis}" "${temp_path}"/clean_up_now_trash_folder  &> /dev/null;
@@ -419,7 +419,7 @@ clean_up_now(){
 update_grub_image(){
 	if [ "$run_update_grub_image" = "Y" ];then
 		show_m "update grub"
-		sudo ln -sf /usr/share/"${Custom_distro_dir_name}"/images/wallpapers/default/Networks.png /boot/grub/
+		sudo ln -sf /usr/share/"my_stuff"/images/wallpapers/default/Networks.png /boot/grub/
 		# this package added some grub config
 		sudo sync
 		sudo update-grub
@@ -463,15 +463,15 @@ check_if_user_has_root_access(){
     
     if command -v sudo >/dev/null;then
     	_SUDO="sudo"
-		sudo -v
+		sudo true
 	fi
 }
 
 source_my_lib_file(){
 	export temp_path="${global_temp_path}"
-	# source my_stuff_lib
-	if [[ ! -z "${my_stuff_lib_location}" ]];then
-		mv "${my_stuff_lib_location}" "${temp_path}"
+	# source disto_lib
+	if [[ ! -z "${disto_lib_location}" ]];then
+		mv "${disto_lib_location}" "${temp_path}"
 	elif [[ ! -f "${temp_path}/${lib_file_name}" ]];then 
 		echo "wget lib file"
 		if ! wget -q https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${lib_file_name} -O "${temp_path}"/${lib_file_name}; then
@@ -505,20 +505,22 @@ fix_time_
 
 source_my_lib_file
 
+set_package_manager
+
 must_install_apps
 
 if [[ "$arg_" = "drivers" ]] || [[ -z "$arg_" ]];then
-	check_and_download_ "my_stuff_Drivers"
+	check_and_download_ "disto_Drivers"
 fi
 
 if [[ "$arg_" = "apps" ]] || [[ -z "$arg_" ]];then
-	check_and_download_ "my_stuff_Installapps_list"
+	check_and_download_ "disto_Installapps_list"
 fi
 
 if [[ -z "$arg_" ]];then
-	check_and_download_ "my_stuff_configer"
+	check_and_download_ "disto_configer"
 	
-	check_and_download_ "my_stuff_post_install_"
+	check_and_download_ "disto_post_install"
 ################################
 # git clone
 	show_m "git clone distro files"
@@ -532,13 +534,13 @@ _unattended_upgrades_ stop
 upgrade_now
 
 if [[ "$arg_" = "drivers" ]] || [[ -z "$arg_" ]];then
-	show_m "Install drivers from (my_stuff_Drivers)"
-	"${temp_path}"/my_stuff_Drivers ${install_GPU_Drivers} ${_cuda_} ${_kernel_open_dkms_}
+	show_m "Install drivers from (disto_Drivers)"
+	"${temp_path}"/disto_Drivers ${install_GPU_Drivers} ${_cuda_} ${_kernel_open_dkms_}
 fi
 
 if [[ "$arg_" = "apps" ]] || [[ -z "$arg_" ]];then
-	show_m "Install apps from (my_stuff_Installapps_list)"
-	"${temp_path}"/my_stuff_Installapps_list $install_xfce4_panel $install_polybar $install_qt5ct $install_jgmenu $install_bspwm $install_zsh_now
+	show_m "Install apps from (disto_Installapps_list)"
+	"${temp_path}"/disto_Installapps_list $install_xfce4_panel $install_polybar $install_qt5ct $install_jgmenu $install_bspwm $install_zsh_now
 fi
 
 install_lightdm_now
@@ -558,8 +560,8 @@ fi
 ##################################################################################
 ##################################################################################
 
-show_m "Configering ${Custom_distro_name}."
-"${temp_path}"/my_stuff_configer "${my_stuff_location}" "${Theme_Stuff_location}"
+show_m "Configering My Stuff."
+"${temp_path}"/disto_configer "${my_stuff_location}" "${Theme_Stuff_location}"
 
 purge_some_unnecessary_pakages
 
@@ -570,7 +572,7 @@ clean_up_now
 update_grub_image
 
 show_m "prepare some script"
-sudo "${temp_path}"/my_stuff_post_install_ "${Custom_distro_dir_name}"
+sudo "${temp_path}"/disto_post_install
 
 show_m "Done"
 if [ "$reboot_now" = "Y" ];then
