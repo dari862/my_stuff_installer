@@ -323,7 +323,10 @@ CHECK_IF_THIS_LAPTOP(){
         	is_this_laptop=true
     	fi
 	fi
-	echo ${is_this_laptop}
+	
+	if [[ "${is_this_laptop}"  = true ]];then
+		mktemp "${temp_path}"/this_is_laptop_XXXXXX
+	fi
 }
 
 ######################################################################################################################

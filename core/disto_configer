@@ -56,8 +56,9 @@ fi
 
 mkdir -p "my_stuff"/bin/not_add_2_path/updater
 
-if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then 
+if ls ${temp_path}/this_is_laptop* 2>/dev/null;then 
 	show_m "this is laptop"
+	mkdir -p "my_stuff"/system_files
 	touch "my_stuff"/system_files/this_is_laptop
 fi
 
@@ -65,7 +66,8 @@ if [[ -f "${temp_path}/envycontrol_updater_DmDmDmdMdMdM" ]];then
 	mv "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM "my_stuff"/bin/not_add_2_path/updater/envycontrol_updater
 fi
  	
-if [[ -f "$(ls ${temp_path}/system_files/GPU_Drivers_ready* 2>/dev/null)" ]];then 
+if ls ${temp_path}/GPU_Drivers_ready* 2>/dev/null;then
+	mkdir -p "my_stuff"/system_files
 	touch "my_stuff"/system_files/GPU_Drivers_ready
 fi
 

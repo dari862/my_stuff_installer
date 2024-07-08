@@ -39,7 +39,7 @@ ln -sf ${__distro_path}/bin/bin/full-upgrade "${_hub_script_dir}"
 ln -sf ${__distro_path}/bin/apps/* "${_hub_script_dir}"
 ln -sf ${__distro_path}/bin/not_add_2_path/pmxkcd/pmxkcd "${_hub_script_dir}"
 
-if [ ! -f "${__distro_path}/system_files/this_is_laptop" ];then
+if ! ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 	if [ -d "${_hub_script_dir}" ];then
 		rm "${_hub_script_dir}/toggletouch"
 		rm "${_hub_script_dir}/wifimenu"
@@ -68,7 +68,7 @@ mkdir -p "${__distro_path}"/bin/not_add_2_path/containers_center/deployed
 ln -sf "${__distro_path}"/bin/not_add_2_path/pmxkcd/pmxkcd "${__distro_path}"/bin/apps/
 ln -sf "${__distro_path}"/bin/not_add_2_path/YadAppsStore/gui "${__distro_path}"/bin/apps/YadStore
 
-if [ -f "${__distro_path}/system_files/this_is_laptop" ];then
+if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/gpu-switcher-session.desktop /etc/xdg/autostart
 	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/gpu-switcher-session.desktop "${__distro_path}"/skel/.config/autostart/
 	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/yadtlp.desktop "${__distro_path}"/applications/

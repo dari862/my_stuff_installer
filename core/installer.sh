@@ -505,6 +505,8 @@ fix_time_
 
 source_my_lib_file
 
+CHECK_IF_THIS_LAPTOP
+
 set_package_manager
 
 must_install_apps

@@ -82,7 +82,7 @@ install_cli_apps=(micro tar bat tree multitail fzf zoxide trash-cli screen ncdu 
 
 upgrade_now
 
-if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
+if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 	add_packages_2_install_list "${install_if_laptop[@]}"
 fi
 add_packages_2_install_list "${install_themes[@]}"
@@ -167,7 +167,7 @@ then
 	sudo systemctl disable mpd.service
 fi
 
-if [[ "$(CHECK_IF_THIS_LAPTOP)"  = true ]];then
+if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 	show_m "some config"
 	if sudo dmesg | grep -i bluetooth 1>/dev/null || sudo lsusb | grep -i bluetooth 1>/dev/null ;then
 		[[ -f "/etc/tlp.conf" ]] && sudo sed -i 's/#DEVICES_TO_DISABLE_ON_STARTUP=.*/DEVICES_TO_DISABLE_ON_STARTUP="bluetooth"/g' /etc/tlp.conf
