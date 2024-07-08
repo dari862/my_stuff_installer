@@ -27,31 +27,31 @@ then
 fi
 
 if [ ! -f "my_stuff/lib/xsessions/my_stuff_openbox.desktop" ];then
-	mv "my_stuff"/lib/xsessions/*_openbox.desktop "my_stuff"/lib/xsessions/"my_stuff"_openbox.desktop
+	mv "my_stuff"/lib/xsessions/*_openbox.desktop "my_stuff"/lib/xsessions/my_stuff_openbox.desktop
 fi
 
 if [ ! -f "my_stuff/lib/xsessions/my_stuff_bspwm.desktop" ];then
-	mv "my_stuff"/lib/xsessions/*_bspwm.desktop "my_stuff"/lib/xsessions/"my_stuff"_bspwm.desktop
+	mv "my_stuff"/lib/xsessions/*_bspwm.desktop "my_stuff"/lib/xsessions/my_stuff_bspwm.desktop
 fi
 
 if [ ! -f "my_stuff/lib/lightdm/lightdm.conf.d/50_my_stuff.conf" ];then
-	mv "my_stuff"/lib/lightdm/lightdm.conf.d/50_*.conf "my_stuff"/lib/lightdm/lightdm.conf.d/50_"my_stuff".conf
+	mv "my_stuff"/lib/lightdm/lightdm.conf.d/50_*.conf "my_stuff"/lib/lightdm/lightdm.conf.d/50_my_stuff.conf
 fi
 
 if [ ! -f "my_stuff/lib/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf" ];then
-	mv "my_stuff"/lib/lightdm/lightdm-gtk-greeter.conf.d/50_*.conf "my_stuff"/lib/lightdm/lightdm-gtk-greeter.conf.d/50_"my_stuff".conf
+	mv "my_stuff"/lib/lightdm/lightdm-gtk-greeter.conf.d/50_*.conf "my_stuff"/lib/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf
 fi
 
 if [ ! -f "my_stuff/lib/openbox_rc/my_stuff_rc.xml" ];then
-	mv "my_stuff"/lib/openbox_rc/*_rc.xml "my_stuff"/lib/openbox_rc/"my_stuff"_rc.xml
+	mv "my_stuff"/lib/openbox_rc/*_rc.xml "my_stuff"/lib/openbox_rc/my_stuff_rc.xml
 fi
 
 if [ ! -f "my_stuff/skel/.config/conky/scripts/my_stuff_weather.sh" ];then
-	mv "my_stuff"/skel/.config/conky/scripts/DmDmDmdMdMdM_weather.sh "my_stuff"/skel/.config/conky/scripts/"my_stuff"_weather.sh
+	mv "my_stuff"/skel/.config/conky/scripts/DmDmDmdMdMdM_weather.sh "my_stuff"/skel/.config/conky/scripts/my_stuff_weather.sh
 fi
 
 if [ ! -f "my_stuff/bin/openbox/pipemenu/my_stuff-kb-pipemenu" ];then
-	mv "my_stuff"/bin/openbox/pipemenu/DmDmDmdMdMdM-kb-pipemenu "my_stuff"/bin/openbox/pipemenu/"my_stuff"-kb-pipemenu
+	mv "my_stuff"/bin/openbox/pipemenu/DmDmDmdMdMdM-kb-pipemenu "my_stuff"/bin/openbox/pipemenu/my_stuff-kb-pipemenu
 fi
 
 mkdir -p "my_stuff"/bin/not_add_2_path/updater
@@ -115,7 +115,7 @@ sudo mkdir -p /usr/share/themes
 sudo mkdir -p /usr/share/"my_stuff"/backup/themes
 for d in /usr/share/"my_stuff"/Theme_Stuff/themes/* ; do
 	Directory_name=${d##*/}
-	[ -d "/usr/share/themes/${Directory_name}" ] && sudo mv "/usr/share/themes/${Directory_name}" /usr/share/"my_stuff"/backup/themes
+	[ -d "/usr/share/themes/${Directory_name}" ] && sudo mv "/usr/share/themes/${Directory_name}" /usr/share/my_stuff/backup/themes
 	sudo ln -sf "$d" /usr/share/themes
 done
 
@@ -124,7 +124,7 @@ sudo mkdir -p /usr/share/icons
 sudo mkdir -p /usr/share/"my_stuff"/backup/icons
 for d in /usr/share/"my_stuff"/Theme_Stuff/icons/* ; do
 	Directory_name=${d##*/}
-	[ -d "/usr/share/icons/${Directory_name}" ] && sudo mv "/usr/share/icons/${Directory_name}" /usr/share/"my_stuff"/backup/icons
+	[ -d "/usr/share/icons/${Directory_name}" ] && sudo mv "/usr/share/icons/${Directory_name}" /usr/share/my_stuff/backup/icons
 	sudo ln -sf "$d" /usr/share/icons
 done
 
@@ -133,7 +133,7 @@ sudo mkdir -p /usr/share/fonts
 sudo mkdir -p /usr/share/"my_stuff"/backup/fonts
 for e in /usr/share/"my_stuff"/Theme_Stuff/fonts/* ; do
 	Directory_name=${e##*/}
-	[ -d "/usr/share/fonts/${Directory_name}" ] && sudo mv "/usr/share/fonts/${Directory_name}" /usr/share/"my_stuff"/backup/fonts
+	[ -d "/usr/share/fonts/${Directory_name}" ] && sudo mv "/usr/share/fonts/${Directory_name}" /usr/share/my_stuff/backup/fonts
 	sudo ln -sf "$e" /usr/share/fonts
 done
 
