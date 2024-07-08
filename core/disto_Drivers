@@ -125,8 +125,7 @@ if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 	if [ "$number_of_gpus" -gt 1 ]; then
 		show_m "create envycontrol installtion file."
 cat << 'EOF' > "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
-	envycontrol_updater_path="$(mktemp -d)" 
-	distroname="DmDmDmdMdMdM"
+	envycontrol_updater_path="$(mktemp -d)"
 	wget -qO- 'https://api.github.com/repos/bayasdev/envycontrol/releases/latest' \
   	| grep '"tarball_url"' \
   	| cut -f2,3 -d':' \
@@ -134,14 +133,14 @@ cat << 'EOF' > "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
   	| tr -d ',' \
   	| xargs wget -O "${envycontrol_updater_path}"/envycontrol.tar.gz && tar -xvzf "${envycontrol_updater_path}"/envycontrol.tar.gz -C "${envycontrol_updater_path}" && mv "${envycontrol_updater_path}"/bayasdev* "${envycontrol_updater_path}"/envycontrol
   	
-  	[ -d "/usr/share/${distroname}/opt/downloaded/envycontrol" ] && sudo rm -rdf "/usr/share/${distroname}/opt/downloaded/envycontrol"
-  	[ ! -d "/usr/share/${distroname}/opt/downloaded" ] && sudo mkdir -p /usr/share/${distroname}/opt/downloaded
-  	[ ! -d "/usr/share/${distroname}/opt/git" ] && sudo mkdir -p /usr/share/${distroname}/opt/git
+  	[ -d "/usr/share/my_stuff/opt/downloaded/envycontrol" ] && sudo rm -rdf "/usr/share/my_stuff/opt/downloaded/envycontrol"
+  	[ ! -d "/usr/share/my_stuff/opt/downloaded" ] && sudo mkdir -p /usr/share/my_stuff/opt/downloaded
+  	[ ! -d "/usr/share/my_stuff/opt/git" ] && sudo mkdir -p /usr/share/my_stuff/opt/git
   	
   	if [ -d "${envycontrol_updater_path}"/envycontrol ];then
   		chmod +x "${envycontrol_updater_path}"/envycontrol/envycontrol.py 
-  		sudo mv "${envycontrol_updater_path}"/envycontrol "/usr/share/${distroname}/opt/git/"
-  		ln -sf "/usr/share/${distroname}/opt/downloaded/envycontrol/envycontrol.py" "/usr/share/${distroname}/bin/bin/envycontrol"
+  		sudo mv "${envycontrol_updater_path}"/envycontrol "/usr/share/my_stuff/opt/git/"
+  		ln -sf "/usr/share/my_stuff/opt/downloaded/envycontrol/envycontrol.py" "/usr/share/my_stuff/bin/bin/envycontrol"
   	fi
 EOF
 		chmod +x "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM

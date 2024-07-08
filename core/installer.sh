@@ -499,7 +499,7 @@ test_internet_
 
 prompt_to_ask_to_what_to_install
 
-mkdir -p "${temp_path}"
+must_create_temp_dir
 
 fix_time_
 
