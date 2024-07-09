@@ -11,8 +11,6 @@ Theme_Stuff_location="${2-}"
 ################################################################################################################################
 cd "${my_stuff_location}"
 
-[ ! -d "my_stuff" ] && mv my_stuff "my_stuff"
-
 [ -d "/usr/share/my_stuff" ] && sudo rm -rdf "/usr/share/my_stuff"
 
 # test if in virtual machine
@@ -20,54 +18,23 @@ if [ "$(hostnamectl | grep "Chassis:" | grep -o "vm")" == "vm" ]
 then
 	# disable vsync from picom (vsync in virtual machine make issues)
 	show_m "picom vm"
-	sed -i 's|# vsync = false|vsync = false;|g' "my_stuff"/skel/.config/picom.conf
-	sed -i 's|# vsync = false|vsync = false;|g' "my_stuff"/skel/.config/picom.conf.bunsenlab
-	sed -i 's|vsync = true;|# vsync = true|g' "my_stuff"/skel/.config/picom.conf
-	sed -i 's|vsync = true;|# vsync = true|g' "my_stuff"/skel/.config/picom.conf.bunsenlab
+	sed -i 's|# vsync = false|vsync = false;|g' my_stuff/skel/.config/picom.conf
+	sed -i 's|# vsync = false|vsync = false;|g' my_stuff/skel/.config/picom.conf.bunsenlab
+	sed -i 's|vsync = true;|# vsync = true|g' my_stuff/skel/.config/picom.conf
+	sed -i 's|vsync = true;|# vsync = true|g' my_stuff/skel/.config/picom.conf.bunsenlab
 fi
 
-if [ ! -f "my_stuff/lib/xsessions/my_stuff_openbox.desktop" ];then
-	mv "my_stuff"/lib/xsessions/*_openbox.desktop "my_stuff"/lib/xsessions/my_stuff_openbox.desktop
-fi
-
-if [ ! -f "my_stuff/lib/xsessions/my_stuff_bspwm.desktop" ];then
-	mv "my_stuff"/lib/xsessions/*_bspwm.desktop "my_stuff"/lib/xsessions/my_stuff_bspwm.desktop
-fi
-
-if [ ! -f "my_stuff/lib/lightdm/lightdm.conf.d/50_my_stuff.conf" ];then
-	mv "my_stuff"/lib/lightdm/lightdm.conf.d/50_*.conf "my_stuff"/lib/lightdm/lightdm.conf.d/50_my_stuff.conf
-fi
-
-if [ ! -f "my_stuff/lib/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf" ];then
-	mv "my_stuff"/lib/lightdm/lightdm-gtk-greeter.conf.d/50_*.conf "my_stuff"/lib/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf
-fi
-
-if [ ! -f "my_stuff/lib/openbox_rc/my_stuff_rc.xml" ];then
-	mv "my_stuff"/lib/openbox_rc/*_rc.xml "my_stuff"/lib/openbox_rc/my_stuff_rc.xml
-fi
-
-if [ ! -f "my_stuff/skel/.config/conky/scripts/my_stuff_weather.sh" ];then
-	mv "my_stuff"/skel/.config/conky/scripts/DmDmDmdMdMdM_weather.sh "my_stuff"/skel/.config/conky/scripts/my_stuff_weather.sh
-fi
-
-if [ ! -f "my_stuff/bin/openbox/pipemenu/my_stuff-kb-pipemenu" ];then
-	mv "my_stuff"/bin/openbox/pipemenu/DmDmDmdMdMdM-kb-pipemenu "my_stuff"/bin/openbox/pipemenu/my_stuff-kb-pipemenu
-fi
-
-mkdir -p "my_stuff"/bin/not_add_2_path/updater
+mkdir -p my_stuff/bin/not_add_2_path/updater
 
 if [[ -f "${temp_path}/envycontrol_updater_DmDmDmdMdMdM" ]];then
-	mv "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM "my_stuff"/bin/not_add_2_path/updater/envycontrol_updater
+	mv "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM my_stuff/bin/not_add_2_path/updater/envycontrol_updater
 fi
-
-find "my_stuff"/. -type f -exec sed -i "s/DmDmDmdMdMdM/my_stuff/g" {} +
-find "my_stuff"/. -type f -exec sed -i "s/mDmDmDmDmDmDmD/My Stuff/g" {} +
 
 source "my_stuff/lib/common/openbox_folder_name"
 
 if [[ ! -d "my_stuff/skel/.config/${OB_folder_name}" ]];then
 	mv "my_stuff/skel/.config/openbox" "my_stuff/skel/.config/${OB_folder_name}"
-	find "my_stuff"/. -type f -exec sed -i "s|.config/openbox|.config/${OB_folder_name}|g" {} +
+	find my_stuff/. -type f -exec sed -i "s|.config/openbox|.config/${OB_folder_name}|g" {} +
 fi
 
 ##################################################################################
@@ -79,24 +46,24 @@ sudo chown -R root:root "my_stuff"
 
 show_m "moving usr_share"
 sudo mv "my_stuff" /usr/share/
-sudo ln -sf /usr/share/"my_stuff"/lib/xsessions/*_openbox.desktop /usr/share/xsessions
+sudo ln -sf /usr/share/my_stuff/lib/xsessions/*_openbox.desktop /usr/share/xsessions
 
-for f in /usr/share/"my_stuff"/applications/* ; do
+for f in /usr/share/my_stuff/applications/* ; do
 	sudo ln -sf "$f" /usr/share/applications
 done
 
 sudo mkdir -p "/usr/share/lightdm/lightdm.conf.d"
 sudo mkdir -p "/usr/share/lightdm/lightdm-gtk-greeter.conf.d"
-sudo ln -sf /usr/share/"my_stuff"/lib/lightdm/lightdm.conf.d/50_"my_stuff".conf /usr/share/lightdm/lightdm.conf.d
-sudo ln -sf /usr/share/"my_stuff"/lib/lightdm/lightdm-gtk-greeter.conf.d/50_"my_stuff".conf /usr/share/lightdm/lightdm-gtk-greeter.conf.d
+sudo ln -sf /usr/share/my_stuff/lib/lightdm/lightdm.conf.d/50_"my_stuff".conf /usr/share/lightdm/lightdm.conf.d
+sudo ln -sf /usr/share/my_stuff/lib/lightdm/lightdm-gtk-greeter.conf.d/50_"my_stuff".conf /usr/share/lightdm/lightdm-gtk-greeter.conf.d
 
 show_m "update alternatives apps"
-sudo /usr/share/"my_stuff"/bin/bin/my-alternatives install
+sudo /usr/share/my_stuff/bin/bin/my-alternatives install
 show_m "installing update-notification"
-sudo /usr/share/"my_stuff"/bin/bin/update-notification -I
+sudo /usr/share/my_stuff/bin/bin/update-notification -I
 if [[ -f "/usr/share/my_stuff/bin/not_add_2_path/updater/envycontrol_updater" ]];then 
 	show_m "runing envycontrol_updater"
-	sudo /usr/share/"my_stuff"/bin/not_add_2_path/updater/envycontrol_updater
+	sudo /usr/share/my_stuff/bin/not_add_2_path/updater/envycontrol_updater
 fi
 
 if [[ -f "$(ls ${temp_path}/fingerprint_exist_* 2>/dev/null)" ]];then 
@@ -112,8 +79,8 @@ sudo mv "${Theme_Stuff_location}"/Theme_Stuff /usr/share/"my_stuff"
 
 show_m "Moving themes from /usr/share/themes that exist in Theme_Stuff /usr/share/my_stuff/backup"
 sudo mkdir -p /usr/share/themes
-sudo mkdir -p /usr/share/"my_stuff"/backup/themes
-for d in /usr/share/"my_stuff"/Theme_Stuff/themes/* ; do
+sudo mkdir -p /usr/share/my_stuff/backup/themes
+for d in /usr/share/my_stuff/Theme_Stuff/themes/* ; do
 	Directory_name=${d##*/}
 	[ -d "/usr/share/themes/${Directory_name}" ] && sudo mv "/usr/share/themes/${Directory_name}" /usr/share/my_stuff/backup/themes
 	sudo ln -sf "$d" /usr/share/themes
@@ -121,8 +88,8 @@ done
 
 show_m "Moving icons from /usr/share/icons that exist in Theme_Stuff /usr/share/my_stuff/backup"
 sudo mkdir -p /usr/share/icons
-sudo mkdir -p /usr/share/"my_stuff"/backup/icons
-for d in /usr/share/"my_stuff"/Theme_Stuff/icons/* ; do
+sudo mkdir -p /usr/share/my_stuff/backup/icons
+for d in /usr/share/my_stuff/Theme_Stuff/icons/* ; do
 	Directory_name=${d##*/}
 	[ -d "/usr/share/icons/${Directory_name}" ] && sudo mv "/usr/share/icons/${Directory_name}" /usr/share/my_stuff/backup/icons
 	sudo ln -sf "$d" /usr/share/icons
@@ -130,8 +97,8 @@ done
 
 show_m "Moving fonts from /usr/share/fonts that exist in Theme_Stuff /usr/share/my_stuff/backup"
 sudo mkdir -p /usr/share/fonts
-sudo mkdir -p /usr/share/"my_stuff"/backup/fonts
-for e in /usr/share/"my_stuff"/Theme_Stuff/fonts/* ; do
+sudo mkdir -p /usr/share/my_stuff/backup/fonts
+for e in /usr/share/my_stuff/Theme_Stuff/fonts/* ; do
 	Directory_name=${e##*/}
 	[ -d "/usr/share/fonts/${Directory_name}" ] && sudo mv "/usr/share/fonts/${Directory_name}" /usr/share/my_stuff/backup/fonts
 	sudo ln -sf "$e" /usr/share/fonts
