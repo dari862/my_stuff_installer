@@ -42,10 +42,10 @@ fi
 
 #run_fixes_
 show_m "change ownership to root"
-sudo chown -R root:root "my_stuff"
+sudo chown -R root:root my_stuff
 
 show_m "moving usr_share"
-sudo mv "my_stuff" /usr/share/
+sudo mv my_stuff /usr/share/
 sudo ln -sf /usr/share/my_stuff/lib/xsessions/*_openbox.desktop /usr/share/xsessions
 
 for f in /usr/share/my_stuff/applications/* ; do
@@ -54,8 +54,8 @@ done
 
 sudo mkdir -p "/usr/share/lightdm/lightdm.conf.d"
 sudo mkdir -p "/usr/share/lightdm/lightdm-gtk-greeter.conf.d"
-sudo ln -sf /usr/share/my_stuff/lib/lightdm/lightdm.conf.d/50_"my_stuff".conf /usr/share/lightdm/lightdm.conf.d
-sudo ln -sf /usr/share/my_stuff/lib/lightdm/lightdm-gtk-greeter.conf.d/50_"my_stuff".conf /usr/share/lightdm/lightdm-gtk-greeter.conf.d
+sudo ln -sf /usr/share/my_stuff/lib/lightdm/lightdm.conf.d/50_my_stuff.conf /usr/share/lightdm/lightdm.conf.d
+sudo ln -sf /usr/share/my_stuff/lib/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf /usr/share/lightdm/lightdm-gtk-greeter.conf.d
 
 show_m "update alternatives apps"
 sudo /usr/share/my_stuff/bin/bin/my-alternatives install
@@ -75,7 +75,7 @@ show_m "chown of Theme_Stuff to root"
 sudo chown -R root:root "${Theme_Stuff_location}"/Theme_Stuff
 
 show_m "moving Theme_Stuff to /usr/share/my_stuff/Theme_Stuff"
-sudo mv "${Theme_Stuff_location}"/Theme_Stuff /usr/share/"my_stuff"
+sudo mv "${Theme_Stuff_location}"/Theme_Stuff /usr/share/my_stuff
 
 show_m "Moving themes from /usr/share/themes that exist in Theme_Stuff /usr/share/my_stuff/backup"
 sudo mkdir -p /usr/share/themes

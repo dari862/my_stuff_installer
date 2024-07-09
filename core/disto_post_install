@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e
-Custom_distro_dir_name="${1-}"
 
 __distro_path="/usr/share/my_stuff"
 _hub_script_dir="${__distro_path}/bin/not_add_2_path/hub_script"
@@ -85,8 +84,9 @@ if ls ${temp_path}/GPU_Drivers_ready* 2>/dev/null;then
 	touch "${__distro_path}"/system_files/GPU_Drivers_ready
 fi
 
-echo "runing script to popluate some needed files"
+echo "Running script for create_DB.sh --all"
 ${__distro_path}/bin/not_add_2_path/create_DB.sh --all
+echo "Running script for YadAppsStore"
 ${__distro_path}/bin/not_add_2_path/YadAppsStore/tools/edite_apps_folder
 ${__distro_path}/bin/not_add_2_path/YadAppsStore/tools/pre_yadstore
 

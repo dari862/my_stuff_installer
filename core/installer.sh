@@ -538,7 +538,6 @@ fi
 clear
 
 _unattended_upgrades_ stop
-upgrade_now
 
 if [[ "$arg_" = "drivers" ]] || [[ -z "$arg_" ]];then
 	show_m "Install drivers from (disto_Drivers)"

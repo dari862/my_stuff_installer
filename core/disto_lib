@@ -105,7 +105,7 @@ check_for_SUDO()
 	fi
 	_SUDO="sudo"
 	
-	set_package_manager
+	set_install_and_purge_var
 	
 	keep_sudo_refresed(){
 		while true

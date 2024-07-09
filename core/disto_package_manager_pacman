@@ -1,5 +1,16 @@
 #!/bin/bash
 set -e
+__noninteractive=""
+__noninteractive_install=''
+__install=""
+__purge=""
+
+set_install_and_purge_var(){
+	__noninteractive="DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true"
+	__noninteractive_install='$_SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true ${PACKAGER} install -yq'
+	__install="$_SUDO ${PACKAGER} install -yq"
+	__purge="$_SUDO ${PACKAGER} purge -y"
+}
 
 if ! command -v yay >/dev/null && ! command -v paru >/dev/null; then
 	echo "Installing yay as AUR helper..."
@@ -27,5 +38,5 @@ create_package_list(){
 		apt list 2>/dev/null > "${list_of_apps_file_path}" 
 	fi
 }
-
+set_install_and_purge_var
 create_package_list

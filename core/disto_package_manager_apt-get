@@ -1,10 +1,16 @@
 #!/bin/bash
 set -e
+__noninteractive=""
+__noninteractive_install=''
+__install=""
+__purge=""
 
-__noninteractive="DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true"
-__noninteractive_install='$_SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true ${PACKAGER} install -yq'
-__install="$_SUDO ${PACKAGER} install -yq"
-__purge="$_SUDO ${PACKAGER} purge -y"
+set_install_and_purge_var(){
+	__noninteractive="DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true"
+	__noninteractive_install='$_SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true ${PACKAGER} install -yq'
+	__install="$_SUDO ${PACKAGER} install -yq"
+	__purge="$_SUDO ${PACKAGER} purge -y"
+}
 
 create_package_list(){
 	# create list_of_apps file
@@ -47,6 +53,7 @@ aptupdate(){
 	show_m "updating your system"
 	[ "$(find /var/cache/apt/pkgcache.bin -mtime 0 2>/dev/null)" ] || $_SUDO ${PACKAGER} update
 }
+
 aptfixer(){
 		if ! command -v sudo >/dev/null
 		then
@@ -110,5 +117,8 @@ enable_repo_(){
 		enable_repo_nonfree && update_now=true
 	fi
 }
+set_install_and_purge_var
 aptfixer
+upgrade_now
 enable_repo_
+create_package_list
