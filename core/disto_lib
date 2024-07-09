@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 
-[[ -z "${temp_path}" ]] && temp_path="/tmp/my_stuff"
 list_of_apps_file_path="${temp_path}/list_of_apps"
 
 _SUDO=""

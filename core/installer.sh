@@ -6,17 +6,16 @@ echo "Loading Script ....."
 ################################################################################################################################
 lib_file_name="disto_lib"
 auto_run_script="false" # true to enable
-# global_temp_path if changed all temp_path will be equal to this value because of next if statment  in all of other files [[ -z "${temp_path}" ]] && temp_path="/tmp/my_stuff"
-global_temp_path="/tmp/my_stuff"
+temp_path="/tmp/my_stuff"
 mirror="http://deb.debian.org/debian/"
 mirror_security="http://security.debian.org/debian-security"
 deb_lines_contrib=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v contrib || :)
 deb_lines_nonfree_firmware=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non-free-firmware' || :)
 deb_lines_nonfree=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v "non-free[[:blank:]]" || :)
 
+export temp_path="${temp_path}"
 arg_="${1-}"
 SUGROUP=""
-temp_path=""
 internet_status=""
 disto_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1 || :)"
 install_GPU_Drivers="install_GPU"
@@ -468,7 +467,6 @@ check_if_user_has_root_access(){
 }
 
 source_my_lib_file(){
-	export temp_path="${global_temp_path}"
 	# source disto_lib
 	if [[ ! -z "${disto_lib_location}" ]];then
 		mv "${disto_lib_location}" "${temp_path}"
@@ -495,8 +493,6 @@ must_create_temp_dir(){
 ################################################################################################################################
 # main
 ################################################################################################################################
-
-export temp_path="${global_temp_path}"
 
 check_if_user_has_root_access
 
