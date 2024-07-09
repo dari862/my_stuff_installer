@@ -74,15 +74,15 @@ if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/yadtlp.desktop "${__distro_path}"/applications/
 fi
 
-mkdir -p "my_stuff"/system_files
+mkdir -p "${__distro_path}"/system_files
 
 if ls ${temp_path}/this_is_laptop* 2>/dev/null;then 
 	show_m "this is laptop"
-	touch "my_stuff"/system_files/this_is_laptop
+	touch "${__distro_path}"/system_files/this_is_laptop
 fi
 	
 if ls ${temp_path}/GPU_Drivers_ready* 2>/dev/null;then
-	touch "my_stuff"/system_files/GPU_Drivers_ready
+	touch "${__distro_path}"/system_files/GPU_Drivers_ready
 fi
 
 echo "runing script to popluate some needed files"
