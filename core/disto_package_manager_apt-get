@@ -45,6 +45,8 @@ add_packages_2_install_list()
 			if [ -n "${check_apps_in_cache}" ];then
 				List_of_apt_2_install_+=("$INDEX") 
 				show_m "${INDEX} added to install apps" 
+			else
+				show_em "${INDEX} does not exist." 
 			fi
 		fi
 	done
@@ -77,6 +79,7 @@ kill_PACKAGE_MANAGER(){
 upgrade_now()
 {
 	$_SUDO ${__noninteractive} ${PACKAGER} -y upgrade
+	$_SUDO ${__noninteractive} ${PACKAGER} -y dist-upgrade
 	$_SUDO ${__noninteractive} ${PACKAGER} -y full-upgrade
 }
 enable_repo_contrib(){
