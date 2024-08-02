@@ -73,8 +73,12 @@ install_zsh=(zsh zsh-antigen zsh-autosuggestions zsh-syntax-highlighting)
 #######################
 ## better bash
 #######################
-install_better_bash=(bash bash-completion command-not-found thefuck)
-install_cli_apps=(micro tar bat tree multitail fzf zoxide trash-cli screen ncdu dos2unix)
+install_better_bash=(bash bash-completion)
+
+#######################
+## better shell
+#######################
+install_better_shell=(micro tar bat tree multitail fzf zoxide trash-cli screen ncdu dos2unix command-not-found thefuck highlight)
 
 ##################################################################################
 # main
@@ -101,7 +105,7 @@ add_packages_2_install_list "${install_must_have_apps[@]}"
 add_packages_2_install_list "${install_must_have_apps2[@]}"
 add_packages_2_install_list "${install_polkit_apps[@]}"
 add_packages_2_install_list "${install_better_bash[@]}"
-add_packages_2_install_list "${install_cli_apps[@]}"
+add_packages_2_install_list "${install_better_shell[@]}"
 if [[ "$install_xfce4_panel_now" = true ]];then
 	add_packages_2_install_list "${install_xfce4_panel[@]}"
 fi

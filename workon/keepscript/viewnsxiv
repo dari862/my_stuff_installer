@@ -1,0 +1,28 @@
+#!/usr/bin/env sh
+
+_handle_url(){
+	curl -sL "$1" > "/tmp/$(echo "$@" | sed "s/.*\///;s/%20/ /g")" && \
+	{ setsid -f sxiv -a "/tmp/$(echo "$@" | sed "s/.*\///;s/%20/ /g")" >/dev/null 2>&1 ; }
+}
+
+_handle_local(){
+	if [ -d "$1" ] ; then
+		{ setsid -f sxiv -t -a "$@" >/dev/null 2>&1 ; }
+		
+	elif [ -f "$1" ]; then
+		{ setsid -f sxiv -a "$@" >/dev/null 2>&1 ; }
+	fi
+}
+
+if [ $# = "0" ]; then 
+	echo "usage: viewnsxiv files/directories/url..."
+else
+	case "$@" in
+		http://*|https://*) 
+			_handle_url "$@"
+			;;
+		*)
+			_handle_local "$@"
+			;;
+	esac
+fi

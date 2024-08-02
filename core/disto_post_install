@@ -1,8 +1,9 @@
 #!/bin/bash
 set -e
 
+temp_path="$(pwd)"
 __distro_path="/usr/share/my_stuff"
-_hub_script_dir="${__distro_path}/bin/not_add_2_path/hub_script"
+_hub_script_dir="${__distro_path}/system_files/hub_script"
 
 PATH="${__distro_path}/bin/bin:$PATH"
 ##################################################################################
@@ -16,7 +17,7 @@ echo "fix terminator"
 
 if [ -d "/etc/xdg" ];then
 	[ ! -d "/etc/xdg/terminator" ] && mkdir -p "/etc/xdg/terminator"
-	[ ! -f "/etc/xdg/terminator/config" ] && cp -r /usr/share/my_stuff/skel/.config/terminator /etc/xdg/terminator
+	[ ! -f "/etc/xdg/terminator/config" ] && cp -r "${__distro_path}"/skel/.config/terminator /etc/xdg/terminator
 fi
 
 ############
@@ -28,6 +29,7 @@ __thunar_wall_plug="$(locate thunar | grep wall || :)"
 [ ! -z "${__thunar_wall_plug}" ] && mv "${__thunar_wall_plug}" "${__thunar_wall_plug}.backup"
 
 ##################################################################################
+
 echo "prepares for hub script"
 mkdir -p "${_hub_script_dir}"
 ln -sf "${__distro_path}"/bin/not_add_2_path/pmxkcd/pmxkcd "${_hub_script_dir}"
@@ -38,13 +40,9 @@ ln -sf ${__distro_path}/bin/bin/full-upgrade "${_hub_script_dir}"
 ln -sf ${__distro_path}/bin/apps/* "${_hub_script_dir}"
 ln -sf ${__distro_path}/bin/not_add_2_path/pmxkcd/pmxkcd "${_hub_script_dir}"
 
-if ! ls ${temp_path}/this_is_laptop* 2>/dev/null;then
-	if [ -d "${_hub_script_dir}" ];then
-		rm "${_hub_script_dir}/toggletouch"
-		rm "${_hub_script_dir}/wifimenu"
-		rm "${_hub_script_dir}/wifi"
-	fi
-fi
+echo "rm not need script for hub script"
+
+! command -v systemctl &>/dev/null && rm -f ${__distro_path}/bin/not_add_2_path/utilities/errcheck
 
 remove_this_script_=(hub rofi-powermenu rofi-launcher rofi-runner unmounter)
 for script in "${remove_this_script_[@]}";do
@@ -53,40 +51,181 @@ done
 
 echo "creating missing dir"
 
-mkdir -p "${__distro_path}"/lib/auto_completion
 mkdir -p "${__distro_path}"/bin/not_add_2_path/distrobox_center/Apps
 mkdir -p "${__distro_path}"/bin/not_add_2_path/distrobox_center/Gaming
-mkdir -p "${__distro_path}"/opt/downloaded
-mkdir -p "${__distro_path}"/opt/git
-mkdir -p "${__distro_path}"/bin/not_add_2_path/hub_script
-mkdir -p "${__distro_path}"/skel/.config/mpd/playlists
-mkdir -p "${__distro_path}"/skel/.local/share/bash_history
-mkdir -p "${__distro_path}"/bin/not_add_2_path/containers_center/deploy
-mkdir -p "${__distro_path}"/bin/not_add_2_path/containers_center/deployed
 
-ln -sf "${__distro_path}"/bin/not_add_2_path/pmxkcd/pmxkcd "${__distro_path}"/bin/apps/
-ln -sf "${__distro_path}"/bin/not_add_2_path/YadAppsStore/gui "${__distro_path}"/bin/apps/YadStore
+echo "LN essional files"
 
-if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
+ln -sf "${__distro_path}"/bin/not_add_2_path/pmxkcd/pmxkcd "${__distro_path}"/system_files/bin/
+
+if [[ -f "${temp_path}/this_is_laptop" ]] ;then
 	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/gpu-switcher-session.desktop /etc/xdg/autostart
-	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/gpu-switcher-session.desktop "${__distro_path}"/skel/.config/autostart/
-	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/yadtlp.desktop "${__distro_path}"/applications/
-fi
-
-mkdir -p "${__distro_path}"/system_files
-
-if ls ${temp_path}/this_is_laptop* 2>/dev/null;then 
-	show_m "this is laptop"
-	touch "${__distro_path}"/system_files/this_is_laptop
-fi
-	
-if ls ${temp_path}/GPU_Drivers_ready* 2>/dev/null;then
-	touch "${__distro_path}"/system_files/GPU_Drivers_ready
+	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/gpu-switcher-session.desktop "${__distro_path}"/system_files/skel/.config/autostart/
+	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/yadtlp.desktop "${__distro_path}"/system_files/applications
+	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/yadtlp.desktop /usr/share/applications
+	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/toggletouch "${__distro_path}"/system_files/bin
 fi
 
 echo "Running script for create_DB.sh --all"
 ${__distro_path}/bin/not_add_2_path/create_DB.sh --all
 echo "Running script for YadAppsStore"
+echo "Running script for YadAppsStore (edite_apps_folder)"
 ${__distro_path}/bin/not_add_2_path/YadAppsStore/tools/edite_apps_folder
+echo "Running script for YadAppsStore (pre_yadstore)"
 ${__distro_path}/bin/not_add_2_path/YadAppsStore/tools/pre_yadstore
 
+echo "create uniq system files"
+mkdir -p "${__distro_path}"/system_files/downloaded
+mkdir -p "${__distro_path}"/system_files/git
+mkdir -p "${__distro_path}"/system_files/deployed_containers/deployed
+
+if [ -f "${temp_path}/this_is_laptop" ];then 
+	echo "this is laptop"
+	touch "${__distro_path}"/system_files/this_is_laptop
+fi
+	
+if [ -f "${temp_path}/GPU_Drivers_ready" ];then 
+	echo "GPU_Drivers ready ."
+	touch "${__distro_path}"/system_files/GPU_Drivers_ready
+fi
+
+if [ -f "${temp_path}/fingerprint_exist" ];then 
+	echo "fingerprint ready ."
+	touch "${__distro_path}"/system_files/fingerprint_exist
+fi
+
+cd "${__distro_path}"/bin/not_add_2_path/must_create_script
+for script in *;do
+	cd "$script"
+	./make
+	cd ..
+done
+
+echo "link icons based on distro"
+if [ -f /etc/os-release ]; then
+    # freedesktop.org and systemd
+    . /etc/os-release
+    distro_name_="$ID"
+fi
+if [ -d "${__distro_path}/icons/Distro/${distro_name_}" ];then
+    ln -sf "${__distro_path}/icons/Distro/${distro_name_}" "${__distro_path}/system_files/Distro"
+else
+	ln -sf "${__distro_path}/icons/Distro/arch" "${__distro_path}/system_files/Distro"
+fi
+
+echo "cp skell file to system_files/skel ."
+cp -r "${__distro_path}/skel" "${__distro_path}/system_files" 
+
+mkdir -p "${__distro_path}"/system_files/skel/.config/mpd/playlists
+touch "${__distro_path}"/system_files/skel/.config/mpd/database
+mkdir -p "${__distro_path}"/system_files/skel/.local/share/bash_history
+
+if command -v gigolo >/dev/null ; then
+	echo "cp gigolo skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/gigolo" "${__distro_path}/system_files/skel/.config" 
+fi
+
+if command -v plank >/dev/null ; then
+	echo "cp plank skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/plank" "${__distro_path}/system_files/skel/.config" 
+	cp -r "${__distro_path}/extra_skel/.local/share/plank" "${__distro_path}/system_files/skel/.local/share/" 
+fi
+
+if command -v xbindkey >/dev/null ; then
+	echo "cp xbindkey skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.xbindkeysrc" "${__distro_path}/system_files/skel" 
+fi
+
+if command -v clipit >/dev/null ; then
+	echo "cp clipit skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/clipit" "${__distro_path}/system_files/skel/.config" 
+fi
+
+if command -v jgmenu >/dev/null ; then
+	echo "cp jgmenu skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/jgmenu" "${__distro_path}/system_files/skel/.config" 
+fi
+
+if command -v greenclip >/dev/null ; then
+	echo "cp greenclip skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/greenclip.toml" "${__distro_path}/system_files/skel/.config" 
+fi
+
+if command -v zathura >/dev/null ; then
+	echo "cp zathura skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/zathura" "${__distro_path}/system_files/skel/.config" 
+fi
+
+if command -v polybar >/dev/null ; then
+	echo "cp polybar skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/polybar" "${__distro_path}/system_files/skel/.config" 
+	if [ -d "${__distro_path}/bin/polybar" ] ; then
+		ln -sf "${__distro_path}"/bin/polybar/* "${__distro_path}"/system_files/bin
+	fi
+fi
+
+if command -v tint2 >/dev/null ; then
+	echo "cp tint2 skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/tint2" "${__distro_path}/system_files/skel/.config" 
+fi
+
+if command -v xfce4-panel >/dev/null ; then
+	echo "cp xfce4-panel skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/xfce4" "${__distro_path}/system_files/skel/.config"
+	cp -r "${__distro_path}/extra_skel/.local/share/xfce4" "${__distro_path}/system_files/skel/.local/share/"
+fi
+
+if command -v lxterminal >/dev/null ; then
+	echo "cp lxterminal skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/lxterminal" "${__distro_path}/system_files/skel/.config" 
+fi
+
+if command -v alacritty >/dev/null ; then
+	echo "cp alacritty skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/alacritty" "${__distro_path}/system_files/skel/.config" 
+fi
+
+if command -v bspwm >/dev/null ; then
+	echo "cp bspwm skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/bspwm" "${__distro_path}/system_files/skel/.config" 
+	cp -r "${__distro_path}/extra_skel/.config/sxhkd" "${__distro_path}/system_files/skel/.config" 
+fi
+
+echo "LN bin files to system_files/bin ."
+
+if [ -f "${__distro_path}/system_files/this_is_laptop" ];then
+	if [ -d "${__distro_path}/bin/laptop" ] ; then
+		echo "laptop bin files to system_files/bin ."
+		ln -sf "${__distro_path}"/bin/laptop/* "${__distro_path}"/system_files/bin
+	fi
+fi
+
+if [ -d "${__distro_path}/bin/bin" ] ; then
+	echo "bin bin files to system_files/bin ."
+	ln -sf "${__distro_path}"/bin/bin/* "${__distro_path}"/system_files/bin
+fi
+
+if [ -d "${__distro_path}/bin/apps" ] ; then
+	echo "apps bin files to system_files/bin ."
+	ln -sf "${__distro_path}"/bin/apps/* "${__distro_path}"/system_files/bin
+fi
+
+if [ -d "${__distro_path}/bin/rofi" ] ; then
+	echo "rofi bin files to system_files/bin ."
+	ln -sf "${__distro_path}"/bin/rofi/* "${__distro_path}"/system_files/bin
+fi
+
+if [ -d "${__distro_path}/bin/session_managers" ] ; then
+		echo "session_managers bin files to system_files/bin ."
+	ln -sf "${__distro_path}"/bin/session_managers/* "${__distro_path}"/system_files/bin
+fi
+
+echo "yadstore bin files to system_files/bin ."
+[ -f "${__distro_path}/bin/not_add_2_path/YadAppsStore/gui" ] && ln -sf "${__distro_path}/bin/not_add_2_path/YadAppsStore/gui" "${__distro_path}/system_files/bin/yadstore"
+
+echo "creating Package-managers library file."
+package_manager_are="$(cat /tmp/package_manager_are)"
+cat "${__distro_path}"/lib/Package-managers/common | tee "${__distro_path}"/system_files/Package-manager
+cat "${__distro_path}"/lib/Package-managers/${package_manager_are}.sh | tee -a "${__distro_path}"/system_files/Package-manager
+
+echo "prepare completed"

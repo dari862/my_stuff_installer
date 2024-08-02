@@ -35,7 +35,7 @@ create_20_intel_conf_file(){
 	show_m "Create 20-intel.conf file."
 	if [ "${intel_gpu_exist}" = "true" ];then
 	sudo mkdir -p /etc/X11/xorg.conf.d/
-sudo bash -c 'cat << EOF > /etc/X11/xorg.conf.d/20-intel.conf
+sudo tee /etc/X11/xorg.conf.d/20-intel.conf << EOF > /dev/null
 Section "Device"
 	Identifier  "Intel Graphics"
 	Driver      "Intel"
@@ -45,7 +45,7 @@ Section "Device"
 	Option      "SwapbuffersWait" "True"
 	#Option      "AccelMethod"  "uxa"
 EndSection
-EOF'
+EOF
 	fi
 }
 
@@ -103,7 +103,7 @@ if [[ "${install_GPU_now}" = "install_GPU" ]];then
 			fi
 			
 			if [[ ! -f "/etc/apt/sources.list.d/nvidia-drivers.list" ]];then 
-				echo "deb [signed-by=/usr/share/keyrings/nvidia-drivers.gpg] https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/ /" | sudo tee /etc/apt/sources.list.d/nvidia-drivers.list
+				echo "deb [signed-by=/usr/share/keyrings/nvidia-drivers.gpg] https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/ /" | sudo tee /etc/apt/sources.list.d/nvidia-drivers.list > /dev/null 2>&1
 			fi
 		fi
 	fi
@@ -124,7 +124,8 @@ if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 	show_m "this is laptop"
 	if [ "$number_of_gpus" -gt 1 ]; then
 		show_m "create envycontrol installtion file."
-cat << 'EOF' > "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
+tee "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM << 'EOF' > /dev/null
+#!/bin/bash
 	envycontrol_updater_path="$(mktemp -d)"
 	wget -qO- 'https://api.github.com/repos/bayasdev/envycontrol/releases/latest' \
   	| grep '"tarball_url"' \
@@ -133,14 +134,14 @@ cat << 'EOF' > "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
   	| tr -d ',' \
   	| xargs wget -O "${envycontrol_updater_path}"/envycontrol.tar.gz && tar -xvzf "${envycontrol_updater_path}"/envycontrol.tar.gz -C "${envycontrol_updater_path}" && mv "${envycontrol_updater_path}"/bayasdev* "${envycontrol_updater_path}"/envycontrol
   	
-  	[ -d "/usr/share/my_stuff/opt/downloaded/envycontrol" ] && sudo rm -rdf "/usr/share/my_stuff/opt/downloaded/envycontrol"
-  	[ ! -d "/usr/share/my_stuff/opt/downloaded" ] && sudo mkdir -p /usr/share/my_stuff/opt/downloaded
-  	[ ! -d "/usr/share/my_stuff/opt/git" ] && sudo mkdir -p /usr/share/my_stuff/opt/git
+  	[ -d "/usr/share/my_stuff/system_files/downloaded/envycontrol" ] && sudo rm -rdf "/usr/share/my_stuff/system_files/downloaded/envycontrol"
+  	[ ! -d "/usr/share/my_stuff/system_files/downloaded" ] && sudo mkdir -p /usr/share/my_stuff/system_files/downloaded
+  	[ ! -d "/usr/share/my_stuff/system_files/git" ] && sudo mkdir -p /usr/share/my_stuff/system_files/git
   	
   	if [ -d "${envycontrol_updater_path}"/envycontrol ];then
   		chmod +x "${envycontrol_updater_path}"/envycontrol/envycontrol.py 
-  		sudo mv "${envycontrol_updater_path}"/envycontrol "/usr/share/my_stuff/opt/git/"
-  		ln -sf "/usr/share/my_stuff/opt/downloaded/envycontrol/envycontrol.py" "/usr/share/my_stuff/bin/bin/envycontrol"
+  		sudo mv "${envycontrol_updater_path}"/envycontrol "/usr/share/my_stuff/system_files/git/"
+  		ln -sf "/usr/share/my_stuff/system_files/downloaded/envycontrol/envycontrol.py" "/usr/share/my_stuff/system_files/bin/envycontrol"
   	fi
 EOF
 		chmod +x "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
@@ -149,15 +150,12 @@ fi
 show_m "run isenkram-autoinstall-firmware."
 sudo isenkram-autoinstall-firmware || : # to prevent script from exiting "isenkram-autoinstall-firmware contain exit command"
 
-show_m "Remove isenkram package."
-apt_purge_with_error2info "${install_autoinstall_firmware[@]}"
-
 show_m "Configer packages."
 
 #create_20_intel_conf_file
 
 if [[ "$fingerprint_exist" = true ]];then
-	mktemp "${temp_path}"/fingerprint_exist_XXXXXX
+	touch "${temp_path}"/fingerprint_exist
 fi
 
 if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
@@ -165,7 +163,7 @@ if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 fi
 
 if [[ "${install_GPU_now}" = "install_GPU" ]];then
-	mktemp "${temp_path}"/GPU_Drivers_ready_XXXXXX
+	touch "${temp_path}"/GPU_Drivers_ready
 fi
 
 if command -v fprintd-verify > /dev/null ;then

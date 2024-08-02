@@ -1,0 +1,46 @@
+bash #| $BASHDOTDIR/bashrc.sh
+profile #| $BASHDOTDIR/profile
+bash_only_aliases #| $BASHDOTDIR/bash_only_aliases
+zsh #| $zshdotfiles/zshrc.sh
+zprofile #| $zshdotfiles/.zprofile
+zsh_only_aliases #| $zshdotfiles/zsh_only_aliases
+fish #| $HOME/.config/fish/config.fish
+confedit #| $HOME/.config/dmscripts/config
+alacritty #| $HOME/.config/alacritty/alacritty.yml
+awesome #| $HOME/.config/awesome/rc.lua
+openbox autorun #| ${OBPATH}
+broot #| $HOME/.config/broot/conf.toml
+bspwm #| $HOME/.config/bspwm/bspwmrc
+doom emacs config.el #| $HOME/.config/doom/config.el
+doom emacs config.org #| $HOME/.config/doom/config.org
+doom emacs init.el #| $HOME/.config/doom/init.el
+doom emacs packages.el #| $HOME/.config/doom/packages.el
+dunst #| $HOME/.config/dunst/dunstrc
+dwm #| $HOME/dwm-distrotube/config.def.h
+dwmblocks #| $HOME/dwmblocks-distrotube/blocks.def.h
+herbstluftwm #| $HOME/.config/herbstluftwm/autostart
+i3 #| $HOME/.config/i3/config
+ncmpcpp #| $HOME/.config/ncmpcpp/config
+neovim #| $HOME/.config/nvim/init.vim
+picom #| $HOME/.config/picom.conf
+qtile #| $HOME/.config/qtile/config.py
+qutebrowser bookmarks #| $HOME/.config/qutebrowser/bookmarks/urls
+qutebrowser quickmarks #| $HOME/.config/qutebrowser/quickmarks
+qutebrowser config.py #| $HOME/.config/qutebrowser/config.py
+spectrwm #| $HOME/.spectrwm.conf
+ssh #| $HOME/.ssh/config
+st #| $HOME/st-distrotube/config.def.h
+stumpwm #| $HOME/.config/stumpwm/config
+surf #| $HOME/surf-distrotube/config.def.h
+sxhkd #| $HOME/.config/sxhkd/sxhkdrc
+tabbed #| $HOME/tabbed-distrotube/config.def.h
+vifm #| $HOME/.config/vifm/vifmrc
+vim #| $HOME/.vimrc
+xmobar mon1 #| $HOME/.config/xmobar/xmobarrc0
+xmobar mon2 #| $HOME/.config/xmobar/xmobarrc1
+xmobar mon3 #| $HOME/.config/xmobar/xmobarrc2
+xmonad #| $HOME/.xmonad/README.org
+xinitrc #| $HOME/.xinitrc
+xresources #| $HOME/.Xresources
+xsessionrc #| $HOME/.xsessionrc
+profile #| $HOME/.profile

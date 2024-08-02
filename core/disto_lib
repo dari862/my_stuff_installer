@@ -1,16 +1,10 @@
 #!/bin/bash
 set -e
-
-list_of_apps_file_path="${temp_path}/list_of_apps"
-
 _SUDO=""
 command -v sudo >/dev/null && _SUDO="sudo"
-PACKAGER=""
-__noninteractive=""
-__noninteractive_install=""
-__install=""
-__purge=""
 number_of_gpus=0
+
+list_of_apps_file_path="${temp_path}/list_of_apps"
 
 if [ "$(lspci | grep -i nvidia | grep VGA -c)" != "0" ];then
 	nvidia_gpu_exist=true
@@ -94,47 +88,6 @@ check_and_download_()
 	fi
 }
 
-check_for_SUDO()
-{
-	if ! command -v sudo >/dev/null;then
-		show_m "Install sudo and add user 1000 to sudo group"
-		kill_PACKAGE_MANAGER && $__install sudo || (kill_PACKAGE_MANAGER && $__install sudo) || (show_em "failed to install sudo" && exit 1)
-		user=$(cut -f 1,3 -d: /etc/passwd | grep :1000$ | cut -f1 -d:)
-		[ "$user" ] && adduser "$user" sudo
-	fi
-	_SUDO="sudo"
-	
-	set_install_and_purge_var
-	
-	keep_sudo_refresed(){
-		while true
-		do
-				sudo true
-				sleep 10m
-		done
-	}
-	keep_sudo_refresed &
-}
-
-must_install_apps()
-{
-	check_for_SUDO
-	
-	if ! command -v killall >/dev/null;then
-		add_packages_2_install_list "killall"
-	fi
-	
-	if ! command -v locate >/dev/null;then
-		add_packages_2_install_list "mlocate"
-	fi
-	
-	if ! command -v git >/dev/null;then
-		add_packages_2_install_list "git"
-	fi
-	
-	install_packages
-}
-
 rm_if_link()
 { 
 _arg="${}"
@@ -142,18 +95,6 @@ _arg2="${}"
 	if [ -L "$1" ]; then
 		rm "$1";
 	fi 
-}
-
-apt_purge_with_error2info()
-{
-	localarray=("$@")
-	for package in "${localarray[@]}"
-	do
-		if dpkg -s "${package}" &>/dev/null; then
-			show_m "Purging ${package}."
-			$__purge "$package"
-		fi
-	done
 }
 
 run_fixes_()
@@ -250,6 +191,15 @@ check_if_user_has_root_access(){
 	fi
 }
 
+must_install_apps()
+{
+	add_packages_2_install_list "wget"
+	add_packages_2_install_list "killall"
+	add_packages_2_install_list "mlocate"
+	add_packages_2_install_list "git"
+	install_packages
+}
+
 ######################################################################################################################
 ######################################################################################################################
 ######################################################################################################################
@@ -325,7 +275,7 @@ CHECK_IF_THIS_LAPTOP(){
 	fi
 	
 	if [[ "${is_this_laptop}"  = true ]];then
-		mktemp "${temp_path}"/this_is_laptop_XXXXXX
+		touch "${temp_path}"/this_is_laptop
 	fi
 }
 
@@ -350,6 +300,8 @@ set_package_manager(){
 	fi
 	
 	check_and_download_ "disto_package_manager_${pgm}"
+	
+	echo "${PACKAGER}" > /tmp/package_manager_are
 	
 	set -a
 	if ! source "${temp_path}/disto_package_manager_${pgm}" 2> /dev/null; then

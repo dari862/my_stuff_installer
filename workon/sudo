@@ -1,0 +1,2 @@
+bin/bin/apps_as_root_yad:	echo "${SUDO_ASKPASS}" | sudo -S ${command_2_run}
+bin/rofi/apps_as_root_rofi:	echo "${SUDO_ASKPASS}" | sudo -S ${command_2_run}

@@ -1,24 +1,112 @@
 #!/bin/bash
 set -e
-__noninteractive=""
-__noninteractive_install=''
-__install=""
-__purge=""
 
-set_install_and_purge_var(){
-	__noninteractive="DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true"
-	__noninteractive_install='$_SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true ${PACKAGER} install -yq'
-	__install="$_SUDO ${PACKAGER} install -yq"
-	__purge="$_SUDO ${PACKAGER} purge -y"
+##################################
+# for rest
+##################################
+
+install_for_sudo()
+{
+	if ! command -v sudo >/dev/null;then
+		show_m "Install sudo and add user 1000 to sudo group"
+		add_packages_2_install_list "sudo"
+		kill_PACKAGE_MANAGER && install_packages || (kill_PACKAGE_MANAGER && install_packages) || (show_em "failed to install sudo" && exit 1)
+		user=$(cut -f 1,3 -d: /etc/passwd | grep :1000$ | cut -f1 -d:)
+		[ "$user" ] && adduser "$user" sudo
+	fi
+	_SUDO="sudo"
+
+	keep_sudo_refresed(){
+		while true
+		do
+				sudo true
+				sleep 10m
+		done
+	}
+	keep_sudo_refresed &
 }
 
-# functions
+install_lightdm_now(){
+	install_lightdm_=(lightdm lightdm-gtk-greeter-settings)
+	if [ -f "/etc/X11/default-display-manager" ]; then
+		d_d_m="$(basename "$(cat /etc/X11/default-display-manager)")"
+		[ "$d_d_m" != "lightdm"  ] && lightdm_does_not_exist=true
+	else
+		lightdm_does_not_exist=true
+	fi
+	
+	if [ "$lightdm_does_not_exist" = true  ];then
+		show_m "Install ${install_lightdm_[@]} ."
+		add_packages_2_install_list "${install_lightdm_[@]}"
+		kill_PACKAGE_MANAGER && install_packages || (kill_PACKAGE_MANAGER && install_packages) || (show_em "failed to install sudo" && exit 1)
+		echo "/usr/sbin/lightdm" | $_SUDO tee /etc/X11/default-display-manager > /dev/null 2>&1
+		$_SUDO dpkg-reconfigure lightdm
+	fi
+}
+
 create_package_list(){
 	# create list_of_apps file
 	if [[ ! -f "${list_of_apps_file_path}" ]];then
 		show_m "create_list_of_apps"
-		apt list 2>/dev/null > "${list_of_apps_file_path}" 
+		dnf list 2>/dev/null > "${list_of_apps_file_path}" 
 	fi
 }
-set_install_and_purge_var
+
+install_packages(){
+	($_SUDO dnf install -y "${List_of_apt_2_install_[@]}" && kill_PACKAGE_MANAGER) || \
+	($_SUDO dnf install -y "${List_of_apt_2_install_[@]}" && kill_PACKAGE_MANAGER) || \
+	$_SUDO dnf install -y "${List_of_apt_2_install_[@]}"
+}
+
+check_if_package_exist_in_repo(){
+	local package_name="${1-}"
+	if ! dpkg -s "${package_name}" > /dev/null 2>&1; then
+		check_apps_in_cache="$(grep "^$package_name/" "${list_of_apps_file_path}" 2>/dev/null || :)"
+		if [ -n "${check_apps_in_cache}" ];then
+			echo "${package_name}" 
+		fi
+	fi
+}
+
+add_packages_2_install_list()
+{
+	localarray=("$@")
+	
+	for INDEX in "${localarray[@]}"
+	do
+		if ! dpkg -s "${INDEX}" > /dev/null 2>&1; then
+			check_apps_in_cache="$(grep "^$INDEX/" "${list_of_apps_file_path}" 2>/dev/null || :)"
+			if [ -n "${check_apps_in_cache}" ];then
+				List_of_apt_2_install_+=("$INDEX") 
+				show_m "${INDEX} added to install apps" 
+			else
+				show_em "${INDEX} does not exist." 
+			fi
+		fi
+	done
+}
+
+kill_PACKAGE_MANAGER(){
+	$_SUDO killall -9 dnf &>/dev/null || :
+}
+	
+upgrade_now()
+{
+	$_SUDO dnf update -y
+	$_SUDO dnf -y upgrade
+}
+
+remove_package_with_error2info()
+{
+	localarray=("$@")
+	for package in "${localarray[@]}"
+	do
+		if dpkg -s "${package}" &>/dev/null; then
+			show_m "Purging ${package}."
+			$_SUDO dnf remove -y "$package"
+		fi
+	done
+}
+
+upgrade_now
 create_package_list

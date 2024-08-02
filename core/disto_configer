@@ -24,10 +24,10 @@ then
 	sed -i 's|vsync = true;|# vsync = true|g' my_stuff/skel/.config/picom.conf.bunsenlab
 fi
 
-mkdir -p my_stuff/bin/not_add_2_path/updater
+mkdir -p my_stuff/system_files/updater
 
 if [[ -f "${temp_path}/envycontrol_updater_DmDmDmdMdMdM" ]];then
-	mv "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM my_stuff/bin/not_add_2_path/updater/envycontrol_updater
+	mv "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM my_stuff/system_files/updater/envycontrol
 fi
 
 source "my_stuff/lib/common/openbox_folder_name"
@@ -61,13 +61,13 @@ show_m "update alternatives apps"
 sudo /usr/share/my_stuff/bin/bin/my-alternatives install
 show_m "installing update-notification"
 sudo /usr/share/my_stuff/bin/bin/update-notification -I
-if [[ -f "/usr/share/my_stuff/bin/not_add_2_path/updater/envycontrol_updater" ]];then 
+if [[ -f "/usr/share/my_stuff/system_files/updater/envycontrol" ]];then 
 	show_m "runing envycontrol_updater"
-	sudo /usr/share/my_stuff/bin/not_add_2_path/updater/envycontrol_updater
+	sudo /usr/share/my_stuff/system_files/updater/envycontrol
 fi
 
-if [[ -f "$(ls ${temp_path}/fingerprint_exist_* 2>/dev/null)" ]];then 
-    ln -sf /usr/share/my_stuff/bin/not_add_2_path/fingerprint_gui /usr/share/my_stuff/bin/apps
+if [[ -f "${temp_path}/fingerprint_exist" ]];then 
+    ln -sf /usr/share/my_stuff/bin/not_add_2_path/fingerprint_gui /usr/share/my_stuff/system_files/bin
 fi
 ##################################################################################
 #Theme_Stuff.git
@@ -77,30 +77,30 @@ sudo chown -R root:root "${Theme_Stuff_location}"/Theme_Stuff
 show_m "moving Theme_Stuff to /usr/share/my_stuff/Theme_Stuff"
 sudo mv "${Theme_Stuff_location}"/Theme_Stuff /usr/share/my_stuff
 
-show_m "Moving themes from /usr/share/themes that exist in Theme_Stuff /usr/share/my_stuff/backup"
+show_m "Moving themes from /usr/share/themes that exist in Theme_Stuff /usr/share/my_stuff/system_files/backup"
 sudo mkdir -p /usr/share/themes
-sudo mkdir -p /usr/share/my_stuff/backup/themes
+sudo mkdir -p /usr/share/my_stuff/system_files/backup/themes
 for d in /usr/share/my_stuff/Theme_Stuff/themes/* ; do
 	Directory_name=${d##*/}
-	[ -d "/usr/share/themes/${Directory_name}" ] && sudo mv "/usr/share/themes/${Directory_name}" /usr/share/my_stuff/backup/themes
+	[ -d "/usr/share/themes/${Directory_name}" ] && sudo mv "/usr/share/themes/${Directory_name}" /usr/share/my_stuff/system_files/backup/themes
 	sudo ln -sf "$d" /usr/share/themes
 done
 
-show_m "Moving icons from /usr/share/icons that exist in Theme_Stuff /usr/share/my_stuff/backup"
+show_m "Moving icons from /usr/share/icons that exist in Theme_Stuff /usr/share/my_stuff/system_files/backup"
 sudo mkdir -p /usr/share/icons
-sudo mkdir -p /usr/share/my_stuff/backup/icons
+sudo mkdir -p /usr/share/my_stuff/system_files/backup/icons
 for d in /usr/share/my_stuff/Theme_Stuff/icons/* ; do
 	Directory_name=${d##*/}
-	[ -d "/usr/share/icons/${Directory_name}" ] && sudo mv "/usr/share/icons/${Directory_name}" /usr/share/my_stuff/backup/icons
+	[ -d "/usr/share/icons/${Directory_name}" ] && sudo mv "/usr/share/icons/${Directory_name}" /usr/share/my_stuff/system_files/backup/icons
 	sudo ln -sf "$d" /usr/share/icons
 done
 
-show_m "Moving fonts from /usr/share/fonts that exist in Theme_Stuff /usr/share/my_stuff/backup"
+show_m "Moving fonts from /usr/share/fonts that exist in Theme_Stuff /usr/share/my_stuff/system_files/backup"
 sudo mkdir -p /usr/share/fonts
-sudo mkdir -p /usr/share/my_stuff/backup/fonts
+sudo mkdir -p /usr/share/my_stuff/system_files/backup/fonts
 for e in /usr/share/my_stuff/Theme_Stuff/fonts/* ; do
 	Directory_name=${e##*/}
-	[ -d "/usr/share/fonts/${Directory_name}" ] && sudo mv "/usr/share/fonts/${Directory_name}" /usr/share/my_stuff/backup/fonts
+	[ -d "/usr/share/fonts/${Directory_name}" ] && sudo mv "/usr/share/fonts/${Directory_name}" /usr/share/my_stuff/system_files/backup/fonts
 	sudo ln -sf "$e" /usr/share/fonts
 done
 

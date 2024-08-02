@@ -1,15 +1,119 @@
 #!/bin/bash
 set -e
-__noninteractive=""
-__noninteractive_install=''
-__install=""
-__purge=""
 
-set_install_and_purge_var(){
-	__noninteractive="DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true"
-	__noninteractive_install='$_SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true ${PACKAGER} install -yq'
-	__install="$_SUDO ${PACKAGER} install -yq"
-	__purge="$_SUDO ${PACKAGER} purge -y"
+##################################
+# only for apt
+##################################
+aptupdate(){
+	show_m "updating your system"
+	[ "$(find /var/cache/apt/pkgcache.bin -mtime 0 2>/dev/null)" ] || $_SUDO apt-get update
+}
+
+aptfixer(){
+		if ! command -v sudo >/dev/null
+		then
+			if grep 'deb cdrom' /etc/apt/sources.list;then
+				sed -i '/deb cdrom/d' /etc/apt/sources.list
+			fi
+		else
+			if grep 'deb cdrom' /etc/apt/sources.list;then
+				$_SUDO sed -i '/deb cdrom/d' /etc/apt/sources.list
+			fi
+		fi
+		aptupdate
+		### Fix broken packages for good measure (why not?)
+		$_SUDO apt-get install -yq -f 2>/dev/null || show_em "failed to $_SUDO apt-get install -yq -f"
+}	
+
+enable_repo_contrib(){
+(
+IFS=$'\n'
+	for l in $deb_lines_contrib; do
+		$_SUDO sed -i "s\\^$l$\\$l contrib\\" /etc/apt/sources.list
+	done
+)
+}
+
+enable_repo_nonfree_firmware(){
+(
+IFS=$'\n'
+	for l in $deb_lines_nonfree_firmware; do
+		$_SUDO sed -i "s\\^$l$\\$l nonfreefirmware\\" /etc/apt/sources.list
+	done
+	$_SUDO sed -i 's/nonfreefirmware/non-free-firmware/g'  /etc/apt/sources.list
+)
+}
+
+enable_repo_nonfree(){
+(
+IFS=$'\n'
+	for l in $deb_lines_nonfree; do
+		$_SUDO sed -i "s\\^$l$\\$l nonfreeonly\\" /etc/apt/sources.list
+	done
+	$_SUDO sed -i 's/nonfreeonly/non-free/g'  /etc/apt/sources.list
+)
+}
+
+enable_repo_(){
+	local update_now=false
+	if [[ "$enable_contrib" = true ]];then
+		enable_repo_contrib && update_now=true
+	fi
+	if [[ "$enable_nonfree_firmware" = true ]];then
+		enable_repo_nonfree_firmware && update_now=true
+	fi
+	if [[ "$enable_nonfree" = true ]];then
+		enable_repo_nonfree && update_now=true
+	fi
+	if [[ "$update_now" = true ]];then
+		aptupdate
+	fi
+}
+
+aptfixer
+enable_repo_
+
+##################################
+# for rest
+##################################
+
+install_for_sudo()
+{
+	if ! command -v sudo >/dev/null;then
+		show_m "Install sudo and add user 1000 to sudo group"
+		add_packages_2_install_list "sudo"
+		kill_PACKAGE_MANAGER && install_packages || (kill_PACKAGE_MANAGER && install_packages) || (show_em "failed to install sudo" && exit 1)
+		user=$(cut -f 1,3 -d: /etc/passwd | grep :1000$ | cut -f1 -d:)
+		[ "$user" ] && adduser "$user" sudo
+	fi
+	_SUDO="sudo"
+
+	keep_sudo_refresed(){
+		while true
+		do
+				sudo true
+				sleep 10m
+		done
+	}
+	keep_sudo_refresed &
+}
+
+install_lightdm_now(){
+	install_lightdm_=(lightdm lightdm-gtk-greeter-settings)
+	if [ -f "/etc/X11/default-display-manager" ]; then
+		d_d_m="$(basename "$(cat /etc/X11/default-display-manager)")"
+		[ "$d_d_m" != "lightdm"  ] && lightdm_does_not_exist=true
+	else
+		lightdm_does_not_exist=true
+	fi
+	
+	if [ "$lightdm_does_not_exist" = true  ];then
+		($_SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true apt-get install -yq ${install_lightdm_[@]} && kill_PACKAGE_MANAGER) || \
+		($_SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true apt-get install -yq ${install_lightdm_[@]} && kill_PACKAGE_MANAGER) || \
+		$_SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true apt-get install -yq ${install_lightdm_[@]}
+		echo "/usr/sbin/lightdm" | $_SUDO tee /etc/X11/default-display-manager > /dev/null 2>&1
+		$_SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true dpkg-reconfigure lightdm
+	fi
 }
 
 create_package_list(){
@@ -21,7 +125,9 @@ create_package_list(){
 }
 
 install_packages(){
-	($__install "${List_of_apt_2_install_[@]}" && kill_PACKAGE_MANAGER) || ($__install "${List_of_apt_2_install_[@]}" && kill_PACKAGE_MANAGER) || $__install "${List_of_apt_2_install_[@]}"
+	($_SUDO apt-get install -yq "${List_of_apt_2_install_[@]}" && kill_PACKAGE_MANAGER) || \
+	($_SUDO apt-get install -yq "${List_of_apt_2_install_[@]}" && kill_PACKAGE_MANAGER) || \
+	$_SUDO apt-get install -yq "${List_of_apt_2_install_[@]}"
 }
 
 check_if_package_exist_in_repo(){
@@ -51,77 +157,29 @@ add_packages_2_install_list()
 		fi
 	done
 }
-aptupdate(){
-	show_m "updating your system"
-	[ "$(find /var/cache/apt/pkgcache.bin -mtime 0 2>/dev/null)" ] || $_SUDO ${PACKAGER} update
-}
 
-aptfixer(){
-		if ! command -v sudo >/dev/null
-		then
-			if grep 'deb cdrom' /etc/apt/sources.list;then
-				sed -i '/deb cdrom/d' /etc/apt/sources.list
-			fi
-		else
-			if grep 'deb cdrom' /etc/apt/sources.list;then
-				$_SUDO sed -i '/deb cdrom/d' /etc/apt/sources.list
-			fi
-		fi
-		aptupdate
-		### Fix broken packages for good measure (why not?)
-		$__install -f 2>/dev/null || show_em "failed to $__install -f"
-}	
-	
 kill_PACKAGE_MANAGER(){
-	$_SUDO killall -9 apt &>/dev/null || $_SUDO killall -9 ${PACKAGER} &>/dev/null || :
+	$_SUDO killall -9 apt &>/dev/null || $_SUDO killall -9 apt-get &>/dev/null || :
 }
 	
 upgrade_now()
 {
-	$_SUDO ${__noninteractive} ${PACKAGER} -y upgrade
-	$_SUDO ${__noninteractive} ${PACKAGER} -y dist-upgrade
-	$_SUDO ${__noninteractive} ${PACKAGER} -y full-upgrade
+	$_SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true apt-get -y upgrade
+	$_SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true apt-get -y dist-upgrade
+	$_SUDO DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true apt-get -y full-upgrade
 }
-enable_repo_contrib(){
-(
-IFS=$'\n'
-	for l in $deb_lines_contrib; do
-		$_SUDO sed -i "s\\^$l$\\$l contrib\\" /etc/apt/sources.list
+
+remove_package_with_error2info()
+{
+	localarray=("$@")
+	for package in "${localarray[@]}"
+	do
+		if dpkg -s "${package}" &>/dev/null; then
+			show_m "Purging ${package}."
+			$_SUDO apt-get purge -y "$package"
+		fi
 	done
-)
 }
-enable_repo_nonfree_firmware(){
-(
-IFS=$'\n'
-	for l in $deb_lines_nonfree_firmware; do
-		$_SUDO sed -i "s\\^$l$\\$l nonfreefirmware\\" /etc/apt/sources.list
-	done
-	$_SUDO sed -i 's/nonfreefirmware/non-free-firmware/g'  /etc/apt/sources.list
-)
-}
-enable_repo_nonfree(){
-(
-IFS=$'\n'
-	for l in $deb_lines_nonfree; do
-		$_SUDO sed -i "s\\^$l$\\$l nonfreeonly\\" /etc/apt/sources.list
-	done
-	$_SUDO sed -i 's/nonfreeonly/non-free/g'  /etc/apt/sources.list
-)
-}
-enable_repo_(){
-	local update_now=false
-	if [[ "$enable_contrib" = true ]];then
-		enable_repo_contrib && update_now=true
-	fi
-	if [[ "$enable_nonfree_firmware" = true ]];then
-		enable_repo_nonfree_firmware && update_now=true
-	fi
-	if [[ "$enable_nonfree" = true ]];then
-		enable_repo_nonfree && update_now=true
-	fi
-}
-set_install_and_purge_var
-aptfixer
+
 upgrade_now
-enable_repo_
 create_package_list

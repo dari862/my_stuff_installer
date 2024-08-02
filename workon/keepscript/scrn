@@ -1,0 +1,109 @@
+#!/bin/sh
+# Default screenshots directory
+SCREENSHOTS_DIR="$HOME/Pictures/ScreenShots" 
+
+# check if app installed ; ignores aliases
+has() {
+    case "$(command -v $1 2>/dev/null)" in
+        alias*|"") return 1
+    esac
+}
+
+# check if adb connected
+is_adb_connected(){
+    adb devices | grep "device"$ >/dev/null 2>&1
+}
+
+# if rofi is not installed, use dmenu as menu
+_chooser(){
+    if   has 'rofi' ; then
+        rofi -dmenu -p "Screenshot which area ?" -i -l 8
+    elif has 'dmenu'; then
+        dmenu -p "Screenshot which area ?" -i -l 8
+    fi
+}
+
+# check if necessary programs are installed
+for prog in maim xdotool ps xclip notify-send; do
+     ! has "$prog" && dependences_not_installed="$dependences_not_installed $prog ,"
+done
+
+# check if rofi or dmenu are installed
+if ! has 'rofi' ; then
+    if ! has 'dmenu' ; then
+        dependences_not_installed="$dependences_not_installed rofi or dmenu ,"
+    fi
+fi
+
+# show full list of necessary programs
+[ ! -z "$dependences_not_installed" ] && notify-send "scrn: look like some dependences is not installed" "you need to install: ${dependences_not_installed::-1}!" && exit 1
+
+scrn_active_windows_id=$(xdotool getactivewindow)
+scrn_active_windows_pid=$(xdotool getwindowpid $scrn_active_windows_id )
+scrn_active_windows_comm=$(ps -o comm= -p $scrn_active_windows_pid || xdotool getwindowname $scrn_active_windows_id)
+
+case "$scrn_active_windows_comm" in
+    mpv*|vlc*)
+        SCREENSHOTS_DIR="$SCREENSHOTS_DIR/videos";;
+    librewolf*|chromium*|vivaldi*|brave*|firefox*)
+        SCREENSHOTS_DIR="$SCREENSHOTS_DIR/browser";;
+    sublime_text*)
+        SCREENSHOTS_DIR="$SCREENSHOTS_DIR/dev";;
+    kitty)
+        SCREENSHOTS_DIR="$SCREENSHOTS_DIR/terminal";;
+esac
+
+# list of screenshot options
+screenshot_types="a selected area\\ncurrent window\\nfull screen\\na selected area (copy)\\ncurrent window (copy)\\nfull screen (copy)"
+
+# only add phone options if a phone is connected
+if is_adb_connected; then
+    screenshot_types="a selected area\\ncurrent window\\nfull screen\\nphone screen\\na selected area (copy)\\ncurrent window (copy)\\nfull screen (copy)\\nphone screen (copy)"
+fi
+
+screenshot_type=$(printf "$screenshot_types" | _chooser )
+
+[ -z "$screenshot_type" ] && exit 1
+
+mkdir -p "$SCREENSHOTS_DIR"
+
+case "$screenshot_type" in
+    "current window")
+                    scrn_filename="Screenshot $(date '+%Y-%m-%d-%H:%M:%S') $scrn_active_windows_comm (window).png"
+                    maim -i "$scrn_active_windows_id" "$SCREENSHOTS_DIR/$scrn_filename" &&\
+                    notify-send "you just took a full-windows screenshot of $scrn_active_windows_comm" "\nsaved in $SCREENSHOTS_DIR/$scrn_filename"
+                    ;;
+    "current window (copy)")
+                    maim -i "$scrn_active_windows_id" | xclip -selection clipboard -t image/png &&\
+                    notify-send "you just took a full-windows screenshot of $scrn_active_windows_comm" "\ncopyed to clipboard"
+                    ;;
+    "full screen")
+                    scrn_filename="Screenshot $(date '+%Y-%m-%d-%H:%M:%S') $scrn_active_windows_comm (full screen).png"
+                    maim "$SCREENSHOTS_DIR/$scrn_filename" && notify-send "you just took a full-screen screenshot of $scrn_active_windows_comm "\
+                    "\nsaved in $SCREENSHOTS_DIR/$scrn_filename"
+                    ;;
+    "full screen (copy)")
+                    maim | xclip -selection clipboard -t image/png &&\
+                    notify-send "you just took a full-screen screenshot of $scrn_active_windows_comm" "\ncopyed to clipboard"
+                    ;;
+    "a selected area")
+                    scrn_filename="Screenshot $(date '+%Y-%m-%d-%H:%M:%S') $scrn_active_windows_comm (selected area).png"
+                    maim -s "$SCREENSHOTS_DIR/$scrn_filename" &&\
+                    notify-send "you just took a selected-area screenshot of $scrn_active_windows_comm" "\nsaved in $SCREENSHOTS_DIR/$scrn_filename"
+                    ;;
+    "a selected area (copy)")
+                    maim -s | xclip -selection clipboard -t image/png &&\
+                    notify-send "you just took a selected-area screenshotof $scrn_active_windows_comm" "\ncopyed to clipboard"
+                    ;;
+    "phone screen")
+                    SCREENSHOTS_DIR="$SCREENSHOTS_DIR/phone";
+                    mkdir -p "$SCREENSHOTS_DIR"
+                    scrn_filename="Screenshot $(date '+%Y-%m-%d-%H:%M:%S').png"
+                    adb exec-out screencap -p > "$SCREENSHOTS_DIR/$scrn_filename" &&\
+                    notify-send "you just took a full-screen screenshot from your phone" "\nsaved in $SCREENSHOTS_DIR/$scrn_filename"
+                    ;;
+    "phone screen (copy)")
+                    adb exec-out screencap -p | xclip -selection clipboard -t image/png &&\
+                    notify-send "you just took a full-screen screenshot from your phone" "\ncopyed to clipboard"
+                    ;;
+esac

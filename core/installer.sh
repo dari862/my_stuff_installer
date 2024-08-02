@@ -309,7 +309,7 @@ wifi_mode_installation(){
 				read -p -r "pass:" pass_var
 			fi
 		done
-		wpa_passphrase "$ssid_var" "$pass_var" | tee "$tmpfile"
+		wpa_passphrase "$ssid_var" "$pass_var" | tee "$tmpfile" > /dev/null 2>&1
 		$_SUDO wpa_supplicant -B -c "$tmpfile" -i "$wifi_interface" &
 		unset ssid_var
 		unset pass_var
@@ -324,8 +324,9 @@ wifi_mode_installation(){
 
 switch_to_network_manager(){
 	network_manager_name="network-manager"
-	$__install ${network_manager_name}
-cat << 'EOF' > "${temp_path}"/interfaces
+	add_packages_2_install_list "${network_manager_name}"
+	install_packages
+sudo tee "${temp_path}"/interfaces << 'EOF' > /dev/null
 # This file describes the network interfaces available on your system
 # and how to activate them. For more information, see interfaces(5).
 	
@@ -335,8 +336,7 @@ source /etc/network/interfaces.d/*
 auto lo
 iface lo inet loopback
 EOF
-	chmod 644 "${temp_path}"/interfaces
-	sudo chown root:root "${temp_path}"/interfaces
+	sudo chmod 644 "${temp_path}"/interfaces
 	sudo mv /etc/network/interfaces /etc/network/interfaces.old
 	sudo mv "${temp_path}"/interfaces /etc/network/interfaces
 	sudo sed -i 's/managed=.*/managed=true/g' /etc/NetworkManager/NetworkManager.conf
@@ -353,8 +353,9 @@ purge_some_unnecessary_pakages(){
 		
 		show_m "adding fonts-linuxlibertine to purging list (fonts-linuxlibertine break polybar) "
 		to_be_purged+=("linuxlibertine")
+		to_be_purged+=("${install_autoinstall_firmware[@]}")
 		show_m "purging apps"
-		apt_purge_with_error2info "${to_be_purged[@]}"
+		remove_package_with_error2info "${to_be_purged[@]}"
 	fi
 }
 
@@ -427,22 +428,6 @@ update_grub_image(){
 	sudo gtk-update-icon-cache
 }
 
-install_lightdm_now(){
-	install_lightdm_=(lightdm lightdm-gtk-greeter-settings)
-	if [ -f "/etc/X11/default-display-manager" ]; then
-		d_d_m="$(basename "$(cat /etc/X11/default-display-manager)")"
-		[ "$d_d_m" != "lightdm"  ] && lightdm_does_not_exist=true
-	else
-		lightdm_does_not_exist=true
-	fi
-	
-	if [ "$lightdm_does_not_exist" = true  ];then
-		($__noninteractive_install ${install_lightdm_[@]} && kill_PACKAGE_MANAGER) || ($__noninteractive_install ${install_lightdm_[@]} && kill_PACKAGE_MANAGER) || $__noninteractive_install ${install_lightdm_[@]}
-		echo "/usr/sbin/lightdm" | $_SUDO tee /etc/X11/default-display-manager
-		$_SUDO $__noninteractive dpkg-reconfigure lightdm
-	fi
-}
-
 check_if_user_has_root_access(){
 	echo "check if user has root access."
     ## Check SuperUser Group
@@ -510,6 +495,8 @@ CHECK_IF_THIS_LAPTOP
 
 set_package_manager
 
+install_for_sudo
+
 must_install_apps
 
 if [[ "$arg_" = "drivers" ]] || [[ -z "$arg_" ]];then
@@ -574,6 +561,7 @@ clean_up_now
 update_grub_image
 
 show_m "prepare some script"
+cd "${temp_path}"
 sudo "${temp_path}"/disto_post_install
 
 show_m "Done"
