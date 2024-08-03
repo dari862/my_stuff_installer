@@ -35,12 +35,36 @@ reboot_now="Y"
 enable_contrib=false
 enable_nonfree_firmware=false
 enable_nonfree=false
-_SUDO=""
+_SUPERUSER=""
+__USER="$USER"
 
 RC='\e[0m'
 RED='\e[31m'
 YELLOW='\e[33m'
 GREEN='\e[32m'
+
+################################################################################################################################
+number_of_gpus=0
+
+if [ "$(lspci | grep -i nvidia | grep VGA -c)" != "0" ];then
+	nvidia_gpu_exist=true
+	number_of_gpus=$((number_of_gpus++))
+fi
+
+if [ "$(lspci | grep -i intel | grep VGA -c)" != "0" ];then
+	intel_gpu_exist=true
+	number_of_gpus=$((number_of_gpus++))
+fi
+
+if [ "$(lspci | grep -i amd | grep VGA -c)" != "0" ];then
+	amd_gpu_exist=true
+	number_of_gpus=$((number_of_gpus++))
+fi
+
+if [ "$(lspci | grep -i VMware | grep VGA -c)" != "0" ];then
+	VMware_gpu_exist=true
+	number_of_gpus=$((number_of_gpus++))
+fi
 ################################################################################################################################
 # Function
 ################################################################################################################################
@@ -66,7 +90,7 @@ test_internet_(){
 			for intf in /sys/class/net/*; do
 				intf_name="$(basename $intf)"
 				if [[ "$intf_name" != "lo" ]] || [[ "$intf_name" != "w"* ]];then
-    				$_SUDO ip link set dev $intf_name up
+    				$_SUPERUSER ip link set dev $intf_name up
     			fi
 			done
 			_intface="$(ip route | awk '/default/ { print $5 }')"
@@ -278,10 +302,10 @@ fix_time_(){
 	if [[ -z "$get_date_from_here" ]];then 
 		echo "failed to ping all of this: ${list_to_test[@]}" && exit 1
 	else
-		$_SUDO date -s "$(wget --method=HEAD -qSO- --max-redirect=0 $get_date_from_here 2>&1 | sed -n 's/^ *Date: *//p')" &>/dev/null
+		$_SUPERUSER date -s "$(wget --method=HEAD -qSO- --max-redirect=0 $get_date_from_here 2>&1 | sed -n 's/^ *Date: *//p')" &>/dev/null
 		#__timezone="$(wget -O- https://ipinfo.io/ 2>/dev/null | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/ //g')"
 		__timezone="Asia/Kuwait"
-		$_SUDO timedatectl set-timezone $__timezone	
+		$_SUPERUSER timedatectl set-timezone $__timezone	
 	fi
 }
 
@@ -303,19 +327,19 @@ wifi_mode_installation(){
 		while :
 		do
 			echo -e "\n These hotspots are available \n"
-			$_SUDO iwlist "$wifi_interface" scan | grep ESSID | sed 's/ESSID://g;s/"//g;s/^                    //g'
+			$_SUPERUSER iwlist "$wifi_interface" scan | grep ESSID | sed 's/ESSID://g;s/"//g;s/^                    //g'
 			read -p -r "ssid:" ssid_var
 			if iw "$wifi_interface" scan | grep 'SSID' | grep "$ssid_var" >/dev/null;then
 				read -p -r "pass:" pass_var
 			fi
 		done
 		wpa_passphrase "$ssid_var" "$pass_var" | tee "$tmpfile" > /dev/null 2>&1
-		$_SUDO wpa_supplicant -B -c "$tmpfile" -i "$wifi_interface" &
+		$_SUPERUSER wpa_supplicant -B -c "$tmpfile" -i "$wifi_interface" &
 		unset ssid_var
 		unset pass_var
 		echo "you will wait for few sec"
 		sleep 10 
-		$_SUDO dhclient "$wifi_interface"
+		$_SUPERUSER dhclient "$wifi_interface"
 		ping -c4 google.com || (echo "no internet connection" ; exit 1)
 		[ -f "$tmpfile" ] && rm "$tmpfile"
 		test_internet_
@@ -326,20 +350,20 @@ switch_to_network_manager(){
 	network_manager_name="network-manager"
 	add_packages_2_install_list "${network_manager_name}"
 	install_packages
-sudo tee "${temp_path}"/interfaces << 'EOF' > /dev/null
-# This file describes the network interfaces available on your system
-# and how to activate them. For more information, see interfaces(5).
-	
-source /etc/network/interfaces.d/*
-	
-# The loopback network interface
-auto lo
-iface lo inet loopback
-EOF
-	sudo chmod 644 "${temp_path}"/interfaces
-	sudo mv /etc/network/interfaces /etc/network/interfaces.old
-	sudo mv "${temp_path}"/interfaces /etc/network/interfaces
-	sudo sed -i 's/managed=.*/managed=true/g' /etc/NetworkManager/NetworkManager.conf
+	$_SUPERUSER tee "${temp_path}"/interfaces <<- 'EOF' > /dev/null
+	# This file describes the network interfaces available on your system
+	# and how to activate them. For more information, see interfaces(5).
+		
+	source /etc/network/interfaces.d/*
+		
+	# The loopback network interface
+	auto lo
+	iface lo inet loopback
+	EOF
+	$_SUPERUSER chmod 644 "${temp_path}"/interfaces
+	$_SUPERUSER mv /etc/network/interfaces /etc/network/interfaces.old
+	$_SUPERUSER mv "${temp_path}"/interfaces /etc/network/interfaces
+	$_SUPERUSER sed -i 's/managed=.*/managed=true/g' /etc/NetworkManager/NetworkManager.conf
 	install_extra_Network_tools=(rfkill)
 	add_packages_2_install_list "${install_extra_Network_tools[@]}"
 	install_packages
@@ -365,29 +389,29 @@ disable_some_unnecessary_services(){
 		
 		# INFO: Some boot services included in Debian are unnecesary for most usres (like NetworkManager-wait-online.service, ModemManager.service or pppd-dns.service)
 		
-		sudo systemctl stop NetworkManager-wait-online.service || show_m "fail to stop NetworkManager-wait-online.service"
-		sudo systemctl mask NetworkManager-wait-online.service || show_m "fail to mask NetworkManager-wait-online.service"
+		$_SUPERUSER systemctl stop NetworkManager-wait-online.service || show_m "fail to stop NetworkManager-wait-online.service"
+		$_SUPERUSER systemctl mask NetworkManager-wait-online.service || show_m "fail to mask NetworkManager-wait-online.service"
 		
-		sudo systemctl stop wpa_supplicant || show_m "fail to stop wpa_supplicant"
-		sudo systemctl disable wpa_supplicant || show_m "fail to disable wpa_supplicant"	# No mask, may be needed by network manager
+		$_SUPERUSER systemctl stop wpa_supplicant || show_m "fail to stop wpa_supplicant"
+		$_SUPERUSER systemctl disable wpa_supplicant || show_m "fail to disable wpa_supplicant"	# No mask, may be needed by network manager
 		
-		sudo systemctl stop ModemManager.service || show_m "fail to stop ModemManager.service"
-		sudo systemctl disable ModemManager.service || show_m "fail to disable ModemManager.service"
+		$_SUPERUSER systemctl stop ModemManager.service || show_m "fail to stop ModemManager.service"
+		$_SUPERUSER systemctl disable ModemManager.service || show_m "fail to disable ModemManager.service"
 		
-		sudo systemctl stop pppd-dns.service || show_m "fail to stop pppd-dns.service"
-		sudo systemctl disable pppd-dns.service || show_m "fail to disable pppd-dns.service"
+		$_SUPERUSER systemctl stop pppd-dns.service || show_m "fail to stop pppd-dns.service"
+		$_SUPERUSER systemctl disable pppd-dns.service || show_m "fail to disable pppd-dns.service"
 		
 		# Disable tracker (Data indexing for GNOME mostly)
-		sudo systemctl --user mask tracker-store.service tracker-miner-fs.service tracker-miner-rss.service tracker-extract.service tracker-miner-apps.service tracker-writeback.service || show_m "fail to disable tracker services"
+		$_SUPERUSER systemctl --user mask tracker-store.service tracker-miner-fs.service tracker-miner-rss.service tracker-extract.service tracker-miner-apps.service tracker-writeback.service || show_m "fail to disable tracker services"
 		#systemctl --user mask gvfs-udisks2-volume-monitor.service gvfs-metadata.service gvfs-daemon.service || show_m "fail to disable gvfs.service"
 		
-		if sudo systemctl status NetworkManager.service &>/dev/null; then
+		if $_SUPERUSER systemctl status NetworkManager.service &>/dev/null; then
 			#apt-get purge ifupdown; rm -rf /etc/network/*
-			sudo systemctl networking disable || show_m "fail to disable networking"
+			$_SUPERUSER systemctl networking disable || show_m "fail to disable networking"
 		
 			#apt-get purge network-dispacher
-			sudo systemctl stop systemd-networkd.service || show_m "fail to stop systemd-networkd.service"
-			sudo systemctl disable systemd-networkd.service || show_m "fail to disable systemd-networkd.service"
+			$_SUPERUSER systemctl stop systemd-networkd.service || show_m "fail to stop systemd-networkd.service"
+			$_SUPERUSER systemctl disable systemd-networkd.service || show_m "fail to disable systemd-networkd.service"
 		fi
 	fi
 }
@@ -411,21 +435,21 @@ clean_up_now(){
 	done
 	if [ "$autoclean_and_autoremove" = "Y" ];then
 		show_m "autoremove unwanted pakages"
-		sudo apt-get autoremove -y
-		sudo apt-get autoclean -y
+		$_SUPERUSER apt-get autoremove -y
+		$_SUPERUSER apt-get autoclean -y
 	fi
 }
 
 update_grub_image(){
 	if [ "$run_update_grub_image" = "Y" ];then
 		show_m "update grub"
-		sudo ln -sf /usr/share/"my_stuff"/images/wallpapers/default/Networks.png /boot/grub/
+		$_SUPERUSER ln -sf /usr/share/"my_stuff"/images/wallpapers/default/Networks.png /boot/grub/
 		# this package added some grub config
-		sudo sync
-		sudo update-grub
+		$_SUPERUSER sync
+		$_SUPERUSER update-grub
 	fi
 	# install Themes
-	sudo gtk-update-icon-cache
+	$_SUPERUSER gtk-update-icon-cache
 }
 
 check_if_user_has_root_access(){
@@ -445,10 +469,17 @@ check_if_user_has_root_access(){
         exit 1
     fi
     
-    if command -v sudo >/dev/null;then
-    	_SUDO="sudo"
-		sudo true
+    set_SUPERUSER_var
+}
+
+set_SUPERUSER_var(){
+	if command -v sudo >/dev/null;then
+    	_SUPERUSER="sudo"
 	fi
+	if command -v doas >/dev/null;then
+    	_SUPERUSER="doas"
+	fi
+	$_SUPERUSER true
 }
 
 source_my_lib_file(){
@@ -475,6 +506,27 @@ must_create_temp_dir(){
 	mkdir -p "${temp_path}"
 }
 
+install_for_superuser_tools()
+{
+	if ! command -v sudo >/dev/null;then
+		show_m "Install sudo and add user 1000 to sudo group"
+		add_packages_2_install_list "sudo"
+		kill_PACKAGE_MANAGER && install_packages || (kill_PACKAGE_MANAGER && install_packages) || (show_em "failed to install sudo" && exit 1)
+		user=$(cut -f 1,3 -d: /etc/passwd | grep :1000$ | cut -f1 -d:)
+		[ "$user" ] && adduser "$user" sudo
+	fi
+	_SUPERUSER="sudo"
+
+	keep_superuser_refresed(){
+		while true
+		do
+				$_SUPERUSER true
+				sleep 10m
+		done
+	}
+	keep_superuser_refresed &
+}
+
 ################################################################################################################################
 # main
 ################################################################################################################################
@@ -495,7 +547,9 @@ CHECK_IF_THIS_LAPTOP
 
 set_package_manager
 
-install_for_sudo
+install_for_superuser_tools
+
+set_SUPERUSER_var
 
 must_install_apps
 
@@ -524,12 +578,12 @@ _unattended_upgrades_ stop
 
 if [[ "$arg_" = "drivers" ]] || [[ -z "$arg_" ]];then
 	show_m "Install drivers from (disto_Drivers)"
-	"${temp_path}"/disto_Drivers ${install_GPU_Drivers} ${_cuda_} ${_kernel_open_dkms_}
+	source "${temp_path}"/disto_Drivers
 fi
 
 if [[ "$arg_" = "apps" ]] || [[ -z "$arg_" ]];then
 	show_m "Install apps from (disto_Installapps_list)"
-	"${temp_path}"/disto_Installapps_list $install_xfce4_panel $install_polybar $install_qt5ct $install_jgmenu $install_bspwm $install_zsh_now
+	source "${temp_path}"/disto_Installapps_list
 fi
 
 install_lightdm_now
@@ -550,7 +604,7 @@ fi
 ##################################################################################
 
 show_m "Configering My Stuff."
-"${temp_path}"/disto_configer "${my_stuff_location}" "${Theme_Stuff_location}"
+source "${temp_path}"/disto_configer
 
 purge_some_unnecessary_pakages
 
@@ -562,9 +616,9 @@ update_grub_image
 
 show_m "prepare some script"
 cd "${temp_path}"
-sudo "${temp_path}"/disto_post_install
+$_SUPERUSER "${temp_path}"/disto_post_install "${PACKAGER}"
 
 show_m "Done"
 if [ "$reboot_now" = "Y" ];then
-	sudo reboot
+	$_SUPERUSER reboot
 fi

@@ -1,6 +1,4 @@
 #!/bin/bash
-set -e
-
 ##################################################################################
 # var
 ##################################################################################
@@ -12,25 +10,22 @@ install_bspwm_now=false
 install_zsh_now=false
 zsh_default_shell=false
 
-extra_apps_2_install=("$@")
-for option in "${extra_apps_2_install[@]}";do
-	if [[ "$option" = "xfce4_panel" ]];then
-		install_xfce4_panel_now=true
-	elif [[ "$option" = "polybar" ]];then
-		install_polybar_now=true
-	elif [[ "$option" = "qt5ct" ]];then
-		install_qt5ct_now=true
-	elif [[ "$option" = "jgmenu" ]];then
-		install_jgmenu_now=true
-	elif [[ "$option" = "bspwm" ]];then
-		install_bspwm_now=true
-	elif [[ "$option" = "zsh" ]];then
-		install_zsh_now=true
-	elif [[ "$option" = "zsh_default" ]];then
-		install_zsh_now=true
-		zsh_default_shell=true
-	fi
-done
+if [[ "$install_xfce4_panel" = "xfce4_panel" ]];then
+	install_xfce4_panel_now=true
+elif [[ "$install_polybar" = "polybar" ]];then
+	install_polybar_now=true
+elif [[ "$install_qt5ct" = "qt5ct" ]];then
+	install_qt5ct_now=true
+elif [[ "$install_jgmenu" = "jgmenu" ]];then
+	install_jgmenu_now=true
+elif [[ "$install_bspwm" = "bspwm" ]];then
+	install_bspwm_now=true
+elif [[ "$install_zsh_now" = "zsh_default" ]];then
+	install_zsh_now=true
+	zsh_default_shell=true
+elif [[ "$install_zsh_now" = "zsh" ]];then
+	install_zsh_now=true
+fi
 
 List_of_apt_2_install_=()
 package_firefox="$(check_if_package_exist_in_repo firefox)"
@@ -40,7 +35,7 @@ package_firefox_esr="$(check_if_package_exist_in_repo firefox-esr)"
 ## must_install_apps_list
 ##################################################################################
 #must have apps
-install_must_have_apps=(jq btop xclip curl cbatticon xprintidle yad git lsb-release rofi picom sudo systemd-timesyncd mlocate)
+install_must_have_apps=(jq btop xclip curl cbatticon xprintidle yad git lsb-release rofi picom systemd-timesyncd mlocate ufw)
 install_must_have_apps2=(psmisc unzip dunst xorg arandr autorandr dbus-x11 pnmixer diodon gparted inxi s-tui dfc htop hwinfo synaptic galternatives xdotool libnotify-bin gnome-keyring ntfs-3g acl xinit xdg-user-dirs lm-sensors)
 install_openbox_=(openbox obconf xcape tint2 nitrogen)
 install_image_viewer_apps=(viewnior)
@@ -134,10 +129,10 @@ if [[ "$install_bspwm_now" = true ]];then
 		echo "var Custom_distro_dir_name is empty"
 		exit 1
 	fi
-	sudo mkdir -p "/usr/share/my_stuff/lib/xsessions"
-	sudo touch "/usr/share/my_stuff/lib/xsessions/my_stuff_bspwm.desktop"
-	sudo ln -sf "/usr/share/my_stuff/lib/xsessions/my_stuff_bspwm.desktop" /usr/share/xsessions
-	sudo rm -rdf "/usr/share/my_stuff"
+	$_SUPERUSER mkdir -p "/usr/share/my_stuff/lib/xsessions"
+	$_SUPERUSER touch "/usr/share/my_stuff/lib/xsessions/my_stuff_bspwm.desktop"
+	$_SUPERUSER ln -sf "/usr/share/my_stuff/lib/xsessions/my_stuff_bspwm.desktop" /usr/share/xsessions
+	$_SUPERUSER rm -rdf "/usr/share/my_stuff"
 fi
 
 if [[ -d "/usr/share/zsh-antigen" ]];then
@@ -146,16 +141,16 @@ if [[ -d "/usr/share/zsh-antigen" ]];then
 	then
 		echo "antigen works fine"
 	else
-		sudo wget -P "${temp_path}" "https://raw.githubusercontent.com/zsh-users/antigen/develop/bin/antigen.zsh"
-		sudo chmod +x "${temp_path}"/antigen.zsh
-		sudo mv /usr/share/zsh-antigen/antigen.zsh /usr/share/zsh-antigen/antigen.zsh.backup
-		sudo mv "${temp_path}"/antigen.zsh /usr/share/zsh-antigen/
+		$_SUPERUSER wget -P "${temp_path}" "https://raw.githubusercontent.com/zsh-users/antigen/develop/bin/antigen.zsh"
+		$_SUPERUSER chmod +x "${temp_path}"/antigen.zsh
+		$_SUPERUSER mv /usr/share/zsh-antigen/antigen.zsh /usr/share/zsh-antigen/antigen.zsh.backup
+		$_SUPERUSER mv "${temp_path}"/antigen.zsh /usr/share/zsh-antigen/
 	fi
 fi
 
 if [[ "$zsh_default_shell" = true ]];then
 	show_m "make zsh default shell "
-	sudo chsh -s $(command -v zsh) $(whoami)
+	$_SUPERUSER chsh -s $(command -v zsh) $__USER
 fi
 
 if command -v mpd >/dev/null
@@ -163,34 +158,55 @@ then
 	if [[ -n "$(pidof mpd)" ]]; then
 		killall -9 mpd
 	fi
-	sudo systemctl stop mpd.socket
-	sudo systemctl stop mpd.service 
-	sudo systemctl disable mpd.socket 
-	sudo systemctl disable mpd.service
+	$_SUPERUSER systemctl stop mpd.socket
+	$_SUPERUSER systemctl stop mpd.service 
+	$_SUPERUSER systemctl disable mpd.socket 
+	$_SUPERUSER systemctl disable mpd.service
 fi
 
 if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 	show_m "some config"
-	if sudo dmesg | grep -i bluetooth 1>/dev/null || sudo lsusb | grep -i bluetooth 1>/dev/null ;then
-		[[ -f "/etc/tlp.conf" ]] && sudo sed -i 's/#DEVICES_TO_DISABLE_ON_STARTUP=.*/DEVICES_TO_DISABLE_ON_STARTUP="bluetooth"/g' /etc/tlp.conf
+	if $_SUPERUSER dmesg | grep -i bluetooth 1>/dev/null || $_SUPERUSER lsusb | grep -i bluetooth 1>/dev/null ;then
+		[[ -f "/etc/tlp.conf" ]] && $_SUPERUSER sed -i 's/#DEVICES_TO_DISABLE_ON_STARTUP=.*/DEVICES_TO_DISABLE_ON_STARTUP="bluetooth"/g' /etc/tlp.conf
 	fi
-	sudo systemctl enable tlp
-	sudo  tlp start || tlp_error="true"
+	$_SUPERUSER systemctl enable tlp
+	$_SUPERUSER  tlp start || tlp_error="true"
 	if [[ "$tlp_error" == "true" ]];then
-		sudo  tlp start | grep '>>> Invoke' >> "${temp_path}"/tlp_error_Invoke
+		$_SUPERUSER  tlp start | grep '>>> Invoke' >> "${temp_path}"/tlp_error_Invoke
 		if [[ -f "${temp_path}/tlp_error_Invoke" ]];then
 			sed -i "s/' to correct this.//g" "${temp_path}"/tlp_error_Invoke
 			sed -i "s/>>> Invoke '//g" "${temp_path}"/tlp_error_Invoke
 			chmod +x "${temp_path}"/tlp_error_Invoke
-			sudo bash "${temp_path}"/tlp_error_Invoke
-			sudo  tlp start
+			$_SUPERUSER bash "${temp_path}"/tlp_error_Invoke
+			$_SUPERUSER  tlp start
 		fi
-		if sudo tlp-stat |  grep '* Install' &>/dev/null ;then
-			sudo tlp-stat |  grep '* Install' | awk -F' '  '{print "apt-get install -y " $3}' >> "${temp_path}"/tlp_install_exta_apps
+		if $_SUPERUSER tlp-stat |  grep '* Install' &>/dev/null ;then
+			$_SUPERUSER tlp-stat |  grep '* Install' | awk -F' '  '{print "apt-get install -y " $3}' >> "${temp_path}"/tlp_install_exta_apps
 			if [[ -f "${temp_path}/tlp_install_exta_apps" ]];then
 				chmod +x "${temp_path}"/tlp_install_exta_apps
-				sudo bash "${temp_path}"/tlp_install_exta_apps
+				$_SUPERUSER bash "${temp_path}"/tlp_install_exta_apps
 			fi
 		fi
 	fi
+fi
+
+if command -v ufw >/dev/null
+then
+    $_SUPERUSER ufw limit 22/tcp
+    echo "Limiting port 22/tcp (UFW)"
+
+    $_SUPERUSER ufw allow 80/tcp
+    echo "Allowing port 80/tcp (UFW)"
+
+    $_SUPERUSER ufw allow 443/tcp
+    echo "Allowing port 443/tcp (UFW)"
+
+    $_SUPERUSER ufw default deny incoming
+    echo "Denying Incoming Packets by Default(UFW)"
+
+    $_SUPERUSER ufw default allow outgoing
+    echo "Allowing Outcoming Packets by Default(UFW)"
+
+    $_SUPERUSER ufw enable
+    show_m "Enabled Firewall with Baselines!"
 fi

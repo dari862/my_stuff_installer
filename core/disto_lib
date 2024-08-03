@@ -1,31 +1,6 @@
 #!/bin/bash
 set -e
-_SUDO=""
-command -v sudo >/dev/null && _SUDO="sudo"
-number_of_gpus=0
-
 list_of_apps_file_path="${temp_path}/list_of_apps"
-
-if [ "$(lspci | grep -i nvidia | grep VGA -c)" != "0" ];then
-	nvidia_gpu_exist=true
-	number_of_gpus=$((number_of_gpus++))
-fi
-
-if [ "$(lspci | grep -i intel | grep VGA -c)" != "0" ];then
-	intel_gpu_exist=true
-	number_of_gpus=$((number_of_gpus++))
-fi
-
-if [ "$(lspci | grep -i amd | grep VGA -c)" != "0" ];then
-	amd_gpu_exist=true
-	number_of_gpus=$((number_of_gpus++))
-fi
-
-if [ "$(lspci | grep -i VMware | grep VGA -c)" != "0" ];then
-	VMware_gpu_exist=true
-	number_of_gpus=$((number_of_gpus++))
-fi
-
 this_is_ubuntu=false
 # distro 
 if [ -f /etc/os-release ]; then
@@ -44,6 +19,7 @@ else
 	distro_name_="$(uname -s)"
 	distro_name_and_ver_=$(uname -s)$(uname -r)
 fi
+
 if [ "$distro_name_" = "ubuntu" ];then
 	this_is_ubuntu=true
 fi
@@ -51,10 +27,6 @@ fi
 ##################################################################################
 # function
 ##################################################################################
-
-test_if_disto_lib_sourced(){  
-	: # do nothing
-}
 
 show_m()
 {
@@ -100,9 +72,9 @@ _arg2="${}"
 run_fixes_()
 {
 	#fix xfce4-panel workspace settings error in openbox
-	[ -L "$1" ] &&  sudo rm "/usr/bin/xfwm4-workspace-settings"
-	[ -f /usr/bin/xfwm4-workspace-settings ] && sudo rm /usr/bin/xfwm4-workspace-settings
-	sudo ln -s /usr/bin/obconf /usr/bin/xfwm4-workspace-settings
+	[ -L "$1" ] &&  $_SUPERUSER rm "/usr/bin/xfwm4-workspace-settings"
+	[ -f /usr/bin/xfwm4-workspace-settings ] && $_SUPERUSER rm /usr/bin/xfwm4-workspace-settings
+	$_SUPERUSER ln -s /usr/bin/obconf /usr/bin/xfwm4-workspace-settings
 }
 
 git_clone_and_set_var_to_path(){
@@ -132,18 +104,18 @@ _unattended_upgrades_()
 		auto_upgrades_file_bak="/etc/apt/apt.conf.d/20auto-upgrades.bak"
 		case "$1" in
 			start)
-				sudo systemctl stop unattended-upgrades || :
+				$_SUPERUSER systemctl stop unattended-upgrades || :
 				if [ ! -f "${auto_upgrades_file_bak}" ];then
-					sudo mv "${auto_upgrades_file}" "${auto_upgrades_file_bak}"
+					$_SUPERUSER mv "${auto_upgrades_file}" "${auto_upgrades_file_bak}"
 				fi
 			;;
 			stop)
 				if [ -f "${auto_upgrades_file}" ] && [ -f "${auto_upgrades_file_bak}" ];then
-					sudo rm "${auto_upgrades_file}"
+					$_SUPERUSER rm "${auto_upgrades_file}"
 				fi
 					
 				if [ -f "${auto_upgrades_file_bak}" ];then
-					sudo mv "${auto_upgrades_file_bak}" "${auto_upgrades_file}"
+					$_SUPERUSER mv "${auto_upgrades_file_bak}" "${auto_upgrades_file}"
 				fi
 			;;
 		esac
@@ -161,33 +133,10 @@ fix_time_(){
 	if [[ -z "$get_date_from_here" ]];then 
 		echo "failed to ping all of this: ${list_to_test[@]}" && exit 1
 	else
-		$_SUDO date -s "$(wget --method=HEAD -qSO- --max-redirect=0 $get_date_from_here 2>&1 | sed -n 's/^ *Date: *//p')" &>/dev/null
+		$_SUPERUSER date -s "$(wget --method=HEAD -qSO- --max-redirect=0 $get_date_from_here 2>&1 | sed -n 's/^ *Date: *//p')" &>/dev/null
 		#__timezone="$(curl -q https://ipinfo.io/ 2>/dev/null | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/ //g')"
 		__timezone="Asia/Kuwait"
-		$_SUDO timedatectl set-timezone $__timezone	
-	fi
-}
-
-check_if_user_has_root_access(){
-    if [[ -z $SUGROUP ]];then
-    	## Check SuperUser Group
-    	SUPERUSERGROUP='wheel sudo root'
-    	for sug in ${SUPERUSERGROUP}; do
-        	if groups | grep ${sug} >/dev/null; then
-            	SUGROUP=${sug}
-            	echo -e "Super user group ${SUGROUP}"
-        	fi
-    	done
-	
-    	## Check if member of the sudo group.
-    	if ! groups | grep ${SUGROUP} >/dev/null; then
-        	echo -e "\e[31m You need to be a member of the sudo group to run me!"
-        	exit 1
-    	fi
-    	
-    	if command -v sudo >/dev/null;then
-			sudo true
-		fi
+		$_SUPERUSER timedatectl set-timezone $__timezone	
 	fi
 }
 
@@ -300,14 +249,9 @@ set_package_manager(){
 	fi
 	
 	check_and_download_ "disto_package_manager_${pgm}"
-	
-	echo "${PACKAGER}" > /tmp/package_manager_are
-	
-	set -a
+
 	if ! source "${temp_path}/disto_package_manager_${pgm}" 2> /dev/null; then
 		echo "Error: Failed to source disto_package_manager_${pgm} from ${temp_path}" >&2
 		exit 1
 	fi
-	set +a
-	
 }

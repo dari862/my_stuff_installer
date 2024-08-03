@@ -1,4 +1,0 @@
-#!/bin/sh
-# Dmenu prompt to easily search for a man page to open
-
-man "$(apropos --long "$1" | $(command -v rofi) -dmenu -l 10 | cut -d " " -f1)"

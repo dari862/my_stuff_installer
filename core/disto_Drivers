@@ -1,9 +1,7 @@
 #!/bin/bash
-set -e
 ##################################################################################
 # var
 ##################################################################################
-install_GPU_now="${1-}"
 List_of_apt_2_install_=()
 fingerprint_exist=false
 
@@ -34,42 +32,41 @@ fi
 create_20_intel_conf_file(){
 	show_m "Create 20-intel.conf file."
 	if [ "${intel_gpu_exist}" = "true" ];then
-	sudo mkdir -p /etc/X11/xorg.conf.d/
-sudo tee /etc/X11/xorg.conf.d/20-intel.conf << EOF > /dev/null
-Section "Device"
-	Identifier  "Intel Graphics"
-	Driver      "Intel"
-	Option      "AccelMethod"  "sna"
-	Option      "TearFree"	"True"
-	Option      "Tiling"	"True"
-	Option      "SwapbuffersWait" "True"
-	#Option      "AccelMethod"  "uxa"
-EndSection
-EOF
+		$_SUPERUSER mkdir -p /etc/X11/xorg.conf.d/
+		$_SUPERUSER tee /etc/X11/xorg.conf.d/20-intel.conf <<- EOF > /dev/null
+		Section "Device"
+			Identifier  "Intel Graphics"
+			Driver      "Intel"
+			Option      "AccelMethod"  "sna"
+			Option      "TearFree"	"True"
+			Option      "Tiling"	"True"
+			Option      "SwapbuffersWait" "True"
+			#Option      "AccelMethod"  "uxa"
+		EndSection
+		EOF
 	fi
 }
 
 ##################################################################################
 # GPU Drivers
 ##################################################################################
-if [[ "${install_GPU_now}" = "install_GPU" ]];then
+if [[ "${install_GPU_Drivers}" = "install_GPU" ]];then
 	if [ "$(lspci | grep "VGA compatible controller" | grep VMware -c)" != "0" ];then
 		echo "This is VM"
-	else
-		if [ "${nvidia_gpu_exist}" = "true" ];then
-			_cuda_="${2-}"
-			_kernel_open_dkms_="${3-}"
-			add_packages_2_install_list "nvidia-driver nvidia-smi nvidia-settings $_kernel_open_dkms_ $_cuda_"
-		fi
-		
-		if [ "${amd_gpu_exist}" = "true" ];then
-			add_packages_2_install_list "libgl1-mesa-dri xserver-xorg-video-ati xserver-xorg-video-amdgpu mesa-vulkan-drivers vkbasalt"
-		fi
-		
-		if [ "${intel_gpu_exist}" = "true" ];then
-			add_packages_2_install_list "xserver-xorg-video-intel intel-gpu-tools intel-media-va-driver"
-		fi
 	fi
+	
+	if [ "${nvidia_gpu_exist}" = "true" ];then
+		add_packages_2_install_list "nvidia-driver nvidia-smi nvidia-settings $_kernel_open_dkms_ $_cuda_"
+	fi
+		
+	if [ "${amd_gpu_exist}" = "true" ];then
+		add_packages_2_install_list "libgl1-mesa-dri xserver-xorg-video-ati xserver-xorg-video-amdgpu mesa-vulkan-drivers vkbasalt"
+	fi
+		
+	if [ "${intel_gpu_exist}" = "true" ];then
+		add_packages_2_install_list "xserver-xorg-video-intel intel-gpu-tools intel-media-va-driver"
+	fi
+	
 fi
 
 ##################################################################################
@@ -87,7 +84,7 @@ if lspci | egrep -i 'wifi|wireless' 1>/dev/null ;then
 	add_packages_2_install_list "${install_wireless[@]}"
 fi
 
-if sudo dmesg | grep -i bluetooth 1>/dev/null || sudo lsusb | grep -i bluetooth 1>/dev/null ;then
+if $_SUPERUSER dmesg | grep -i bluetooth 1>/dev/null || $_SUPERUSER lsusb | grep -i bluetooth 1>/dev/null ;then
 	add_packages_2_install_list "${install_bluetooth[@]}"
 fi
 
@@ -95,15 +92,15 @@ add_packages_2_install_list "${install_audio[@]}"
 add_packages_2_install_list "${install_Network[@]}"
 add_packages_2_install_list "${install_autoinstall_firmware[@]}"
 
-if [[ "${install_GPU_now}" = "install_GPU" ]];then
+if [[ "${install_GPU_Drivers}" = "install_GPU" ]];then
 	if [[ $PACKAGER == "apt-get" ]]; then
 		if [ "${nvidia_gpu_exist}" = "true" ];then
 			if [[ ! -f "/usr/share/keyrings/nvidia-drivers.gpg" ]];then
-				curl -fSsL "https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/3bf863cc.pub" | sudo gpg --dearmor | sudo tee /usr/share/keyrings/nvidia-drivers.gpg > /dev/null 2>&1
+				curl -fSsL "https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/3bf863cc.pub" | $_SUPERUSER gpg --dearmor | $_SUPERUSER tee /usr/share/keyrings/nvidia-drivers.gpg > /dev/null 2>&1
 			fi
 			
 			if [[ ! -f "/etc/apt/sources.list.d/nvidia-drivers.list" ]];then 
-				echo "deb [signed-by=/usr/share/keyrings/nvidia-drivers.gpg] https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/ /" | sudo tee /etc/apt/sources.list.d/nvidia-drivers.list > /dev/null 2>&1
+				echo "deb [signed-by=/usr/share/keyrings/nvidia-drivers.gpg] https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/ /" | $_SUPERUSER tee /etc/apt/sources.list.d/nvidia-drivers.list > /dev/null 2>&1
 			fi
 		fi
 	fi
@@ -111,9 +108,9 @@ fi
 
 if [[ $PACKAGER == "apt-get" ]]; then		
 	if [ "$this_is_ubuntu" = true ];then
-		sudo apt-get install -y software-properties-common
-		sudo add-apt-repository -y universe
-		sudo add-apt-repository -y multiverse
+		$_SUPERUSER apt-get install -y software-properties-common
+		$_SUPERUSER add-apt-repository -y universe
+		$_SUPERUSER add-apt-repository -y multiverse
 	fi
 	show_m "Running Update."
 	aptupdate	
@@ -124,31 +121,31 @@ if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 	show_m "this is laptop"
 	if [ "$number_of_gpus" -gt 1 ]; then
 		show_m "create envycontrol installtion file."
-tee "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM << 'EOF' > /dev/null
-#!/bin/bash
-	envycontrol_updater_path="$(mktemp -d)"
-	wget -qO- 'https://api.github.com/repos/bayasdev/envycontrol/releases/latest' \
-  	| grep '"tarball_url"' \
-  	| cut -f2,3 -d':' \
-  	| tr -d '"' \
-  	| tr -d ',' \
-  	| xargs wget -O "${envycontrol_updater_path}"/envycontrol.tar.gz && tar -xvzf "${envycontrol_updater_path}"/envycontrol.tar.gz -C "${envycontrol_updater_path}" && mv "${envycontrol_updater_path}"/bayasdev* "${envycontrol_updater_path}"/envycontrol
-  	
-  	[ -d "/usr/share/my_stuff/system_files/downloaded/envycontrol" ] && sudo rm -rdf "/usr/share/my_stuff/system_files/downloaded/envycontrol"
-  	[ ! -d "/usr/share/my_stuff/system_files/downloaded" ] && sudo mkdir -p /usr/share/my_stuff/system_files/downloaded
-  	[ ! -d "/usr/share/my_stuff/system_files/git" ] && sudo mkdir -p /usr/share/my_stuff/system_files/git
-  	
-  	if [ -d "${envycontrol_updater_path}"/envycontrol ];then
-  		chmod +x "${envycontrol_updater_path}"/envycontrol/envycontrol.py 
-  		sudo mv "${envycontrol_updater_path}"/envycontrol "/usr/share/my_stuff/system_files/git/"
-  		ln -sf "/usr/share/my_stuff/system_files/downloaded/envycontrol/envycontrol.py" "/usr/share/my_stuff/system_files/bin/envycontrol"
-  	fi
-EOF
+		tee "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM <<- 'EOF' > /dev/null
+		#!/bin/bash
+			envycontrol_updater_path="$(mktemp -d)"
+			wget -qO- 'https://api.github.com/repos/bayasdev/envycontrol/releases/latest' \
+  			| grep '"tarball_url"' \
+  			| cut -f2,3 -d':' \
+  			| tr -d '"' \
+  			| tr -d ',' \
+  			| xargs wget -O "${envycontrol_updater_path}"/envycontrol.tar.gz && tar -xvzf "${envycontrol_updater_path}"/envycontrol.tar.gz -C "${envycontrol_updater_path}" && mv "${envycontrol_updater_path}"/bayasdev* "${envycontrol_updater_path}"/envycontrol
+  			
+  			[ -d "/usr/share/my_stuff/system_files/downloaded/envycontrol" ] && rm -rdf "/usr/share/my_stuff/system_files/downloaded/envycontrol"
+  			[ ! -d "/usr/share/my_stuff/system_files/downloaded" ] && mkdir -p /usr/share/my_stuff/system_files/downloaded
+  			[ ! -d "/usr/share/my_stuff/system_files/git" ] && mkdir -p /usr/share/my_stuff/system_files/git
+  			
+  			if [ -d "${envycontrol_updater_path}"/envycontrol ];then
+  				chmod +x "${envycontrol_updater_path}"/envycontrol/envycontrol.py 
+  				mv "${envycontrol_updater_path}"/envycontrol "/usr/share/my_stuff/system_files/git/"
+  				ln -sf "/usr/share/my_stuff/system_files/downloaded/envycontrol/envycontrol.py" "/usr/share/my_stuff/system_files/bin/envycontrol"
+  			fi
+		EOF
 		chmod +x "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
 	fi
 fi
 show_m "run isenkram-autoinstall-firmware."
-sudo isenkram-autoinstall-firmware || : # to prevent script from exiting "isenkram-autoinstall-firmware contain exit command"
+$_SUPERUSER isenkram-autoinstall-firmware || : # to prevent script from exiting "isenkram-autoinstall-firmware contain exit command"
 
 show_m "Configer packages."
 
@@ -162,10 +159,10 @@ if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 	show_m "some config"
 fi
 
-if [[ "${install_GPU_now}" = "install_GPU" ]];then
+if [[ "${install_GPU_Drivers}" = "install_GPU" ]];then
 	touch "${temp_path}"/GPU_Drivers_ready
 fi
 
 if command -v fprintd-verify > /dev/null ;then
-	sudo pam-auth-update --enable fprintd
+	$_SUPERUSER pam-auth-update --enable fprintd
 fi

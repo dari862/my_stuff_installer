@@ -1,6 +1,6 @@
 #!/bin/bash
-set -e
-
+set -eu
+package_manager_are="${1-}"
 temp_path="$(pwd)"
 __distro_path="/usr/share/my_stuff"
 _hub_script_dir="${__distro_path}/system_files/hub_script"
@@ -54,10 +54,12 @@ echo "creating missing dir"
 mkdir -p "${__distro_path}"/bin/not_add_2_path/distrobox_center/Apps
 mkdir -p "${__distro_path}"/bin/not_add_2_path/distrobox_center/Gaming
 
+echo "Running script for create_DB.sh --all"
+${__distro_path}/bin/not_add_2_path/create_DB.sh --all
+
 echo "LN essional files"
-
+mkdir -p "${__distro_path}"/system_files/bin
 ln -sf "${__distro_path}"/bin/not_add_2_path/pmxkcd/pmxkcd "${__distro_path}"/system_files/bin/
-
 if [[ -f "${temp_path}/this_is_laptop" ]] ;then
 	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/gpu-switcher-session.desktop /etc/xdg/autostart
 	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/gpu-switcher-session.desktop "${__distro_path}"/system_files/skel/.config/autostart/
@@ -65,14 +67,6 @@ if [[ -f "${temp_path}/this_is_laptop" ]] ;then
 	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/yadtlp.desktop /usr/share/applications
 	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/toggletouch "${__distro_path}"/system_files/bin
 fi
-
-echo "Running script for create_DB.sh --all"
-${__distro_path}/bin/not_add_2_path/create_DB.sh --all
-echo "Running script for YadAppsStore"
-echo "Running script for YadAppsStore (edite_apps_folder)"
-${__distro_path}/bin/not_add_2_path/YadAppsStore/tools/edite_apps_folder
-echo "Running script for YadAppsStore (pre_yadstore)"
-${__distro_path}/bin/not_add_2_path/YadAppsStore/tools/pre_yadstore
 
 echo "create uniq system files"
 mkdir -p "${__distro_path}"/system_files/downloaded
@@ -216,16 +210,53 @@ if [ -d "${__distro_path}/bin/rofi" ] ; then
 fi
 
 if [ -d "${__distro_path}/bin/session_managers" ] ; then
-		echo "session_managers bin files to system_files/bin ."
+	echo "session_managers bin files to system_files/bin ."
 	ln -sf "${__distro_path}"/bin/session_managers/* "${__distro_path}"/system_files/bin
 fi
 
-echo "yadstore bin files to system_files/bin ."
-[ -f "${__distro_path}/bin/not_add_2_path/YadAppsStore/gui" ] && ln -sf "${__distro_path}/bin/not_add_2_path/YadAppsStore/gui" "${__distro_path}/system_files/bin/yadstore"
+ln -sf "${__distro_path}"/bin/not_add_2_path/nbrowser/nbrowser "${__distro_path}"/system_files/bin
+ln -sf "${__distro_path}"/bin/not_add_2_path/nbrowser/nbrowser.desktop /usr/share/applications
 
 echo "creating Package-managers library file."
-package_manager_are="$(cat /tmp/package_manager_are)"
-cat "${__distro_path}"/lib/Package-managers/common | tee "${__distro_path}"/system_files/Package-manager
-cat "${__distro_path}"/lib/Package-managers/${package_manager_are}.sh | tee -a "${__distro_path}"/system_files/Package-manager
+cat "${__distro_path}"/lib/Package-managers/common | tee "${__distro_path}"/system_files/Package-manager &>/dev/null
+cat "${__distro_path}"/lib/Package-managers/${package_manager_are}.sh | tee -a "${__distro_path}"/system_files/Package-manager &>/dev/null
+
+# test if in virtual machine
+if [ "$(hostnamectl | grep "Chassis:" | grep -o "vm")" == "vm" ]
+then
+	# disable vsync from picom (vsync in virtual machine make issues)
+	echo "picom vm"
+	sed -i 's|# vsync = false|vsync = false;|g' "${__distro_path}"/system_files/skel/.config/picom.conf
+	sed -i 's|# vsync = false|vsync = false;|g' "${__distro_path}"/system_files/skel/.config/picom.conf.bunsenlab
+	sed -i 's|vsync = true;|# vsync = true|g' "${__distro_path}"/system_files/skel/.config/picom.conf
+	sed -i 's|vsync = true;|# vsync = true|g' "${__distro_path}"/system_files/skel/.config/picom.conf.bunsenlab
+fi
+
+if [[ -f "${temp_path}/envycontrol_updater_DmDmDmdMdMdM" ]];then
+	mv "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM "${__distro_path}"/system_files/updater/envycontrol
+	"${__distro_path}"/system_files/updater/envycontrol
+fi
+
+mkdir -p "/usr/share/lightdm/lightdm.conf.d"
+mkdir -p "/usr/share/lightdm/lightdm-gtk-greeter.conf.d"
+
+cp -r /usr/share/my_stuff/lib/lightdm "${__distro_path}"/system_files
+ln -sf "${__distro_path}"/system_files/lightdm/lightdm.conf.d/50_my_stuff.conf /usr/share/lightdm/lightdm.conf.d
+ln -sf "${__distro_path}"/system_files/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf /usr/share/lightdm/lightdm-gtk-greeter.conf.d
+
+echo "update alternatives apps"
+/usr/share/my_stuff/system_files/bin/my-alternatives install
+
+echo "installing update-notification"
+/usr/share/my_stuff/system_files/bin/update-notification -I
+
+if [[ -f "/usr/share/my_stuff/system_files/updater/envycontrol" ]];then 
+	echo "runing envycontrol_updater"
+	/usr/share/my_stuff/system_files/updater/envycontrol
+fi
+
+if [[ -f "${temp_path}/fingerprint_exist" ]];then 
+    ln -sf /usr/share/my_stuff/bin/not_add_2_path/fingerprint_gui /usr/share/my_stuff/system_files/bin
+fi
 
 echo "prepare completed"

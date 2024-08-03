@@ -10,8 +10,8 @@ install_AUR_helper(){
 	if ! command -v yay >/dev/null && ! command -v paru >/dev/null; then
 		echo -e "switching ${PACKAGER}"
 		echo "Installing yay as AUR helper..."
-		$_SUDO ${PACKAGER} --noconfirm -S base-devel
-		cd /opt && sudo git clone https://aur.archlinux.org/yay-git.git && sudo chown -R ${USER}:${USER} ./yay-git
+		$_SUPERUSER ${PACKAGER} --noconfirm -S base-devel
+		cd /opt && $_SUPERUSER git clone https://aur.archlinux.org/yay-git.git && $_SUPERUSER chown -R ${USER}:${USER} ./yay-git
 		cd yay-git && makepkg --noconfirm -si
 	fi
 	
@@ -22,8 +22,8 @@ install_AUR_helper(){
 	fi
 	
 	${PACKAGER} --noconfirm -S rate-mirrors-bin
-	sudo cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
-	sudo rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch
+	$_SUPERUSER cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
+	$_SUPERUSER rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch
 }
 
 install_AUR_helper
@@ -31,27 +31,6 @@ install_AUR_helper
 ##################################
 # for rest
 ##################################
-
-install_for_sudo()
-{
-	if ! command -v sudo >/dev/null;then
-		show_m "Install sudo and add user 1000 to sudo group"
-		add_packages_2_install_list "sudo"
-		kill_PACKAGE_MANAGER && install_packages || (kill_PACKAGE_MANAGER && install_packages) || (show_em "failed to install sudo" && exit 1)
-		user=$(cut -f 1,3 -d: /etc/passwd | grep :1000$ | cut -f1 -d:)
-		[ "$user" ] && adduser "$user" sudo
-	fi
-	_SUDO="sudo"
-
-	keep_sudo_refresed(){
-		while true
-		do
-				sudo true
-				sleep 10m
-		done
-	}
-	keep_sudo_refresed &
-}
 
 install_lightdm_now(){
 	install_lightdm_=(lightdm lightdm-gtk-greeter-settings)
@@ -65,9 +44,9 @@ install_lightdm_now(){
 	if [ "$lightdm_does_not_exist" = true  ];then
 		show_m "Install ${install_lightdm_[@]} ."
 		add_packages_2_install_list "${install_lightdm_[@]}"
-		kill_PACKAGE_MANAGER && install_packages || (kill_PACKAGE_MANAGER && install_packages) || (show_em "failed to install sudo" && exit 1)
-		echo "/usr/sbin/lightdm" | $_SUDO tee /etc/X11/default-display-manager > /dev/null 2>&1
-		$_SUDO dpkg-reconfigure lightdm
+		kill_PACKAGE_MANAGER && install_packages || (kill_PACKAGE_MANAGER && install_packages) || (show_em "failed to install lightdm" && exit 1)
+		echo "/usr/sbin/lightdm" | $_SUPERUSER tee /etc/X11/default-display-manager > /dev/null 2>&1
+		$_SUPERUSER dpkg-reconfigure lightdm
 	fi
 }
 
@@ -75,14 +54,14 @@ create_package_list(){
 	# create list_of_apps file
 	if [[ ! -f "${list_of_apps_file_path}" ]];then
 		show_m "create_list_of_apps"
-		$_SUDO pacman -Qnq --noconfirm 2>/dev/null > "${list_of_apps_file_path}" 
+		$_SUPERUSER pacman -Qnq --noconfirm 2>/dev/null > "${list_of_apps_file_path}" 
 	fi
 }
 
 install_packages(){
-	($_SUDO pacman -q --noprogressbar -Syu --noconfirm "${List_of_apt_2_install_[@]}" && kill_PACKAGE_MANAGER) || \
-	($_SUDO pacman -q --noprogressbar -Syu --noconfirm "${List_of_apt_2_install_[@]}" && kill_PACKAGE_MANAGER) || \
-	$_SUDO pacman -q --noprogressbar -Syu --noconfirm "${List_of_apt_2_install_[@]}"
+	($_SUPERUSER pacman -q --noprogressbar -Syu --noconfirm "${List_of_apt_2_install_[@]}" && kill_PACKAGE_MANAGER) || \
+	($_SUPERUSER pacman -q --noprogressbar -Syu --noconfirm "${List_of_apt_2_install_[@]}" && kill_PACKAGE_MANAGER) || \
+	$_SUPERUSER pacman -q --noprogressbar -Syu --noconfirm "${List_of_apt_2_install_[@]}"
 }
 
 check_if_package_exist_in_repo(){
@@ -114,12 +93,12 @@ add_packages_2_install_list()
 }
 
 kill_PACKAGE_MANAGER(){
-	$_SUDO killall -9 pacman &>/dev/null || :
+	$_SUPERUSER killall -9 pacman &>/dev/null || :
 }
 	
 upgrade_now()
 {
-	$_SUDO pacman -Syu --noconfirm
+	$_SUPERUSER pacman -Syu --noconfirm
 }
 
 remove_package_with_error2info()
@@ -129,7 +108,7 @@ remove_package_with_error2info()
 	do
 		if dpkg -s "${package}" &>/dev/null; then
 			show_m "Purging ${package}."
-			$_SUDO pacman -Rs "$package"
+			$_SUPERUSER pacman -Rs "$package"
 		fi
 	done
 }

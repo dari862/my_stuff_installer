@@ -1,110 +1,59 @@
 #!/bin/bash
-set -e
 ################################################################################################################################
-# Var
-################################################################################################################################
-my_stuff_location="${1-}"
-Theme_Stuff_location="${2-}"
-
-################################################################################################################################
-# main
+# my_stuff.git
 ################################################################################################################################
 cd "${my_stuff_location}"
 
-[ -d "/usr/share/my_stuff" ] && sudo rm -rdf "/usr/share/my_stuff"
-
-# test if in virtual machine
-if [ "$(hostnamectl | grep "Chassis:" | grep -o "vm")" == "vm" ]
-then
-	# disable vsync from picom (vsync in virtual machine make issues)
-	show_m "picom vm"
-	sed -i 's|# vsync = false|vsync = false;|g' my_stuff/skel/.config/picom.conf
-	sed -i 's|# vsync = false|vsync = false;|g' my_stuff/skel/.config/picom.conf.bunsenlab
-	sed -i 's|vsync = true;|# vsync = true|g' my_stuff/skel/.config/picom.conf
-	sed -i 's|vsync = true;|# vsync = true|g' my_stuff/skel/.config/picom.conf.bunsenlab
-fi
-
-mkdir -p my_stuff/system_files/updater
-
-if [[ -f "${temp_path}/envycontrol_updater_DmDmDmdMdMdM" ]];then
-	mv "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM my_stuff/system_files/updater/envycontrol
-fi
-
-source "my_stuff/lib/common/openbox_folder_name"
-
-if [[ ! -d "my_stuff/skel/.config/${OB_folder_name}" ]];then
-	mv "my_stuff/skel/.config/openbox" "my_stuff/skel/.config/${OB_folder_name}"
-	find my_stuff/. -type f -exec sed -i "s|.config/openbox|.config/${OB_folder_name}|g" {} +
-fi
-
-##################################################################################
-#my_stuff.git
+[ -d "/usr/share/my_stuff" ] && $_SUPERUSER rm -rdf "/usr/share/my_stuff"
 
 #run_fixes_
 show_m "change ownership to root"
-sudo chown -R root:root my_stuff
+$_SUPERUSER chown -R root:root my_stuff
 
 show_m "moving usr_share"
-sudo mv my_stuff /usr/share/
-sudo ln -sf /usr/share/my_stuff/lib/xsessions/*_openbox.desktop /usr/share/xsessions
+$_SUPERUSER mv my_stuff /usr/share/
+$_SUPERUSER ln -sf /usr/share/my_stuff/lib/xsessions/*_openbox.desktop /usr/share/xsessions
 
 for f in /usr/share/my_stuff/applications/* ; do
-	sudo ln -sf "$f" /usr/share/applications
+	$_SUPERUSER ln -sf "$f" /usr/share/applications
 done
 
-sudo mkdir -p "/usr/share/lightdm/lightdm.conf.d"
-sudo mkdir -p "/usr/share/lightdm/lightdm-gtk-greeter.conf.d"
-sudo ln -sf /usr/share/my_stuff/lib/lightdm/lightdm.conf.d/50_my_stuff.conf /usr/share/lightdm/lightdm.conf.d
-sudo ln -sf /usr/share/my_stuff/lib/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf /usr/share/lightdm/lightdm-gtk-greeter.conf.d
-
-show_m "update alternatives apps"
-sudo /usr/share/my_stuff/bin/bin/my-alternatives install
-show_m "installing update-notification"
-sudo /usr/share/my_stuff/bin/bin/update-notification -I
-if [[ -f "/usr/share/my_stuff/system_files/updater/envycontrol" ]];then 
-	show_m "runing envycontrol_updater"
-	sudo /usr/share/my_stuff/system_files/updater/envycontrol
-fi
-
-if [[ -f "${temp_path}/fingerprint_exist" ]];then 
-    ln -sf /usr/share/my_stuff/bin/not_add_2_path/fingerprint_gui /usr/share/my_stuff/system_files/bin
-fi
 ##################################################################################
 #Theme_Stuff.git
 show_m "chown of Theme_Stuff to root"
-sudo chown -R root:root "${Theme_Stuff_location}"/Theme_Stuff
+$_SUPERUSER chown -R root:root "${Theme_Stuff_location}"/Theme_Stuff
 
 show_m "moving Theme_Stuff to /usr/share/my_stuff/Theme_Stuff"
-sudo mv "${Theme_Stuff_location}"/Theme_Stuff /usr/share/my_stuff
+$_SUPERUSER mv "${Theme_Stuff_location}"/Theme_Stuff /usr/share/my_stuff
 
 show_m "Moving themes from /usr/share/themes that exist in Theme_Stuff /usr/share/my_stuff/system_files/backup"
-sudo mkdir -p /usr/share/themes
-sudo mkdir -p /usr/share/my_stuff/system_files/backup/themes
+$_SUPERUSER mkdir -p /usr/share/themes
+$_SUPERUSER mkdir -p /usr/share/my_stuff/system_files/backup/themes
 for d in /usr/share/my_stuff/Theme_Stuff/themes/* ; do
 	Directory_name=${d##*/}
-	[ -d "/usr/share/themes/${Directory_name}" ] && sudo mv "/usr/share/themes/${Directory_name}" /usr/share/my_stuff/system_files/backup/themes
-	sudo ln -sf "$d" /usr/share/themes
+	[ -d "/usr/share/themes/${Directory_name}" ] && $_SUPERUSER mv "/usr/share/themes/${Directory_name}" /usr/share/my_stuff/system_files/backup/themes
+	$_SUPERUSER ln -sf "$d" /usr/share/themes
 done
 
 show_m "Moving icons from /usr/share/icons that exist in Theme_Stuff /usr/share/my_stuff/system_files/backup"
-sudo mkdir -p /usr/share/icons
-sudo mkdir -p /usr/share/my_stuff/system_files/backup/icons
+$_SUPERUSER mkdir -p /usr/share/icons
+$_SUPERUSER mkdir -p /usr/share/my_stuff/system_files/backup/icons
 for d in /usr/share/my_stuff/Theme_Stuff/icons/* ; do
 	Directory_name=${d##*/}
-	[ -d "/usr/share/icons/${Directory_name}" ] && sudo mv "/usr/share/icons/${Directory_name}" /usr/share/my_stuff/system_files/backup/icons
-	sudo ln -sf "$d" /usr/share/icons
+	[ -d "/usr/share/icons/${Directory_name}" ] && $_SUPERUSER mv "/usr/share/icons/${Directory_name}" /usr/share/my_stuff/system_files/backup/icons
+	$_SUPERUSER ln -sf "$d" /usr/share/icons
 done
 
 show_m "Moving fonts from /usr/share/fonts that exist in Theme_Stuff /usr/share/my_stuff/system_files/backup"
-sudo mkdir -p /usr/share/fonts
-sudo mkdir -p /usr/share/my_stuff/system_files/backup/fonts
+$_SUPERUSER mkdir -p /usr/share/fonts
+$_SUPERUSER mkdir -p /usr/share/my_stuff/system_files/backup/fonts
 for e in /usr/share/my_stuff/Theme_Stuff/fonts/* ; do
 	Directory_name=${e##*/}
-	[ -d "/usr/share/fonts/${Directory_name}" ] && sudo mv "/usr/share/fonts/${Directory_name}" /usr/share/my_stuff/system_files/backup/fonts
-	sudo ln -sf "$e" /usr/share/fonts
+	[ -d "/usr/share/fonts/${Directory_name}" ] && $_SUPERUSER mv "/usr/share/fonts/${Directory_name}" /usr/share/my_stuff/system_files/backup/fonts
+	$_SUPERUSER ln -sf "$e" /usr/share/fonts
 done
 
 show_m "update fonts cache"
-sudo fc-cache -vf
+$_SUPERUSER fc-cache -vf
 show_m "update icons cache"
-sudo gtk-update-icon-cache
+$_SUPERUSER gtk-update-icon-cache

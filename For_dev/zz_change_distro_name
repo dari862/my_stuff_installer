@@ -1,6 +1,7 @@
 #!/bin/bash
 Custom_distro_name="My Stuff"
 Custom_distro_dir_name="$(echo "$Custom_distro_name" | tr -dc '[:alnum:] \n\r' | tr '[:upper:]' '[:lower:]' | tr -s ' ' '_')"
+OB_folder_name="openbox"
 
 cd ../core
 
@@ -44,4 +45,10 @@ fi
 if [[ "${Custom_distro_dir_name}" != "my_stuff" ]];then
 	find . -type f -exec sed -i "s/my_stuff/${Custom_distro_dir_name}/g" {} +
 	find . -type f -exec sed -i "s/My Stuff/${Custom_distro_name}/g" {} +
+fi
+
+
+if [[ ! -d "my_stuff/skel/.config/${OB_folder_name}" ]];then
+	mv "my_stuff/skel/.config/openbox" "my_stuff/skel/.config/${OB_folder_name}"
+	find my_stuff/. -type f -exec sed -i "s|.config/openbox|.config/${OB_folder_name}|g" {} +
 fi
