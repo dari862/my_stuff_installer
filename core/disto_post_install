@@ -6,6 +6,7 @@ __distro_path="/usr/share/my_stuff"
 _hub_script_dir="${__distro_path}/system_files/hub_script"
 
 PATH="${__distro_path}/bin/bin:$PATH"
+
 ##################################################################################
 echo "update Databases ex: locate"
 updatedb
@@ -90,9 +91,7 @@ fi
 
 cd "${__distro_path}"/bin/not_add_2_path/must_create_script
 for script in *;do
-	cd "$script"
-	./make
-	cd ..
+	source "$script"/make
 done
 
 echo "link icons based on distro"
@@ -243,6 +242,12 @@ mkdir -p "/usr/share/lightdm/lightdm-gtk-greeter.conf.d"
 cp -r /usr/share/my_stuff/lib/lightdm "${__distro_path}"/system_files
 ln -sf "${__distro_path}"/system_files/lightdm/lightdm.conf.d/50_my_stuff.conf /usr/share/lightdm/lightdm.conf.d
 ln -sf "${__distro_path}"/system_files/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf /usr/share/lightdm/lightdm-gtk-greeter.conf.d
+
+if command -v doas >/dev/null 2>&1;then
+	ln -sf /usr/bin/doas /usr/bin/my-superuser
+elif command -v sudo >/dev/null 2>&1;then
+	ln -sf /usr/bin/sudo /usr/bin/my-superuser
+fi
 
 echo "update alternatives apps"
 /usr/share/my_stuff/system_files/bin/my-alternatives install

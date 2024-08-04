@@ -1,1 +1,1 @@
-../../my_stuff/bin/laptop/yadtlp.sh
+/home/dari/Desktop/my_stuff/bin/laptop/yadtlp.sh
