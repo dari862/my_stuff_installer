@@ -1,0 +1,293 @@
+#!/bin/bash
+set -eu
+package_manager_are="${1-}"
+temp_path="$(pwd)"
+__distro_path="/usr/share/my_stuff"
+_hub_script_dir="${__distro_path}/system_files/hub_script"
+
+PATH="${__distro_path}/bin/bin:$PATH"
+
+##################################################################################
+echo "update Databases ex: locate"
+updatedb
+
+############
+# terminator
+############
+echo "fix terminator"
+
+if [ -d "/etc/xdg" ];then
+	[ ! -d "/etc/xdg/terminator" ] && mkdir -p "/etc/xdg/terminator"
+	[ ! -f "/etc/xdg/terminator/config" ] && cp -r "${__distro_path}"/skel/.config/terminator /etc/xdg/terminator
+fi
+
+############
+# Remove "Set as wallpaper" from Thunar Context Menu and replace it with  "Set as wallpaper" from thunar config uac file
+############
+echo "fix thunar"
+
+__thunar_wall_plug="$(locate thunar | grep wall || :)"
+[ ! -z "${__thunar_wall_plug}" ] && mv "${__thunar_wall_plug}" "${__thunar_wall_plug}.backup"
+
+##################################################################################
+
+echo "prepares for hub script"
+mkdir -p "${_hub_script_dir}"
+ln -sf "${__distro_path}"/bin/not_add_2_path/pmxkcd/pmxkcd "${_hub_script_dir}"
+ln -sf ${__distro_path}/bin/not_add_2_path/utilities/* "${_hub_script_dir}"
+ln -sf ${__distro_path}/bin/rofi/* "${_hub_script_dir}" 
+ln -sf ${__distro_path}/bin/bin/displayselect "${_hub_script_dir}"
+ln -sf ${__distro_path}/bin/bin/full-upgrade "${_hub_script_dir}"
+ln -sf ${__distro_path}/bin/apps/* "${_hub_script_dir}"
+ln -sf ${__distro_path}/bin/not_add_2_path/pmxkcd/pmxkcd "${_hub_script_dir}"
+
+echo "rm not need script for hub script"
+command -v systemctl &>/dev/null && ln -sf ${__distro_path}/bin/not_add_2_path/utilities/errcheck "${_hub_script_dir}"
+
+remove_this_script_=(hub rofi-powermenu rofi-launcher rofi-runner unmounter)
+for script in "${remove_this_script_[@]}";do
+	rm "${_hub_script_dir}"/"$script"
+done
+
+echo "creating missing dir"
+
+mkdir -p "${__distro_path}"/bin/not_add_2_path/distrobox_center/Apps
+mkdir -p "${__distro_path}"/bin/not_add_2_path/distrobox_center/Gaming
+
+echo "LN essional files"
+mkdir -p "${__distro_path}"/system_files/bin
+ln -sf "${__distro_path}"/bin/not_add_2_path/pmxkcd/pmxkcd "${__distro_path}"/system_files/bin/
+command -v systemctl &>/dev/null && ln -sf "${__distro_path}"/bin/not_add_2_path/utilities/errcheck "${__distro_path}"/system_files/bin/
+
+if [[ -f "${temp_path}/this_is_laptop" ]] ;then
+	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/gpu-switcher-session.desktop /etc/xdg/autostart
+	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/gpu-switcher-session.desktop "${__distro_path}"/system_files/skel/.config/autostart/
+	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/yadtlp.desktop "${__distro_path}"/system_files/applications
+	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/yadtlp.desktop /usr/share/applications
+	ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/toggletouch "${__distro_path}"/system_files/bin
+fi
+
+echo "create uniq system files"
+mkdir -p "${__distro_path}"/system_files/downloaded
+mkdir -p "${__distro_path}"/system_files/git
+mkdir -p "${__distro_path}"/system_files/deployed_containers/deployed
+mkdir -p "${__distro_path}"/system_files/auto_completion
+
+if [ -f "${temp_path}/this_is_laptop" ];then 
+	echo "this is laptop"
+	touch "${__distro_path}"/system_files/this_is_laptop
+fi
+	
+if [ -f "${temp_path}/GPU_Drivers_ready" ];then 
+	echo "GPU_Drivers ready ."
+	touch "${__distro_path}"/system_files/GPU_Drivers_ready
+fi
+
+if [ -f "${temp_path}/fingerprint_exist" ];then 
+	echo "fingerprint ready ."
+	touch "${__distro_path}"/system_files/fingerprint_exist
+fi
+
+echo "link icons based on distro"
+if [ -f /etc/os-release ]; then
+    # freedesktop.org and systemd
+    . /etc/os-release
+    distro_name_="$ID"
+fi
+
+if [ -d "${__distro_path}/icons/Distro/${distro_name_}" ];then
+    ln -sf "${__distro_path}/icons/Distro/${distro_name_}" "${__distro_path}/system_files/Distro"
+else
+	ln -sf "${__distro_path}/icons/Distro/arch" "${__distro_path}/system_files/Distro"
+fi
+
+echo "cp skell file to system_files/skel ."
+cp -r "${__distro_path}/skel" "${__distro_path}/system_files" 
+
+mkdir -p "${__distro_path}"/system_files/skel/.config/mpd/playlists
+touch "${__distro_path}"/system_files/skel/.config/mpd/database
+mkdir -p "${__distro_path}"/system_files/skel/.local/share/bash_history
+
+if command -v gigolo >/dev/null ; then
+	echo "cp gigolo skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/gigolo" "${__distro_path}/system_files/skel/.config" 
+fi
+
+if command -v plank >/dev/null ; then
+	echo "cp plank skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/plank" "${__distro_path}/system_files/skel/.config" 
+	cp -r "${__distro_path}/extra_skel/.local/share/plank" "${__distro_path}/system_files/skel/.local/share/" 
+fi
+
+if command -v xbindkey >/dev/null ; then
+	echo "cp xbindkey skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.xbindkeysrc" "${__distro_path}/system_files/skel" 
+fi
+
+if command -v clipit >/dev/null ; then
+	echo "cp clipit skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/clipit" "${__distro_path}/system_files/skel/.config" 
+fi
+
+if command -v jgmenu >/dev/null ; then
+	echo "cp jgmenu skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/jgmenu" "${__distro_path}/system_files/skel/.config" 
+fi
+
+if command -v greenclip >/dev/null ; then
+	echo "cp greenclip skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/greenclip.toml" "${__distro_path}/system_files/skel/.config" 
+fi
+
+if command -v zathura >/dev/null ; then
+	echo "cp zathura skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/zathura" "${__distro_path}/system_files/skel/.config" 
+fi
+
+if command -v polybar >/dev/null ; then
+	echo "cp polybar skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/polybar" "${__distro_path}/system_files/skel/.config" 
+	if [ -d "${__distro_path}/bin/polybar" ] ; then
+		ln -sf "${__distro_path}"/bin/polybar/* "${__distro_path}"/system_files/bin
+	fi
+fi
+
+if command -v tint2 >/dev/null ; then
+	echo "cp tint2 skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/tint2" "${__distro_path}/system_files/skel/.config" 
+fi
+
+if command -v xfce4-panel >/dev/null ; then
+	echo "cp xfce4-panel skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/xfce4" "${__distro_path}/system_files/skel/.config"
+	cp -r "${__distro_path}/extra_skel/.local/share/xfce4" "${__distro_path}/system_files/skel/.local/share/"
+fi
+
+if command -v lxterminal >/dev/null ; then
+	echo "cp lxterminal skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/lxterminal" "${__distro_path}/system_files/skel/.config" 
+fi
+
+if command -v alacritty >/dev/null ; then
+	echo "cp alacritty skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/alacritty" "${__distro_path}/system_files/skel/.config" 
+fi
+
+if command -v bspwm >/dev/null ; then
+	echo "cp bspwm skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/bspwm" "${__distro_path}/system_files/skel/.config" 
+	cp -r "${__distro_path}/extra_skel/.config/sxhkd" "${__distro_path}/system_files/skel/.config" 
+fi
+
+echo "LN bin files to system_files/bin ."
+
+if [ -f "${__distro_path}/system_files/this_is_laptop" ];then
+	if [ -d "${__distro_path}/bin/laptop" ] ; then
+		echo "laptop bin files to system_files/bin ."
+		ln -sf "${__distro_path}"/bin/laptop/* "${__distro_path}"/system_files/bin
+	fi
+fi
+
+if [ -d "${__distro_path}/bin/bin" ] ; then
+	echo "bin bin files to system_files/bin ."
+	ln -sf "${__distro_path}"/bin/bin/* "${__distro_path}"/system_files/bin
+fi
+
+if [ -d "${__distro_path}/bin/apps" ] ; then
+	echo "apps bin files to system_files/bin ."
+	ln -sf "${__distro_path}"/bin/apps/* "${__distro_path}"/system_files/bin
+fi
+
+if [ -d "${__distro_path}/bin/rofi" ] ; then
+	echo "rofi bin files to system_files/bin ."
+	ln -sf "${__distro_path}"/bin/rofi/* "${__distro_path}"/system_files/bin
+fi
+
+if [ -d "${__distro_path}/bin/session_managers" ] ; then
+	echo "session_managers bin files to system_files/bin ."
+	ln -sf "${__distro_path}"/bin/session_managers/* "${__distro_path}"/system_files/bin
+fi
+
+ln -sf "${__distro_path}"/bin/not_add_2_path/nbrowser/nbrowser "${__distro_path}"/system_files/bin
+ln -sf "${__distro_path}"/bin/not_add_2_path/nbrowser/nbrowser.desktop /usr/share/applications
+
+echo "creating Package-managers library file."
+cat "${__distro_path}"/lib/Package-managers/common | tee "${__distro_path}"/system_files/Package-manager &>/dev/null
+cat "${__distro_path}"/lib/Package-managers/${package_manager_are}.sh | tee -a "${__distro_path}"/system_files/Package-manager &>/dev/null
+
+# test if in virtual machine
+if [ "$(cat /sys/devices/virtual/dmi/id/chassis_type)" = "1" ];then # 1 eq vm
+	# disable vsync from picom (vsync in virtual machine make issues)
+	echo "picom vm"
+	sed -i 's|# vsync = false|vsync = false;|g' "${__distro_path}"/system_files/skel/.config/picom.conf
+	sed -i 's|# vsync = false|vsync = false;|g' "${__distro_path}"/system_files/skel/.config/picom.conf.bunsenlab
+	sed -i 's|vsync = true;|# vsync = true|g' "${__distro_path}"/system_files/skel/.config/picom.conf
+	sed -i 's|vsync = true;|# vsync = true|g' "${__distro_path}"/system_files/skel/.config/picom.conf.bunsenlab
+fi
+
+if [[ -f "${temp_path}/envycontrol_updater_DmDmDmdMdMdM" ]];then
+	mv "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM "${__distro_path}"/system_files/updater/envycontrol
+fi
+
+mkdir -p "/usr/share/lightdm/lightdm.conf.d"
+mkdir -p "/usr/share/lightdm/lightdm-gtk-greeter.conf.d"
+
+cp -r /usr/share/my_stuff/lib/lightdm "${__distro_path}"/system_files
+ln -sf "${__distro_path}"/system_files/lightdm/lightdm.conf.d/50_my_stuff.conf /usr/share/lightdm/lightdm.conf.d
+ln -sf "${__distro_path}"/system_files/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf /usr/share/lightdm/lightdm-gtk-greeter.conf.d
+
+if [[ -f "${temp_path}/fingerprint_exist" ]];then 
+    ln -sf /usr/share/my_stuff/bin/not_add_2_path/fingerprint_gui /usr/share/my_stuff/system_files/bin
+fi
+
+echo "copy manpages."
+ln -sf ${__distro_path}/lib/manpage/* /usr/share/man/man1
+
+##################################################################################
+##################################################################################
+##################################################################################
+
+echo "Running script for create_DB.sh --all"
+${__distro_path}/bin/not_add_2_path/create_DB.sh --all
+
+echo "Running must_create_script."
+for script in "${__distro_path}"/bin/not_add_2_path/must_create_script/*;do
+	source "$script"/make
+done
+
+if [[ -f "/usr/share/my_stuff/system_files/updater/envycontrol" ]];then 
+	echo "runing envycontrol_updater"
+	/usr/share/my_stuff/system_files/updater/envycontrol
+fi
+
+echo "installing update-notification"
+cp -r "/usr/share/my_stuff/lib/apps/update-notification.conf" "/usr/share/my_stuff/system_files"
+source "/usr/share/my_stuff/system_files/update-notification.conf"
+ln -sf "$script_full_path" "/etc/cron.$cron_when"	
+if [ ! -f "$updates_file" ]
+then 
+	touch "$updates_file"
+	chmod a+w "$updates_file"
+fi
+
+##################################################################################
+##################################################################################
+##################################################################################
+
+echo "pick correct apps_as_root."
+if command -v doas >/dev/null 2>&1;then
+	ln -sf ${__distro_path}/lib/apps/doas/apps_as_root /usr/share/my_stuff/system_files/bin
+	cp -r ${__distro_path}/lib/apps/doas/doas.conf /etc
+	
+	if ! doas -C ${__distro_path}/lib/apps/doas/doas.conf;then
+		echo "config error"
+		exit 1
+	fi
+	chmod -c 0400 /etc/doas.conf
+elif command -v sudo >/dev/null 2>&1;then
+	ln -sf ${__distro_path}/lib/apps/sudo/apps_as_root /usr/share/my_stuff/system_files/bin
+fi
+
+chmod -c 0400 ${__distro_path}/lib/apps/doas/doas.conf
+
+echo "prepare completed"

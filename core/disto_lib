@@ -1,0 +1,213 @@
+#!/bin/bash
+set -e
+list_of_apps_file_path="${temp_path}/list_of_apps"
+this_is_ubuntu=false
+# distro 
+if [ -f /etc/os-release ]; then
+	# freedesktop.org and systemd
+	. /etc/os-release
+	version_=$(echo "${VERSION_ID//./}")
+	distro_name_="$ID"
+	distro_name_and_ver_=$ID$version_
+elif [ -f /etc/lsb-release ]; then
+	# For some versions of Debian/Ubuntu without lsb_release command
+	. /etc/lsb-release
+	distro_name_="$DISTRIB_ID"
+	distro_name_and_ver_=$DISTRIB_ID$DISTRIB_RELEASE
+else
+	# Fall back to uname, e.g. "Linux <version>", also works for BSD, etc.
+	distro_name_="$(uname -s)"
+	distro_name_and_ver_=$(uname -s)$(uname -r)
+fi
+
+if [ "$distro_name_" = "ubuntu" ];then
+	this_is_ubuntu=true
+fi
+
+##################################################################################
+# function
+##################################################################################
+
+show_m()
+{
+  echo -e $'\033[1;32m'"$*"$'\033[0m'
+}
+
+show_em()
+{
+	__massage="${1-}"
+	echo "$__massage"
+}
+
+check_and_download_()
+{
+	check_this_file_="${1-}"
+	new_check_this_file_="${temp_path}/${check_this_file_}"
+	check_this_file_location="$(find $HOME -type f -name ${check_this_file_} | head -1)"
+	
+	if [[ ! -z "${check_this_file_location}" ]];then
+		mv "${check_this_file_location}" "${temp_path}"
+	fi
+	
+	if [[ ! -f "${new_check_this_file_}" ]]; then
+	show_m "Download $check_this_file_ file from www.github.com/dari862/my_stuff_installer ."
+		if curl -SL --progress-bar https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/"$check_this_file_" -o "${new_check_this_file_}" ;then
+		chmod +x "${new_check_this_file_}"
+		else
+			show_em "Error: Failed to download ${check_this_file_} from ${new_check_this_file_} "
+			exit 1
+		fi
+	fi
+}
+
+rm_if_link()
+{ 
+_arg="${}"
+_arg2="${}"
+	if [ -L "$1" ]; then
+		rm "$1";
+	fi 
+}
+
+kill_package_(){
+	ps aux | grep "${1}" | awk '{print $2}' | xargs my-superuser kill -9 >/dev/null 2>&1 || :
+}
+
+run_fixes_()
+{
+	#fix xfce4-panel workspace settings error in openbox
+	[ -L "$1" ] &&  my-superuser rm "/usr/bin/xfwm4-workspace-settings"
+	[ -f /usr/bin/xfwm4-workspace-settings ] && my-superuser rm /usr/bin/xfwm4-workspace-settings
+	my-superuser ln -s /usr/bin/obconf /usr/bin/xfwm4-workspace-settings
+}
+
+git_clone_and_set_var_to_path(){
+	getthis="${1-}"
+	show_m "git clone ${getthis}"
+	getthis_location="$(find $HOME -type d -name ${getthis} | head -1)"
+	
+	if [[ -z "${getthis_location}" ]];then
+		getthis_location="${temp_path}"
+	else
+		getthis_location="$(cd "${getthis_location}" && cd .. && pwd)"
+	fi
+	
+	if [ ! -d "${getthis_location}/${getthis}" ]; then 
+		git clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}/${getthis}"
+	else
+		show_m "${getthis} Folder does exsist"
+	fi
+	
+	echo "${getthis_location}"
+}
+
+_unattended_upgrades_()
+{
+	auto_upgrades_file="/etc/apt/apt.conf.d/20auto-upgrades"
+	if [ -f "${auto_upgrades_file}" ];then
+		auto_upgrades_file_bak="/etc/apt/apt.conf.d/20auto-upgrades.bak"
+		case "$1" in
+			start)
+				my-superuser systemctl stop unattended-upgrades || :
+				if [ ! -f "${auto_upgrades_file_bak}" ];then
+					my-superuser mv "${auto_upgrades_file}" "${auto_upgrades_file_bak}"
+				fi
+			;;
+			stop)
+				if [ -f "${auto_upgrades_file}" ] && [ -f "${auto_upgrades_file_bak}" ];then
+					my-superuser rm "${auto_upgrades_file}"
+				fi
+					
+				if [ -f "${auto_upgrades_file_bak}" ];then
+					my-superuser mv "${auto_upgrades_file_bak}" "${auto_upgrades_file}"
+				fi
+			;;
+		esac
+	fi
+}
+
+must_install_apps()
+{
+	add_packages_2_install_list "mlocate"
+	add_packages_2_install_list "git"
+	install_packages
+}
+
+######################################################################################################################
+######################################################################################################################
+######################################################################################################################
+######################################################################################################################
+######################################################################################################################
+
+CHECK_IF_THIS_LAPTOP(){
+	is_this_laptop=""
+	# Are we a mac?
+	if test -d /proc/pmu; then
+        	batteries=$(grep Battery /proc/pmu/info | cut -f2 -d:)
+        	if test "$batteries" -ne 0; then
+            	is_this_laptop=true
+        	fi
+	fi
+	
+	if dmidecode="$(command -v dmidecode)" && [ -r /dev/mem -a -x "$dmidecode" ]
+	then
+        	# dmidecode to grab the Chassis type
+        	dmitype=$("$dmidecode" --string chassis-type)
+	
+        	if test "$dmitype" = "Notebook" || \
+           	test "$dmitype" = "Portable" || \
+           	test "$dmitype" = "Laptop"   || \
+           	test "$dmitype" = "Hand Held"; then
+            	is_this_laptop=true
+        	fi
+	
+        	# turn back on for debugging
+        	#echo "$dmitype"
+	fi
+	
+	if [ -e /sys/devices/virtual/dmi/id/chassis_type ] ; then
+    	chassis_type="$(cat /sys/devices/virtual/dmi/id/chassis_type)"
+    	case "$chassis_type" in
+        	8|9|10|11) # Portable
+            	is_this_laptop=true
+            	;;
+    	esac
+	fi
+	
+	# check for non device ACPI batteries
+	/sbin/modprobe battery 2> /dev/null || true
+	sysfs_power_supply=/sys/class/power_supply
+	if [ -d "$sysfs_power_supply" ]; then
+		for power_supply in "$sysfs_power_supply"/*
+		do
+			if (
+				grep -q Battery "$power_supply"/type 2>/dev/null
+			) && (
+				! grep -q Device "$power_supply"/scope 2>/dev/null
+			)
+			then
+				is_this_laptop=true
+			fi
+		done
+	fi
+	# old interface:
+	if [ -d /proc/acpi/battery ]; then
+        	results=$(find /proc/acpi/battery -mindepth 1 -type d)
+        	if [ -n "$results" ]; then
+            	is_this_laptop=true
+        	fi
+	fi
+
+	# check for APM batteries. This sucks, because we'll only get a valid response
+	# if the laptop has a battery fitted at the time
+	if [ -f /proc/apm ]; then
+    	battery=$(awk '{print $6}' </proc/apm)
+    	if [ "$battery" != "0xff" ] && [ "$battery" != "0x80" ]; then
+        	is_this_laptop=true
+    	fi
+	fi
+	
+	if [[ "${is_this_laptop}"  = true ]];then
+		touch "${temp_path}"/this_is_laptop
+	fi
+}

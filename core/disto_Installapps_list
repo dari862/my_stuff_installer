@@ -1,0 +1,213 @@
+#!/bin/bash
+##################################################################################
+# var
+##################################################################################
+install_xfce4_panel_now=false
+install_polybar_now=false
+install_qt5ct_now=false
+install_jgmenu_now=false
+install_bspwm_now=false
+install_zsh_now=false
+zsh_default_shell=false
+
+if [[ "$install_xfce4_panel" = "xfce4_panel" ]];then
+	install_xfce4_panel_now=true
+elif [[ "$install_polybar" = "polybar" ]];then
+	install_polybar_now=true
+elif [[ "$install_qt5ct" = "qt5ct" ]];then
+	install_qt5ct_now=true
+elif [[ "$install_jgmenu" = "jgmenu" ]];then
+	install_jgmenu_now=true
+elif [[ "$install_bspwm" = "bspwm" ]];then
+	install_bspwm_now=true
+elif [[ "$install_zsh_now" = "zsh_default" ]];then
+	install_zsh_now=true
+	zsh_default_shell=true
+elif [[ "$install_zsh_now" = "zsh" ]];then
+	install_zsh_now=true
+fi
+
+List_of_apt_2_install_=()
+package_firefox="$(check_if_package_exist_in_repo firefox)"
+package_firefox_esr="$(check_if_package_exist_in_repo firefox-esr)"
+
+##################################################################################
+## must_install_apps_list
+##################################################################################
+#must have apps
+install_must_have_apps=(jq btop xclip curl cbatticon xprintidle yad git lsb-release rofi picom systemd-timesyncd mlocate ufw wget)
+install_must_have_apps2=(psmisc unzip dunst xorg arandr autorandr dbus-x11 pnmixer diodon gparted inxi s-tui dfc htop hwinfo synaptic galternatives xdotool libnotify-bin gnome-keyring ntfs-3g acl xinit xdg-user-dirs lm-sensors)
+install_openbox_=(openbox obconf xcape tint2 nitrogen)
+install_image_viewer_apps=(viewnior)
+install_files_manager_app=(thunar thunar-archive-plugin gvfs gvfs-fuse gvfs-backends file-roller baobab)
+install_firefox_=($package_firefox $package_firefox_esr)
+install_terminal=(kitty terminator)
+install_conky_all_app=(conky-all)
+install_if_laptop=(tlp tlp-rdw powertop xserver-xorg-input-synaptics xinput)
+install_cli_sound_app=(mpd mpc ncmpcpp)
+install_text_editer_app=(geany evince meld)
+install_mediaplayer_app=(mpv)
+install_x_lock_extra=(i3lock i3lock-fancy)
+install_fonts=(fonts-noto fonts-droid-fallback fonts-cantarell fonts-liberation fonts-opensymbol fonts-noto-core fonts-noto-mono fonts-inconsolata)
+install_themes=(papirus-icon-theme fonts-noto-color-emoji fonts-firacode fonts-font-awesome arc-theme gtk3-nocsd numix-icon-theme paper-icon-theme dmz-cursor-theme)
+install_themes_tools=(xsettingsd lxappearance)
+install_polkit_apps=(policykit-1 policykit-1-gnome)
+
+# maim for ac-shots , ffmpeg for screen recoding , at for bl-beepmein , xsel for files-uploader , wmctrl for style-manager and files-uploader
+install_for_scripts=(maim ffmpeg at xsel wmctrl)
+
+#######################
+## extra apps
+#######################
+install_xfce4_panel=(xfce4-panel xfce4-settings xfce4-clipman xfce4-whiskermenu-plugin network-manager-gnome)
+install_polybar=(polybar libnm-dev)
+install_qt5ct=(qt5ct qt5-style-kvantum libqt5svg5 qml-module-qtquick-controls)
+install_jgmenu=(jgmenu)
+install_bspwm=(bspwm sxhkd)
+install_zsh=(zsh zsh-antigen zsh-autosuggestions zsh-syntax-highlighting)
+#######################
+## better bash
+#######################
+install_better_bash=(bash bash-completion)
+
+#######################
+## better shell
+#######################
+install_better_shell=(micro tar bat tree multitail fzf trash-cli screen ncdu dos2unix command-not-found thefuck highlight lf)
+
+##################################################################################
+# main
+##################################################################################
+
+if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
+	add_packages_2_install_list "${install_if_laptop[@]}"
+fi
+add_packages_2_install_list "${install_themes[@]}"
+add_packages_2_install_list "${install_themes_tools[@]}"
+add_packages_2_install_list "${install_terminal[@]}"
+add_packages_2_install_list "${install_files_manager_app[@]}"
+add_packages_2_install_list "${install_x_lock_extra[@]}"
+add_packages_2_install_list "${install_firefox_[@]}"
+add_packages_2_install_list "${install_cli_sound_app[@]}"
+add_packages_2_install_list "${install_conky_all_app[@]}"
+add_packages_2_install_list "${install_text_editer_app[@]}"
+add_packages_2_install_list "${install_mediaplayer_app[@]}"
+add_packages_2_install_list "${install_openbox_[@]}"
+add_packages_2_install_list "${install_fonts[@]}"
+add_packages_2_install_list "${install_for_scripts[@]}"
+add_packages_2_install_list "${install_image_viewer_apps[@]}"
+add_packages_2_install_list "${install_must_have_apps[@]}"
+add_packages_2_install_list "${install_must_have_apps2[@]}"
+add_packages_2_install_list "${install_polkit_apps[@]}"
+add_packages_2_install_list "${install_better_bash[@]}"
+add_packages_2_install_list "${install_better_shell[@]}"
+if [[ "$install_xfce4_panel_now" = true ]];then
+	add_packages_2_install_list "${install_xfce4_panel[@]}"
+fi
+if [[ "$install_polybar_now" = true ]];then
+	add_packages_2_install_list "${install_polybar[@]}"
+fi
+if [[ "$install_qt5ct_now" = true ]];then
+	add_packages_2_install_list "${install_qt5ct[@]}"
+fi
+if [[ "$install_jgmenu_now" = true ]];then
+	add_packages_2_install_list "${install_jgmenu[@]}"
+fi
+if [[ "$install_bspwm_now" = true ]];then
+	add_packages_2_install_list "${install_bspwm[@]}"
+fi
+if [[ "$install_zsh_now" = true ]];then
+	add_packages_2_install_list "${install_zsh[@]}"
+fi
+install_packages
+
+show_m "Configer packages."
+
+if [[ "$install_bspwm_now" = true ]];then
+	show_m "adding my_stuff_bspwm to xsessions."
+	if [ -z "my_stuff" ];then
+		echo "var Custom_distro_dir_name is empty"
+		exit 1
+	fi
+	my-superuser mkdir -p "/usr/share/my_stuff/lib/xsessions"
+	my-superuser touch "/usr/share/my_stuff/lib/xsessions/my_stuff_bspwm.desktop"
+	my-superuser ln -sf "/usr/share/my_stuff/lib/xsessions/my_stuff_bspwm.desktop" /usr/share/xsessions
+	my-superuser rm -rdf "/usr/share/my_stuff"
+fi
+
+if [[ -d "/usr/share/zsh-antigen" ]];then
+	does_antigen_env_setup_works=$(grep -c antigen-env-setup /usr/share/zsh-antigen/antigen.zsh)
+	if [ "$does_antigen_env_setup_works" -gt "1" ]
+	then
+		echo "antigen works fine"
+	else
+		my-superuser curl -SL --progress-bar "https://raw.githubusercontent.com/zsh-users/antigen/develop/bin/antigen.zsh" -o "${temp_path}"/antigen.zsh
+		my-superuser chmod +x "${temp_path}"/antigen.zsh
+		my-superuser mv /usr/share/zsh-antigen/antigen.zsh /usr/share/zsh-antigen/antigen.zsh.backup
+		my-superuser mv "${temp_path}"/antigen.zsh /usr/share/zsh-antigen/
+	fi
+fi
+
+if [[ "$zsh_default_shell" = true ]];then
+	show_m "make zsh default shell "
+	my-superuser chsh -s $(command -v zsh) $__USER
+fi
+
+if command -v mpd >/dev/null
+then
+	if [[ -n "$(pidof mpd)" ]]; then
+		kill_package_ mpd
+	fi
+	if [ $systemd_installed = true ];then
+		my-superuser systemctl stop mpd.socket
+		my-superuser systemctl stop mpd.service 
+		my-superuser systemctl disable mpd.socket 
+		my-superuser systemctl disable mpd.service
+	fi
+fi
+
+if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
+	show_m "some config"
+	if my-superuser dmesg | grep -i bluetooth 1>/dev/null || my-superuser lsusb | grep -i bluetooth 1>/dev/null ;then
+		[[ -f "/etc/tlp.conf" ]] && my-superuser sed -i 's/#DEVICES_TO_DISABLE_ON_STARTUP=.*/DEVICES_TO_DISABLE_ON_STARTUP="bluetooth"/g' /etc/tlp.conf
+	fi
+	my-superuser systemctl enable tlp
+	my-superuser  tlp start || tlp_error="true"
+	if [[ "$tlp_error" == "true" ]];then
+		my-superuser  tlp start | grep '>>> Invoke' >> "${temp_path}"/tlp_error_Invoke
+		if [[ -f "${temp_path}/tlp_error_Invoke" ]];then
+			sed -i "s/' to correct this.//g" "${temp_path}"/tlp_error_Invoke
+			sed -i "s/>>> Invoke '/my-superuser /g" "${temp_path}"/tlp_error_Invoke
+			source "${temp_path}"/tlp_error_Invoke
+			my-superuser  tlp start
+		fi
+		if my-superuser tlp-stat |  grep '* Install' &>/dev/null ;then
+			my-superuser tlp-stat |  grep '* Install' | awk -F' '  '{print "add_packages_2_install_list " $3}' >> "${temp_path}"/tlp_install_exta_apps
+			if [[ -f "${temp_path}/tlp_install_exta_apps" ]];then
+				source "${temp_path}"/tlp_install_exta_apps
+				install_packages
+			fi
+		fi
+	fi
+fi
+
+if command -v ufw >/dev/null
+then
+    my-superuser ufw limit 22/tcp
+    echo "Limiting port 22/tcp (UFW)"
+
+    my-superuser ufw allow 80/tcp
+    echo "Allowing port 80/tcp (UFW)"
+
+    my-superuser ufw allow 443/tcp
+    echo "Allowing port 443/tcp (UFW)"
+
+    my-superuser ufw default deny incoming
+    echo "Denying Incoming Packets by Default(UFW)"
+
+    my-superuser ufw default allow outgoing
+    echo "Allowing Outcoming Packets by Default(UFW)"
+
+    my-superuser ufw enable
+    show_m "Enabled Firewall with Baselines!"
+fi

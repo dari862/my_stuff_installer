@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+sudo apt purge -y rustc cargo || :
+sudo apt autoremove -y || :
+sudo apt-get install -y librust-gdk-sys-dev libdbusmenu-gtk3-dev libdbusmenu-gtk3-dev
+cd /tmp
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+git clone https://github.com/elkowar/eww.git
+cd eww
+cargo build --release --no-default-features --features x11
+cd target/release
+chmod +x ./eww
+

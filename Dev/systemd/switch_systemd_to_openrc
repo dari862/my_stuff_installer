@@ -1,0 +1,15 @@
+https://ianlecorbeau.github.io/blog/debian-bookworm-sysvinit.html
+
+package req systemd
+===================
+pulseaudio
+libpam-fprintd
+systemd-timesyncd
+gnome-keyring
+mpd
+
+
+bootctl
+
+bin/not_add_2_path/apps_center/Utilities/gammastep:my-superuser ln -sf /usr/share/my_stuff/bin/not_add_2_path/color_temperature_adjuster_gui/gammastep.service /lib/systemd/user
+bin/not_add_2_path/apps_center/Utilities/redshift:my-superuser ln -sf /usr/share/my_stuff/bin/not_add_2_path/color_temperature_adjuster_gui/redshift.service /lib/systemd/user

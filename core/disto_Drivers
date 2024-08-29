@@ -1,0 +1,145 @@
+#!/bin/bash
+##################################################################################
+# var
+##################################################################################
+List_of_apt_2_install_=()
+fingerprint_exist=false
+
+#######################
+## must_install_apps_list
+#######################
+#must have apps
+install_audio=(pulseaudio pavucontrol)
+install_if_laptop=(acpi upower)
+if [[ "$(ls /sys/class/backlight | head -n 1)" == *"intel_"* ]]; then
+	install_if_laptop+=(xbacklight)
+else
+	install_if_laptop+=(light)
+fi
+install_fingerprint=(fprintd libpam-fprintd)
+install_wireless=(wireless-tools)
+install_bluetooth=(bluez blueman)
+install_autoinstall_firmware=(isenkram)
+
+if lsusb | grep -i fingerprint >/dev/null || lspci | grep -i fingerprint >/dev/null || ls /sys/bus/usb/devices/* | grep -i fingerprint >/dev/null; then
+    fingerprint_exist=true
+fi
+
+##################################################################################
+# function
+##################################################################################
+
+create_20_intel_conf_file(){
+	show_m "Create 20-intel.conf file."
+	if [ "${intel_gpu_exist}" = "true" ];then
+		my-superuser mkdir -p /etc/X11/xorg.conf.d/
+		my-superuser tee /etc/X11/xorg.conf.d/20-intel.conf <<- EOF > /dev/null
+		Section "Device"
+			Identifier  "Intel Graphics"
+			Driver      "Intel"
+			Option      "AccelMethod"  "sna"
+			Option      "TearFree"	"True"
+			Option      "Tiling"	"True"
+			Option      "SwapbuffersWait" "True"
+			#Option      "AccelMethod"  "uxa"
+		EndSection
+		EOF
+	fi
+}
+
+##################################################################################
+# GPU Drivers
+##################################################################################
+if [[ "${install_GPU_Drivers}" = "install_GPU" ]];then
+	if [ "$(lspci | grep "VGA compatible controller" | grep VMware -c)" != "0" ];then
+		echo "This is VM"
+	fi
+	
+	if [ "${nvidia_gpu_exist}" = "true" ];then
+		add_packages_2_install_list "nvidia-driver nvidia-smi nvidia-settings $_kernel_open_dkms_ $_cuda_"
+	fi
+		
+	if [ "${amd_gpu_exist}" = "true" ];then
+		add_packages_2_install_list "libgl1-mesa-dri xserver-xorg-video-ati xserver-xorg-video-amdgpu mesa-vulkan-drivers vkbasalt"
+	fi
+		
+	if [ "${intel_gpu_exist}" = "true" ];then
+		add_packages_2_install_list "xserver-xorg-video-intel intel-gpu-tools intel-media-va-driver"
+	fi
+	
+fi
+
+##################################################################################
+# main
+##################################################################################
+if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
+	add_packages_2_install_list "${install_if_laptop[@]}"
+fi
+
+if [[ "$fingerprint_exist" = true ]];then
+    add_packages_2_install_list "${install_fingerprint[@]}"
+fi
+
+if lspci | egrep -i 'wifi|wireless' 1>/dev/null ;then
+	add_packages_2_install_list "${install_wireless[@]}"
+fi
+
+if my-superuser dmesg | grep -i bluetooth 1>/dev/null || my-superuser lsusb | grep -i bluetooth 1>/dev/null ;then
+	add_packages_2_install_list "${install_bluetooth[@]}"
+fi
+
+add_packages_2_install_list "${install_audio[@]}"
+add_packages_2_install_list "${install_Network[@]}"
+add_packages_2_install_list "${install_autoinstall_firmware[@]}"
+
+install_packages
+
+if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
+	show_m "this is laptop"
+	if [ "$number_of_gpus" -gt 1 ]; then
+		show_m "create envycontrol installtion file."
+		tee "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM <<- 'EOF' > /dev/null
+		#!/bin/bash
+			envycontrol_updater_path="$(mktemp -d)"
+			curl -s 'https://api.github.com/repos/bayasdev/envycontrol/releases/latest' \
+  			| grep '"tarball_url"' \
+  			| cut -f2,3 -d':' \
+  			| tr -d '"' \
+  			| tr -d ',' \
+  			| xargs curl -o "${envycontrol_updater_path}"/envycontrol.tar.gz && tar -xvzf "${envycontrol_updater_path}"/envycontrol.tar.gz -C "${envycontrol_updater_path}" && mv "${envycontrol_updater_path}"/bayasdev* "${envycontrol_updater_path}"/envycontrol
+  			
+  			[ -d "/usr/share/my_stuff/system_files/downloaded/envycontrol" ] && rm -rdf "/usr/share/my_stuff/system_files/downloaded/envycontrol"
+  			[ ! -d "/usr/share/my_stuff/system_files/downloaded" ] && mkdir -p /usr/share/my_stuff/system_files/downloaded
+  			[ ! -d "/usr/share/my_stuff/system_files/git" ] && mkdir -p /usr/share/my_stuff/system_files/git
+  			
+  			if [ -d "${envycontrol_updater_path}"/envycontrol ];then
+  				chmod +x "${envycontrol_updater_path}"/envycontrol/envycontrol.py 
+  				mv "${envycontrol_updater_path}"/envycontrol "/usr/share/my_stuff/system_files/git/"
+  				ln -sf "/usr/share/my_stuff/system_files/downloaded/envycontrol/envycontrol.py" "/usr/share/my_stuff/system_files/bin/envycontrol"
+  			fi
+		EOF
+		chmod +x "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
+	fi
+fi
+show_m "run isenkram-autoinstall-firmware."
+my-superuser isenkram-autoinstall-firmware || : # to prevent script from exiting "isenkram-autoinstall-firmware contain exit command"
+
+show_m "Configer packages."
+
+#create_20_intel_conf_file
+
+if [[ "$fingerprint_exist" = true ]];then
+	touch "${temp_path}"/fingerprint_exist
+fi
+
+if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
+	show_m "some config"
+fi
+
+if [[ "${install_GPU_Drivers}" = "install_GPU" ]];then
+	touch "${temp_path}"/GPU_Drivers_ready
+fi
+
+if command -v fprintd-verify > /dev/null ;then
+	my-superuser pam-auth-update --enable fprintd
+fi

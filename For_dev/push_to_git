@@ -1,0 +1,29 @@
+#!/bin/bash
+push_now(){
+	git_this_repo="${1-}"
+	git remote set-url origin git@github.com:dari862/${git_this_repo}.git
+	git add -A
+	if git commit -am "Update README.md";then
+		if ! git push --set-upstream origin main;then
+			git push --force
+		fi
+	fi
+}
+
+git_repo_Array=(
+my_stuff
+Theme_Stuff
+my_stuff_installer
+YadAppsStore
+)
+
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_rsa
+
+for getthis in "${git_repo_Array[@]}"; do
+	cd $HOME/Desktop/$getthis
+	echo "###############################################"
+	echo "#		pushing $getthis repo"
+	echo "###############################################"
+	push_now $getthis
+done
