@@ -73,7 +73,7 @@ install_better_bash=(bash bash-completion)
 #######################
 ## better shell
 #######################
-install_better_shell=(micro tar bat tree multitail fzf trash-cli screen ncdu dos2unix command-not-found thefuck highlight lf)
+install_better_shell=(micro tar bat tree multitail fzf trash-cli ncdu dos2unix command-not-found thefuck highlight lf)
 
 ##################################################################################
 # main
@@ -158,12 +158,11 @@ then
 	if [[ -n "$(pidof mpd)" ]]; then
 		kill_package_ mpd
 	fi
-	if [ $systemd_installed = true ];then
-		my-superuser systemctl stop mpd.socket
-		my-superuser systemctl stop mpd.service 
-		my-superuser systemctl disable mpd.socket 
-		my-superuser systemctl disable mpd.service
-	fi
+	
+	init_manager stop mpd.socket
+	init_manager stop mpd.service 
+	init_manager disable mpd.socket 
+	init_manager disable mpd.service
 fi
 
 if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
@@ -171,8 +170,10 @@ if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 	if my-superuser dmesg | grep -i bluetooth 1>/dev/null || my-superuser lsusb | grep -i bluetooth 1>/dev/null ;then
 		[[ -f "/etc/tlp.conf" ]] && my-superuser sed -i 's/#DEVICES_TO_DISABLE_ON_STARTUP=.*/DEVICES_TO_DISABLE_ON_STARTUP="bluetooth"/g' /etc/tlp.conf
 	fi
-	my-superuser systemctl enable tlp
-	my-superuser  tlp start || tlp_error="true"
+	
+	init_manager enable tlp
+	
+	my-superuser tlp start || tlp_error="true"
 	if [[ "$tlp_error" == "true" ]];then
 		my-superuser  tlp start | grep '>>> Invoke' >> "${temp_path}"/tlp_error_Invoke
 		if [[ -f "${temp_path}/tlp_error_Invoke" ]];then

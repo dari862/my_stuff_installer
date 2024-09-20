@@ -1,4 +1,0 @@
-bin/openbox/pipemenu/ac-randr:#!/usr/bin/env python3
-bin/not_add_2_path/ps_mem.py:#!/usr/bin/env python3
-
-grep -r "#" -I | grep "!" | grep "bash"

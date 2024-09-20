@@ -28,17 +28,6 @@ fi
 # function
 ##################################################################################
 
-show_m()
-{
-  echo -e $'\033[1;32m'"$*"$'\033[0m'
-}
-
-show_em()
-{
-	__massage="${1-}"
-	echo "$__massage"
-}
-
 check_and_download_()
 {
 	check_this_file_="${1-}"
@@ -81,26 +70,47 @@ run_fixes_()
 	my-superuser ln -s /usr/bin/obconf /usr/bin/xfwm4-workspace-settings
 }
 
-git_clone_and_set_var_to_path(){
-	getthis="${1-}"
-	show_m "git clone ${getthis}"
-	getthis_location="$(find $HOME -type d -name ${getthis} | head -1)"
-	
-	if [[ -z "${getthis_location}" ]];then
-		getthis_location="${temp_path}"
-	else
-		getthis_location="$(cd "${getthis_location}" && cd .. && pwd)"
-	fi
-	
-	if [ ! -d "${getthis_location}/${getthis}" ]; then 
-		git clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}/${getthis}"
-	else
-		show_m "${getthis} Folder does exsist"
-	fi
-	
-	echo "${getthis_location}"
-}
-
+if command -v git >/dev/null 2>&1;then
+	clone_and_set_var_to_path(){
+		getthis="${1-}"
+		show_m "git clone ${getthis}"
+		getthis_location="$(find $HOME -type d -name ${getthis} | head -1)"
+		
+		if [[ -z "${getthis_location}" ]];then
+			getthis_location="${temp_path}"
+		else
+			getthis_location="$(cd "${getthis_location}" && cd .. && pwd)"
+		fi
+		
+		if [ ! -d "${getthis_location}/${getthis}" ]; then 
+			git clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}/${getthis}"
+		else
+			show_m "${getthis} Folder does exsist"
+		fi
+		
+		echo "${getthis_location}"
+	}
+elif command -v svn >/dev/null 2>&1;then
+	clone_and_set_var_to_path(){
+		getthis="${1-}"
+		show_m "svn clone ${getthis}"
+		getthis_location="$(find $HOME -type d -name ${getthis} | head -1)"
+		
+		if [[ -z "${getthis_location}" ]];then
+			getthis_location="${temp_path}"
+		else
+			getthis_location="$(cd "${getthis_location}" && cd .. && pwd)"
+		fi
+		
+		if [ ! -d "${getthis_location}/${getthis}" ]; then 
+			svn clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}/${getthis}"
+		else
+			show_m "${getthis} Folder does exsist"
+		fi
+		
+		echo "${getthis_location}"
+	}
+fi
 _unattended_upgrades_()
 {
 	auto_upgrades_file="/etc/apt/apt.conf.d/20auto-upgrades"
@@ -108,7 +118,7 @@ _unattended_upgrades_()
 		auto_upgrades_file_bak="/etc/apt/apt.conf.d/20auto-upgrades.bak"
 		case "$1" in
 			start)
-				my-superuser systemctl stop unattended-upgrades || :
+				init_manager stop unattended-upgrades || :
 				if [ ! -f "${auto_upgrades_file_bak}" ];then
 					my-superuser mv "${auto_upgrades_file}" "${auto_upgrades_file_bak}"
 				fi
@@ -133,6 +143,26 @@ must_install_apps()
 	install_packages
 }
 
+if apt list --installed systemd 2>/dev/null | grep "^systemd/" | grep -q "[installed]";then
+	init_system_are="systemd"
+	init_manager(){
+		_command="${1-}"
+		_file="${2-}"
+		if [ "${_command}" = "stop" ];then
+			my-superuser systemctl stop ${_file}
+		elif [ "${_command}" = "enable" ];then
+			my-superuser systemctl enable --now ${_file}
+		elif [ "${_command}" = "disable" ];then
+			my-superuser systemctl disable ${_file}
+		elif [ "${_command}" = "status" ];then
+			my-superuser systemctl status ${_file}
+		elif [ "${_command}" = "mask" ];then
+			my-superuser systemctl mask ${_file}
+		fi
+	}
+else
+	show_em "somthing went wrong."
+fi
 ######################################################################################################################
 ######################################################################################################################
 ######################################################################################################################

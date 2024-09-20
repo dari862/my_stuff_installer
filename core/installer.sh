@@ -7,22 +7,27 @@ echo "Loading Script ....."
 lib_file_name="disto_lib"
 auto_run_script="false" # true to enable
 temp_path="/tmp/my_stuff"
-mirror="http://deb.debian.org/debian/"
-mirror_security="http://security.debian.org/debian-security"
-deb_lines_contrib=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v contrib || :)
-deb_lines_nonfree_firmware=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non-free-firmware' || :)
-deb_lines_nonfree=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v "non-free[[:blank:]]" || :)
+grub_image_name="Networks.png"
+
+mirror=""
+mirror_security=""
+deb_lines_contrib=""
+deb_lines_nonfree_firmware=""
+deb_lines_nonfree=""
 
 export temp_path="${temp_path}"
+prompt_to_install_value_file="${temp_path}/value_of_picked_option_from_prompt_to_install"
 arg_="${1-}"
 SUGROUP=""
 internet_status=""
-disto_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1 || :)"
+disto_lib_location=""
 install_GPU_Drivers="install_GPU"
 _cuda_="cuda"
 _kernel_open_dkms_="nvidia-kernel-open-dkms"
 run_purge_some_unnecessary_pakages="Y"
 run_disable_some_unnecessary_services="Y"
+disable_ipv6_stack="Y"
+disable_ipv6="Y"
 run_update_grub_image="Y"
 autoclean_and_autoremove="Y"
 install_zsh_now=""
@@ -53,33 +58,21 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:$PATH
 remove_aria2=false
 
 switch_default_xsession_to="openbox"
-systemd_installed=$(apt list --installed systemd 2>/dev/null | grep "^systemd/" | grep -q "[installed]" && echo true || echo false)
 
-################################################################################################################################
-number_of_gpus=0
-
-if [ "$(lspci | grep -i nvidia | grep VGA -c)" != "0" ];then
-	nvidia_gpu_exist=true
-	number_of_gpus=$((number_of_gpus++))
-fi
-
-if [ "$(lspci | grep -i intel | grep VGA -c)" != "0" ];then
-	intel_gpu_exist=true
-	number_of_gpus=$((number_of_gpus++))
-fi
-
-if [ "$(lspci | grep -i amd | grep VGA -c)" != "0" ];then
-	amd_gpu_exist=true
-	number_of_gpus=$((number_of_gpus++))
-fi
-
-if [ "$(lspci | grep -i VMware | grep VGA -c)" != "0" ];then
-	VMware_gpu_exist=true
-	number_of_gpus=$((number_of_gpus++))
-fi
 ################################################################################################################################
 # Function
 ################################################################################################################################
+
+show_m()
+{
+  echo -e $'\033[1;32m'"$*"$'\033[0m'
+}
+
+show_em()
+{
+	__massage="${1-}"
+	echo "$__massage"
+}
 
 test_internet_(){
 	local wifi_interface=""
@@ -182,7 +175,51 @@ do_you_want_2_run_this_yes_or_no(){
 }
 
 prompt_to_ask_to_what_to_install(){
+	mirror="http://deb.debian.org/debian/"
+	mirror_security="http://security.debian.org/debian-security"
+	deb_lines_contrib=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v contrib || :)
+	deb_lines_nonfree_firmware=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non-free-firmware' || :)
+	deb_lines_nonfree=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v "non-free[[:blank:]]" || :)
+	
+	if [ -f "${prompt_to_install_value_file}" ];then
+		show_m "file exist : ${prompt_to_install_value_file} form previce run."
+		if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want source it?')" = "Y" ];then
+			source "${prompt_to_install_value_file}"
+			return
+		fi
+	
+	fi
+	
+	number_of_gpus=0
+
+	if [ "$(lspci | grep -i VMware | grep VGA -c)" != "0" ];then
+		VMware_gpu_exist=true
+		number_of_gpus=$((number_of_gpus++))
+	else
+		if [ "$(lspci | grep -i nvidia | grep VGA -c)" != "0" ];then
+			nvidia_gpu_exist=true
+			number_of_gpus=$((number_of_gpus++))
+		fi
+		
+		if [ "$(lspci | grep -i intel | grep VGA -c)" != "0" ];then
+			intel_gpu_exist=true
+			number_of_gpus=$((number_of_gpus++))
+		fi
+		
+		if [ "$(lspci | grep -i amd | grep VGA -c)" != "0" ];then
+			amd_gpu_exist=true
+			number_of_gpus=$((number_of_gpus++))
+		fi
+	fi
+	
 	if [ "$(do_you_want_2_run_this_yes_or_no 'Autorun installation?')" = "Y" ];then
+		tee "${prompt_to_install_value_file}" <<- EOF >/dev/null 
+			number_of_gpus="${number_of_gpus}"
+			VMware_gpu_exist="${VMware_gpu_exist}"
+			nvidia_gpu_exist="${nvidia_gpu_exist}"
+			intel_gpu_exist="${intel_gpu_exist}"
+			amd_gpu_exist="${amd_gpu_exist}"		
+		EOF
 		return
 	fi
 	
@@ -243,8 +280,14 @@ prompt_to_ask_to_what_to_install(){
 				run_disable_some_unnecessary_services=""
 			fi
 			
-			if [ "$(do_you_want_2_run_this_yes_or_no 'update grub image?')" != "Y" ];then
-				run_update_grub_image=""
+			if [ "$(do_you_want_2_run_this_yes_or_no 'disable ipv6 stack?')" != "Y" ];then
+				if [ "$(do_you_want_2_run_this_yes_or_no 'disable ipv6 only?')" != "Y" ];then
+					disable_ipv6="Y"
+				fi
+				if [ "$(do_you_want_2_run_this_yes_or_no 'update grub image?')" != "Y" ];then
+					run_update_grub_image=""
+				fi
+				disable_ipv6_stack=""
 			fi
 			
 			if [ "$(do_you_want_2_run_this_yes_or_no 'run autoclean and autoremove?')" != "Y" ];then
@@ -309,6 +352,37 @@ prompt_to_ask_to_what_to_install(){
 			fi
 		fi
 	fi
+	tee "${prompt_to_install_value_file}" <<- EOF >/dev/null 
+		deb_lines_contrib="${deb_lines_contrib}"
+		deb_lines_nonfree_firmware="${deb_lines_nonfree_firmware}"
+		deb_lines_nonfree="${deb_lines_nonfree}"
+		number_of_gpus="${number_of_gpus}"
+		VMware_gpu_exist="${VMware_gpu_exist}"
+		nvidia_gpu_exist="${nvidia_gpu_exist}"
+		intel_gpu_exist="${intel_gpu_exist}"
+		amd_gpu_exist="${amd_gpu_exist}"
+		switch_to_doas="${switch_to_doas}"
+		enable_contrib="${enable_contrib}"
+		enable_nonfree_firmware="${enable_nonfree_firmware}"
+		enable_nonfree="${enable_nonfree}"
+		install_GPU_Drivers="${install_GPU_Drivers}"
+		_cuda_="${_cuda_}"
+		_kernel_open_dkms_="${_kernel_open_dkms_}"
+		run_purge_some_unnecessary_pakages="${run_purge_some_unnecessary_pakages}"
+		run_disable_some_unnecessary_services="${run_disable_some_unnecessary_services}"
+		disable_ipv6="${disable_ipv6}"
+		run_update_grub_image="${run_update_grub_image}"
+		disable_ipv6_stack="${disable_ipv6_stack}"
+		autoclean_and_autoremove="${autoclean_and_autoremove}"
+		install_zsh_now="${install_zsh_now}"
+		install_xfce4_panel="${install_xfce4_panel}"
+		install_polybar="${install_polybar}"
+		install_qt5ct="${install_qt5ct}"
+		install_jgmenu="${install_jgmenu}"
+		install_bspwm="${install_bspwm}"
+		switch_default_xsession_to="${switch_default_xsession_to}"
+		reboot_now="${reboot_now}"		
+	EOF
 }
 
 fix_time_(){
@@ -326,7 +400,7 @@ fix_time_(){
 		$_SUPERUSER date -s "$(curl --head -sL --max-redirs 0 $get_date_from_here 2>&1 | sed -n 's/^ *Date: *//p')" &>/dev/null
 		#__timezone="$(curl -s https://ipinfo.io/ 2>/dev/null | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/ //g')"
 		__timezone="Asia/Kuwait"
-		if [ $systemd_installed = true ];then
+		if command -v timedatectl >/dev/null 2>&1;then
 			$_SUPERUSER timedatectl set-timezone $__timezone
 		else
 			$_SUPERUSER ln -sf /usr/share/zoneinfo/$__timezone /etc/localtime
@@ -414,27 +488,23 @@ disable_some_unnecessary_services(){
 		show_m "Disable some unnecessary services"
 		
 		# INFO: Some boot services included in Debian are unnecesary for most usres (like NetworkManager-wait-online.service, ModemManager.service or pppd-dns.service)
-		
-		my-superuser systemctl stop NetworkManager-wait-online.service || show_m "fail to stop NetworkManager-wait-online.service"
-		my-superuser systemctl mask NetworkManager-wait-online.service || show_m "fail to mask NetworkManager-wait-online.service"
-		
-		my-superuser systemctl stop wpa_supplicant || show_m "fail to stop wpa_supplicant"
-		my-superuser systemctl disable wpa_supplicant || show_m "fail to disable wpa_supplicant"	# No mask, may be needed by network manager
-		
-		my-superuser systemctl stop ModemManager.service || show_m "fail to stop ModemManager.service"
-		my-superuser systemctl disable ModemManager.service || show_m "fail to disable ModemManager.service"
-		
-		my-superuser systemctl stop pppd-dns.service || show_m "fail to stop pppd-dns.service"
-		my-superuser systemctl disable pppd-dns.service || show_m "fail to disable pppd-dns.service"
-		
+		for service in NetworkManager-wait-online.service wpa_supplicant ModemManager.service pppd-dns.service;do
+			init_manager stop $service || show_m "fail to stop $service"
+			init_manager mask $service || show_m "fail to mask $service"
+		done
+
 		# Disable tracker (Data indexing for GNOME mostly)
-		my-superuser systemctl --user mask tracker-store.service tracker-miner-fs.service tracker-miner-rss.service tracker-extract.service tracker-miner-apps.service tracker-writeback.service || show_m "fail to disable tracker services"
-		#systemctl --user mask gvfs-udisks2-volume-monitor.service gvfs-metadata.service gvfs-daemon.service || show_m "fail to disable gvfs.service"
+		for service in tracker-store.service tracker-miner-fs.service tracker-miner-rss.service tracker-extract.service tracker-miner-apps.service tracker-writeback.service;do
+			init_manager mask $service  || show_m "fail to disable $service"
+		done
+		#init_manager mask gvfs-udisks2-volume-monitor.service || show_m "fail to disable gvfs.service"
+		#init_manager mask gvfs-daemon.service || show_m "fail to disable gvfs.service"
+		#init_manager mask gvfs-metadata.service || show_m "fail to disable gvfs.service"
 		
-		if my-superuser systemctl status NetworkManager.service &>/dev/null; then
-			my-superuser systemctl networking disable || show_m "fail to disable networking"
-			my-superuser systemctl stop systemd-networkd.service || show_m "fail to stop systemd-networkd.service"
-			my-superuser systemctl disable systemd-networkd.service || show_m "fail to disable systemd-networkd.service"
+		if init_manager status NetworkManager.service &>/dev/null; then
+			init_manager disable networking || show_m "fail to disable networking"
+			init_manager stop systemd-networkd.service || show_m "fail to stop systemd-networkd.service"
+			init_manager disable systemd-networkd.service || show_m "fail to disable systemd-networkd.service"
 		fi
 	fi
 }
@@ -464,13 +534,43 @@ clean_up_now(){
 	[ "$autoclean_and_autoremove" = "Y" ] && run_package_manager_autoclean
 }
 
+disable_ipv6_now(){
+	if [ "$disable_ipv6_stack" = "Y" ];then
+		show_m "disabling IPv6 stack (kernal level)."
+		if ! grep 'GRUB_CMDLINE_LINUX=' /etc/default/grub | grep -q 'ipv6.disable=1';then
+			if grep -q 'GRUB_CMDLINE_LINUX=""' /etc/default/grub;then
+				my-superuser sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="ipv6.disable=1"/' /etc/default/grub
+			else
+				my-superuser sed -i 's/GRUB_CMDLINE_LINUX=\"\(.*\)\"/GRUB_CMDLINE_LINUX=\"\1 ipv6.disable=1\"/' /etc/default/grub
+			fi
+		fi
+		if ! grep 'GRUB_CMDLINE_LINUX_DEFAULT=' /etc/default/grub | grep -q 'ipv6.disable=1';then
+			if grep -q 'GRUB_CMDLINE_LINUX_DEFAULT=""' /etc/default/grub;then
+				my-superuser sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=""/GRUB_CMDLINE_LINUX_DEFAULT="ipv6.disable=1"/' /etc/default/grub
+			else
+				my-superuser sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=\"\(.*\)\"/GRUB_CMDLINE_LINUX_DEFAULT=\"\1 ipv6.disable=1\"/' /etc/default/grub
+			fi
+		fi
+	fi
+	
+	if [ "$disable_ipv6" = "Y" ];then
+		disable_ipv6_conf="/etc/sysctl.d/90-disable_ipv6.conf"
+		show_m "Disabling IPv6."
+		echo "net.ipv6.conf.all.disable_ipv6 = 1" | my-superuser tee "${disable_ipv6_conf}" >/dev/null 2>&1
+		echo "net.ipv6.conf.default.disable_ipv6 = 1" | my-superuser tee -a "${disable_ipv6_conf}" >/dev/null 2>&1
+		echo "net.ipv6.conf.lo.disable_ipv6 = 1" | my-superuser tee -a "${disable_ipv6_conf}" >/dev/null 2>&1
+		
+		my-superuser sysctl -p "${disable_ipv6_conf}"
+	fi
+}
+
 update_grub_image(){
 	if [ "$run_update_grub_image" = "Y" ];then
 		show_m "update grub"
-		my-superuser ln -sf /usr/share/"my_stuff"/images/wallpapers/default/Networks.png /boot/grub/
+		my-superuser ln -sf /usr/share/my_stuff/images/wallpapers/default/${grub_image_name} /boot/grub/
 		# this package added some grub config
 		my-superuser sync
-		my-superuser update-grub
+		my-superuser grub-mkconfig -o /boot/grub/grub.cfg
 	fi
 	# install Themes
 	my-superuser gtk-update-icon-cache
@@ -518,6 +618,7 @@ check_if_user_has_root_access(){
 }
 
 source_my_lib_file(){
+	disto_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1 || :)"
 	# source disto_lib
 	if [[ ! -z "${disto_lib_location}" ]];then
 		mv "${disto_lib_location}" "${temp_path}"
@@ -641,11 +742,11 @@ switch_default_xsession(){
 
 check_if_user_has_root_access
 
-test_internet_
+must_create_temp_dir
 
 prompt_to_ask_to_what_to_install
 
-must_create_temp_dir
+test_internet_
 
 fix_time_
 
@@ -672,15 +773,15 @@ if [[ -z "$arg_" ]];then
 	
 	check_and_download_ "disto_post_install"
 ################################
-# git clone
-	show_m "git clone distro files"
-	my_stuff_location="$(git_clone_and_set_var_to_path "my_stuff" | tail -1)"
-	Theme_Stuff_location="$(git_clone_and_set_var_to_path "Theme_Stuff" | tail -1)"
+# repo clone
+	show_m "clone distro files repo."
+	my_stuff_location="$(clone_and_set_var_to_path "my_stuff" | tail -1)"
+	Theme_Stuff_location="$(clone_and_set_var_to_path "Theme_Stuff" | tail -1)"
 ################################
 fi
 clear
 
-if [ $systemd_installed = true ];then
+if [ "$init_system_are" = "systemd" ];then
 	_unattended_upgrades_ stop
 fi
 
@@ -698,7 +799,7 @@ install_lightdm_now
 
 switch_to_network_manager
 
-if [ $systemd_installed = true ];then
+if [ "$init_system_are" = "systemd" ];then
 	_unattended_upgrades_ start
 fi
 
@@ -718,11 +819,13 @@ source "${temp_path}"/disto_configer
 
 purge_some_unnecessary_pakages
 
-if [ $systemd_installed = true ];then
+if [ "$init_system_are" = "systemd" ];then
 	disable_some_unnecessary_services
 fi
 
 clean_up_now
+
+disable_ipv6_now
 
 update_grub_image
 

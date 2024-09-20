@@ -1,12 +1,13 @@
 #!/bin/bash
 set -eu
 package_manager_are="${1-}"
-temp_path="$(pwd)"
+temp_path="/tmp/my_stuff"
 __distro_path="/usr/share/my_stuff"
 _hub_script_dir="${__distro_path}/system_files/hub_script"
 
 PATH="${__distro_path}/bin/bin:$PATH"
-
+wall_path="${__distro_path}/my_wallpapers/"
+wall_theme_path="${__distro_path}/system_files/wallpapers"
 ##################################################################################
 echo "update Databases ex: locate"
 updatedb
@@ -18,7 +19,7 @@ echo "fix terminator"
 
 if [ -d "/etc/xdg" ];then
 	[ ! -d "/etc/xdg/terminator" ] && mkdir -p "/etc/xdg/terminator"
-	[ ! -f "/etc/xdg/terminator/config" ] && cp -r "${__distro_path}"/skel/.config/terminator /etc/xdg/terminator
+	[ ! -f "/etc/xdg/terminator/config" ] && cp -r "${__distro_path}"/extra_skel/.config/terminator /etc/xdg/terminator
 fi
 
 ############
@@ -44,7 +45,7 @@ ln -sf ${__distro_path}/bin/not_add_2_path/pmxkcd/pmxkcd "${_hub_script_dir}"
 echo "rm not need script for hub script"
 command -v systemctl &>/dev/null && ln -sf ${__distro_path}/bin/not_add_2_path/utilities/errcheck "${_hub_script_dir}"
 
-remove_this_script_=(hub rofi-powermenu rofi-launcher rofi-runner unmounter)
+remove_this_script_=(hub rofi-launcher rofi-runner unmounter)
 for script in "${remove_this_script_[@]}";do
 	rm "${_hub_script_dir}"/"$script"
 done
@@ -103,10 +104,38 @@ fi
 
 echo "cp skell file to system_files/skel ."
 cp -r "${__distro_path}/skel" "${__distro_path}/system_files" 
+cp -r "${__distro_path}/lib/rc.xml" "${__distro_path}/system_files/rc.xml"
+mkdir -p "${__distro_path}/system_files/skel/.local/bin"
 
 mkdir -p "${__distro_path}"/system_files/skel/.config/mpd/playlists
 touch "${__distro_path}"/system_files/skel/.config/mpd/database
 mkdir -p "${__distro_path}"/system_files/skel/.local/share/bash_history
+
+if command -v geany >/dev/null ; then
+	echo "cp geany skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/geany" "${__distro_path}/system_files/skel/.config" 
+fi
+
+if command -v lf >/dev/null ; then
+	echo "cp lf skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/lf" "${__distro_path}/system_files/skel/.config" 
+fi
+
+if command -v nsxiv >/dev/null || command -v sxiv >/dev/null ; then
+	echo "cp nsxiv skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/nsxiv" "${__distro_path}/system_files/skel/.config"
+	cp -r "${__distro_path}/extra_skel/.config/sxiv" "${__distro_path}/system_files/skel/.config" 
+fi
+
+if command -v terminator >/dev/null ; then
+	echo "cp gigolo skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/terminator" "${__distro_path}/system_files/skel/.config" 
+fi
+
+if command -v thunar >/dev/null ; then
+	echo "cp gigolo skell file to system_files/skel ."
+	cp -r "${__distro_path}/extra_skel/.config/Thunar" "${__distro_path}/system_files/skel/.config" 
+fi
 
 if command -v gigolo >/dev/null ; then
 	echo "cp gigolo skell file to system_files/skel ."
@@ -146,7 +175,8 @@ fi
 
 if command -v polybar >/dev/null ; then
 	echo "cp polybar skell file to system_files/skel ."
-	cp -r "${__distro_path}/extra_skel/.config/polybar" "${__distro_path}/system_files/skel/.config" 
+	cp -r "${__distro_path}/extra_skel/.config/polybar" "${__distro_path}/system_files/skel/.config"
+	
 	if [ -d "${__distro_path}/bin/polybar" ] ; then
 		ln -sf "${__distro_path}"/bin/polybar/* "${__distro_path}"/system_files/bin
 	fi
@@ -232,12 +262,35 @@ fi
 mkdir -p "/usr/share/lightdm/lightdm.conf.d"
 mkdir -p "/usr/share/lightdm/lightdm-gtk-greeter.conf.d"
 
-cp -r /usr/share/my_stuff/lib/lightdm "${__distro_path}"/system_files
+cp -r ${__distro_path}/lib/lightdm "${__distro_path}"/system_files
 ln -sf "${__distro_path}"/system_files/lightdm/lightdm.conf.d/50_my_stuff.conf /usr/share/lightdm/lightdm.conf.d
 ln -sf "${__distro_path}"/system_files/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf /usr/share/lightdm/lightdm-gtk-greeter.conf.d
 
 if [[ -f "${temp_path}/fingerprint_exist" ]];then 
-    ln -sf /usr/share/my_stuff/bin/not_add_2_path/fingerprint_gui /usr/share/my_stuff/system_files/bin
+    ln -sf ${__distro_path}/bin/not_add_2_path/fingerprint_gui ${__distro_path}/system_files/bin
+fi
+
+echo "Add current distro name and icon to polybar."
+# distro 
+if [ -f /etc/os-release ]; then
+	. /etc/os-release
+	version_=$(echo "${VERSION_ID//./}")
+	distro_name_="$ID"
+elif [ -f /etc/lsb-release ]; then
+	# For some versions of Debian/Ubuntu without lsb_release command
+	. /etc/lsb-release
+	distro_name_="$DISTRIB_ID"
+else
+	# Fall back to uname, e.g. "Linux <version>", also works for BSD, etc.
+	distro_name_="$(uname -s)"
+fi
+	
+if [ "$distro_name_" = "debian" ];then
+	sed -i 's///g' "${__distro_path}/system_files/bin/polybar_fixer"
+	sed -i 's/Arch Linux/Debian/g' "${__distro_path}/system_files/bin/polybar_fixer"
+elif [ "$distro_name_" = "ubuntu" ];then
+	sed -i 's//󰕈/g' "${__distro_path}/system_files/bin/polybar_fixer"
+	sed -i 's/Arch Linux/Ubuntu/g' "${__distro_path}/system_files/bin/polybar_fixer"
 fi
 
 echo "copy manpages."
@@ -252,17 +305,18 @@ ${__distro_path}/bin/not_add_2_path/create_DB.sh --all
 
 echo "Running must_create_script."
 for script in "${__distro_path}"/bin/not_add_2_path/must_create_script/*;do
+	echo "running $(basename $script). from must_create_script ."
 	source "$script"/make
 done
 
-if [[ -f "/usr/share/my_stuff/system_files/updater/envycontrol" ]];then 
+if [[ -f "${__distro_path}/system_files/updater/envycontrol" ]];then 
 	echo "runing envycontrol_updater"
-	/usr/share/my_stuff/system_files/updater/envycontrol
+	${__distro_path}/system_files/updater/envycontrol
 fi
 
 echo "installing update-notification"
-cp -r "/usr/share/my_stuff/lib/apps/update-notification.conf" "/usr/share/my_stuff/system_files"
-source "/usr/share/my_stuff/system_files/update-notification.conf"
+cp -r "${__distro_path}/lib/apps/update-notification.conf" "${__distro_path}/system_files"
+source "${__distro_path}/system_files/update-notification.conf"
 ln -sf "$script_full_path" "/etc/cron.$cron_when"	
 if [ ! -f "$updates_file" ]
 then 
@@ -270,13 +324,16 @@ then
 	chmod a+w "$updates_file"
 fi
 
+echo "Create keybinds."
+"${__distro_path}"/system_files/bin/keybinds --initial-step
+
 ##################################################################################
 ##################################################################################
 ##################################################################################
 
 echo "pick correct apps_as_root."
 if command -v doas >/dev/null 2>&1;then
-	ln -sf ${__distro_path}/lib/apps/doas/apps_as_root /usr/share/my_stuff/system_files/bin
+	ln -sf ${__distro_path}/lib/apps/doas/apps_as_root ${__distro_path}/system_files/bin
 	cp -r ${__distro_path}/lib/apps/doas/doas.conf /etc
 	
 	if ! doas -C ${__distro_path}/lib/apps/doas/doas.conf;then
@@ -285,9 +342,11 @@ if command -v doas >/dev/null 2>&1;then
 	fi
 	chmod -c 0400 /etc/doas.conf
 elif command -v sudo >/dev/null 2>&1;then
-	ln -sf ${__distro_path}/lib/apps/sudo/apps_as_root /usr/share/my_stuff/system_files/bin
+	ln -sf ${__distro_path}/lib/apps/sudo/apps_as_root ${__distro_path}/system_files/bin
 fi
 
 chmod -c 0400 ${__distro_path}/lib/apps/doas/doas.conf
+
+ln -sf ${__distro_path}/distro_manager/full-upgrade ${__distro_path}/system_files/bin
 
 echo "prepare completed"
