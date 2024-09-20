@@ -14,11 +14,11 @@ bash <(curl -s https://raw.githubusercontent.com/dari862/my_stuff_installer/main
 
 ```
 
-bash <(curl -s https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/pre_dev_env)
+bash <(curl -s https://raw.githubusercontent.com/dari862/my_stuff_installer/main/For_dev/pre_dev_env)
 ```
 
 ```
-bash <(wget -q -O - https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/pre_dev_env)
+bash <(wget -q -O - https://raw.githubusercontent.com/dari862/my_stuff_installer/main/For_dev/pre_dev_env)
 ```
 
 <details>
