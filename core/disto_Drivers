@@ -30,7 +30,7 @@ fi
 ##################################################################################
 
 create_20_intel_conf_file(){
-	show_m "Create 20-intel.conf file."
+	show_im "Create 20-intel.conf file."
 	if [ "${intel_gpu_exist}" = "true" ];then
 		my-superuser mkdir -p /etc/X11/xorg.conf.d/
 		my-superuser tee /etc/X11/xorg.conf.d/20-intel.conf <<- EOF > /dev/null
@@ -52,7 +52,7 @@ create_20_intel_conf_file(){
 ##################################################################################
 if [[ "${install_GPU_Drivers}" = "install_GPU" ]];then
 	if [ "$(lspci | grep "VGA compatible controller" | grep VMware -c)" != "0" ];then
-		echo "This is VM"
+		show_im "This is VM"
 	fi
 	
 	if [ "${nvidia_gpu_exist}" = "true" ];then
@@ -91,13 +91,13 @@ fi
 add_packages_2_install_list "${install_audio[@]}"
 add_packages_2_install_list "${install_Network[@]}"
 add_packages_2_install_list "${install_autoinstall_firmware[@]}"
-
+show_im "Install Drivers."
 install_packages
 
 if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
-	show_m "this is laptop"
+	show_im "this is laptop"
 	if [ "$number_of_gpus" -gt 1 ]; then
-		show_m "create envycontrol installtion file."
+		show_im "create envycontrol installtion file."
 		tee "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM <<- 'EOF' > /dev/null
 		#!/bin/bash
 			envycontrol_updater_path="$(mktemp -d)"
@@ -121,10 +121,10 @@ if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 		chmod +x "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
 	fi
 fi
-show_m "run isenkram-autoinstall-firmware."
+show_im "run isenkram-autoinstall-firmware."
 my-superuser isenkram-autoinstall-firmware || : # to prevent script from exiting "isenkram-autoinstall-firmware contain exit command"
 
-show_m "Configer packages."
+show_im "Configer packages."
 
 #create_20_intel_conf_file
 
@@ -133,7 +133,7 @@ if [[ "$fingerprint_exist" = true ]];then
 fi
 
 if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
-	show_m "some config"
+	show_im "some config"
 fi
 
 if [[ "${install_GPU_Drivers}" = "install_GPU" ]];then
@@ -143,3 +143,5 @@ fi
 if command -v fprintd-verify > /dev/null ;then
 	my-superuser pam-auth-update --enable fprintd
 fi
+
+touch "${installer_phases}/disto_Drivers"

@@ -34,113 +34,26 @@ check_and_download_()
 	new_check_this_file_="${temp_path}/${check_this_file_}"
 	check_this_file_location="$(find $HOME -type f -name ${check_this_file_} | head -1)"
 	
+	[ -f "${new_check_this_file_}" ] && return
+	
 	if [[ ! -z "${check_this_file_location}" ]];then
 		mv "${check_this_file_location}" "${temp_path}"
 	fi
 	
 	if [[ ! -f "${new_check_this_file_}" ]]; then
-	show_m "Download $check_this_file_ file from www.github.com/dari862/my_stuff_installer ."
+		show_im "Download $check_this_file_ file from www.github.com/dari862/my_stuff_installer ."
 		if curl -SL --progress-bar https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/"$check_this_file_" -o "${new_check_this_file_}" ;then
 		chmod +x "${new_check_this_file_}"
 		else
 			show_em "Error: Failed to download ${check_this_file_} from ${new_check_this_file_} "
-			exit 1
 		fi
+	else
+		show_im "file: $check_this_file_ exsit."
 	fi
-}
-
-rm_if_link()
-{ 
-_arg="${}"
-_arg2="${}"
-	if [ -L "$1" ]; then
-		rm "$1";
-	fi 
 }
 
 kill_package_(){
 	ps aux | grep "${1}" | awk '{print $2}' | xargs my-superuser kill -9 >/dev/null 2>&1 || :
-}
-
-run_fixes_()
-{
-	#fix xfce4-panel workspace settings error in openbox
-	[ -L "$1" ] &&  my-superuser rm "/usr/bin/xfwm4-workspace-settings"
-	[ -f /usr/bin/xfwm4-workspace-settings ] && my-superuser rm /usr/bin/xfwm4-workspace-settings
-	my-superuser ln -s /usr/bin/obconf /usr/bin/xfwm4-workspace-settings
-}
-
-if command -v git >/dev/null 2>&1;then
-	clone_and_set_var_to_path(){
-		getthis="${1-}"
-		show_m "git clone ${getthis}"
-		getthis_location="$(find $HOME -type d -name ${getthis} | head -1)"
-		
-		if [[ -z "${getthis_location}" ]];then
-			getthis_location="${temp_path}"
-		else
-			getthis_location="$(cd "${getthis_location}" && cd .. && pwd)"
-		fi
-		
-		if [ ! -d "${getthis_location}/${getthis}" ]; then 
-			git clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}/${getthis}"
-		else
-			show_m "${getthis} Folder does exsist"
-		fi
-		
-		echo "${getthis_location}"
-	}
-elif command -v svn >/dev/null 2>&1;then
-	clone_and_set_var_to_path(){
-		getthis="${1-}"
-		show_m "svn clone ${getthis}"
-		getthis_location="$(find $HOME -type d -name ${getthis} | head -1)"
-		
-		if [[ -z "${getthis_location}" ]];then
-			getthis_location="${temp_path}"
-		else
-			getthis_location="$(cd "${getthis_location}" && cd .. && pwd)"
-		fi
-		
-		if [ ! -d "${getthis_location}/${getthis}" ]; then 
-			svn clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}/${getthis}"
-		else
-			show_m "${getthis} Folder does exsist"
-		fi
-		
-		echo "${getthis_location}"
-	}
-fi
-_unattended_upgrades_()
-{
-	auto_upgrades_file="/etc/apt/apt.conf.d/20auto-upgrades"
-	if [ -f "${auto_upgrades_file}" ];then
-		auto_upgrades_file_bak="/etc/apt/apt.conf.d/20auto-upgrades.bak"
-		case "$1" in
-			start)
-				init_manager stop unattended-upgrades || :
-				if [ ! -f "${auto_upgrades_file_bak}" ];then
-					my-superuser mv "${auto_upgrades_file}" "${auto_upgrades_file_bak}"
-				fi
-			;;
-			stop)
-				if [ -f "${auto_upgrades_file}" ] && [ -f "${auto_upgrades_file_bak}" ];then
-					my-superuser rm "${auto_upgrades_file}"
-				fi
-					
-				if [ -f "${auto_upgrades_file_bak}" ];then
-					my-superuser mv "${auto_upgrades_file_bak}" "${auto_upgrades_file}"
-				fi
-			;;
-		esac
-	fi
-}
-
-must_install_apps()
-{
-	add_packages_2_install_list "mlocate"
-	add_packages_2_install_list "git"
-	install_packages
 }
 
 if apt list --installed systemd 2>/dev/null | grep "^systemd/" | grep -q "[installed]";then
@@ -161,7 +74,7 @@ if apt list --installed systemd 2>/dev/null | grep "^systemd/" | grep -q "[insta
 		fi
 	}
 else
-	show_em "somthing went wrong."
+	show_wm "somthing went wrong. systemd not installed."
 fi
 ######################################################################################################################
 ######################################################################################################################
@@ -170,6 +83,8 @@ fi
 ######################################################################################################################
 
 CHECK_IF_THIS_LAPTOP(){
+	[ -f "${installer_phases}/CHECK_IF_THIS_LAPTOP" ] && return
+	show_m "CHECK IF THIS LAPTOP"
 	is_this_laptop=""
 	# Are we a mac?
 	if test -d /proc/pmu; then
@@ -238,6 +153,10 @@ CHECK_IF_THIS_LAPTOP(){
 	fi
 	
 	if [[ "${is_this_laptop}"  = true ]];then
+		show_im "this is laptop"
 		touch "${temp_path}"/this_is_laptop
+	else
+		show_im "this is not laptop"
 	fi
+	touch "${installer_phases}/CHECK_IF_THIS_LAPTOP"
 }

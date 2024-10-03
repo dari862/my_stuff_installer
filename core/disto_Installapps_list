@@ -35,7 +35,7 @@ package_firefox_esr="$(check_if_package_exist_in_repo firefox-esr)"
 ## must_install_apps_list
 ##################################################################################
 #must have apps
-install_must_have_apps=(jq btop xclip curl cbatticon xprintidle yad git lsb-release rofi picom systemd-timesyncd mlocate ufw wget)
+install_must_have_apps=(jq btop xclip curl cbatticon xprintidle yad git lsb-release rofi picom systemd-timesyncd mlocate ufw wget xwallpaper)
 install_must_have_apps2=(psmisc unzip dunst xorg arandr autorandr dbus-x11 pnmixer diodon gparted inxi s-tui dfc htop hwinfo synaptic galternatives xdotool libnotify-bin gnome-keyring ntfs-3g acl xinit xdg-user-dirs lm-sensors)
 install_openbox_=(openbox obconf xcape tint2 nitrogen)
 install_image_viewer_apps=(viewnior)
@@ -119,15 +119,16 @@ fi
 if [[ "$install_zsh_now" = true ]];then
 	add_packages_2_install_list "${install_zsh[@]}"
 fi
+
+show_im "Install distro packages."
 install_packages
 
-show_m "Configer packages."
+show_im "Configer packages."
 
 if [[ "$install_bspwm_now" = true ]];then
-	show_m "adding my_stuff_bspwm to xsessions."
+	show_im "adding my_stuff_bspwm to xsessions."
 	if [ -z "my_stuff" ];then
-		echo "var Custom_distro_dir_name is empty"
-		exit 1
+		show_em "var Custom_distro_dir_name is empty"
 	fi
 	my-superuser mkdir -p "/usr/share/my_stuff/lib/xsessions"
 	my-superuser touch "/usr/share/my_stuff/lib/xsessions/my_stuff_bspwm.desktop"
@@ -139,7 +140,7 @@ if [[ -d "/usr/share/zsh-antigen" ]];then
 	does_antigen_env_setup_works=$(grep -c antigen-env-setup /usr/share/zsh-antigen/antigen.zsh)
 	if [ "$does_antigen_env_setup_works" -gt "1" ]
 	then
-		echo "antigen works fine"
+		show_im "antigen works fine"
 	else
 		my-superuser curl -SL --progress-bar "https://raw.githubusercontent.com/zsh-users/antigen/develop/bin/antigen.zsh" -o "${temp_path}"/antigen.zsh
 		my-superuser chmod +x "${temp_path}"/antigen.zsh
@@ -149,7 +150,7 @@ if [[ -d "/usr/share/zsh-antigen" ]];then
 fi
 
 if [[ "$zsh_default_shell" = true ]];then
-	show_m "make zsh default shell "
+	show_im "make zsh default shell "
 	my-superuser chsh -s $(command -v zsh) $__USER
 fi
 
@@ -166,7 +167,7 @@ then
 fi
 
 if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
-	show_m "some config"
+	show_im "some config"
 	if my-superuser dmesg | grep -i bluetooth 1>/dev/null || my-superuser lsusb | grep -i bluetooth 1>/dev/null ;then
 		[[ -f "/etc/tlp.conf" ]] && my-superuser sed -i 's/#DEVICES_TO_DISABLE_ON_STARTUP=.*/DEVICES_TO_DISABLE_ON_STARTUP="bluetooth"/g' /etc/tlp.conf
 	fi
@@ -195,20 +196,21 @@ fi
 if command -v ufw >/dev/null
 then
     my-superuser ufw limit 22/tcp
-    echo "Limiting port 22/tcp (UFW)"
+    show_im "Limiting port 22/tcp (UFW)"
 
     my-superuser ufw allow 80/tcp
-    echo "Allowing port 80/tcp (UFW)"
+    show_im "Allowing port 80/tcp (UFW)"
 
     my-superuser ufw allow 443/tcp
-    echo "Allowing port 443/tcp (UFW)"
+    show_im "Allowing port 443/tcp (UFW)"
 
     my-superuser ufw default deny incoming
-    echo "Denying Incoming Packets by Default(UFW)"
+    show_im "Denying Incoming Packets by Default(UFW)"
 
     my-superuser ufw default allow outgoing
-    echo "Allowing Outcoming Packets by Default(UFW)"
+    show_im "Allowing Outcoming Packets by Default(UFW)"
 
     my-superuser ufw enable
-    show_m "Enabled Firewall with Baselines!"
+    show_im "Enabled Firewall with Baselines!"
 fi
+touch "${installer_phases}/disto_Installapps_list"

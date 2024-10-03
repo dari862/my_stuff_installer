@@ -8,8 +8,8 @@ PACKAGER=""
 
 install_AUR_helper(){
 	if ! command -v yay >/dev/null && ! command -v paru >/dev/null; then
-		echo -e "switching ${PACKAGER}"
-		echo "Installing yay as AUR helper..."
+		show_im "switching ${PACKAGER} to yay"
+		show_im "Installing yay as AUR helper..."
 		$_SUPERUSER ${PACKAGER} --noconfirm -S base-devel
 		cd /opt && $_SUPERUSER git clone https://aur.archlinux.org/yay-git.git && $_SUPERUSER chown -R ${USER}:${USER} ./yay-git
 		cd yay-git && makepkg --noconfirm -si
@@ -26,14 +26,16 @@ install_AUR_helper(){
 	$_SUPERUSER rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/${PACKAGER}.d/mirrorlist --allow-root arch
 }
 
-install_AUR_helper
-
 ##################################
 # for rest
 ##################################
 
 install_lightdm_now(){
+	if [ -f "${installer_phases}/install_lightdm_now" ];then
+		return
+	fi
 	install_lightdm_=(lightdm lightdm-gtk-greeter-settings)
+	show_im "installing ( lightdm )."
 	if [ -f "/etc/X11/default-display-manager" ]; then
 		d_d_m="$(basename "$(cat /etc/X11/default-display-manager)")"
 		[ "$d_d_m" != "lightdm"  ] && lightdm_does_not_exist=true
@@ -42,18 +44,21 @@ install_lightdm_now(){
 	fi
 	
 	if [ "$lightdm_does_not_exist" = true  ];then
-		show_m "Install ${install_lightdm_[@]} ."
+		show_im "Install ${install_lightdm_[@]} ."
 		add_packages_2_install_list "${install_lightdm_[@]}"
-		kill_package_ ${PACKAGER} && install_packages || (kill_package_ ${PACKAGER} && install_packages) || (show_em "failed to install lightdm" && exit 1)
+		kill_package_ ${PACKAGER} && install_packages || (kill_package_ ${PACKAGER} && install_packages) || (show_em "failed to install lightdm")
 		echo "/usr/sbin/lightdm" | $_SUPERUSER tee /etc/X11/default-display-manager > /dev/null 2>&1
 		$_SUPERUSER dpkg-reconfigure lightdm
+	else
+		show_im "lightdm already exist."
 	fi
+	touch "${installer_phases}/install_lightdm_now"
 }
 
 create_package_list(){
 	# create list_of_apps file
 	if [[ ! -f "${list_of_apps_file_path}" ]];then
-		show_m "create_list_of_apps"
+		show_im "create_list_of_apps"
 		${PACKAGER} -Qnq --noconfirm 2>/dev/null > "${list_of_apps_file_path}" 
 	fi
 }
@@ -84,9 +89,9 @@ add_packages_2_install_list()
 			check_apps_in_cache="$(grep "^$INDEX/" "${list_of_apps_file_path}" 2>/dev/null || :)"
 			if [ -n "${check_apps_in_cache}" ];then
 				List_of_apt_2_install_+=("$INDEX") 
-				show_m "${INDEX} added to install apps" 
+				show_im "${INDEX} added to install apps" 
 			else
-				show_em "${INDEX} does not exist." 
+				show_wm "${INDEX} does not exist." 
 			fi
 		fi
 	done
@@ -103,19 +108,57 @@ remove_package_with_error2info()
 	for package in "${localarray[@]}"
 	do
 		if dpkg -s "${package}" &>/dev/null; then
-			show_m "Purging ${package}."
+			show_im "Purging ${package}."
 			${PACKAGER} -Rs "$package"
 		fi
 	done
 }
 
 remove_unnecessary_package_manager_stuff(){
-	show_m ""
+	show_im ""
 }
 
 run_package_manager_autoclean(){
-	show_m ""
+	show_im ""
 }
 
-upgrade_now
-create_package_list
+_unattended_upgrades_()
+{
+	auto_upgrades_file="/etc/apt/apt.conf.d/20auto-upgrades"
+	if [ -f "${auto_upgrades_file}" ];then
+		auto_upgrades_file_bak="/etc/apt/apt.conf.d/20auto-upgrades.bak"
+		case "$1" in
+			start)
+				if [ -f "${installer_phases}/_unattended_upgrades_start" ];then
+					return
+				fi
+				show_im "start unattended upgrades."
+				init_manager stop unattended-upgrades || :
+				if [ ! -f "${auto_upgrades_file_bak}" ];then
+					my-superuser mv "${auto_upgrades_file}" "${auto_upgrades_file_bak}"
+				fi
+				touch "${installer_phases}/_unattended_upgrades_start"
+			;;
+			stop)
+				if [ -f "${installer_phases}/_unattended_upgrades_stop" ];then
+					return
+				fi
+				show_im "stop unattended upgrades."
+				if [ -f "${auto_upgrades_file}" ] && [ -f "${auto_upgrades_file_bak}" ];then
+					my-superuser rm "${auto_upgrades_file}"
+				fi
+					
+				if [ -f "${auto_upgrades_file_bak}" ];then
+					my-superuser mv "${auto_upgrades_file_bak}" "${auto_upgrades_file}"
+				fi
+				touch "${installer_phases}/_unattended_upgrades_stop"
+			;;
+		esac
+	fi
+}
+
+pre_package_manager_(){
+	install_AUR_helper
+	upgrade_now
+	create_package_list
+}
