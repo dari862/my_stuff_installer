@@ -377,7 +377,9 @@ prompt_to_ask_to_what_to_install(){
 }
 
 pick_file_downloader_and_url_checker(){
+	show_im "picking url command"
 	if command -v curl >/dev/null 2>&1;then
+		show_im "picked url command: curl "
 		check_url(){
 			curl -s "${1-}" 2>/dev/null
 		}
@@ -388,11 +390,12 @@ pick_file_downloader_and_url_checker(){
 			curl -s "${1-}" 2>/dev/null
 		}
 	elif command -v wget >/dev/null 2>&1;then
+		show_im "picked url command: wget "
 		check_url(){
 			wget -q -O- "${1-}" >/dev/null 2>&1
 		}
 		download_file(){
-			${1-} curl -SsL --progress-bar "${2-}" -o "${3-}" 2>/dev/null
+			${1-} wget -q --no-check-certificate --progress=bar "${2-}" -O "${3-}" 2>/dev/null
 		}
 		get_url_content(){
 			wget -q -O- "${1-}" 2>/dev/null
@@ -848,48 +851,54 @@ switch_to_doas_now(){
 	fi
 }
 
-if command -v git >/dev/null 2>&1;then
-	clone_rep_(){
-		getthis="${1-}"
-		if [ ! -f "${installer_phases}/${getthis}" ];then
-			show_im "clone distro files repo ( ${getthis} )."
-			getthis_location="$(find $HOME -type d -name ${getthis} | head -1)"
-			
-			if [ -z "${getthis_location}" ];then
-				getthis_location="${temp_path}"
-			else
-				getthis_location="$(cd "${getthis_location}" && cd .. && pwd)"
+pick_clone_rep_commnad(){
+	show_m "pick clone repo commnad"
+	if command -v git >/dev/null 2>&1;then
+		show_im "clone repo commnad: git"
+		clone_rep_(){
+			getthis="${1-}"
+			if [ ! -f "${installer_phases}/${getthis}" ];then
+				show_im "clone distro files repo ( ${getthis} )."
+				getthis_location="$(find $HOME -type d -name ${getthis} | head -1)"
+				
+				if [ -z "${getthis_location}" ];then
+					getthis_location="${temp_path}"
+				else
+					getthis_location="$(cd "${getthis_location}" && cd .. && pwd)"
+				fi
+				
+				if [ ! -d "${getthis_location}/${getthis}" ]; then 
+					git clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}/${getthis}"
+				else
+					show_im "${getthis} Folder does exsist"
+				fi
 			fi
-			
-			if [ ! -d "${getthis_location}/${getthis}" ]; then 
-				git clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}/${getthis}"
-			else
-				show_im "${getthis} Folder does exsist"
+			touch "${installer_phases}/${getthis}"
+		}
+	elif command -v svn >/dev/null 2>&1;then
+		show_im "clone repo commnad: svn"
+		clone_rep_(){
+			getthis="${1-}"
+			if [ ! -f "${installer_phases}/${getthis}" ];then
+				show_im "clone distro files repo ( ${getthis} )."
+				getthis_location="$(find $HOME -type d -name ${getthis} | head -1)"
+				
+				if [ -z "${getthis_location}" ];then
+					getthis_location="${temp_path}"
+				else
+					getthis_location="$(cd "${getthis_location}" && cd .. && pwd)"
+				fi
+				
+				if [ ! -d "${getthis_location}/${getthis}" ]; then 
+					svn clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}/${getthis}"
+				else
+					show_im "${getthis} Folder does exsist"
+				fi
 			fi
-		fi
-		touch "${installer_phases}/${getthis}"
-	}
-elif command -v svn >/dev/null 2>&1;then
-	clone_rep_(){
-		getthis="${1-}"
-		show_im "svn clone ${getthis}"
-		getthis_location="$(find $HOME -type d -name ${getthis} | head -1)"
-		
-		if [[ -z "${getthis_location}" ]];then
-			getthis_location="${temp_path}"
-		else
-			getthis_location="$(cd "${getthis_location}" && cd .. && pwd)"
-		fi
-		
-		if [ ! -d "${getthis_location}/${getthis}" ]; then 
-			svn clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}/${getthis}"
-		else
-			show_im "${getthis} Folder does exsist"
-		fi
-		
-		echo "${getthis_location}"
-	}
-fi
+			touch "${installer_phases}/${getthis}"
+		}
+	fi
+}
 
 check_and_download_core_script(){
 	show_m "check if exsit and download core script."
@@ -949,6 +958,8 @@ set_package_manager
 install_superuser_tools
 
 must_install_apps
+
+pick_clone_rep_commnad
 
 check_and_download_core_script
 
