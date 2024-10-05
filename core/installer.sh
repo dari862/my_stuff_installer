@@ -322,11 +322,13 @@ prompt_to_ask_to_what_to_install(){
 			fi
 			
 			if ! command -v bspwm >/dev/null && ! command -v sxhkd >/dev/null;then
-				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install bspwm?')" != "Y" ];then
-					install_bspwm=""
+				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install bspwm?')" = "Y" ];then
+					install_bspwm=bspwm
 					if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to switch to bspwm session?')" = "Y" ];then
 						switch_default_xsession_to="bspwm"
 					fi
+				else
+					install_bspwm=""
 				fi
 			fi
 			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install extra apps?')" = "Y" ];then

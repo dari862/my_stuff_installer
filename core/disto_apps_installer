@@ -34,9 +34,7 @@ fi
 if [[ "$install_zsh_now" = "zsh_default" ]];then
 	install_zsh_now=true
 	zsh_default_shell=true
-fi
-
-if [[ "$install_zsh_now" = "zsh" ]];then
+elif [[ "$install_zsh_now" = "zsh" ]];then
 	install_zsh_now=true
 fi
 
