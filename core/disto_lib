@@ -42,8 +42,8 @@ check_and_download_()
 	
 	if [[ ! -f "${new_check_this_file_}" ]]; then
 		show_im "Download $check_this_file_ file from www.github.com/dari862/my_stuff_installer ."
-		if curl -SL --progress-bar https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/"$check_this_file_" -o "${new_check_this_file_}" ;then
-		chmod +x "${new_check_this_file_}"
+		if download_file "" "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${check_this_file_}" "${new_check_this_file_}" ;then
+			chmod +x "${new_check_this_file_}"
 		else
 			show_em "Error: Failed to download ${check_this_file_} from ${new_check_this_file_} "
 		fi

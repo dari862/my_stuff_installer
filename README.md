@@ -1,24 +1,16 @@
 # experimental
 
-# my-linux-script
+# my-stuff-script
 
 ```
-bash <(wget -q -O - https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/installer.sh)
+bash <(wget -q -O - https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/installer.sh || curl -s https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/installer.sh)
 ```
 
-```
-bash <(curl -s https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/installer.sh)
-```
-
-# my-linux-script (deploy dev env)
+# my-stuff-script (deploy dev env)
 
 ```
 
-bash <(curl -s https://raw.githubusercontent.com/dari862/my_stuff_installer/main/For_dev/pre_dev_env)
-```
-
-```
-bash <(wget -q -O - https://raw.githubusercontent.com/dari862/my_stuff_installer/main/For_dev/pre_dev_env)
+bash <(wget -q -O - https://raw.githubusercontent.com/dari862/my_stuff_installer/main/For_dev/pre_dev_env || curl -s https://raw.githubusercontent.com/dari862/my_stuff_installer/main/For_dev/pre_dev_env)
 ```
 
 <details>

@@ -25,9 +25,10 @@ install_apt_fast(){
   		remove_aria2=true
 	fi
 	apt_fast_url='https://raw.githubusercontent.com/ilikenwf/apt-fast/master'
-	$_SUPERUSER curl -SL --progress-bar "$apt_fast_url"/apt-fast -o /usr/local/bin/apt-fast
+	download_file "$_SUPERUSER" "${apt_fast_url}/apt-fast" "/usr/local/bin/apt-fast"
+	
 	$_SUPERUSER chmod +x /usr/local/bin/apt-fast
-  	[ ! -f /etc/apt-fast.conf ] && $_SUPERUSER curl -SL --progress-bar "$apt_fast_url"/apt-fast.conf -o /etc/apt-fast.conf
+  	[ ! -f /etc/apt-fast.conf ] && download_file "$_SUPERUSER" "${apt_fast_url}/apt-fast.conf" "/etc/apt-fast.conf"
 }
 
 enable_repo_contrib(){

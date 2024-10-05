@@ -96,7 +96,7 @@ test_internet_(){
 	NETWORK=$(printf "GET /nm HTTP/1.1\\r\\nHost: network-test.debian.org\\r\\n\\r\\n" | nc -w1 $NETWORK_TEST 80 | grep -c "NetworkManager is online")
 	if test "$NETWORK" -ne 1 ; then
 		local wifi_interface=""
-		if curl -s "$url_to_test" &> /dev/null; then
+		if check_url "$url_to_test"; then
 			show_im "Internet connection test passed!"
 			return 0
 		else
@@ -141,7 +141,7 @@ test_internet_(){
 	
     		fix_time_
     		
-    		if curl -s "$url_to_test" &> /dev/null; then
+    		if check_url "$url_to_test"; then
 				show_im "Internet connection test passed!"
 				return 0
 			elif ping -q -c 5 "$test_dns" >/dev/null 2>&1; then
@@ -376,11 +376,37 @@ prompt_to_ask_to_what_to_install(){
 	EOF
 }
 
+pick_file_downloader_and_url_checker(){
+	if command -v curl >/dev/null 2>&1;then
+		check_url(){
+			curl -s "${1-}" 2>/dev/null
+		}
+		download_file(){
+			${1-} curl -SsL --progress-bar "${2-}" -o "${3-}" 2>/dev/null
+		}
+		get_url_content(){
+			curl -s "${1-}" 2>/dev/null
+		}
+	elif command -v wget >/dev/null 2>&1;then
+		check_url(){
+			wget -q -O- "${1-}" >/dev/null 2>&1
+		}
+		download_file(){
+			${1-} curl -SsL --progress-bar "${2-}" -o "${3-}" 2>/dev/null
+		}
+		get_url_content(){
+			wget -q -O- "${1-}" 2>/dev/null
+		}
+	else
+		show_em "please install curl or wget."
+	fi
+}
+
 fix_time_(){
 	[ -f "${installer_phases}/fix_time_" ] && return
 	show_m "Setting date ,time ,and timezone."
 	get_date_from_here=""
-	list_to_test=(debian.com ipinfo.io 104.16.132.229)
+	list_to_test=(network-test.debian.org ipinfo.io 104.16.132.229)
 	
 	for test in "${list_to_test[@]}";do
 		ping -c 1 $test &>/dev/null && get_date_from_here="$test" && break
@@ -389,8 +415,12 @@ fix_time_(){
 	if [[ -z "$get_date_from_here" ]];then 
 		show_em "failed to ping all of this: ${list_to_test[@]}"
 	else
-		$_SUPERUSER date -s "$(curl --head -sL --max-redirs 0 "$get_date_from_here" 2>&1 | sed -n 's/^ *Date: *//p')" &>/dev/null
-		#__timezone="$(curl -s https://ipinfo.io/ 2>/dev/null | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/ //g')"
+		if command -v curl >/dev/null 2>&1;then
+			$_SUPERUSER date -s "$(curl --head -sL --max-redirs 0 "$get_date_from_here" 2>&1 | sed -n 's/^ *Date: *//p')" >/dev/null 2>&1
+		elif command -v wget >/dev/null 2>&1;then
+			$_SUPERUSER date -s "$(wget -S -O- -q --no-check-certificate --max-redirect=0 "$get_date_from_here" 2>&1 | sed -n 's/^ *Date: *//p')" >/dev/null 2>&1
+		fi
+		#__timezone="$(get_url_content "https://ipinfo.io/" | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/ //g')"
 		__timezone="Asia/Kuwait"
 		if command -v timedatectl >/dev/null 2>&1;then
 			$_SUPERUSER timedatectl set-timezone $__timezone
@@ -445,6 +475,7 @@ must_install_apps()
 	show_m "installing req apps"
 	add_packages_2_install_list "mlocate"
 	add_packages_2_install_list "git"
+	add_packages_2_install_list "curl"
 	install_packages
 	touch "${installer_phases}/must_install_apps"
 }
@@ -652,7 +683,7 @@ source_my_lib_file(){
 		mv "${disto_lib_location}" "${temp_path}"
 	elif [[ ! -f "${temp_path}/${lib_file_name}" ]];then 
 		show_im "download lib file"
-		if ! curl -s https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${lib_file_name} -o "${temp_path}"/${lib_file_name}; then
+		if ! download_file "" "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${lib_file_name}" "${temp_path}/${lib_file_name}"; then
 			show_em "Error: Failed to download ${lib_file_name} ."
 		fi
 	fi
