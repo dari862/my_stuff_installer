@@ -934,6 +934,8 @@ check_if_user_has_root_access
 
 prompt_to_ask_to_what_to_install
 
+pick_file_downloader_and_url_checker
+
 test_internet_
 
 fix_time_
