@@ -9,72 +9,40 @@ install_jgmenu_now=false
 install_bspwm_now=false
 install_zsh_now=false
 zsh_default_shell=false
+install_extra_now=false
 
 if [[ "$install_xfce4_panel" = "xfce4_panel" ]];then
 	install_xfce4_panel_now=true
-elif [[ "$install_polybar" = "polybar" ]];then
+fi
+
+if [[ "$install_polybar" = "polybar" ]];then
 	install_polybar_now=true
-elif [[ "$install_qt5ct" = "qt5ct" ]];then
+fi
+
+if [[ "$install_qt5ct" = "qt5ct" ]];then
 	install_qt5ct_now=true
-elif [[ "$install_jgmenu" = "jgmenu" ]];then
+fi
+
+if [[ "$install_jgmenu" = "jgmenu" ]];then
 	install_jgmenu_now=true
-elif [[ "$install_bspwm" = "bspwm" ]];then
+fi
+
+if [[ "$install_bspwm" = "bspwm" ]];then
 	install_bspwm_now=true
-elif [[ "$install_zsh_now" = "zsh_default" ]];then
+fi
+
+if [[ "$install_zsh_now" = "zsh_default" ]];then
 	install_zsh_now=true
 	zsh_default_shell=true
-elif [[ "$install_zsh_now" = "zsh" ]];then
+fi
+
+if [[ "$install_zsh_now" = "zsh" ]];then
 	install_zsh_now=true
 fi
 
-List_of_apt_2_install_=()
-package_firefox="$(check_if_package_exist_in_repo firefox)"
-package_firefox_esr="$(check_if_package_exist_in_repo firefox-esr)"
-
-##################################################################################
-## must_install_apps_list
-##################################################################################
-#must have apps
-install_must_have_apps=(jq btop xclip curl cbatticon xprintidle yad git lsb-release rofi picom systemd-timesyncd mlocate ufw wget xwallpaper)
-install_must_have_apps2=(psmisc unzip dunst xorg arandr autorandr dbus-x11 pnmixer diodon gparted inxi s-tui dfc htop hwinfo synaptic galternatives xdotool libnotify-bin gnome-keyring ntfs-3g acl xinit xdg-user-dirs lm-sensors)
-install_openbox_=(openbox obconf xcape tint2 nitrogen)
-install_image_viewer_apps=(viewnior)
-install_files_manager_app=(thunar thunar-archive-plugin gvfs gvfs-fuse gvfs-backends file-roller baobab)
-install_firefox_=($package_firefox $package_firefox_esr)
-install_terminal=(kitty terminator)
-install_conky_all_app=(conky-all)
-install_if_laptop=(tlp tlp-rdw powertop xserver-xorg-input-synaptics xinput)
-install_cli_sound_app=(mpd mpc ncmpcpp)
-install_text_editer_app=(geany evince meld)
-install_mediaplayer_app=(mpv)
-install_x_lock_extra=(i3lock i3lock-fancy)
-install_fonts=(fonts-noto fonts-droid-fallback fonts-cantarell fonts-liberation fonts-opensymbol fonts-noto-core fonts-noto-mono fonts-inconsolata)
-install_themes=(papirus-icon-theme fonts-noto-color-emoji fonts-firacode fonts-font-awesome arc-theme gtk3-nocsd numix-icon-theme paper-icon-theme dmz-cursor-theme)
-install_themes_tools=(xsettingsd lxappearance)
-install_polkit_apps=(policykit-1 policykit-1-gnome)
-
-# maim for ac-shots , ffmpeg for screen recoding , at for bl-beepmein , xsel for files-uploader , wmctrl for style-manager and files-uploader
-install_for_scripts=(maim ffmpeg at xsel wmctrl)
-
-#######################
-## extra apps
-#######################
-install_xfce4_panel=(xfce4-panel xfce4-settings xfce4-clipman xfce4-whiskermenu-plugin network-manager-gnome)
-install_polybar=(polybar libnm-dev)
-install_qt5ct=(qt5ct qt5-style-kvantum libqt5svg5 qml-module-qtquick-controls)
-install_jgmenu=(jgmenu)
-install_bspwm=(bspwm sxhkd)
-install_zsh=(zsh zsh-antigen zsh-autosuggestions zsh-syntax-highlighting)
-#######################
-## better bash
-#######################
-install_better_bash=(bash bash-completion)
-
-#######################
-## better shell
-#######################
-install_better_shell=(micro tar bat tree multitail fzf trash-cli ncdu dos2unix command-not-found thefuck highlight lf)
-
+if [[ "$install_extra_now" = "extra" ]];then
+	install_extra_now=true
+fi
 ##################################################################################
 # main
 ##################################################################################
@@ -86,6 +54,7 @@ add_packages_2_install_list "${install_themes[@]}"
 add_packages_2_install_list "${install_themes_tools[@]}"
 add_packages_2_install_list "${install_terminal[@]}"
 add_packages_2_install_list "${install_files_manager_app[@]}"
+add_packages_2_install_list "${install_files_manager_support_app[@]}"
 add_packages_2_install_list "${install_x_lock_extra[@]}"
 add_packages_2_install_list "${install_firefox_[@]}"
 add_packages_2_install_list "${install_cli_sound_app[@]}"
@@ -119,7 +88,9 @@ fi
 if [[ "$install_zsh_now" = true ]];then
 	add_packages_2_install_list "${install_zsh[@]}"
 fi
-
+if [[ "$install_extra_now" = true ]];then
+	add_packages_2_install_list "${install_extra_apps[@]}"
+fi
 show_im "Install distro packages."
 install_packages
 

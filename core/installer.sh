@@ -37,10 +37,11 @@ disable_ipv6="Y"
 run_update_grub_image="Y"
 autoclean_and_autoremove="Y"
 install_zsh_now=""
+install_extra_now=""
+install_qt5ct="" 
+install_jgmenu="" 
 install_xfce4_panel=xfce4_panel 
 install_polybar=polybar 
-install_qt5ct=qt5ct 
-install_jgmenu=jgmenu 
 install_bspwm=bspwm
 reboot_now="Y"
 enable_contrib=false
@@ -194,6 +195,8 @@ prompt_to_ask_to_what_to_install(){
 		fi
 	fi
 	
+	show_m "prompt for what do you want to install."
+	
 	if [ "$auto_run_script" != "true" ];then
 		if [ "$(do_you_want_2_run_this_yes_or_no 'Autorun installation?')" = "Y" ];then
 			tee "${prompt_to_install_value_file}" <<- EOF >/dev/null
@@ -307,14 +310,14 @@ prompt_to_ask_to_what_to_install(){
 			fi
 			
 			if ! command -v qt5ct >/dev/null;then
-				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install qt5ct?')" != "Y" ];then
-					install_qt5ct=""
+				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install qt5ct?')" = "Y" ];then
+					install_qt5ct=qt5ct
 				fi
 			fi
 			
 			if ! command -v jgmenu >/dev/null;then
-				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install jgmenu?')" != "Y" ];then
-					install_jgmenu=""
+				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install jgmenu?')" = "Y" ];then
+					install_jgmenu=jgmenu
 				fi
 			fi
 			
@@ -325,6 +328,9 @@ prompt_to_ask_to_what_to_install(){
 						switch_default_xsession_to="bspwm"
 					fi
 				fi
+			fi
+			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install extra apps?')" = "Y" ];then
+				install_extra_now=extra
 			fi
 		fi
 		
@@ -357,6 +363,7 @@ prompt_to_ask_to_what_to_install(){
 		disable_ipv6_stack="${disable_ipv6_stack}"
 		autoclean_and_autoremove="${autoclean_and_autoremove}"
 		install_zsh_now="${install_zsh_now}"
+		install_extra_now="${install_extra_now}"
 		install_xfce4_panel="${install_xfce4_panel}"
 		install_polybar="${install_polybar}"
 		install_qt5ct="${install_qt5ct}"
@@ -667,6 +674,7 @@ source_this_script(){
 
 pre_script_create_dir_and_source_stuff(){
 	show_m "pre-script: create dir and source files."
+	show_im "create dir ${installer_phases}"
 	mkdir -p "${installer_phases}"
 	
 	if [ -f "${save_value_file}" ];then
@@ -674,7 +682,7 @@ pre_script_create_dir_and_source_stuff(){
 	fi
 	
 	if [ -f "${prompt_to_install_value_file}" ];then
-		show_m "file exist : ${prompt_to_install_value_file} form previce run."
+		show_im "file exist : ${prompt_to_install_value_file} form previce run."
 		if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want source it?')" = "Y" ];then
 			source "${prompt_to_install_value_file}"
 			source_prompt_to_install_file=true
@@ -854,11 +862,13 @@ check_and_download_core_script(){
 	show_m "check if exsit and download core script."
 	
 	if [[ "$arg_" = "drivers" ]] || [[ -z "$arg_" ]];then
-		check_and_download_ "disto_Drivers"
+		check_and_download_ "disto_Drivers_list"
+		check_and_download_ "disto_Drivers_installer"
 	fi
 	
 	if [[ "$arg_" = "apps" ]] || [[ -z "$arg_" ]];then
-		check_and_download_ "disto_Installapps_list"
+		check_and_download_ "disto_apps_list"
+		check_and_download_ "disto_apps_installer"
 	fi
 	
 	if [[ -z "$arg_" ]];then
@@ -912,11 +922,13 @@ clear
 _unattended_upgrades_ stop
 
 if [[ "$arg_" = "drivers" ]] || [[ -z "$arg_" ]];then
-	source_this_script "disto_Drivers" "Install drivers from (disto_Drivers)"
+	source_this_script "disto_Drivers_list" "Install drivers from (disto_Drivers)"
+	source_this_script "disto_Drivers_installer" "Install drivers from (disto_Drivers)"
 fi
 
 if [[ "$arg_" = "apps" ]] || [[ -z "$arg_" ]];then
-	source_this_script "disto_Installapps_list" "Install apps from (disto_Installapps_list)"
+	source_this_script "disto_apps_list" "Install drivers from (disto_Drivers)"
+	source_this_script "disto_apps_installer" "Install apps from (disto_Installapps_list)"
 fi
 
 install_lightdm_now
