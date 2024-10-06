@@ -1,349 +1,120 @@
-#!/bin/bash
-temp_path="/tmp/my_stuff"
+#!/bin/sh
 __distro_path="/usr/share/my_stuff"
-_hub_script_dir="${__distro_path}/system_files/hub_script"
 
-PATH="${__distro_path}/bin/bin:$PATH"
-wall_path="${__distro_path}/my_wallpapers/"
-wall_theme_path="${__distro_path}/system_files/wallpapers"
-##################################################################################
-show_im "update Databases ex: locate"
-my-superuser updatedb
-
-############
-# terminator
-############
-show_im "fix terminator"
-
-if [ -d "/etc/xdg" ];then
-	[ ! -d "/etc/xdg/terminator" ] && my-superuser mkdir -p "/etc/xdg/terminator"
-	[ ! -f "/etc/xdg/terminator/config" ] && my-superuser cp -r "${__distro_path}"/extra_skel/.config/terminator /etc/xdg/terminator
-fi
-
-############
-# Remove "Set as wallpaper" from Thunar Context Menu and replace it with  "Set as wallpaper" from thunar config uac file
-############
-show_im "fix thunar"
-
-__thunar_wall_plug="$(locate thunar | grep wall || :)"
-[ ! -z "${__thunar_wall_plug}" ] && my-superuser mv "${__thunar_wall_plug}" "${__thunar_wall_plug}.backup"
-
-##################################################################################
-
-show_im "prepares for hub script"
-my-superuser mkdir -p "${_hub_script_dir}"
-my-superuser ln -sf "${__distro_path}"/bin/not_add_2_path/pmxkcd/pmxkcd "${_hub_script_dir}"
-my-superuser ln -sf ${__distro_path}/bin/not_add_2_path/utilities/* "${_hub_script_dir}"
-my-superuser ln -sf ${__distro_path}/bin/rofi/* "${_hub_script_dir}" 
-my-superuser ln -sf ${__distro_path}/bin/bin/displayselect "${_hub_script_dir}"
-my-superuser ln -sf ${__distro_path}/bin/bin/full-upgrade "${_hub_script_dir}"
-my-superuser ln -sf ${__distro_path}/bin/apps/* "${_hub_script_dir}"
-my-superuser ln -sf ${__distro_path}/bin/not_add_2_path/pmxkcd/pmxkcd "${_hub_script_dir}"
-command -v systemctl &>/dev/null && my-superuser rm -f "${_hub_script_dir}"/yautostart
-
-show_im "remove not need script for hub script"
-command -v systemctl &>/dev/null && my-superuser ln -sf ${__distro_path}/bin/not_add_2_path/utilities/errcheck "${_hub_script_dir}"
-remove_this_script_=(hub rofi-launcher rofi-runner unmounter)
-for script in "${remove_this_script_[@]}";do
-	my-superuser rm "${_hub_script_dir}"/"$script"
-done
-
-show_im "creating missing dir"
-
-my-superuser mkdir -p "${__distro_path}"/bin/not_add_2_path/distrobox_center/Apps
-my-superuser mkdir -p "${__distro_path}"/bin/not_add_2_path/distrobox_center/Gaming
-
-show_im "LN essional files"
-my-superuser mkdir -p "${__distro_path}"/system_files/bin
-my-superuser ln -sf "${__distro_path}"/bin/not_add_2_path/pmxkcd/pmxkcd "${__distro_path}"/system_files/bin/
-command -v systemctl &>/dev/null && my-superuser ln -sf "${__distro_path}"/bin/not_add_2_path/utilities/errcheck "${__distro_path}"/system_files/bin/
-
-if [[ -f "${temp_path}/this_is_laptop" ]] ;then
-	my-superuser ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/gpu-switcher-session.desktop /etc/xdg/autostart
-	my-superuser ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/gpu-switcher-session.desktop "${__distro_path}"/system_files/skel/.config/autostart/
-	my-superuser ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/yadtlp.desktop "${__distro_path}"/system_files/applications
-	my-superuser ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/yadtlp.desktop /usr/share/applications
-	my-superuser ln -sf "${__distro_path}"/bin/not_add_2_path/laptop/toggletouch "${__distro_path}"/system_files/bin
-fi
-
-show_im "create uniq system files"
-my-superuser mkdir -p "${__distro_path}"/system_files/downloaded
-my-superuser mkdir -p "${__distro_path}"/system_files/git
-my-superuser mkdir -p "${__distro_path}"/system_files/deployed_containers/deployed
-my-superuser mkdir -p "${__distro_path}"/system_files/auto_completion
-
-if [ -f "${temp_path}/this_is_laptop" ];then 
-	show_im "this is laptop"
-	my-superuser touch "${__distro_path}"/system_files/this_is_laptop
-fi
+pre_post_install(){
+	show_im "create system ready files"
+	my-superuser mkdir -p "${__distro_path}"/system_files/updater
 	
-if [ -f "${temp_path}/GPU_Drivers_ready" ];then 
-	show_im "GPU_Drivers ready ."
-	my-superuser touch "${__distro_path}"/system_files/GPU_Drivers_ready
-fi
-
-if [ -f "${temp_path}/fingerprint_exist" ];then 
-	show_im "fingerprint ready ."
-	my-superuser touch "${__distro_path}"/system_files/fingerprint_exist
-fi
-
-show_im "link icons based on distro"
-if [ -f /etc/os-release ]; then
- # freedesktop.org and systemd
- . /etc/os-release
- distro_name_="$ID"
-fi
-
-if [ -d "${__distro_path}/icons/Distro/${distro_name_}" ];then
- my-superuser ln -sf "${__distro_path}/icons/Distro/${distro_name_}" "${__distro_path}/system_files/Distro"
-else
-	my-superuser ln -sf "${__distro_path}/icons/Distro/arch" "${__distro_path}/system_files/Distro"
-fi
-
-show_im "copy skell file to system_files/skel ."
-my-superuser cp -r "${__distro_path}/skel" "${__distro_path}/system_files" 
-my-superuser cp -r "${__distro_path}/lib/rc.xml" "${__distro_path}/system_files/rc.xml"
-my-superuser mkdir -p "${__distro_path}/system_files/skel/.local/bin"
-
-my-superuser mkdir -p "${__distro_path}"/system_files/skel/.config/mpd/playlists
-my-superuser touch "${__distro_path}"/system_files/skel/.config/mpd/database
-my-superuser mkdir -p "${__distro_path}"/system_files/skel/.local/share/bash_history
-
-if command -v geany >/dev/null ; then
-	show_im "copy geany skell file to system_files/skel ."
-	my-superuser cp -r "${__distro_path}/extra_skel/.config/geany" "${__distro_path}/system_files/skel/.config" 
-fi
-
-if command -v lf >/dev/null ; then
-	show_im "copy lf skell file to system_files/skel ."
-	my-superuser cp -r "${__distro_path}/extra_skel/.config/lf" "${__distro_path}/system_files/skel/.config" 
-fi
-
-if command -v nsxiv >/dev/null || command -v sxiv >/dev/null ; then
-	show_im "copy nsxiv skell file to system_files/skel ."
-	my-superuser cp -r "${__distro_path}/extra_skel/.config/nsxiv" "${__distro_path}/system_files/skel/.config"
-	my-superuser cp -r "${__distro_path}/extra_skel/.config/sxiv" "${__distro_path}/system_files/skel/.config" 
-fi
-
-if command -v terminator >/dev/null ; then
-	show_im "copy gigolo skell file to system_files/skel ."
-	my-superuser cp -r "${__distro_path}/extra_skel/.config/terminator" "${__distro_path}/system_files/skel/.config" 
-fi
-
-if command -v thunar >/dev/null ; then
-	show_im "copy gigolo skell file to system_files/skel ."
-	my-superuser cp -r "${__distro_path}/extra_skel/.config/Thunar" "${__distro_path}/system_files/skel/.config" 
-fi
-
-if command -v gigolo >/dev/null ; then
-	show_im "cp gigolo skell file to system_files/skel ."
-	my-superuser cp -r "${__distro_path}/extra_skel/.config/gigolo" "${__distro_path}/system_files/skel/.config" 
-fi
-
-if command -v plank >/dev/null ; then
-	show_im "copy plank skell file to system_files/skel ."
-	my-superuser cp -r "${__distro_path}/extra_skel/.config/plank" "${__distro_path}/system_files/skel/.config" 
-	my-superuser cp -r "${__distro_path}/extra_skel/.local/share/plank" "${__distro_path}/system_files/skel/.local/share/" 
-fi
-
-if command -v xbindkey >/dev/null ; then
-	show_im "copy xbindkey skell file to system_files/skel ."
-	my-superuser cp -r "${__distro_path}/extra_skel/.xbindkeysrc" "${__distro_path}/system_files/skel" 
-fi
-
-if command -v clipit >/dev/null ; then
-	show_im "copy clipit skell file to system_files/skel ."
-	my-superuser cp -r "${__distro_path}/extra_skel/.config/clipit" "${__distro_path}/system_files/skel/.config" 
-fi
-
-if command -v jgmenu >/dev/null ; then
-	show_im "copy jgmenu skell file to system_files/skel ."
-	my-superuser cp -r "${__distro_path}/extra_skel/.config/jgmenu" "${__distro_path}/system_files/skel/.config" 
-fi
-
-if command -v greenclip >/dev/null ; then
-	show_im "copy greenclip skell file to system_files/skel ."
-	my-superuser cp -r "${__distro_path}/extra_skel/.config/greenclip.toml" "${__distro_path}/system_files/skel/.config" 
-fi
-
-if command -v zathura >/dev/null ; then
-	show_im "copy zathura skell file to system_files/skel ."
-	my-superuser cp -r "${__distro_path}/extra_skel/.config/zathura" "${__distro_path}/system_files/skel/.config" 
-fi
-
-if command -v polybar >/dev/null ; then
-	show_im "copy polybar skell file to system_files/skel ."
-	my-superuser cp -r "${__distro_path}/extra_skel/.config/polybar" "${__distro_path}/system_files/skel/.config"
+	if [ -f "${temp_path}/this_is_laptop" ];then 
+		show_im "this is laptop"
+		my-superuser touch "${__distro_path}"/system_files/this_is_laptop
+	fi
+		
+	if [ -f "${temp_path}/GPU_Drivers_ready" ];then 
+		show_im "GPU_Drivers ready ."
+		my-superuser touch "${__distro_path}"/system_files/GPU_Drivers_ready
+	fi
 	
-	if [ -d "${__distro_path}/bin/polybar" ] ; then
-		my-superuser ln -sf "${__distro_path}"/bin/polybar/* "${__distro_path}"/system_files/bin
+	if [ -f "${temp_path}/fingerprint_exist" ];then 
+		show_im "fingerprint ready ."
+		my-superuser touch "${__distro_path}"/system_files/fingerprint_exist
 	fi
-fi
-
-if command -v tint2 >/dev/null ; then
-	show_im "copy tint2 skell file to system_files/skel ."
-	my-superuser cp -r "${__distro_path}/extra_skel/.config/tint2" "${__distro_path}/system_files/skel/.config" 
-fi
-
-if command -v xfce4-panel >/dev/null ; then
-	show_im "copy xfce4-panel skell file to system_files/skel ."
-	my-superuser cp -r "${__distro_path}/extra_skel/.config/xfce4" "${__distro_path}/system_files/skel/.config"
-	my-superuser cp -r "${__distro_path}/extra_skel/.local/share/xfce4" "${__distro_path}/system_files/skel/.local/share/"
-fi
-
-if command -v lxterminal >/dev/null ; then
-	show_im "copy lxterminal skell file to system_files/skel ."
-	my-superuser cp -r "${__distro_path}/extra_skel/.config/lxterminal" "${__distro_path}/system_files/skel/.config" 
-fi
-
-if command -v alacritty >/dev/null ; then
-	show_im "copy alacritty skell file to system_files/skel ."
-	my-superuser cp -r "${__distro_path}/extra_skel/.config/alacritty" "${__distro_path}/system_files/skel/.config" 
-fi
-
-if command -v bspwm >/dev/null ; then
-	show_im "copy bspwm skell file to system_files/skel ."
-	my-superuser cp -r "${__distro_path}/extra_skel/.config/bspwm" "${__distro_path}/system_files/skel/.config" 
-	my-superuser cp -r "${__distro_path}/extra_skel/.config/sxhkd" "${__distro_path}/system_files/skel/.config" 
-fi
-
-show_im "LN bin files to system_files/bin ."
-
-if [ -f "${__distro_path}/system_files/this_is_laptop" ];then
-	if [ -d "${__distro_path}/bin/laptop" ] ; then
-		show_im "laptop bin files to system_files/bin ."
-		my-superuser ln -sf "${__distro_path}"/bin/laptop/* "${__distro_path}"/system_files/bin
-	fi
-fi
-
-if [ -d "${__distro_path}/bin/bin" ] ; then
-	show_im "bin bin files to system_files/bin ."
-	my-superuser ln -sf "${__distro_path}"/bin/bin/* "${__distro_path}"/system_files/bin
-fi
-
-if [ -d "${__distro_path}/bin/apps" ] ; then
-	show_im "apps bin files to system_files/bin ."
-	my-superuser ln -sf "${__distro_path}"/bin/apps/* "${__distro_path}"/system_files/bin
-	command -v systemctl &>/dev/null && my-superuser rm -f "${__distro_path}"/system_files/bin/yautostart
-fi
-
-if [ -d "${__distro_path}/bin/rofi" ] ; then
-	show_im "rofi bin files to system_files/bin ."
-	my-superuser ln -sf "${__distro_path}"/bin/rofi/* "${__distro_path}"/system_files/bin
-fi
-
-if [ -d "${__distro_path}/bin/session_managers" ] ; then
-	show_im "session_managers bin files to system_files/bin ."
-	my-superuser ln -sf "${__distro_path}"/bin/session_managers/* "${__distro_path}"/system_files/bin
-fi
-
-my-superuser ln -sf "${__distro_path}"/bin/not_add_2_path/nbrowser/nbrowser "${__distro_path}"/system_files/bin
-my-superuser ln -sf "${__distro_path}"/bin/not_add_2_path/nbrowser/nbrowser.desktop /usr/share/applications
-
-show_im "creating Package-managers library file."
-cat "${__distro_path}"/lib/Package-managers/common | my-superuser tee "${__distro_path}"/system_files/Package-manager &>/dev/null
-cat "${__distro_path}"/lib/Package-managers/${PACKAGER}.sh | my-superuser tee -a "${__distro_path}"/system_files/Package-manager &>/dev/null
-
-# test if in virtual machine
-if [ "$(cat /sys/devices/virtual/dmi/id/chassis_type)" = "1" ];then # 1 eq vm
-	# disable vsync from picom (vsync in virtual machine make issues)
-	show_im "picom vm"
-	my-superuser sed -i 's|# vsync = false|vsync = false;|g' "${__distro_path}"/system_files/skel/.config/picom.conf
-	my-superuser sed -i 's|# vsync = false|vsync = false;|g' "${__distro_path}"/system_files/skel/.config/picom.conf.bunsenlab
-	my-superuser sed -i 's|vsync = true;|# vsync = true|g' "${__distro_path}"/system_files/skel/.config/picom.conf
-	my-superuser sed -i 's|vsync = true;|# vsync = true|g' "${__distro_path}"/system_files/skel/.config/picom.conf.bunsenlab
-fi
-
-if [[ -f "${temp_path}/envycontrol_updater_DmDmDmdMdMdM" ]];then
-	my-superuser mv "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM "${__distro_path}"/system_files/updater/envycontrol
-fi
-
-my-superuser mkdir -p "/usr/share/lightdm/lightdm.conf.d"
-my-superuser mkdir -p "/usr/share/lightdm/lightdm-gtk-greeter.conf.d"
-
-my-superuser cp -r ${__distro_path}/lib/lightdm "${__distro_path}"/system_files
-my-superuser ln -sf "${__distro_path}"/system_files/lightdm/lightdm.conf.d/50_my_stuff.conf /usr/share/lightdm/lightdm.conf.d
-my-superuser ln -sf "${__distro_path}"/system_files/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf /usr/share/lightdm/lightdm-gtk-greeter.conf.d
-
-if [[ -f "${temp_path}/fingerprint_exist" ]];then 
- my-superuser ln -sf ${__distro_path}/bin/not_add_2_path/fingerprint_gui ${__distro_path}/system_files/bin
-fi
-
-show_im "Add current distro name and icon to polybar."
-# distro 
-if [ -f /etc/os-release ]; then
-	. /etc/os-release
-	version_=$(echo "${VERSION_ID//./}")
-	distro_name_="$ID"
-elif [ -f /etc/lsb-release ]; then
-	# For some versions of Debian/Ubuntu without lsb_release command
-	. /etc/lsb-release
-	distro_name_="$DISTRIB_ID"
-else
-	# Fall back to uname, e.g. "Linux <version>", also works for BSD, etc.
-	distro_name_="$(uname -s)"
-fi
 	
-if [ "$distro_name_" = "debian" ];then
-	my-superuser sed -i 's///g' "${__distro_path}/system_files/bin/polybar_fixer"
-	my-superuser sed -i 's/Arch Linux/Debian/g' "${__distro_path}/system_files/bin/polybar_fixer"
-elif [ "$distro_name_" = "ubuntu" ];then
-	my-superuser sed -i 's//󰕈/g' "${__distro_path}/system_files/bin/polybar_fixer"
-	my-superuser sed -i 's/Arch Linux/Ubuntu/g' "${__distro_path}/system_files/bin/polybar_fixer"
-fi
-
-show_im "copy manpages."
-my-superuser ln -sf ${__distro_path}/lib/manpage/* /usr/share/man/man1
-
-##################################################################################
-##################################################################################
-##################################################################################
-
-show_im "Running script for create_DB.sh --all"
-my-superuser ${__distro_path}/bin/not_add_2_path/create_DB.sh --all
-
-show_im "Running must_create_script."
-for script in "${__distro_path}"/bin/not_add_2_path/must_create_script/*;do
-	show_im "running $(basename $script). from must_create_script ."
-	source "$script"/make
-done
-
-if [[ -f "${__distro_path}/system_files/updater/envycontrol" ]];then 
-	show_im "runing envycontrol_updater"
-	my-superuser ${__distro_path}/system_files/updater/envycontrol
-fi
-
-show_im "installing update-notification"
-my-superuser cp -r "${__distro_path}/lib/apps/update-notification.conf" "${__distro_path}/system_files"
-source "${__distro_path}/system_files/update-notification.conf"
-my-superuser ln -sf "$script_full_path" "/etc/cron.$cron_when"	
-if [ ! -f "$updates_file" ]
-then 
-	my-superuser touch "$updates_file"
-	my-superuser chmod a+w "$updates_file"
-fi
-
-show_im "Create keybinds."
-my-superuser "${__distro_path}"/system_files/bin/keybinds --initial-step
-
-##################################################################################
-##################################################################################
-##################################################################################
-
-show_im "pick correct apps_as_root."
-my-superuser chmod -c 0400 ${__distro_path}/lib/apps/doas/doas.conf
-if command -v doas >/dev/null 2>&1;then
-	my-superuser ln -sf ${__distro_path}/lib/apps/doas/apps_as_root ${__distro_path}/system_files/bin
-	my-superuser ln -sf ${__distro_path}/lib/apps/doas/doasedit ${__distro_path}/system_files/bin
-	my-superuser cp -r ${__distro_path}/lib/apps/doas/doas.conf /etc
-	if ! my-superuser doas -C ${__distro_path}/lib/apps/doas/doas.conf;then
-		show_em "config error"
+	if [ -f "${temp_path}/envycontrol_updater_DmDmDmdMdMdM" ];then
+		my-superuser mv "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM "${__distro_path}"/system_files/updater/envycontrol
+		show_im "runing envycontrol_updater"
+		my-superuser ${__distro_path}/system_files/updater/envycontrol
 	fi
-elif command -v sudo >/dev/null 2>&1;then
-	my-superuser ln -sf ${__distro_path}/lib/apps/sudo/apps_as_root ${__distro_path}/system_files/bin
-fi
+	
+	show_im "Add current distro name and icon to polybar."
+	# distro 
+	if [ -f /etc/os-release ]; then
+		. /etc/os-release
+		version_=$(echo "${VERSION_ID//./}")
+		distro_name_="$ID"
+	elif [ -f /etc/lsb-release ]; then
+		# For some versions of Debian/Ubuntu without lsb_release command
+		. /etc/lsb-release
+		distro_name_="$DISTRIB_ID"
+	else
+		# Fall back to uname, e.g. "Linux <version>", also works for BSD, etc.
+		distro_name_="$(uname -s)"
+	fi
+		
+	if [ "$distro_name_" = "debian" ];then
+		echo "distro_icon=" | my-superuser tee "${__distro_path}/system_files/disto_icons" >/dev/null 2>&1
+		echo 'distro_name="Debian"' | my-superuser tee -a "${__distro_path}/system_files/disto_icons" >/dev/null 2>&1
+	elif [ "$distro_name_" = "ubuntu" ];then
+		echo "distro_icon=󰕈" | my-superuser tee "${__distro_path}/system_files/disto_icons" >/dev/null 2>&1
+		echo 'distro_name="Ubuntu"' | my-superuser tee -a "${__distro_path}/system_files/disto_icons" >/dev/null 2>&1
+	else
+		echo "distro_icon=" | my-superuser tee "${__distro_path}/system_files/disto_icons" >/dev/null 2>&1
+		echo 'distro_name="Arch Linux"' | my-superuser tee -a "${__distro_path}/system_files/disto_icons" >/dev/null 2>&1
+	fi
+}
 
-my-superuser ln -sf ${__distro_path}/distro_manager/full-upgrade ${__distro_path}/system_files/bin
+end_of_post_install(){
+	show_im "creating Package-managers library file."
+	cat "${__distro_path}"/lib/Package-managers/common | my-superuser tee "${__distro_path}"/system_files/Package-manager >/dev/null 2>&1
+	cat "${__distro_path}"/lib/Package-managers/${PACKAGER}.sh | my-superuser tee -a "${__distro_path}"/system_files/Package-manager >/dev/null 2>&1
+	
+	show_im "link icons based on distro"
+	if [ -f /etc/os-release ]; then
+ 		# freedesktop.org and systemd
+ 		. /etc/os-release
+ 		distro_name_="$ID"
+	fi
+	
+	if [ -d "${__distro_path}/icons/Distro/${distro_name_}" ];then
+		my-superuser ln -sf "${__distro_path}/icons/Distro/${distro_name_}" "${__distro_path}/system_files/Distro"
+	else
+		my-superuser ln -sf "${__distro_path}/icons/Distro/arch" "${__distro_path}/system_files/Distro"
+	fi
+	
+	# test if in virtual machine
+	if [ "$(cat /sys/devices/virtual/dmi/id/chassis_type)" = "1" ];then # 1 eq vm
+		# disable vsync from picom (vsync in virtual machine make issues)
+		show_im "picom vm"
+		my-superuser sed -i 's|# vsync = false|vsync = false;|g' "${__distro_path}"/system_files/skel/.config/picom.conf
+		my-superuser sed -i 's|# vsync = false|vsync = false;|g' "${__distro_path}"/system_files/skel/.config/picom.conf.bunsenlab
+		my-superuser sed -i 's|vsync = true;|# vsync = true|g' "${__distro_path}"/system_files/skel/.config/picom.conf
+		my-superuser sed -i 's|vsync = true;|# vsync = true|g' "${__distro_path}"/system_files/skel/.config/picom.conf.bunsenlab
+	fi
+	
+	my-superuser mkdir -p "/usr/share/lightdm/lightdm.conf.d"
+	my-superuser mkdir -p "/usr/share/lightdm/lightdm-gtk-greeter.conf.d"
+	
+	my-superuser cp -r ${__distro_path}/lib/lightdm "${__distro_path}"/system_files
+	my-superuser ln -sf "${__distro_path}"/system_files/lightdm/lightdm.conf.d/50_my_stuff.conf /usr/share/lightdm/lightdm.conf.d
+	my-superuser ln -sf "${__distro_path}"/system_files/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf /usr/share/lightdm/lightdm-gtk-greeter.conf.d
 
-show_im "prepare completed"
-my-superuser touch "${installer_phases}/disto_post_install"
+	show_im "copy manpages."
+	my-superuser ln -sf ${__distro_path}/lib/manpage/* /usr/share/man/man1
+	
+	show_im "installing update-notification"
+	my-superuser cp -r "${__distro_path}/lib/apps/update-notification.conf" "${__distro_path}/system_files"
+	source "${__distro_path}/system_files/update-notification.conf"
+	my-superuser ln -sf "$script_full_path" "/etc/cron.$cron_when"	
+	if [ ! -f "$updates_file" ]
+	then 
+		my-superuser touch "$updates_file"
+		my-superuser chmod a+w "$updates_file"
+	fi
+	
+	show_im "pick correct apps_as_root."
+	my-superuser chmod -c 0400 ${__distro_path}/lib/apps/doas/doas.conf
+	if command -v doas >/dev/null 2>&1;then
+		my-superuser ln -sf ${__distro_path}/lib/apps/doas/apps_as_root ${__distro_path}/system_files/bin
+		my-superuser ln -sf ${__distro_path}/lib/apps/doas/doasedit ${__distro_path}/system_files/bin
+		my-superuser cp -r ${__distro_path}/lib/apps/doas/doas.conf /etc
+		if ! my-superuser doas -C ${__distro_path}/lib/apps/doas/doas.conf;then
+			show_em "config error"
+		fi
+	elif command -v sudo >/dev/null 2>&1;then
+		my-superuser ln -sf ${__distro_path}/lib/apps/sudo/apps_as_root ${__distro_path}/system_files/bin
+	fi	
+	
+	show_im "prepare completed"
+	my-superuser touch "${installer_phases}/disto_post_install"
+	
+}

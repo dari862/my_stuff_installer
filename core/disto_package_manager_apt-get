@@ -84,7 +84,7 @@ enable_repo_(){
 		enable_repo_nonfree && update_now=true
 	fi
 	
-	if [ "${install_GPU_Drivers}" = "install_GPU" ] && [ "${nvidia_gpu_exist}" = "true" ];then
+	if [ "${enable_nvidia_repo}" = "true" ];then
 		enable_nvidia_gpu_repo
 	fi
 

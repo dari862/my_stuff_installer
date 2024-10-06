@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source "${prompt_to_install_value_file}"
+
 List_of_apt_2_install_=()
 #######################
 ## must_install_apps_list
@@ -16,3 +18,13 @@ install_fingerprint=(fprintd libpam-fprintd)
 install_wireless=(wireless-tools)
 install_bluetooth=(bluez blueman)
 install_autoinstall_firmware=(isenkram)
+install_nvidia_gpu_drivers=(nvidia-driver nvidia-smi nvidia-settings)
+install_amd_gpu_drivers=(libgl1-mesa-dri xserver-xorg-video-ati xserver-xorg-video-amdgpu mesa-vulkan-drivers vkbasalt)
+install_intel_gpu_drivers=(xserver-xorg-video-intel intel-gpu-tools intel-media-va-driver)
+if [ "$_cuda_" = "Y" ];then
+	install_nvidia_gpu_drivers+=(cuda)
+fi
+
+if [ "$_kernel_open_dkms_" = "Y" ];then
+	install_nvidia_gpu_drivers+=(nvidia-kernel-open-dkms)
+fi

@@ -1,29 +1,4 @@
-#!/bin/bash
-set -e
-list_of_apps_file_path="${temp_path}/list_of_apps"
-this_is_ubuntu=false
-# distro 
-if [ -f /etc/os-release ]; then
-	# freedesktop.org and systemd
-	. /etc/os-release
-	version_=$(echo "${VERSION_ID//./}")
-	distro_name_="$ID"
-	distro_name_and_ver_=$ID$version_
-elif [ -f /etc/lsb-release ]; then
-	# For some versions of Debian/Ubuntu without lsb_release command
-	. /etc/lsb-release
-	distro_name_="$DISTRIB_ID"
-	distro_name_and_ver_=$DISTRIB_ID$DISTRIB_RELEASE
-else
-	# Fall back to uname, e.g. "Linux <version>", also works for BSD, etc.
-	distro_name_="$(uname -s)"
-	distro_name_and_ver_=$(uname -s)$(uname -r)
-fi
-
-if [ "$distro_name_" = "ubuntu" ];then
-	this_is_ubuntu=true
-fi
-
+#!/bin/sh
 ##################################################################################
 # function
 ##################################################################################

@@ -1,11 +1,14 @@
 #!/bin/bash
+
+source "${prompt_to_install_value_file}"
+
 ##################################################################################
 # var
 ##################################################################################
-fingerprint_exist=false
-
 if lsusb | grep -i fingerprint >/dev/null || lspci | grep -i fingerprint >/dev/null || ls /sys/bus/usb/devices/* | grep -i fingerprint >/dev/null; then
     fingerprint_exist=true
+else
+	fingerprint_exist=false
 fi
 
 ##################################################################################
@@ -33,21 +36,44 @@ create_20_intel_conf_file(){
 ##################################################################################
 # GPU Drivers
 ##################################################################################
-if [[ "${install_GPU_Drivers}" = "install_GPU" ]];then
+if [[ "${install_GPU_Drivers}" = "Y" ]];then
+		
+	number_of_gpus=0
+
+	if [ "$(lspci | grep -i VMware | grep VGA -c)" != "0" ];then
+		VMware_gpu_exist=true
+		number_of_gpus=$((number_of_gpus++))
+	else
+		if [ "$(lspci | grep -i nvidia | grep VGA -c)" != "0" ];then
+			nvidia_gpu_exist=true
+			number_of_gpus=$((number_of_gpus++))
+		fi
+		
+		if [ "$(lspci | grep -i intel | grep VGA -c)" != "0" ];then
+			intel_gpu_exist=true
+			number_of_gpus=$((number_of_gpus++))
+		fi
+		
+		if [ "$(lspci | grep -i amd | grep VGA -c)" != "0" ];then
+			amd_gpu_exist=true
+			number_of_gpus=$((number_of_gpus++))
+		fi
+	fi
+	
 	if [ "$(lspci | grep "VGA compatible controller" | grep VMware -c)" != "0" ];then
 		show_im "This is VM"
 	fi
 	
 	if [ "${nvidia_gpu_exist}" = "true" ];then
-		add_packages_2_install_list "nvidia-driver nvidia-smi nvidia-settings $_kernel_open_dkms_ $_cuda_"
+		add_packages_2_install_list "${install_nvidia_gpu_drivers[@]}"
 	fi
 		
 	if [ "${amd_gpu_exist}" = "true" ];then
-		add_packages_2_install_list "libgl1-mesa-dri xserver-xorg-video-ati xserver-xorg-video-amdgpu mesa-vulkan-drivers vkbasalt"
+		add_packages_2_install_list "${install_amd_gpu_drivers[@]}"
 	fi
 		
 	if [ "${intel_gpu_exist}" = "true" ];then
-		add_packages_2_install_list "xserver-xorg-video-intel intel-gpu-tools intel-media-va-driver"
+		add_packages_2_install_list "${install_intel_gpu_drivers[@]}"
 	fi
 	
 fi
@@ -119,7 +145,7 @@ if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 	show_im "some config"
 fi
 
-if [[ "${install_GPU_Drivers}" = "install_GPU" ]];then
+if [[ "${install_GPU_Drivers}" = "Y" ]];then
 	touch "${temp_path}"/GPU_Drivers_ready
 fi
 

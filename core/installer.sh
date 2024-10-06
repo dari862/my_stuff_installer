@@ -27,9 +27,10 @@ arg_="${1-}"
 SUGROUP=""
 internet_status=""
 disto_lib_location=""
+
 install_GPU_Drivers="install_GPU"
-_cuda_="cuda"
-_kernel_open_dkms_="nvidia-kernel-open-dkms"
+_cuda_=""
+_kernel_open_dkms_=""
 run_purge_some_unnecessary_pakages="Y"
 run_disable_some_unnecessary_services="Y"
 disable_ipv6_stack="Y"
@@ -44,6 +45,7 @@ install_xfce4_panel=xfce4_panel
 install_polybar=polybar 
 install_bspwm=bspwm
 reboot_now="Y"
+
 enable_contrib=false
 enable_nonfree_firmware=false
 enable_nonfree=false
@@ -66,6 +68,30 @@ sudo_installed=false
 PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:$PATH
 
 var_for_distro_uninstaller="/usr/share/my_stuff/system_files/var_for_distro_uninstaller"
+
+list_of_apps_file_path="${temp_path}/list_of_apps"
+this_is_ubuntu=false
+# distro 
+if [ -f /etc/os-release ]; then
+	# freedesktop.org and systemd
+	. /etc/os-release
+	version_=$(echo "${VERSION_ID//./}")
+	distro_name_="$ID"
+	distro_name_and_ver_=$ID$version_
+elif [ -f /etc/lsb-release ]; then
+	# For some versions of Debian/Ubuntu without lsb_release command
+	. /etc/lsb-release
+	distro_name_="$DISTRIB_ID"
+	distro_name_and_ver_=$DISTRIB_ID$DISTRIB_RELEASE
+else
+	# Fall back to uname, e.g. "Linux <version>", also works for BSD, etc.
+	distro_name_="$(uname -s)"
+	distro_name_and_ver_=$(uname -s)$(uname -r)
+fi
+
+if [ "$distro_name_" = "ubuntu" ];then
+	this_is_ubuntu=true
+fi
 
 ################################################################################################################################
 # Function
@@ -91,6 +117,7 @@ show_im(){
 	message="${1-}"
 	printf '%b' "\\033[1;34m[*]\\033[0m${message}\n"
 }
+
 test_internet_(){
 	show_m "Testing internet connection."	
 	NETWORK=$(printf "GET /nm HTTP/1.1\\r\\nHost: network-test.debian.org\\r\\n\\r\\n" | nc -w1 $NETWORK_TEST 80 | grep -c "NetworkManager is online")
@@ -172,40 +199,11 @@ prompt_to_ask_to_what_to_install(){
 	if [ "${source_prompt_to_install_file}" = "true" ];then
 		return
 	fi
-	
-	number_of_gpus=0
 
-	if [ "$(lspci | grep -i VMware | grep VGA -c)" != "0" ];then
-		VMware_gpu_exist=true
-		number_of_gpus=$((number_of_gpus++))
-	else
-		if [ "$(lspci | grep -i nvidia | grep VGA -c)" != "0" ];then
-			nvidia_gpu_exist=true
-			number_of_gpus=$((number_of_gpus++))
-		fi
-		
-		if [ "$(lspci | grep -i intel | grep VGA -c)" != "0" ];then
-			intel_gpu_exist=true
-			number_of_gpus=$((number_of_gpus++))
-		fi
-		
-		if [ "$(lspci | grep -i amd | grep VGA -c)" != "0" ];then
-			amd_gpu_exist=true
-			number_of_gpus=$((number_of_gpus++))
-		fi
-	fi
-	
 	show_m "prompt for what do you want to install."
 	
 	if [ "$auto_run_script" != "true" ];then
 		if [ "$(do_you_want_2_run_this_yes_or_no 'Autorun installation?')" = "Y" ];then
-			tee "${prompt_to_install_value_file}" <<- EOF >/dev/null
-				number_of_gpus="${number_of_gpus}"
-				VMware_gpu_exist="${VMware_gpu_exist}"
-				nvidia_gpu_exist="${nvidia_gpu_exist}"
-				intel_gpu_exist="${intel_gpu_exist}"
-				amd_gpu_exist="${amd_gpu_exist}"		
-			EOF
 			return
 		fi
 			
@@ -219,63 +217,83 @@ prompt_to_ask_to_what_to_install(){
 			if [ "$deb_lines_contrib" != "" ];then
 				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want enable contrib repo?')" = "Y" ];then
 					enable_contrib=true
+				else
+					enable_contrib=false
 				fi
 			fi
 			if [ "$deb_lines_nonfree_firmware" != "" ];then
 				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want enable nonfree_firmware repo?')" = "Y" ];then
 					enable_nonfree_firmware=true
+				else
+					enable_nonfree_firmware=false
 				fi
 			fi
 			if [ "$deb_lines_nonfree" != "" ];then
 				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want enable nonfree repo?')" = "Y" ];then
 					enable_nonfree=true
+				else
+					enable_nonfree=false
 				fi
 			fi
 		fi
 		
 		if [[ -z "$arg_" ]] || [[ "$arg_" = "drivers" ]];then
-			if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to install GPU drivers?')" != "Y" ];then
-				install_GPU_Drivers=""
-			else
-				if [ "${nvidia_gpu_exist}" = "true" ];then
-					if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to add Cuda Support?')" != "Y" ];then
-						_cuda_=""
+			if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to install GPU drivers?')" = "Y" ];then
+				install_GPU_Drivers="Y"
+				if lspci | grep -i nvidia | grep VGA -q;then
+					enable_nvidia_repo="true"
+					if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to add Cuda Support?')" = "Y" ];then
+						_cuda_="Y"
 					else
-						_cuda_="cuda"
+						_cuda_=""
 					fi
 					
-					if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to install opensource nvidia-kernel?')" != "Y" ];then
-						_kernel_open_dkms_=""
+					if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to install opensource nvidia-kernel?')" = "Y" ];then
+						_kernel_open_dkms_="Y"
 					else
-						_kernel_open_dkms_="nvidia-kernel-open-dkms"
+						_kernel_open_dkms_=""
 					fi
 				else
 					_cuda_=""
 					_kernel_open_dkms_=""
 				fi
+			else
+				install_GPU_Drivers=""
 			fi
 		fi
 		
 		if [[ -z "$arg_" ]];then
-			if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to purge some unnecessary pakages?')" != "Y" ];then
+			if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to purge some unnecessary pakages?')" = "Y" ];then
+				run_purge_some_unnecessary_pakages="Y"
+			else
 				run_purge_some_unnecessary_pakages=""
 			fi
 			
-			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to disable some unnecessary services?')" != "Y" ];then
+			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to disable some unnecessary services?')" = "Y" ];then
+				run_disable_some_unnecessary_services="Y"
+			else
 				run_disable_some_unnecessary_services=""
 			fi
 			
-			if [ "$(do_you_want_2_run_this_yes_or_no 'disable ipv6 stack?')" != "Y" ];then
-				if [ "$(do_you_want_2_run_this_yes_or_no 'disable ipv6 only?')" != "Y" ];then
+			if [ "$(do_you_want_2_run_this_yes_or_no 'disable ipv6 stack?')" = "Y" ];then
+				disable_ipv6_stack="Y"
+			else
+				if [ "$(do_you_want_2_run_this_yes_or_no 'disable ipv6 only?')" = "Y" ];then
 					disable_ipv6="Y"
+				else
+					disable_ipv6=""
 				fi
-				if [ "$(do_you_want_2_run_this_yes_or_no 'update grub image?')" != "Y" ];then
+				if [ "$(do_you_want_2_run_this_yes_or_no 'update grub image?')" = "Y" ];then
+					run_update_grub_image="Y"
+				else
 					run_update_grub_image=""
 				fi
 				disable_ipv6_stack=""
 			fi
 			
-			if [ "$(do_you_want_2_run_this_yes_or_no 'run autoclean and autoremove?')" != "Y" ];then
+			if [ "$(do_you_want_2_run_this_yes_or_no 'run autoclean and autoremove?')" = "Y" ];then
+				autoclean_and_autoremove="Y"
+			else
 				autoclean_and_autoremove=""
 			fi
 		fi
@@ -288,6 +306,8 @@ prompt_to_ask_to_what_to_install(){
 					else
 						install_zsh_now=zsh
 					fi
+				else
+					install_zsh_now=""
 				fi
 			else
 				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to set zsh as default shell?')" = "Y" ];then
@@ -298,13 +318,17 @@ prompt_to_ask_to_what_to_install(){
 			fi
 			
 			if ! command -v xfce4-panel >/dev/null;then
-				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install xfce4-panel?')" != "Y" ];then
+				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install xfce4-panel?')" = "Y" ];then
+					install_xfce4_panel=xfce4_panel
+				else
 					install_xfce4_panel=""
 				fi
 			fi
 			
 			if ! command -v polybar >/dev/null;then
-				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install polybar?')" != "Y" ];then
+				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install polybar?')" = "Y" ];then
+					install_polybar=polybar
+				else
 					install_polybar=""
 				fi
 			fi
@@ -312,16 +336,20 @@ prompt_to_ask_to_what_to_install(){
 			if ! command -v qt5ct >/dev/null;then
 				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install qt5ct?')" = "Y" ];then
 					install_qt5ct=qt5ct
+				else
+					install_qt5ct=""
 				fi
 			fi
 			
 			if ! command -v jgmenu >/dev/null;then
 				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install jgmenu?')" = "Y" ];then
 					install_jgmenu=jgmenu
+				else
+					install_jgmenu=""
 				fi
 			fi
 			
-			if ! command -v bspwm >/dev/null && ! command -v sxhkd >/dev/null;then
+			if ! command -v bspwm >/dev/null;then
 				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install bspwm?')" = "Y" ];then
 					install_bspwm=bspwm
 					if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to switch to bspwm session?')" = "Y" ];then
@@ -333,11 +361,15 @@ prompt_to_ask_to_what_to_install(){
 			fi
 			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install extra apps?')" = "Y" ];then
 				install_extra_now=extra
+			else
+				install_extra_now=""
 			fi
 		fi
 		
 		if [[ -z "$arg_" ]];then
-			if [ "$(do_you_want_2_run_this_yes_or_no 'reboot?')" != "Y" ];then
+			if [ "$(do_you_want_2_run_this_yes_or_no 'reboot?')" = "Y" ];then
+				reboot_now="Y"
+			else
 				reboot_now=""
 			fi
 		fi
@@ -346,11 +378,6 @@ prompt_to_ask_to_what_to_install(){
 		deb_lines_contrib="${deb_lines_contrib}"
 		deb_lines_nonfree_firmware="${deb_lines_nonfree_firmware}"
 		deb_lines_nonfree="${deb_lines_nonfree}"
-		number_of_gpus="${number_of_gpus}"
-		VMware_gpu_exist="${VMware_gpu_exist}"
-		nvidia_gpu_exist="${nvidia_gpu_exist}"
-		intel_gpu_exist="${intel_gpu_exist}"
-		amd_gpu_exist="${amd_gpu_exist}"
 		switch_to_doas="${switch_to_doas}"
 		enable_contrib="${enable_contrib}"
 		enable_nonfree_firmware="${enable_nonfree_firmware}"
@@ -377,7 +404,7 @@ prompt_to_ask_to_what_to_install(){
 }
 
 pick_file_downloader_and_url_checker(){
-	show_im "picking url command"
+	show_m "picking url command"
 	if command -v curl >/dev/null 2>&1;then
 		show_im "picked url command: curl "
 		check_url(){
@@ -1008,6 +1035,9 @@ update_grub_image
 run_my_alternatives
 
 source_this_script "disto_post_install" "prepare some script"
+pre_post_install
+/usr/share/my_stuff/distro_manager/system_files_creater
+end_of_post_install
 
 create_uninstaller_file
 

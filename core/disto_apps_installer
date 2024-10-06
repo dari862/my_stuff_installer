@@ -1,50 +1,10 @@
 #!/bin/bash
-##################################################################################
-# var
-##################################################################################
-install_xfce4_panel_now=false
-install_polybar_now=false
-install_qt5ct_now=false
-install_jgmenu_now=false
-install_bspwm_now=false
-install_zsh_now=false
-zsh_default_shell=false
-install_extra_now=false
 
-if [[ "$install_xfce4_panel" = "xfce4_panel" ]];then
-	install_xfce4_panel_now=true
-fi
+source "${prompt_to_install_value_file}"
 
-if [[ "$install_polybar" = "polybar" ]];then
-	install_polybar_now=true
-fi
-
-if [[ "$install_qt5ct" = "qt5ct" ]];then
-	install_qt5ct_now=true
-fi
-
-if [[ "$install_jgmenu" = "jgmenu" ]];then
-	install_jgmenu_now=true
-fi
-
-if [[ "$install_bspwm" = "bspwm" ]];then
-	install_bspwm_now=true
-fi
-
-if [[ "$install_zsh_now" = "zsh_default" ]];then
-	install_zsh_now=true
-	zsh_default_shell=true
-elif [[ "$install_zsh_now" = "zsh" ]];then
-	install_zsh_now=true
-fi
-
-if [[ "$install_extra_now" = "extra" ]];then
-	install_extra_now=true
-fi
 ##################################################################################
 # main
 ##################################################################################
-
 if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 	add_packages_2_install_list "${install_if_laptop[@]}"
 fi
@@ -68,25 +28,25 @@ add_packages_2_install_list "${install_must_have_apps2[@]}"
 add_packages_2_install_list "${install_polkit_apps[@]}"
 add_packages_2_install_list "${install_better_bash[@]}"
 add_packages_2_install_list "${install_better_shell[@]}"
-if [[ "$install_xfce4_panel_now" = true ]];then
+if [ "$install_xfce4_panel" = "xfce4_panel" ];then
 	add_packages_2_install_list "${install_xfce4_panel[@]}"
 fi
-if [[ "$install_polybar_now" = true ]];then
+if [ "$install_polybar" = "polybar" ];then
 	add_packages_2_install_list "${install_polybar[@]}"
 fi
-if [[ "$install_qt5ct_now" = true ]];then
+if [ "$install_qt5ct" = "qt5ct" ];then
 	add_packages_2_install_list "${install_qt5ct[@]}"
 fi
-if [[ "$install_jgmenu_now" = true ]];then
+if [ "$install_jgmenu" = "jgmenu" ];then
 	add_packages_2_install_list "${install_jgmenu[@]}"
 fi
-if [[ "$install_bspwm_now" = true ]];then
+if [ "$install_bspwm" = "bspwm" ];then
 	add_packages_2_install_list "${install_bspwm[@]}"
 fi
-if [[ "$install_zsh_now" = true ]];then
+if [ "$install_zsh_now" = "zsh_default" ] || [ "$install_zsh_now" = "zsh" ];then
 	add_packages_2_install_list "${install_zsh[@]}"
 fi
-if [[ "$install_extra_now" = true ]];then
+if [ "$install_extra_now" = "extra" ];then
 	add_packages_2_install_list "${install_extra_apps[@]}"
 fi
 show_im "Install distro packages."
@@ -94,7 +54,7 @@ install_packages
 
 show_im "Configer packages."
 
-if [[ "$install_bspwm_now" = true ]];then
+if [ "$install_bspwm" = "bspwm" ];then
 	show_im "adding my_stuff_bspwm to xsessions."
 	if [ -z "my_stuff" ];then
 		show_em "var Custom_distro_dir_name is empty"
@@ -105,7 +65,7 @@ if [[ "$install_bspwm_now" = true ]];then
 	my-superuser rm -rdf "/usr/share/my_stuff"
 fi
 
-if [[ -d "/usr/share/zsh-antigen" ]];then
+if [ -d "/usr/share/zsh-antigen" ];then
 	does_antigen_env_setup_works=$(grep -c antigen-env-setup /usr/share/zsh-antigen/antigen.zsh)
 	if [ "$does_antigen_env_setup_works" -gt "1" ]
 	then
@@ -118,14 +78,14 @@ if [[ -d "/usr/share/zsh-antigen" ]];then
 	fi
 fi
 
-if [[ "$zsh_default_shell" = true ]];then
+if [ "$install_zsh_now" = "zsh_default" ];then
 	show_im "make zsh default shell "
 	my-superuser chsh -s $(command -v zsh) $__USER
 fi
 
 if command -v mpd >/dev/null
 then
-	if [[ -n "$(pidof mpd)" ]]; then
+	if [ -n "$(pidof mpd)" ]; then
 		kill_package_ mpd
 	fi
 	
@@ -138,15 +98,15 @@ fi
 if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 	show_im "some config"
 	if my-superuser dmesg | grep -i bluetooth 1>/dev/null || my-superuser lsusb | grep -i bluetooth 1>/dev/null ;then
-		[[ -f "/etc/tlp.conf" ]] && my-superuser sed -i 's/#DEVICES_TO_DISABLE_ON_STARTUP=.*/DEVICES_TO_DISABLE_ON_STARTUP="bluetooth"/g' /etc/tlp.conf
+		[ -f "/etc/tlp.conf" ]] && my-superuser sed -i 's/#DEVICES_TO_DISABLE_ON_STARTUP=.*/DEVICES_TO_DISABLE_ON_STARTUP="bluetooth"/g' /etc/tlp.conf
 	fi
 	
 	init_manager enable tlp
 	
 	my-superuser tlp start || tlp_error="true"
-	if [[ "$tlp_error" == "true" ]];then
+	if [ "$tlp_error" == "true" ];then
 		my-superuser  tlp start | grep '>>> Invoke' >> "${temp_path}"/tlp_error_Invoke
-		if [[ -f "${temp_path}/tlp_error_Invoke" ]];then
+		if [ -f "${temp_path}/tlp_error_Invoke" ];then
 			sed -i "s/' to correct this.//g" "${temp_path}"/tlp_error_Invoke
 			sed -i "s/>>> Invoke '/my-superuser /g" "${temp_path}"/tlp_error_Invoke
 			source "${temp_path}"/tlp_error_Invoke
@@ -154,7 +114,7 @@ if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 		fi
 		if my-superuser tlp-stat |  grep '* Install' &>/dev/null ;then
 			my-superuser tlp-stat |  grep '* Install' | awk -F' '  '{print "add_packages_2_install_list " $3}' >> "${temp_path}"/tlp_install_exta_apps
-			if [[ -f "${temp_path}/tlp_install_exta_apps" ]];then
+			if [ -f "${temp_path}/tlp_install_exta_apps" ];then
 				source "${temp_path}"/tlp_install_exta_apps
 				install_packages
 			fi
