@@ -39,10 +39,10 @@ run_update_grub_image="Y"
 autoclean_and_autoremove="Y"
 install_zsh_now=""
 install_extra_now=""
-install_qt5ct="" 
-install_jgmenu="" 
-install_xfce4_panel=xfce4_panel 
-install_polybar=polybar 
+install_qt5ct=""
+install_jgmenu=""
+install_xfce4_panel=""
+install_polybar=polybar
 install_bspwm=bspwm
 reboot_now="Y"
 
@@ -52,11 +52,6 @@ enable_nonfree=false
 _SUPERUSER=""
 __USER="$USER"
 source_prompt_to_install_file=""
-
-RC='\e[0m'
-RED='\e[31m'
-YELLOW='\e[33m'
-GREEN='\e[32m'
 
 getthis_location=""
 my_stuff_temp_path=""
@@ -70,8 +65,9 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:$PATH
 var_for_distro_uninstaller="/usr/share/my_stuff/system_files/var_for_distro_uninstaller"
 
 list_of_apps_file_path="${temp_path}/list_of_apps"
+
+# distro
 this_is_ubuntu=false
-# distro 
 if [ -f /etc/os-release ]; then
 	# freedesktop.org and systemd
 	. /etc/os-release
@@ -88,10 +84,7 @@ else
 	distro_name_="$(uname -s)"
 	distro_name_and_ver_=$(uname -s)$(uname -r)
 fi
-
-if [ "$distro_name_" = "ubuntu" ];then
-	this_is_ubuntu=true
-fi
+[ "$distro_name_" = "ubuntu" ] && this_is_ubuntu=true
 
 ################################################################################################################################
 # Function
@@ -374,10 +367,11 @@ prompt_to_ask_to_what_to_install(){
 			fi
 		fi
 	fi
+}
+
+create_prompt_to_install_value_file(){
+	show_m "creating: ${prompt_to_install_value_file}"
 	tee "${prompt_to_install_value_file}" <<- EOF >/dev/null
-		deb_lines_contrib="${deb_lines_contrib}"
-		deb_lines_nonfree_firmware="${deb_lines_nonfree_firmware}"
-		deb_lines_nonfree="${deb_lines_nonfree}"
 		switch_to_doas="${switch_to_doas}"
 		enable_contrib="${enable_contrib}"
 		enable_nonfree_firmware="${enable_nonfree_firmware}"
@@ -402,7 +396,6 @@ prompt_to_ask_to_what_to_install(){
 		reboot_now="${reboot_now}"		
 	EOF
 }
-
 pick_file_downloader_and_url_checker(){
 	show_m "picking url command"
 	if command -v curl >/dev/null 2>&1;then
@@ -738,8 +731,12 @@ source_this_script(){
 pre_script_create_dir_and_source_stuff(){
 	show_m "pre-script: create dir and source files."
 	show_im "create dir ${installer_phases}"
-	mkdir -p "${installer_phases}"
 	
+	mkdir -p "${temp_path}"
+	chmod 700 "${temp_path}"
+	
+	mkdir -p "${installer_phases}"
+		
 	if [ -f "${save_value_file}" ];then
 		source "${save_value_file}"
 	fi
@@ -830,7 +827,7 @@ set_package_manager(){
 		done
 		
 		if [ -z "${PACKAGER}" ]; then
-			show_em "${RED}Can't find a supported package manager"
+			show_em "Error: Can't find a supported package manager"
 		fi
 		
 		check_and_download_ "disto_package_manager_${PACKAGER}"
@@ -969,6 +966,7 @@ pre_script_create_dir_and_source_stuff
 check_if_user_has_root_access
 
 prompt_to_ask_to_what_to_install
+create_prompt_to_install_value_file
 
 pick_file_downloader_and_url_checker
 
@@ -1037,6 +1035,7 @@ run_my_alternatives
 source_this_script "disto_post_install" "prepare some script"
 pre_post_install
 /usr/share/my_stuff/distro_manager/system_files_creater
+create_blob_system_files
 end_of_post_install
 
 create_uninstaller_file
