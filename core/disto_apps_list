@@ -6,16 +6,17 @@ List_of_apt_2_install_=()
 ## must_install_apps_list
 ##################################################################################
 #must have apps
-install_must_have_apps=(jq btop xclip cbatticon xprintidle yad git lsb-release rofi picom mlocate ufw wget xwallpaper)
-install_must_have_apps2=(psmisc unzip dunst xorg arandr autorandr dbus-x11 pnmixer gparted inxi s-tui dfc htop hwinfo synaptic galternatives xdotool libnotify-bin gnome-keyring ntfs-3g acl xinit xdg-user-dirs lm-sensors)
+install_core_apps=(lsb-release xorg arandr dbus-x11 xinit xdg-user-dirs x11-xserver-utils autorandr)
+install_must_have_apps=(jq xclip cbatticon xprintidle yad git rofi picom mlocate ufw wget xwallpaper htop unzip dunst libnotify-bin)
+install_must_have_apps2=(psmisc pnmixer gparted inxi s-tui dfc hwinfo synaptic galternatives xdotool acl lm-sensors gnome-keyring ntfs-3g)
 install_openbox_=(openbox obconf xcape tint2)
 install_image_viewer_apps=(viewnior)
 install_files_manager_support_app=(gvfs gvfs-fuse gvfs-backends file-roller baobab)
 install_terminal=(kitty terminator)
 install_conky_all_app=(conky-all)
 install_if_laptop=(tlp tlp-rdw powertop xserver-xorg-input-synaptics xinput)
-install_cli_sound_app=(mpd mpc ncmpcpp)
-install_text_editer_app=(geany evince meld)
+install_cli_sound_app=(mpd mpc ncmpcpp wildmidi timidity)
+install_text_editer_app=(geany evince)
 install_mediaplayer_app=(mpv)
 install_x_lock_extra=(i3lock i3lock-fancy)
 install_fonts=(fonts-noto fonts-droid-fallback fonts-cantarell fonts-liberation fonts-opensymbol fonts-noto-core fonts-noto-mono fonts-inconsolata)
@@ -28,7 +29,7 @@ install_firefox_=()
 check_if_package_exist_in_repo firefox && install_firefox_+=(firefox)
 check_if_package_exist_in_repo firefox-esr && install_firefox_+=(firefox-esr)
 
-# maim for ac-shots , ffmpeg for screen recoding , at for bl-beepmein , xsel for files-uploader , wmctrl for style-manager and files-uploader
+# slop for ac-shots and screen recoding , ffmpeg for screen recoding , at for bl-beepmein , xsel for files-uploader , wmctrl for style-manager and files-uploader
 install_for_scripts=(slop ffmpeg at xsel wmctrl)
 
 #######################
@@ -52,7 +53,7 @@ install_better_bash=(bash bash-completion)
 #######################
 ## better shell
 #######################
-install_better_shell=(tar bat fzf trash-cli dos2unix command-not-found thefuck highlight lf)
+install_better_shell=(tar bat fzf trash-cli command-not-found thefuck highlight lf)
 
 #######################
 ## extra
@@ -63,4 +64,8 @@ multitail
 ncdu 
 tree
 nitrogen
+nsxiv
+dos2unix
+meld
+btop
 )

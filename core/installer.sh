@@ -7,12 +7,12 @@ lib_file_name="disto_lib"
 auto_run_script="false" # true to enable
 temp_path="/tmp/my_stuff"
 installer_phases="/tmp/my_stuff/installer_phases"
-grub_image_name="Networks.png"
+grub_image_path="/usr/share/my_stuff/my_wallpapers/default/Networks.png"
 switch_default_xsession_to="openbox"
 switch_to_doas=false
+NETWORK_TEST="network-test.debian.org"
 url_to_test=debian.org
 test_dns="1.1.1.1"
-NETWORK_TEST="network-test.debian.org"
 
 mirror=""
 mirror_security=""
@@ -642,7 +642,7 @@ update_grub_image(){
 	[ -f "${installer_phases}/update_grub_image" ] && return
 	if [ "$run_update_grub_image" = "Y" ];then
 		show_m "update grub"
-		my-superuser ln -sf /usr/share/my_stuff/images/wallpapers/default/${grub_image_name} /boot/grub/
+		my-superuser ln -sf ${grub_image_path} /boot/grub/
 		# this package added some grub config
 		my-superuser sync
 		my-superuser grub-mkconfig -o /boot/grub/grub.cfg
