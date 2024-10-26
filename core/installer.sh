@@ -42,6 +42,7 @@ install_extra_now=""
 install_qt5ct=""
 install_jgmenu=""
 install_xfce4_panel=""
+xfce4_files_manager=false
 install_polybar=polybar
 install_bspwm=bspwm
 reboot_now="Y"
@@ -313,8 +314,19 @@ prompt_to_ask_to_what_to_install(){
 			if ! command -v xfce4-panel >/dev/null;then
 				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install xfce4-panel?')" = "Y" ];then
 					install_xfce4_panel=xfce4_panel
+					xfce4_files_manager=true
 				else
 					install_xfce4_panel=""
+				fi
+			fi
+			
+			if [ "$xfce4_files_manager" = false ];then
+				if ! command -v thunar >/dev/null;then
+					if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install xfce4-panel?')" = "Y" ];then
+						xfce4_files_manager=true
+					fi
+				else
+					xfce4_files_manager=true
 				fi
 			fi
 			

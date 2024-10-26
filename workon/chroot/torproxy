@@ -1,0 +1,87 @@
+#!/bin/bash
+set -euo pipefail                           # Treat unset variables as an error
+
+### Tor's TransPort
+__TransPort="9040"
+__DNSPort="5353"
+_non_tor="192.168.1.0/24 192.168.0.0/24"
+
+RULES="/var/tmp/tor-router.save"
+
+start_tor(){
+	# Most of this is from
+	# https://trac.torproject.org/projects/tor/wiki/doc/TransparentProxy
+	### get the UID that tor runs as
+	_tor_uid="$(schroot --directory / -u root -c onion -- id -u debian-tor)"
+	
+	if test -f "$RULES"; then
+		echo "$RULES exists. Either delete it, or stop tor-router first."
+		exit 1
+	else
+		# Only save the rules when we are sure that everything is working
+		sudo iptables-save >$RULES
+	
+		### flush iptables
+		sudo iptables -F
+		sudo iptables -t nat -F
+		
+		### set iptables *nat to ignore tor user
+		sudo iptables -t nat -A OUTPUT -m owner --uid-owner $_tor_uid -j RETURN
+		
+		### redirect all DNS output to tor's DNSPort
+		sudo iptables -t nat -A OUTPUT -p udp --dport 53 -j REDIRECT --to-ports $__DNSPort
+		
+		### set iptables *filter
+		sudo iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+		
+		### allow clearnet access for hosts in $_non_tor
+		for _clearnet in $_non_tor 127.0.0.0/8; do
+   			sudo iptables -t nat -A OUTPUT -d $_clearnet -j RETURN
+   			sudo iptables -A OUTPUT -d $_clearnet -j ACCEPT
+		done
+		
+		### redirect all other output to tor's TransPort
+		sudo iptables -t nat -A OUTPUT -p tcp --syn -j REDIRECT --to-ports $__TransPort
+		
+		### allow only tor output
+		sudo iptables -A OUTPUT -m owner --uid-owner $_tor_uid -j ACCEPT
+		sudo iptables -A OUTPUT -j REJECT
+	fi
+}
+
+stop_tor(){
+	if test -f "$RULES"; then
+		echo "Restoring previous rules from $RULES"
+		sudo iptables -F
+		sudo iptables-restore <"$RULES"
+		rm "$RULES"
+	else
+		echo "$RULES does not exist. Not doing anything."
+		exit
+	fi
+}
+
+restart_tor(){
+	stop_tor
+	sleep 1
+	start_tor
+}
+
+__arg_="${1-}"
+
+case "$__arg_" in
+start)
+	start_tor
+	;;
+
+stop)
+	stop_tor
+	;;
+
+restart)
+	restart_tor
+	;;
+*)
+	echo "Usage: $0 {start|stop|restart}"
+	;;
+esac

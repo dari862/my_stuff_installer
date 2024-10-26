@@ -1,0 +1,24 @@
+#!/bin/sh
+__ControlPort=9051
+__DNSPort=5353
+__SocksPort=9050
+__TransPort=9040
+
+sudo ./chroot_creater.sh --chroot onion --group sudo --release bookworm
+schroot --directory / -u root -c onion -- apt-get install -y tor
+schroot --directory / -u root -c onion -- echo "AutomapHostsOnResolve 1" >> /etc/tor/torrc
+schroot --directory / -u root -c onion -- echo "ControlPort $__ControlPort" >>/etc/tor/torrc
+schroot --directory / -u root -c onion -- echo "ControlSocket /etc/tor/run/control" >>/etc/tor/torrc
+schroot --directory / -u root -c onion -- echo "ControlSocketsGroupWritable 1" >>/etc/tor/torrc
+schroot --directory / -u root -c onion -- echo "CookieAuthentication 1" >>/etc/tor/torrc
+schroot --directory / -u root -c onion -- echo "CookieAuthFile /etc/tor/run/control.authcookie" >>/etc/tor/torrc
+schroot --directory / -u root -c onion -- echo "CookieAuthFileGroupReadable 1" >>/etc/tor/torrc
+schroot --directory / -u root -c onion -- echo "DNSPort $__DNSPort" >>/etc/tor/torrc
+schroot --directory / -u root -c onion -- echo "DataDirectory /var/lib/tor" >>/etc/tor/torrc
+schroot --directory / -u root -c onion -- echo "ExitPolicy reject *:*" >>/etc/tor/torrc
+schroot --directory / -u root -c onion -- echo "Log notice stderr" >>/etc/tor/torrc
+schroot --directory / -u root -c onion -- echo "RunAsDaemon 0" >>/etc/tor/torrc
+schroot --directory / -u root -c onion -- echo "SocksPort $__SocksPort IsolateDestAddr" >>/etc/tor/torrc
+schroot --directory / -u root -c onion -- echo "TransPort $__TransPort" >>/etc/tor/torrc
+schroot --directory / -u root -c onion -- echo "VirtualAddrNetworkIPv4 10.192.0.0/10" >>/etc/tor/torrc
+schroot --directory / -u root -c onion -- tor
