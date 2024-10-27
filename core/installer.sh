@@ -113,8 +113,15 @@ show_im(){
 }
 
 test_internet_(){
-	show_m "Testing internet connection."	
-	NETWORK=$(printf "GET /nm HTTP/1.1\\r\\nHost: network-test.debian.org\\r\\n\\r\\n" | nc -w1 $NETWORK_TEST 80 | grep -c "NetworkManager is online")
+	show_m "Testing internet connection."
+	if command -v nc >/dev/null;then
+		NETWORK=$(printf "GET /nm HTTP/1.1\\r\\nHost: ${NETWORK_TEST}\\r\\n\\r\\n" | nc -w1 $NETWORK_TEST 80 | grep -c "NetworkManager is online")
+	elif command -v curl >/dev/null 2>&1;then
+		NETWORK=$(curl -s -X GET ${NETWORK_TEST} && echo 1)
+	elif command -v wget >/dev/null 2>&1;then
+		NETWORK=$(wget -qS -O- network-test.debian.org &>/dev/null && echo 1)
+	fi
+	
 	if test "$NETWORK" -ne 1 ; then
 		local wifi_interface=""
 		if check_url "$url_to_test"; then
@@ -322,7 +329,7 @@ prompt_to_ask_to_what_to_install(){
 			
 			if [ "$xfce4_files_manager" = false ];then
 				if ! command -v thunar >/dev/null;then
-					if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install xfce4-panel?')" = "Y" ];then
+					if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to switch from pcmanfm to thunar?')" = "Y" ];then
 						xfce4_files_manager=true
 					fi
 				else
@@ -441,7 +448,7 @@ fix_time_(){
 	[ -f "${installer_phases}/fix_time_" ] && return
 	show_m "Setting date ,time ,and timezone."
 	get_date_from_here=""
-	list_to_test=(network-test.debian.org ipinfo.io 104.16.132.229)
+	list_to_test=(${NETWORK_TEST} ipinfo.io 104.16.132.229)
 	
 	for test in "${list_to_test[@]}";do
 		ping -c 1 $test &>/dev/null && get_date_from_here="$test" && break
@@ -455,8 +462,7 @@ fix_time_(){
 		elif command -v wget >/dev/null 2>&1;then
 			$_SUPERUSER date -s "$(wget -S -O- -q --no-check-certificate --max-redirect=0 "$get_date_from_here" 2>&1 | sed -n 's/^ *Date: *//p')" >/dev/null 2>&1
 		fi
-		#__timezone="$(get_url_content "https://ipinfo.io/" | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/ //g')"
-		__timezone="Asia/Kuwait"
+		__timezone="$(get_url_content "https://ipinfo.io/" | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/ //g')"
 		if command -v timedatectl >/dev/null 2>&1;then
 			$_SUPERUSER timedatectl set-timezone $__timezone
 		else
