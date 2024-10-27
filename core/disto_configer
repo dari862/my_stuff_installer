@@ -1,5 +1,6 @@
 #!/bin/bash
 ################################################################################################################################
+[ -f "${installer_phases}/disto_configer" ] && return
 show_im "moving Theme_Stuff to my_stuff"
 my-superuser mv "${theme_temp_path}"/Theme_Stuff "${my_stuff_temp_path}"/my_stuff
 

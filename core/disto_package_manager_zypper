@@ -6,9 +6,8 @@ set -e
 ##################################
 
 install_lightdm_now(){
-	if [ -f "${installer_phases}/install_lightdm_now" ];then
-		return
-	fi
+	[ -f "${installer_phases}/install_lightdm_now" ] && return
+	
 	install_lightdm_=(lightdm lightdm-gtk-greeter-settings)
 	show_im "installing ( lightdm )."
 	if [ -f "/etc/X11/default-display-manager" ]; then
@@ -39,9 +38,9 @@ create_package_list(){
 }
 
 install_packages(){
-	($_SUPERUSER ${PACKAGER} install -y "${List_of_apt_2_install_[@]}" && kill_package_ ${PACKAGER}) || \
-	($_SUPERUSER ${PACKAGER} install -y "${List_of_apt_2_install_[@]}" && kill_package_ ${PACKAGER}) || \
-	$_SUPERUSER ${PACKAGER} install -y "${List_of_apt_2_install_[@]}"
+	($_SUPERUSER ${PACKAGER} install -y ${List_of_apt_2_install_} && kill_package_ ${PACKAGER}) || \
+	($_SUPERUSER ${PACKAGER} install -y ${List_of_apt_2_install_} && kill_package_ ${PACKAGER}) || \
+	$_SUPERUSER ${PACKAGER} install -y ${List_of_apt_2_install_}
 }
 
 check_if_package_exist_in_repo(){
@@ -49,21 +48,21 @@ check_if_package_exist_in_repo(){
 	if ! dpkg -s "${package_name}" > /dev/null 2>&1; then
 		check_apps_in_cache="$(grep "^$package_name/" "${list_of_apps_file_path}" 2>/dev/null || :)"
 		if [ -n "${check_apps_in_cache}" ];then
-			echo "${package_name}" 
+			return 0
 		fi
 	fi
 }
 
 add_packages_2_install_list()
 {
-	localarray=("$@")
+	localarray="$@"
 	
-	for INDEX in "${localarray[@]}"
+	for INDEX in ${localarray}
 	do
 		if ! dpkg -s "${INDEX}" > /dev/null 2>&1; then
 			check_apps_in_cache="$(grep "^$INDEX/" "${list_of_apps_file_path}" 2>/dev/null || :)"
 			if [ -n "${check_apps_in_cache}" ];then
-				List_of_apt_2_install_+=("$INDEX") 
+				List_of_apt_2_install_="$List_of_apt_2_install_ $INDEX"
 				show_im "${INDEX} added to install apps" 
 			else
 				show_wm "${INDEX} does not exist." 
@@ -80,8 +79,8 @@ upgrade_now()
 
 remove_package_with_error2info()
 {
-	localarray=("$@")
-	for package in "${localarray[@]}"
+	localarray="$@"
+	for package in ${localarray}
 	do
 		if dpkg -s "${package}" &>/dev/null; then
 			show_im "Purging ${package}."
@@ -105,9 +104,7 @@ _unattended_upgrades_()
 		auto_upgrades_file_bak="/etc/apt/apt.conf.d/20auto-upgrades.bak"
 		case "$1" in
 			start)
-				if [ -f "${installer_phases}/_unattended_upgrades_start" ];then
-					return
-				fi
+				[ -f "${installer_phases}/_unattended_upgrades_start" ] && return
 				show_im "start unattended upgrades."
 				init_manager stop unattended-upgrades || :
 				if [ ! -f "${auto_upgrades_file_bak}" ];then
@@ -116,9 +113,7 @@ _unattended_upgrades_()
 				touch "${installer_phases}/_unattended_upgrades_start"
 			;;
 			stop)
-				if [ -f "${installer_phases}/_unattended_upgrades_stop" ];then
-					return
-				fi
+				[ -f "${installer_phases}/_unattended_upgrades_stop" ] && return
 				show_im "stop unattended upgrades."
 				if [ -f "${auto_upgrades_file}" ] && [ -f "${auto_upgrades_file_bak}" ];then
 					my-superuser rm "${auto_upgrades_file}"

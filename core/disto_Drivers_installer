@@ -1,5 +1,5 @@
 #!/bin/bash
-
+[ -f "${installer_phases}/disto_Drivers" ] && return
 source "${prompt_to_install_value_file}"
 
 ##################################################################################
@@ -65,15 +65,15 @@ if [[ "${install_GPU_Drivers}" = "Y" ]];then
 	fi
 	
 	if [ "${nvidia_gpu_exist}" = "true" ];then
-		add_packages_2_install_list "${install_nvidia_gpu_drivers[@]}"
+		add_packages_2_install_list "${install_nvidia_gpu_drivers}"
 	fi
 		
 	if [ "${amd_gpu_exist}" = "true" ];then
-		add_packages_2_install_list "${install_amd_gpu_drivers[@]}"
+		add_packages_2_install_list "${install_amd_gpu_drivers}"
 	fi
 		
 	if [ "${intel_gpu_exist}" = "true" ];then
-		add_packages_2_install_list "${install_intel_gpu_drivers[@]}"
+		add_packages_2_install_list "${install_intel_gpu_drivers}"
 	fi
 	
 fi
@@ -82,24 +82,24 @@ fi
 # main
 ##################################################################################
 if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
-	add_packages_2_install_list "${install_if_laptop[@]}"
+	add_packages_2_install_list "${install_if_laptop}"
 fi
 
 if [[ "$fingerprint_exist" = true ]];then
-    add_packages_2_install_list "${install_fingerprint[@]}"
+    add_packages_2_install_list "${install_fingerprint}"
 fi
 
 if lspci | egrep -i 'wifi|wireless' 1>/dev/null ;then
-	add_packages_2_install_list "${install_wireless[@]}"
+	add_packages_2_install_list "${install_wireless}"
 fi
 
 if my-superuser dmesg | grep -i bluetooth 1>/dev/null || my-superuser lsusb | grep -i bluetooth 1>/dev/null ;then
-	add_packages_2_install_list "${install_bluetooth[@]}"
+	add_packages_2_install_list "${install_bluetooth}"
 fi
 
-add_packages_2_install_list "${install_audio[@]}"
-add_packages_2_install_list "${install_Network[@]}"
-add_packages_2_install_list "${install_autoinstall_firmware[@]}"
+add_packages_2_install_list "${install_audio}"
+add_packages_2_install_list "${install_Network}"
+add_packages_2_install_list "${install_autoinstall_firmware}"
 show_im "Install Drivers."
 install_packages
 

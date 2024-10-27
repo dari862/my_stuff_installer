@@ -143,7 +143,7 @@ test_internet_(){
             	fi
 			fi
 			_ip="$(ip address show dev $_intface | grep 'inet ' | awk '{print $2}' | cut -f1 -d'/')"
-			if [[ ! -z "$(echo $_ip | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]]
+			if [[ -n "$(echo $_ip | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]]
 			then
 				if ls /sys/class/net/w* 2>/dev/null;then
 					wifi_interface="$(ip link | awk -F: '$0 !~ "^[^0-9]"{print $2;getline}' | awk '/w/{ print $0 }')"
@@ -649,11 +649,10 @@ disable_ipv6_now(){
 }
 
 run_my_alternatives(){
-	if [ ! -f "${installer_phases}/my_alternatives" ];then
-		show_m "update alternatives apps"
-		/usr/share/my_stuff/bin/bin/my-alternatives --install
-		touch "${installer_phases}/my_alternatives"
-	fi
+	[ -f "${installer_phases}/my_alternatives" ] && return
+	show_m "update alternatives apps"
+	/usr/share/my_stuff/bin/bin/my-alternatives --install
+	touch "${installer_phases}/my_alternatives"
 }
 
 update_grub_image(){
@@ -720,7 +719,7 @@ source_my_lib_file(){
 	show_m "sourcing ${lib_file_name} file."
 	disto_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1 || :)"
 	# source disto_lib
-	if [[ ! -z "${disto_lib_location}" ]];then
+	if [[ -n "${disto_lib_location}" ]];then
 		mv "${disto_lib_location}" "${temp_path}"
 	elif [[ ! -f "${temp_path}/${lib_file_name}" ]];then 
 		show_im "download lib file"
@@ -793,7 +792,7 @@ keep_superuser_refresed(){
 
 install_doas(){
 	if ! command -v doas >/dev/null;then
-		if ! cat /etc/group | grep sudo;then
+		if ! grep "sudo" /etc/group;then
 			$_SUPERUSER groupadd sudo
 		fi
 		show_im "Installing doas"
@@ -862,9 +861,7 @@ set_package_manager(){
 }
 
 switch_default_xsession(){
-	if [ -f "${installer_phases}/switch_default_xsession" ];then
-		return	
-	fi
+	[ -f "${installer_phases}/switch_default_xsession" ] && return
 	show_m "switching default xsession to my stuff $switch_default_xsession_to."
 	my-superuser update-alternatives --install /usr/bin/x-session-manager x-session-manager /usr/share/my_stuff/system_files/bin/xsessions/${switch_default_xsession_to} 60
 	touch "${installer_phases}/switch_default_xsession"
@@ -1026,7 +1023,7 @@ switch_to_network_manager
 
 _unattended_upgrades_ start
 
-if [[ ! -z "$arg_" ]];then
+if [[ -n "$arg_" ]];then
 	show_m "Done"
 	exit
 fi
