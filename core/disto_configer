@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 ################################################################################################################################
 [ -f "${installer_phases}/disto_configer" ] && return
 show_im "moving Theme_Stuff to my_stuff"
@@ -7,40 +7,40 @@ my-superuser mv "${theme_temp_path}"/Theme_Stuff "${my_stuff_temp_path}"/my_stuf
 show_im "change ownership to root"
 my-superuser chown -R root:root "${my_stuff_temp_path}"/my_stuff
 
-[ -d "/usr/share/my_stuff" ] && my-superuser rm -rdf "/usr/share/my_stuff"
+[ -d "${__distro_path}" ] && my-superuser rm -rdf "${__distro_path}"
 
 show_im "moving usr_share"
 my-superuser mv "${my_stuff_temp_path}"/my_stuff /usr/share/
-my-superuser ln -sf /usr/share/my_stuff/lib/xsessions/*_openbox.desktop /usr/share/xsessions
+my-superuser ln -sf "${__distro_path}"/lib/xsessions/*_openbox.desktop /usr/share/xsessions
 
-for f in /usr/share/my_stuff/applications/* ; do
+for f in ${__distro_path}/applications/* ; do
 	my-superuser ln -sf "$f" /usr/share/applications
 done
 
-show_im "Moving themes from /usr/share/themes that exist in Theme_Stuff /usr/share/my_stuff/system_files/backup"
+show_im "Moving themes from /usr/share/themes that exist in Theme_Stuff ${__distro_path}/system_files/backup"
 my-superuser mkdir -p /usr/share/themes
-my-superuser mkdir -p /usr/share/my_stuff/system_files/backup/themes
-for d in /usr/share/my_stuff/Theme_Stuff/themes/* ; do
-	Directory_name=${d##*/}
-	[ -d "/usr/share/themes/${Directory_name}" ] && my-superuser mv "/usr/share/themes/${Directory_name}" /usr/share/my_stuff/system_files/backup/themes
+my-superuser mkdir -p "${__distro_path}"/system_files/backup/themes
+for d in ${__distro_path}/Theme_Stuff/themes/* ; do
+	Directory_name="$(basename ${d})"
+	[ -d "/usr/share/themes/${Directory_name}" ] && my-superuser mv "/usr/share/themes/${Directory_name}" "${__distro_path}"/system_files/backup/themes
 	my-superuser ln -sf "$d" /usr/share/themes
 done
 
-show_im "Moving icons from /usr/share/icons that exist in Theme_Stuff /usr/share/my_stuff/system_files/backup"
+show_im "Moving icons from /usr/share/icons that exist in Theme_Stuff ${__distro_path}/system_files/backup"
 my-superuser mkdir -p /usr/share/icons
-my-superuser mkdir -p /usr/share/my_stuff/system_files/backup/icons
-for d in /usr/share/my_stuff/Theme_Stuff/icons/* ; do
-	Directory_name=${d##*/}
-	[ -d "/usr/share/icons/${Directory_name}" ] && my-superuser mv "/usr/share/icons/${Directory_name}" /usr/share/my_stuff/system_files/backup/icons
+my-superuser mkdir -p "${__distro_path}/system_files/backup/icons"
+for d in ${__distro_path}/Theme_Stuff/icons/* ; do
+	Directory_name="$(basename ${d})"
+	[ -d "/usr/share/icons/${Directory_name}" ] && my-superuser mv "/usr/share/icons/${Directory_name}" "${__distro_path}/system_files/backup/icons"
 	my-superuser ln -sf "$d" /usr/share/icons
 done
 
-show_im "Moving fonts from /usr/share/fonts that exist in Theme_Stuff /usr/share/my_stuff/system_files/backup"
+show_im "Moving fonts from /usr/share/fonts that exist in Theme_Stuff ${__distro_path}/system_files/backup"
 my-superuser mkdir -p /usr/share/fonts
-my-superuser mkdir -p /usr/share/my_stuff/system_files/backup/fonts
-for e in /usr/share/my_stuff/Theme_Stuff/fonts/* ; do
-	Directory_name=${e##*/}
-	[ -d "/usr/share/fonts/${Directory_name}" ] && my-superuser mv "/usr/share/fonts/${Directory_name}" /usr/share/my_stuff/system_files/backup/fonts
+my-superuser mkdir -p "${__distro_path}/system_files/backup/fonts"
+for e in ${__distro_path}/Theme_Stuff/fonts/* ; do
+	Directory_name="$(basename ${e})"
+	[ -d "/usr/share/fonts/${Directory_name}" ] && my-superuser mv "/usr/share/fonts/${Directory_name}" "${__distro_path}/system_files/backup/fonts"
 	my-superuser ln -sf "$e" /usr/share/fonts
 done
 

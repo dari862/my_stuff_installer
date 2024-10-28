@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/bin/sh
 
 [ -f "${installer_phases}/disto_Installapps_list" ] && return
-source "${prompt_to_install_value_file}"
+. "${prompt_to_install_value_file}"
 
 ##################################################################################
 # main
@@ -67,10 +67,10 @@ show_im "Configer packages."
 
 if [ "$install_bspwm" = "bspwm" ];then
 	show_im "adding my_stuff_bspwm to xsessions."
-	my-superuser mkdir -p "/usr/share/my_stuff/lib/xsessions"
-	my-superuser touch "/usr/share/my_stuff/lib/xsessions/my_stuff_bspwm.desktop"
-	my-superuser ln -sf "/usr/share/my_stuff/lib/xsessions/my_stuff_bspwm.desktop" /usr/share/xsessions
-	my-superuser rm -rdf "/usr/share/my_stuff"
+	my-superuser mkdir -p "${__distro_path}/lib/xsessions"
+	my-superuser touch "${__distro_path}/lib/xsessions/my_stuff_bspwm.desktop"
+	my-superuser ln -sf "${__distro_path}/lib/xsessions/my_stuff_bspwm.desktop" /usr/share/xsessions
+	my-superuser rm -rdf "${__distro_path}"
 fi
 
 if [ -d "/usr/share/zsh-antigen" ];then
@@ -112,18 +112,18 @@ if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 	init_manager enable tlp
 	
 	my-superuser tlp start || tlp_error="true"
-	if [ "$tlp_error" == "true" ];then
+	if [ "$tlp_error" = "true" ];then
 		my-superuser  tlp start | grep '>>> Invoke' >> "${temp_path}"/tlp_error_Invoke
 		if [ -f "${temp_path}/tlp_error_Invoke" ];then
 			sed -i "s/' to correct this.//g" "${temp_path}"/tlp_error_Invoke
 			sed -i "s/>>> Invoke '/my-superuser /g" "${temp_path}"/tlp_error_Invoke
-			source "${temp_path}"/tlp_error_Invoke
+			. "${temp_path}"/tlp_error_Invoke
 			my-superuser  tlp start
 		fi
-		if my-superuser tlp-stat |  grep '* Install' &>/dev/null ;then
+		if my-superuser tlp-stat |  grep '* Install' >/dev/null 2>&1 ;then
 			my-superuser tlp-stat |  grep '* Install' | awk -F' '  '{print "add_packages_2_install_list " $3}' >> "${temp_path}"/tlp_install_exta_apps
 			if [ -f "${temp_path}/tlp_install_exta_apps" ];then
-				source "${temp_path}"/tlp_install_exta_apps
+				. "${temp_path}"/tlp_install_exta_apps
 				install_packages
 			fi
 		fi

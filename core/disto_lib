@@ -11,11 +11,11 @@ check_and_download_()
 	
 	[ -f "${new_check_this_file_}" ] && return
 	
-	if [[ ! -z "${check_this_file_location}" ]];then
+	if [ -n "${check_this_file_location}" ];then
 		mv "${check_this_file_location}" "${temp_path}"
 	fi
 	
-	if [[ ! -f "${new_check_this_file_}" ]]; then
+	if [ ! -f "${new_check_this_file_}" ]; then
 		show_im "Download $check_this_file_ file from www.github.com/dari862/my_stuff_installer ."
 		if download_file "" "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${check_this_file_}" "${new_check_this_file_}" ;then
 			chmod +x "${new_check_this_file_}"
@@ -127,7 +127,7 @@ CHECK_IF_THIS_LAPTOP(){
     	fi
 	fi
 	
-	if [[ "${is_this_laptop}"  = true ]];then
+	if [ "${is_this_laptop}"  = true ];then
 		show_im "this is laptop"
 		touch "${temp_path}"/this_is_laptop
 	else

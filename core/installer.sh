@@ -1,13 +1,14 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 ################################################################################################################################
 # Var
 ################################################################################################################################
+__distro_path="/usr/share/my_stuff"
 lib_file_name="disto_lib"
 auto_run_script="false" # true to enable
 temp_path="/tmp/my_stuff"
 installer_phases="/tmp/my_stuff/installer_phases"
-grub_image_path="/usr/share/my_stuff/my_wallpapers/default/Networks.png"
+grub_image_path="${__distro_path}/my_wallpapers/default/Networks.png"
 switch_default_xsession_to="openbox"
 switch_to_doas=false
 NETWORK_TEST="network-test.debian.org"
@@ -63,7 +64,7 @@ sudo_installed=false
 
 PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:$PATH
 
-var_for_distro_uninstaller="/usr/share/my_stuff/system_files/var_for_distro_uninstaller"
+var_for_distro_uninstaller="${__distro_path}/system_files/var_for_distro_uninstaller"
 
 list_of_apps_file_path="${temp_path}/list_of_apps"
 
@@ -72,7 +73,7 @@ this_is_ubuntu=false
 if [ -f /etc/os-release ]; then
 	# freedesktop.org and systemd
 	. /etc/os-release
-	version_=$(echo "${VERSION_ID//./}")
+	version_="$(echo "${VERSION_ID}" | sed 's/.//g')"
 	distro_name_="$ID"
 	distro_name_and_ver_=$ID$version_
 elif [ -f /etc/lsb-release ]; then
@@ -98,18 +99,18 @@ show_m(){
 
 show_wm(){
 	message="${1-}"
-	printf '%b' "\\033[1;33m[!]\\033[0m${message}\n"
+	printf '%b' "\\033[1;33m[!] \\033[0m${message}\n"
 }
 
 show_em(){
 	message="${1-}"
-	printf '%b' "\\033[1;31m[-]${message}\\033[0m\n"
+	printf '%b' "\\033[1;31m[-] ${message}\\033[0m\n"
 	exit 1 # show_em
 }
 
 show_im(){
 	message="${1-}"
-	printf '%b' "\\033[1;34m[*]\\033[0m${message}\n"
+	printf '%b' "\\033[1;34m[*] \\033[0m${message}\n"
 }
 
 test_internet_(){
@@ -119,11 +120,11 @@ test_internet_(){
 	elif command -v curl >/dev/null 2>&1;then
 		NETWORK=$(curl -s -X GET ${NETWORK_TEST} && echo 1)
 	elif command -v wget >/dev/null 2>&1;then
-		NETWORK=$(wget -qS -O- network-test.debian.org &>/dev/null && echo 1)
+		NETWORK=$(wget -qS -O- network-test.debian.org >/dev/null 2>&1 && echo 1)
 	fi
 	
 	if test "$NETWORK" -ne 1 ; then
-		local wifi_interface=""
+		wifi_interface=""
 		if check_url "$url_to_test"; then
 			show_im "Internet connection test passed!"
 			return 0
@@ -133,7 +134,7 @@ test_internet_(){
 			if [ -z "$_intface" ];then
 				for intf in /sys/class/net/*; do
 					intf_name="$(basename $intf)"
-					if [[ "$intf_name" != "lo" ]] || [[ "$intf_name" != "w"* ]];then
+					if [ "$intf_name" != "lo" ] || echo "$intf_name" | grep "^w" ;then
     					$_SUPERUSER ip link set dev $intf_name up
     				fi
 				done
@@ -143,8 +144,7 @@ test_internet_(){
             	fi
 			fi
 			_ip="$(ip address show dev $_intface | grep 'inet ' | awk '{print $2}' | cut -f1 -d'/')"
-			if [[ -n "$(echo $_ip | grep -E '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)')" ]]
-			then
+			if echo $_ip | grep -qE '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)';then
 				if ls /sys/class/net/w* 2>/dev/null;then
 					wifi_interface="$(ip link | awk -F: '$0 !~ "^[^0-9]"{print $2;getline}' | awk '/w/{ print $0 }')"
 					if [ -z "$wifi_interface" ];then
@@ -184,23 +184,24 @@ test_internet_(){
 do_you_want_2_run_this_yes_or_no(){
 	massage_is_="${1}"
 	yn=""
-	read -r -p "${massage_is_} (yes/no) (default: yes)" yn
+	echo "${massage_is_} (yes/no) (default: yes) "
+	read -r yn
 	yn="$(echo "$yn" | cut -c 1 | tr '[:lower:]' '[:upper:]')"
 	[ "$yn" = "" ] && yn="Y"
 	echo "$yn"
 }
 
 prompt_to_ask_to_what_to_install(){
-	mirror="http://deb.debian.org/debian/"
-	mirror_security="http://security.debian.org/debian-security"
-	deb_lines_contrib=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v contrib || :)
-	deb_lines_nonfree_firmware=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non-free-firmware' || :)
-	deb_lines_nonfree=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v "non-free[[:blank:]]" || :)
-	
 	if [ "${source_prompt_to_install_file}" = "true" ];then
 		return
 	fi
-
+	
+	mirror="http://deb.debian.org/debian/"
+	mirror_security="http://security.debian.org/debian-security"
+	deb_lines_nonfree_firmware=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non-free-firmware' || :)
+	deb_lines_contrib=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v contrib || :)
+	deb_lines_nonfree=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v "non-free[[:blank:]]" || :)
+	
 	show_m "prompt for what do you want to install."
 	
 	if [ "$auto_run_script" != "true" ];then
@@ -214,22 +215,22 @@ prompt_to_ask_to_what_to_install(){
 			fi
 		fi
 		
-		if [[ -z "$arg_" ]];then
-			if [ "$deb_lines_contrib" != "" ];then
+		if [ -z "$arg_" ];then
+			if [ -n "$deb_lines_contrib" ];then
 				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want enable contrib repo?')" = "Y" ];then
 					enable_contrib=true
 				else
 					enable_contrib=false
 				fi
 			fi
-			if [ "$deb_lines_nonfree_firmware" != "" ];then
+			if [ -n "$deb_lines_nonfree_firmware" ];then
 				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want enable nonfree_firmware repo?')" = "Y" ];then
 					enable_nonfree_firmware=true
 				else
 					enable_nonfree_firmware=false
 				fi
 			fi
-			if [ "$deb_lines_nonfree" != "" ];then
+			if [ -n "$deb_lines_nonfree" ];then
 				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want enable nonfree repo?')" = "Y" ];then
 					enable_nonfree=true
 				else
@@ -238,7 +239,7 @@ prompt_to_ask_to_what_to_install(){
 			fi
 		fi
 		
-		if [[ -z "$arg_" ]] || [[ "$arg_" = "drivers" ]];then
+		if [ -z "$arg_" ] || [ "$arg_" = "drivers" ];then
 			if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to install GPU drivers?')" = "Y" ];then
 				install_GPU_Drivers="Y"
 				if lspci | grep -i nvidia | grep VGA -q;then
@@ -263,7 +264,7 @@ prompt_to_ask_to_what_to_install(){
 			fi
 		fi
 		
-		if [[ -z "$arg_" ]];then
+		if [ -z "$arg_" ];then
 			if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to purge some unnecessary pakages?')" = "Y" ];then
 				run_purge_some_unnecessary_pakages="Y"
 			else
@@ -299,7 +300,7 @@ prompt_to_ask_to_what_to_install(){
 			fi
 		fi
 		
-		if [[ -z "$arg_" ]] || [[ "$arg_" = "apps" ]];then
+		if [ -z "$arg_" ] || [ "$arg_" = "apps" ];then
 			if ! command -v zsh >/dev/null;then
 				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install zsh?')" = "Y" ];then
 					if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to set zsh as default shell?')" = "Y" ];then
@@ -378,7 +379,7 @@ prompt_to_ask_to_what_to_install(){
 			fi
 		fi
 		
-		if [[ -z "$arg_" ]];then
+		if [ -z "$arg_" ];then
 			if [ "$(do_you_want_2_run_this_yes_or_no 'reboot?')" = "Y" ];then
 				reboot_now="Y"
 			else
@@ -448,14 +449,14 @@ fix_time_(){
 	[ -f "${installer_phases}/fix_time_" ] && return
 	show_m "Setting date ,time ,and timezone."
 	get_date_from_here=""
-	list_to_test=(${NETWORK_TEST} ipinfo.io 104.16.132.229)
+	list_to_test="${NETWORK_TEST} ipinfo.io 104.16.132.229"
 	
-	for test in "${list_to_test[@]}";do
-		ping -c 1 $test &>/dev/null && get_date_from_here="$test" && break
+	for test in ${list_to_test};do
+		ping -c 1 $test >/dev/null 2>&1 && get_date_from_here="$test" && break
 	done
 		
-	if [[ -z "$get_date_from_here" ]];then 
-		show_em "failed to ping all of this: ${list_to_test[@]}"
+	if [ -z "$get_date_from_here" ];then 
+		show_em "failed to ping all of this: ${list_to_test}"
 	else
 		if command -v curl >/dev/null 2>&1;then
 			$_SUPERUSER date -s "$(curl --head -sL --max-redirs 0 "$get_date_from_here" 2>&1 | sed -n 's/^ *Date: *//p')" >/dev/null 2>&1
@@ -474,27 +475,29 @@ fix_time_(){
 }
 
 wifi_mode_installation(){
-	local wifi_interface="${1-}"
+	wifi_interface="${1-}"
 	
 	ip link set "$wifi_interface" up
 		
-	if command -v nmcli &> /dev/null
+	if command -v nmcli >/dev/null 2>&1
 	then
 		nmcli radio wifi on
 		while :
 		do
 			nmcli --ask dev wifi connect && break
 		done
-	elif command -v wpa_supplicant &> /dev/null
+	elif command -v wpa_supplicant >/dev/null 2>&1
 	then
 		tmpfile="$(mktemp)"
 		while :
 		do
-			echo -e "\n These hotspots are available \n"
+			printf "\n These hotspots are available \n"
 			$_SUPERUSER iwlist "$wifi_interface" scan | grep ESSID | sed 's/ESSID://g;s/"//g;s/^                    //g'
-			read -p -r "ssid:" ssid_var
+			echo "ssid: "
+			read -r ssid_var
 			if iw "$wifi_interface" scan | grep 'SSID' | grep "$ssid_var" >/dev/null;then
-				read -p -r "pass:" pass_var
+				echo "pass: "
+				read -r pass_var
 			fi
 		done
 		wpa_passphrase "$ssid_var" "$pass_var" | tee "$tmpfile" > /dev/null
@@ -523,6 +526,7 @@ must_install_apps()
 
 switch_to_network_manager(){
 	[ -f "${installer_phases}/switch_to_network_manager" ] && return
+	[ -f "/etc/network/interfaces.old" ] && return
 	network_manager_name="network-manager"
 	show_m "switching to ${network_manager_name}"
 	add_packages_2_install_list "${network_manager_name}"
@@ -540,9 +544,9 @@ switch_to_network_manager(){
 	my-superuser chmod 644 "${temp_path}"/interfaces
 	my-superuser mv /etc/network/interfaces /etc/network/interfaces.old
 	my-superuser mv "${temp_path}"/interfaces /etc/network/interfaces
-	my-superuser sed -i 's/managed=.*/managed=true/g' /etc/NetworkManager/NetworkManager.conf
-	install_extra_Network_tools=(rfkill)
-	add_packages_2_install_list "${install_extra_Network_tools[@]}"
+	my-superuser sed -i 's/managed=.*/managed=false/g' /etc/NetworkManager/NetworkManager.conf
+	install_extra_Network_tools="rfkill"
+	add_packages_2_install_list "${install_extra_Network_tools}"
 	install_packages
 	touch "${installer_phases}/switch_to_network_manager"
 }
@@ -552,13 +556,13 @@ purge_some_unnecessary_pakages(){
 	# fonts-linuxlibertine break polybar 
 	# fonts-linuxlibertine installed from libreoffice
 	if [ "$run_purge_some_unnecessary_pakages" = "Y" ];then
-		declare -a to_be_purged=( aisleriot anthy kasumi aspell debian-reference-common fcitx fcitx-bin fcitx-frontend-gtk2 fcitx-frontend-gtk3 fcitx-mozc five-or-more four-in-a-row gnome-chess gnome-klotski gnome-mahjongg gnome-mines gnome-music gnome-nibbles gnome-robots gnome-sudoku gnome-taquin gnome-tetravex gnote goldendict hamster-applet hdate-applet hexchat hitori iagno khmerconverter lightsoff mate-themes malcontent mlterm mlterm-tiny mozc-utils-gui quadrapassel reportbug rhythmbox scim simple-scan sound-juicer swell-foop tali uim xboard xiterm+thai xterm im-config xfce4-notifyd xfce4-power-manager* )
+		to_be_purged=" aisleriot anthy kasumi aspell debian-reference-common fcitx fcitx-bin fcitx-frontend-gtk2 fcitx-frontend-gtk3 fcitx-mozc five-or-more four-in-a-row gnome-chess gnome-klotski gnome-mahjongg gnome-mines gnome-music gnome-nibbles gnome-robots gnome-sudoku gnome-taquin gnome-tetravex gnote goldendict hamster-applet hdate-applet hexchat hitori iagno khmerconverter lightsoff mate-themes malcontent mlterm mlterm-tiny mozc-utils-gui quadrapassel reportbug rhythmbox scim simple-scan sound-juicer swell-foop tali uim xboard xiterm+thai xterm im-config xfce4-notifyd xfce4-power-manager* "
 		
 		show_im "adding fonts-linuxlibertine to purging list (fonts-linuxlibertine break polybar) "
-		to_be_purged+=("linuxlibertine")
-		to_be_purged+=("${install_autoinstall_firmware[@]}")
+		to_be_purged="${to_be_purged} linuxlibertine"
+		to_be_purged="${to_be_purged} ${install_autoinstall_firmware}"
 		show_m "purging apps"
-		remove_package_with_error2info "${to_be_purged[@]}"
+		remove_package_with_error2info "${to_be_purged}"
 	fi
 	touch "${installer_phases}/purge_some_unnecessary_pakages"
 }
@@ -571,7 +575,7 @@ disable_some_unnecessary_services(){
 			show_m "Disable some unnecessary services"
 			
 			# INFO: Some boot services included in Debian are unnecesary for most usres (like NetworkManager-wait-online.service, ModemManager.service or pppd-dns.service)
-			for service in NetworkManager-wait-online.service wpa_supplicant ModemManager.service pppd-dns.service;do
+			for service in NetworkManager-wait-online.service ModemManager.service pppd-dns.service;do
 				init_manager stop $service || show_wm "fail to stop $service"
 				init_manager mask $service || show_wm "fail to mask $service"
 			done
@@ -584,7 +588,7 @@ disable_some_unnecessary_services(){
 			#init_manager mask gvfs-daemon.service || show_wm "fail to disable gvfs.service"
 			#init_manager mask gvfs-metadata.service || show_wm "fail to disable gvfs.service"
 			
-			if init_manager status NetworkManager.service &>/dev/null; then
+			if init_manager status NetworkManager.service >/dev/null 2>&1; then
 				init_manager disable networking || show_wm "fail to disable networking"
 				init_manager stop systemd-networkd.service || show_wm "fail to stop systemd-networkd.service"
 				init_manager disable systemd-networkd.service || show_wm "fail to disable systemd-networkd.service"
@@ -602,12 +606,12 @@ clean_up_now(){
 	
 	show_m "removing not needed dotfiles"
 
-	remove_this_Array=(
+	remove_this_Array="
 	.xsession-error
 	.xsession-error.old
-	)
-	for removethis in "${remove_this_Array[@]}"; do
-		[ -f "${HOME}/${removethis}" ] && rm -f "${HOME}/${removethis}" &> /dev/null;
+	"
+	for removethis in ${remove_this_Array}; do
+		[ -f "${HOME}/${removethis}" ] && rm -f "${HOME}/${removethis}" >/dev/null 2>&1;
 	done
 	
 	[ "$autoclean_and_autoremove" = "Y" ] && run_package_manager_autoclean
@@ -636,14 +640,15 @@ disable_ipv6_now(){
 	
 	if [ "$disable_ipv6" = "Y" ];then
 		disable_ipv6_conf="/etc/sysctl.d/90-disable_ipv6.conf"
-		show_m "Disabling IPv6."
-		
-		my-superuser tee "${disable_ipv6_conf}" <<- EOF >/dev/null
-		net.ipv6.conf.all.disable_ipv6 = 1
-		net.ipv6.conf.default.disable_ipv6 = 1
-		net.ipv6.conf.lo.disable_ipv6 = 1
-		EOF
-		my-superuser sysctl -p "${disable_ipv6_conf}"
+		if [ ! -f "${disable_ipv6_conf}" ];then
+			show_m "Disabling IPv6."
+			my-superuser tee "${disable_ipv6_conf}" <<- EOF >/dev/null
+			net.ipv6.conf.all.disable_ipv6 = 1
+			net.ipv6.conf.default.disable_ipv6 = 1
+			net.ipv6.conf.lo.disable_ipv6 = 1
+			EOF
+			my-superuser sysctl -p "${disable_ipv6_conf}"
+		fi
 	fi
 	touch "${installer_phases}/disable_ipv6_now"
 }
@@ -651,7 +656,7 @@ disable_ipv6_now(){
 run_my_alternatives(){
 	[ -f "${installer_phases}/my_alternatives" ] && return
 	show_m "update alternatives apps"
-	/usr/share/my_stuff/bin/bin/my-alternatives --install
+	${__distro_path}/bin/bin/my-alternatives --install
 	touch "${installer_phases}/my_alternatives"
 }
 
@@ -671,7 +676,7 @@ update_grub_image(){
 
 check_if_user_has_root_access(){
 	show_m "check if user has root access."
-	if [[ "$EUID" -ne 0 ]];then
+	if [ "$(id -u)" -ne 0 ];then
     	## Check SuperUser Group
     	SUPERUSERGROUP='wheel sudo root'
     	for sug in ${SUPERUSERGROUP}; do
@@ -719,9 +724,9 @@ source_my_lib_file(){
 	show_m "sourcing ${lib_file_name} file."
 	disto_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1 || :)"
 	# source disto_lib
-	if [[ -n "${disto_lib_location}" ]];then
+	if [ -n "${disto_lib_location}" ];then
 		mv "${disto_lib_location}" "${temp_path}"
-	elif [[ ! -f "${temp_path}/${lib_file_name}" ]];then 
+	elif [ ! -f "${temp_path}/${lib_file_name}" ];then 
 		show_im "download lib file"
 		if ! download_file "" "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${lib_file_name}" "${temp_path}/${lib_file_name}"; then
 			show_em "Error: Failed to download ${lib_file_name} ."
@@ -729,7 +734,7 @@ source_my_lib_file(){
 	fi
 		
 	set -a
-	if ! source "${temp_path}"/${lib_file_name} 2> /dev/null; then
+	if ! . "${temp_path}"/${lib_file_name} 2> /dev/null; then
 		show_em "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
 	fi
 	set +a
@@ -742,7 +747,7 @@ source_this_script(){
 	[ ! -f "${temp_path}"/"${file_to_source_and_check}" ] && show_em "can not source this file ( ${temp_path}/${file_to_source_and_check} ). does not exist."
 	[ -f "${installer_phases}/${file_to_source_and_check}" ] && return
 	show_m "${message_to_show}"
-	source "${temp_path}"/"${file_to_source_and_check}"
+	. "${temp_path}"/"${file_to_source_and_check}"
 }
 
 pre_script_create_dir_and_source_stuff(){
@@ -755,13 +760,13 @@ pre_script_create_dir_and_source_stuff(){
 	mkdir -p "${installer_phases}"
 		
 	if [ -f "${save_value_file}" ];then
-		source "${save_value_file}"
+		. "${save_value_file}"
 	fi
 	
 	if [ -f "${prompt_to_install_value_file}" ];then
 		show_im "file exist : ${prompt_to_install_value_file} form previce run."
 		if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want source it?')" = "Y" ];then
-			source "${prompt_to_install_value_file}"
+			. "${prompt_to_install_value_file}"
 			source_prompt_to_install_file=true
 		fi
 	fi
@@ -774,7 +779,7 @@ purge_sudo(){
 		PASSWORD=$(tr -dc 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' < /dev/urandom | head -c 30 | base64)	
 		echo "root:${PASSWORD}" | $_SUPERUSER chpasswd
 		remove_package_with_error2info "sudo" 
-		echo "$PASSWORD" | su -c "dpkg -i /usr/share/my_stuff/lib/fake_empty_apps/sudo.deb" root
+		echo "$PASSWORD" | su -c "dpkg -i ${__distro_path}/lib/fake_empty_apps/sudo.deb" root
 		echo "$PASSWORD" | su -c "ln -sf $(which doas) /usr/bin/sudo" root
 		echo "$PASSWORD" | su -c "passwd -l root" root
 		PASSWORD=""
@@ -851,7 +856,7 @@ set_package_manager(){
 		echo "PACKAGER=\"${PACKAGER}\"" | tee "${save_value_file}" >/dev/null 2>&1
 	fi
 	
-	if ! source "${temp_path}/disto_package_manager_${PACKAGER}" 2> /dev/null; then
+	if ! . "${temp_path}/disto_package_manager_${PACKAGER}" 2> /dev/null; then
 		show_em "Error: Failed to source disto_package_manager_${PACKAGER} from ${temp_path}" >&2
 	fi
 	
@@ -863,14 +868,14 @@ set_package_manager(){
 switch_default_xsession(){
 	[ -f "${installer_phases}/switch_default_xsession" ] && return
 	show_m "switching default xsession to my stuff $switch_default_xsession_to."
-	my-superuser update-alternatives --install /usr/bin/x-session-manager x-session-manager /usr/share/my_stuff/system_files/bin/xsessions/${switch_default_xsession_to} 60
+	my-superuser update-alternatives --install /usr/bin/x-session-manager x-session-manager ${__distro_path}/system_files/bin/xsessions/${switch_default_xsession_to} 60
 	touch "${installer_phases}/switch_default_xsession"
 }
 
 create_uninstaller_file(){
 	[ -f "${var_for_distro_uninstaller}" ] && return
 	show_m "Creating uninstaller file."
-	List_of_installed_packages_="${List_of_apt_2_install_[@]}"
+	List_of_installed_packages_="${List_of_apt_2_install_}"
 	my-superuser tee "${var_for_distro_uninstaller}" <<- EOF >/dev/null
 	grub_image_name=\"${grub_image_name}\"
 	List_of_pakages_installed_=\"${List_of_installed_packages_}\"
@@ -942,17 +947,17 @@ pick_clone_rep_commnad(){
 check_and_download_core_script(){
 	show_m "check if exsit and download core script."
 	
-	if [[ "$arg_" = "drivers" ]] || [[ -z "$arg_" ]];then
+	if [ "$arg_" = "drivers" ] || [ -z "$arg_" ];then
 		check_and_download_ "disto_Drivers_list"
 		check_and_download_ "disto_Drivers_installer"
 	fi
 	
-	if [[ "$arg_" = "apps" ]] || [[ -z "$arg_" ]];then
+	if [ "$arg_" = "apps" ] || [ -z "$arg_" ];then
 		check_and_download_ "disto_apps_list"
 		check_and_download_ "disto_apps_installer"
 	fi
 	
-	if [[ -z "$arg_" ]];then
+	if [ -z "$arg_" ];then
 		check_and_download_ "disto_configer"
 		
 		check_and_download_ "disto_post_install"
@@ -1007,12 +1012,12 @@ clear
 
 _unattended_upgrades_ stop
 
-if [[ "$arg_" = "drivers" ]] || [[ -z "$arg_" ]];then
+if [ "$arg_" = "drivers" ] || [ -z "$arg_" ];then
 	source_this_script "disto_Drivers_list" "Install drivers from (disto_Drivers)"
 	source_this_script "disto_Drivers_installer" "Install drivers from (disto_Drivers)"
 fi
 
-if [[ "$arg_" = "apps" ]] || [[ -z "$arg_" ]];then
+if [ "$arg_" = "apps" ] || [ -z "$arg_" ];then
 	source_this_script "disto_apps_list" "Install drivers from (disto_Drivers)"
 	source_this_script "disto_apps_installer" "Install apps from (disto_Installapps_list)"
 fi
@@ -1023,7 +1028,7 @@ switch_to_network_manager
 
 _unattended_upgrades_ start
 
-if [[ -n "$arg_" ]];then
+if [ -n "$arg_" ];then
 	show_m "Done"
 	exit
 fi
@@ -1049,7 +1054,7 @@ run_my_alternatives
 
 source_this_script "disto_post_install" "prepare some script"
 pre_post_install
-/usr/share/my_stuff/distro_manager/system_files_creater
+${__distro_path}/distro_manager/system_files_creater
 create_blob_system_files
 end_of_post_install
 
@@ -1062,5 +1067,5 @@ switch_to_doas_now
 show_m "Done"
 
 if [ "$reboot_now" = "Y" ];then
-	/usr/share/my_stuff/system_files/bin/my_session_manager reboot
+	${__distro_path}/system_files/bin/my_session_manager reboot
 fi

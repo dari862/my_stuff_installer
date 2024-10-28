@@ -119,7 +119,7 @@ end_of_post_install(){
 	
 	show_im "installing update-notification"
 	my-superuser cp -r "${__distro_path}/lib/apps/update-notification.conf" "${__distro_path}/system_files"
-	source "${__distro_path}/system_files/update-notification.conf"
+	. "${__distro_path}/system_files/update-notification.conf"
 	my-superuser ln -sf "$script_full_path" "/etc/cron.$cron_when"	
 	if [ ! -f "$updates_file" ]
 	then 

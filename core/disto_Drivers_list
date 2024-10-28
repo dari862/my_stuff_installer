@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
-source "${prompt_to_install_value_file}"
+. "${prompt_to_install_value_file}"
 
 List_of_apt_2_install_=""
 #######################
@@ -9,7 +9,7 @@ List_of_apt_2_install_=""
 #must have apps
 install_audio="pulseaudio pavucontrol"
 install_if_laptop="acpi upower"
-if [[ "$(ls /sys/class/backlight | head -n 1)" == *"intel_"* ]]; then
+if ls /sys/class/backlight | head -n 1 | grep "intel_"; then
 	install_if_laptop="${install_if_laptop} xbacklight"
 else
 	install_if_laptop="${install_if_laptop} light"

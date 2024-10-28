@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 [ -f "${installer_phases}/disto_Drivers" ] && return
-source "${prompt_to_install_value_file}"
+. "${prompt_to_install_value_file}"
 
 ##################################################################################
 # var
@@ -36,27 +36,27 @@ create_20_intel_conf_file(){
 ##################################################################################
 # GPU Drivers
 ##################################################################################
-if [[ "${install_GPU_Drivers}" = "Y" ]];then
+if [ "${install_GPU_Drivers}" = "Y" ];then
 		
 	number_of_gpus=0
 
 	if [ "$(lspci | grep -i VMware | grep VGA -c)" != "0" ];then
 		VMware_gpu_exist=true
-		number_of_gpus=$((number_of_gpus++))
+		number_of_gpus=$((number_of_gpus + 1))
 	else
 		if [ "$(lspci | grep -i nvidia | grep VGA -c)" != "0" ];then
 			nvidia_gpu_exist=true
-			number_of_gpus=$((number_of_gpus++))
+			number_of_gpus=$((number_of_gpus + 1))
 		fi
 		
 		if [ "$(lspci | grep -i intel | grep VGA -c)" != "0" ];then
 			intel_gpu_exist=true
-			number_of_gpus=$((number_of_gpus++))
+			number_of_gpus=$((number_of_gpus + 1))
 		fi
 		
 		if [ "$(lspci | grep -i amd | grep VGA -c)" != "0" ];then
 			amd_gpu_exist=true
-			number_of_gpus=$((number_of_gpus++))
+			number_of_gpus=$((number_of_gpus + 1))
 		fi
 	fi
 	
@@ -85,7 +85,7 @@ if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 	add_packages_2_install_list "${install_if_laptop}"
 fi
 
-if [[ "$fingerprint_exist" = true ]];then
+if [ "$fingerprint_exist" = true ];then
     add_packages_2_install_list "${install_fingerprint}"
 fi
 
@@ -108,7 +108,8 @@ if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 	if [ "$number_of_gpus" -gt 1 ]; then
 		show_im "create envycontrol installtion file."
 		tee "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM <<- 'EOF' > /dev/null
-		#!/bin/bash
+		#!/bin/sh
+			__distro_path="/usr/share/my_stuff"
 			envycontrol_updater_path="$(mktemp -d)"
 			curl -s 'https://api.github.com/repos/bayasdev/envycontrol/releases/latest' \
   			| grep '"tarball_url"' \
@@ -117,14 +118,14 @@ if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
   			| tr -d ',' \
   			| xargs curl -o "${envycontrol_updater_path}"/envycontrol.tar.gz && tar -xvzf "${envycontrol_updater_path}"/envycontrol.tar.gz -C "${envycontrol_updater_path}" && mv "${envycontrol_updater_path}"/bayasdev* "${envycontrol_updater_path}"/envycontrol
   			
-  			[ -d "/usr/share/my_stuff/system_files/downloaded/envycontrol" ] && rm -rdf "/usr/share/my_stuff/system_files/downloaded/envycontrol"
-  			[ ! -d "/usr/share/my_stuff/system_files/downloaded" ] && mkdir -p /usr/share/my_stuff/system_files/downloaded
-  			[ ! -d "/usr/share/my_stuff/system_files/git" ] && mkdir -p /usr/share/my_stuff/system_files/git
+  			[ -d "${__distro_path}/system_files/downloaded/envycontrol" ] && rm -rdf "${__distro_path}/system_files/downloaded/envycontrol"
+  			[ ! -d "${__distro_path}/system_files/downloaded" ] && mkdir -p ${__distro_path}/system_files/downloaded
+  			[ ! -d "${__distro_path}/system_files/git" ] && mkdir -p ${__distro_path}/system_files/git
   			
   			if [ -d "${envycontrol_updater_path}"/envycontrol ];then
   				chmod +x "${envycontrol_updater_path}"/envycontrol/envycontrol.py 
-  				mv "${envycontrol_updater_path}"/envycontrol "/usr/share/my_stuff/system_files/git/"
-  				ln -sf "/usr/share/my_stuff/system_files/downloaded/envycontrol/envycontrol.py" "/usr/share/my_stuff/system_files/bin/envycontrol"
+  				mv "${envycontrol_updater_path}"/envycontrol "${__distro_path}/system_files/git/"
+  				ln -sf "${__distro_path}/system_files/downloaded/envycontrol/envycontrol.py" "${__distro_path}/system_files/bin/envycontrol"
   			fi
 		EOF
 		chmod +x "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
@@ -137,7 +138,7 @@ show_im "Configer packages."
 
 #create_20_intel_conf_file
 
-if [[ "$fingerprint_exist" = true ]];then
+if [ "$fingerprint_exist" = true ];then
 	touch "${temp_path}"/fingerprint_exist
 fi
 
@@ -145,7 +146,7 @@ if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 	show_im "some config"
 fi
 
-if [[ "${install_GPU_Drivers}" = "Y" ]];then
+if [ "${install_GPU_Drivers}" = "Y" ];then
 	touch "${temp_path}"/GPU_Drivers_ready
 fi
 
