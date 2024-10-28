@@ -34,7 +34,7 @@ install_apt_fast(){
 
 enable_repo_contrib(){
 	while IFS= read -r line;do
-		if echo "${line}" | grep -qv contrib;then
+		if echo "${line}" | grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" | grep -qv contrib;then
 			$_SUPERUSER sed -i "s|^${line}$|${line} contrib|g" /etc/apt/sources.list
 		fi
 	done < /etc/apt/sources.list
@@ -42,7 +42,7 @@ enable_repo_contrib(){
 
 enable_repo_nonfree_firmware(){
 	while IFS= read -r line;do
-		if echo "${line}" | grep -qv 'non-free-firmware';then
+		if echo "${line}" | grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" | grep -qv 'non-free-firmware';then
 			$_SUPERUSER sed -i "s|^${line}$|${line} nonfreefirmware|g" /etc/apt/sources.list
 		fi
 	done < /etc/apt/sources.list
@@ -51,7 +51,7 @@ enable_repo_nonfree_firmware(){
 
 enable_repo_nonfree(){
 	while IFS= read -r line;do
-		if echo "${line}" | grep -qv "non-free[[:blank:]]";then
+		if echo "${line}" | grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" | grep -qv "non-free[[:blank:]]";then
 			$_SUPERUSER sed -i "s|^${line}$|${line} nonfreeonly|g" /etc/apt/sources.list
 		fi
 	done < /etc/apt/sources.list

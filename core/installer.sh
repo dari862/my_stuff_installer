@@ -88,6 +88,9 @@ else
 fi
 [ "$distro_name_" = "ubuntu" ] && this_is_ubuntu=true
 
+mirror="http://deb.debian.org/debian/"
+mirror_security="http://security.debian.org/debian-security"
+
 ################################################################################################################################
 # Function
 ################################################################################################################################
@@ -200,9 +203,9 @@ prompt_to_ask_to_what_to_install(){
 	
 	mirror="http://deb.debian.org/debian/"
 	mirror_security="http://security.debian.org/debian-security"
-	deb_lines_nonfree_firmware=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non-free-firmware' || :)
-	deb_lines_contrib=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v contrib || :)
-	deb_lines_nonfree=$(egrep "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v "non-free[[:blank:]]" || :)
+	deb_lines_nonfree_firmware=$(grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non-free-firmware' || :)
+	deb_lines_contrib=$(grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v contrib || :)
+	deb_lines_nonfree=$(grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v "non-free[[:blank:]]" || :)
 	
 	show_m "prompt for what do you want to install."
 	
