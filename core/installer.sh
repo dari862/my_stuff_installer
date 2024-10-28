@@ -184,11 +184,13 @@ test_internet_(){
 do_you_want_2_run_this_yes_or_no(){
 	massage_is_="${1}"
 	yn=""
-	echo "${massage_is_} (yes/no) (default: yes) "
+	printf "${massage_is_} (yes/no) (default: yes) "
 	read -r yn
 	yn="$(echo "$yn" | cut -c 1 | tr '[:lower:]' '[:upper:]')"
 	[ "$yn" = "" ] && yn="Y"
-	echo "$yn"
+	if [ "$yn" != "Y" ];then
+		return 1
+	fi
 }
 
 prompt_to_ask_to_what_to_install(){
@@ -205,33 +207,33 @@ prompt_to_ask_to_what_to_install(){
 	show_m "prompt for what do you want to install."
 	
 	if [ "$auto_run_script" != "true" ];then
-		if [ "$(do_you_want_2_run_this_yes_or_no 'Autorun installation?')" = "Y" ];then
+		if do_you_want_2_run_this_yes_or_no 'Autorun installation?';then
 			return
 		fi
 			
 		if [ "$switch_to_doas" = false ];then
-			if [ "$(do_you_want_2_run_this_yes_or_no 'Switch to doas?')" = "Y" ];then
+			if do_you_want_2_run_this_yes_or_no 'Switch to doas?';then
 				switch_to_doas=true
 			fi
 		fi
 		
 		if [ -z "$arg_" ];then
 			if [ -n "$deb_lines_contrib" ];then
-				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want enable contrib repo?')" = "Y" ];then
+				if do_you_want_2_run_this_yes_or_no 'Do you want enable contrib repo?';then
 					enable_contrib=true
 				else
 					enable_contrib=false
 				fi
 			fi
 			if [ -n "$deb_lines_nonfree_firmware" ];then
-				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want enable nonfree_firmware repo?')" = "Y" ];then
+				if do_you_want_2_run_this_yes_or_no 'Do you want enable nonfree_firmware repo?';then
 					enable_nonfree_firmware=true
 				else
 					enable_nonfree_firmware=false
 				fi
 			fi
 			if [ -n "$deb_lines_nonfree" ];then
-				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want enable nonfree repo?')" = "Y" ];then
+				if do_you_want_2_run_this_yes_or_no 'Do you want enable nonfree repo?';then
 					enable_nonfree=true
 				else
 					enable_nonfree=false
@@ -240,17 +242,17 @@ prompt_to_ask_to_what_to_install(){
 		fi
 		
 		if [ -z "$arg_" ] || [ "$arg_" = "drivers" ];then
-			if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to install GPU drivers?')" = "Y" ];then
+			if do_you_want_2_run_this_yes_or_no 'do you want to install GPU drivers?';then
 				install_GPU_Drivers="Y"
 				if lspci | grep -i nvidia | grep VGA -q;then
 					enable_nvidia_repo="true"
-					if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to add Cuda Support?')" = "Y" ];then
+					if do_you_want_2_run_this_yes_or_no 'do you want to add Cuda Support?';then
 						_cuda_="Y"
 					else
 						_cuda_=""
 					fi
 					
-					if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to install opensource nvidia-kernel?')" = "Y" ];then
+					if do_you_want_2_run_this_yes_or_no 'do you want to install opensource nvidia-kernel?';then
 						_kernel_open_dkms_="Y"
 					else
 						_kernel_open_dkms_=""
@@ -265,27 +267,27 @@ prompt_to_ask_to_what_to_install(){
 		fi
 		
 		if [ -z "$arg_" ];then
-			if [ "$(do_you_want_2_run_this_yes_or_no 'do you want to purge some unnecessary pakages?')" = "Y" ];then
+			if do_you_want_2_run_this_yes_or_no 'do you want to purge some unnecessary pakages?';then
 				run_purge_some_unnecessary_pakages="Y"
 			else
 				run_purge_some_unnecessary_pakages=""
 			fi
 			
-			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to disable some unnecessary services?')" = "Y" ];then
+			if do_you_want_2_run_this_yes_or_no 'Do you want to disable some unnecessary services?';then
 				run_disable_some_unnecessary_services="Y"
 			else
 				run_disable_some_unnecessary_services=""
 			fi
 			
-			if [ "$(do_you_want_2_run_this_yes_or_no 'disable ipv6 stack?')" = "Y" ];then
+			if do_you_want_2_run_this_yes_or_no 'disable ipv6 stack?';then
 				disable_ipv6_stack="Y"
 			else
-				if [ "$(do_you_want_2_run_this_yes_or_no 'disable ipv6 only?')" = "Y" ];then
+				if do_you_want_2_run_this_yes_or_no 'disable ipv6 only?';then
 					disable_ipv6="Y"
 				else
 					disable_ipv6=""
 				fi
-				if [ "$(do_you_want_2_run_this_yes_or_no 'update grub image?')" = "Y" ];then
+				if do_you_want_2_run_this_yes_or_no 'update grub image?';then
 					run_update_grub_image="Y"
 				else
 					run_update_grub_image=""
@@ -293,7 +295,7 @@ prompt_to_ask_to_what_to_install(){
 				disable_ipv6_stack=""
 			fi
 			
-			if [ "$(do_you_want_2_run_this_yes_or_no 'run autoclean and autoremove?')" = "Y" ];then
+			if do_you_want_2_run_this_yes_or_no 'run autoclean and autoremove?';then
 				autoclean_and_autoremove="Y"
 			else
 				autoclean_and_autoremove=""
@@ -302,8 +304,8 @@ prompt_to_ask_to_what_to_install(){
 		
 		if [ -z "$arg_" ] || [ "$arg_" = "apps" ];then
 			if ! command -v zsh >/dev/null;then
-				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install zsh?')" = "Y" ];then
-					if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to set zsh as default shell?')" = "Y" ];then
+				if do_you_want_2_run_this_yes_or_no 'Do you want to install zsh?';then
+					if do_you_want_2_run_this_yes_or_no 'Do you want to set zsh as default shell?';then
 						install_zsh_now=zsh_default
 					else
 						install_zsh_now=zsh
@@ -312,7 +314,7 @@ prompt_to_ask_to_what_to_install(){
 					install_zsh_now=""
 				fi
 			else
-				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to set zsh as default shell?')" = "Y" ];then
+				if do_you_want_2_run_this_yes_or_no 'Do you want to set zsh as default shell?';then
 					install_zsh_now=zsh_default
 				else
 					install_zsh_now=zsh
@@ -320,7 +322,7 @@ prompt_to_ask_to_what_to_install(){
 			fi
 			
 			if ! command -v xfce4-panel >/dev/null;then
-				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install xfce4-panel?')" = "Y" ];then
+				if do_you_want_2_run_this_yes_or_no 'Do you want to install xfce4-panel?';then
 					install_xfce4_panel=xfce4_panel
 					xfce4_files_manager=true
 				else
@@ -330,7 +332,7 @@ prompt_to_ask_to_what_to_install(){
 			
 			if [ "$xfce4_files_manager" = false ];then
 				if ! command -v thunar >/dev/null;then
-					if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to switch from pcmanfm to thunar?')" = "Y" ];then
+					if do_you_want_2_run_this_yes_or_no 'Do you want to switch from pcmanfm to thunar?';then
 						xfce4_files_manager=true
 					fi
 				else
@@ -339,7 +341,7 @@ prompt_to_ask_to_what_to_install(){
 			fi
 			
 			if ! command -v polybar >/dev/null;then
-				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install polybar?')" = "Y" ];then
+				if do_you_want_2_run_this_yes_or_no 'Do you want to install polybar?';then
 					install_polybar=polybar
 				else
 					install_polybar=""
@@ -347,7 +349,7 @@ prompt_to_ask_to_what_to_install(){
 			fi
 			
 			if ! command -v qt5ct >/dev/null;then
-				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install qt5ct?')" = "Y" ];then
+				if do_you_want_2_run_this_yes_or_no 'Do you want to install qt5ct?';then
 					install_qt5ct=qt5ct
 				else
 					install_qt5ct=""
@@ -355,7 +357,7 @@ prompt_to_ask_to_what_to_install(){
 			fi
 			
 			if ! command -v jgmenu >/dev/null;then
-				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install jgmenu?')" = "Y" ];then
+				if do_you_want_2_run_this_yes_or_no 'Do you want to install jgmenu?';then
 					install_jgmenu=jgmenu
 				else
 					install_jgmenu=""
@@ -363,16 +365,16 @@ prompt_to_ask_to_what_to_install(){
 			fi
 			
 			if ! command -v bspwm >/dev/null;then
-				if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install bspwm?')" = "Y" ];then
+				if do_you_want_2_run_this_yes_or_no 'Do you want to install bspwm?';then
 					install_bspwm=bspwm
-					if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to switch to bspwm session?')" = "Y" ];then
+					if do_you_want_2_run_this_yes_or_no 'Do you want to switch to bspwm session?';then
 						switch_default_xsession_to="bspwm"
 					fi
 				else
 					install_bspwm=""
 				fi
 			fi
-			if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want to install extra apps?')" = "Y" ];then
+			if do_you_want_2_run_this_yes_or_no 'Do you want to install extra apps?';then
 				install_extra_now=extra
 			else
 				install_extra_now=""
@@ -380,7 +382,7 @@ prompt_to_ask_to_what_to_install(){
 		fi
 		
 		if [ -z "$arg_" ];then
-			if [ "$(do_you_want_2_run_this_yes_or_no 'reboot?')" = "Y" ];then
+			if do_you_want_2_run_this_yes_or_no 'reboot?';then
 				reboot_now="Y"
 			else
 				reboot_now=""
@@ -765,7 +767,7 @@ pre_script_create_dir_and_source_stuff(){
 	
 	if [ -f "${prompt_to_install_value_file}" ];then
 		show_im "file exist : ${prompt_to_install_value_file} form previce run."
-		if [ "$(do_you_want_2_run_this_yes_or_no 'Do you want source it?')" = "Y" ];then
+		if do_you_want_2_run_this_yes_or_no 'Do you want source it?';then
 			. "${prompt_to_install_value_file}"
 			source_prompt_to_install_file=true
 		fi
