@@ -60,7 +60,7 @@ enable_repo_nonfree(){
 
 enable_nvidia_gpu_repo(){
 	if [ ! -f "/usr/share/keyrings/nvidia-drivers.gpg" ];then
-		curl -fSsL "https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/3bf863cc.pub" | $_SUPERUSER gpg --dearmor | $_SUPERUSER tee /usr/share/keyrings/nvidia-drivers.gpg > /dev/null 2>&1
+		get_url_content "https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/3bf863cc.pub" | $_SUPERUSER gpg --dearmor | $_SUPERUSER tee /usr/share/keyrings/nvidia-drivers.gpg > /dev/null 2>&1
 	fi
 				
 	if [ ! -f "/etc/apt/sources.list.d/nvidia-drivers.list" ];then 

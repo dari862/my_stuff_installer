@@ -90,6 +90,7 @@ fi
 
 mirror="http://deb.debian.org/debian/"
 mirror_security="http://security.debian.org/debian-security"
+only_doas_installed=false
 
 ################################################################################################################################
 # Function
@@ -118,15 +119,8 @@ show_im(){
 
 test_internet_(){
 	show_m "Testing internet connection."
-	if command -v nc >/dev/null;then
-		NETWORK=$(printf "GET /nm HTTP/1.1\\r\\nHost: ${NETWORK_TEST}\\r\\n\\r\\n" | nc -w1 $NETWORK_TEST 80 | grep -c "NetworkManager is online")
-	elif command -v curl >/dev/null 2>&1;then
-		NETWORK=$(curl -s -X GET ${NETWORK_TEST} && echo 1)
-	elif command -v wget >/dev/null 2>&1;then
-		NETWORK=$(wget -qS -O- network-test.debian.org >/dev/null 2>&1 && echo 1)
-	fi
 	
-	if test "$NETWORK" -ne 1 ; then
+	if ! internet_tester ; then
 		wifi_interface=""
 		if check_url "$url_to_test"; then
 			show_im "Internet connection test passed!"
@@ -214,7 +208,7 @@ prompt_to_ask_to_what_to_install(){
 			return
 		fi
 			
-		if [ "$switch_to_doas" = false ];then
+		if [ "$switch_to_doas" = false ] && [ "$only_doas_installed" = "false" ];then
 			if do_you_want_2_run_this_yes_or_no 'Switch to doas?';then
 				switch_to_doas=true
 			fi
@@ -425,8 +419,14 @@ pick_file_downloader_and_url_checker(){
 	show_m "picking url command"
 	if command -v curl >/dev/null 2>&1;then
 		show_im "picked url command: curl "
+		internet_tester(){
+			curl -s -X GET ${NETWORK_TEST}
+		}
 		check_url(){
-			curl -s "${1-}" 2>/dev/null
+			curl -SsL "${1-}" 2>/dev/null
+		}
+		get_url_content(){
+			curl -fsSL "${1-}"
 		}
 		download_file(){
 			${1-} curl -SsL --progress-bar "${2-}" -o "${3-}" 2>/dev/null
@@ -434,10 +434,19 @@ pick_file_downloader_and_url_checker(){
 		get_url_content(){
 			curl -s "${1-}" 2>/dev/null
 		}
+		get_current_date(){
+			curl --head -fSs --max-redirs 0 "${1-}" 2>&1 | sed -n 's/^ *Date: *//p'
+		}
 	elif command -v wget >/dev/null 2>&1;then
 		show_im "picked url command: wget "
+		internet_tester(){
+			wget -qS -O- network-test.debian.org >/dev/null 2>&1
+		}
 		check_url(){
 			wget -q -O- "${1-}" >/dev/null 2>&1
+		}
+		get_url_content(){
+			wget -O- "${1-}"
 		}
 		download_file(){
 			${1-} wget -q --no-check-certificate --progress=bar "${2-}" -O "${3-}" 2>/dev/null
@@ -445,8 +454,17 @@ pick_file_downloader_and_url_checker(){
 		get_url_content(){
 			wget -q -O- "${1-}" 2>/dev/null
 		}
+		get_current_date(){
+			wget -S -O- -q --no-check-certificate --max-redirect=0 "${1-}" 2>&1 | sed -n 's/^ *Date: *//p'
+		}
 	else
 		show_em "please install curl or wget."
+	fi
+	
+	if command -v nc >/dev/null;then
+		internet_tester(){
+			printf "GET /nm HTTP/1.1\\r\\nHost: ${NETWORK_TEST}\\r\\n\\r\\n" | nc -w1 $NETWORK_TEST 80 | grep -c "NetworkManager is online"
+		}
 	fi
 }
 
@@ -463,11 +481,8 @@ fix_time_(){
 	if [ -z "$get_date_from_here" ];then 
 		show_em "failed to ping all of this: ${list_to_test}"
 	else
-		if command -v curl >/dev/null 2>&1;then
-			$_SUPERUSER date -s "$(curl --head -sL --max-redirs 0 "$get_date_from_here" 2>&1 | sed -n 's/^ *Date: *//p')" >/dev/null 2>&1
-		elif command -v wget >/dev/null 2>&1;then
-			$_SUPERUSER date -s "$(wget -S -O- -q --no-check-certificate --max-redirect=0 "$get_date_from_here" 2>&1 | sed -n 's/^ *Date: *//p')" >/dev/null 2>&1
-		fi
+		current_date="$(get_current_date "$get_date_from_here")"
+		$_SUPERUSER date -s "$current_date" >/dev/null 2>&1
 		__timezone="$(get_url_content "https://ipinfo.io/" | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/ //g')"
 		if command -v timedatectl >/dev/null 2>&1;then
 			$_SUPERUSER timedatectl set-timezone $__timezone
@@ -524,7 +539,6 @@ must_install_apps()
 	show_m "installing req apps"
 	add_packages_2_install_list "mlocate"
 	add_packages_2_install_list "git"
-	add_packages_2_install_list "curl"
 	install_packages
 	touch "${installer_phases}/must_install_apps"
 }
@@ -711,6 +725,9 @@ check_if_user_has_root_access(){
 			[ "$sudo_installed" = "true" ] && keep_superuser_refresed &
 		fi
 		
+		if [ "$sudo_installed" = "false" ] && [ "$doas_installed" = "true" ];then
+			only_doas_installed="true"
+		fi
 		$_SUPERUSER ln -sf $(which $_SUPERUSER) /usr/bin/my-superuser
     else
     	if command -v doas >/dev/null;then
@@ -800,8 +817,11 @@ keep_superuser_refresed(){
 	done
 }
 
-install_doas(){
-	if ! command -v doas >/dev/null;then
+install_superuser_tools()
+{
+	show_m "install superuser tools."
+	[ -f "${installer_phases}/install_superuser_tools" ] && return
+	if [ "$switch_to_doas" = true ] && [ "$only_doas_installed" = "false" ];then
 		if ! grep "sudo" /etc/group;then
 			$_SUPERUSER groupadd sudo
 		fi
@@ -815,27 +835,16 @@ install_doas(){
 			complete -F _command doas
 		fi
 		EOF
-	fi
-}
-
-install_superuser_tools()
-{
-	show_m "install superuser tools."
-	[ -f "${installer_phases}/install_superuser_tools" ] && return
-	if [ "$switch_to_doas" = true ];then
-		install_doas
-	fi
-	
-	if [ -z "$_SUPERUSER" ] && [ "$doas_installed" = false ] ;then
-	   	install_doas
+		
     	$_SUPERUSER tee /etc/doas.conf <<- EOF >/dev/null 
 		permit nopass $USER as root			
 		EOF
-		if ! doas -C /etc/doas.conf;then
+		if ! $_SUPERUSER doas -C /etc/doas.conf;then
 			show_em "config error"
 		fi
-		chmod -c 0400 /etc/doas.conf
-		ln -sf $(which doas) /usr/bin/my-superuser
+		$_SUPERUSER chmod -c 0400 /etc/doas.conf
+		doas_path="$(which doas)"
+		$_SUPERUSER ln -sf "$doas_path" "/usr/bin/my-superuser"
 	fi
 	touch "${installer_phases}/install_superuser_tools"
 }

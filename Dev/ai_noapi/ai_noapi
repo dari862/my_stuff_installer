@@ -1,0 +1,50 @@
+#!/bin/sh
+# Function to interact with GPT-Neo model via Hugging Face's transformers library
+chat_with_gpt_neo() {
+    prompt="$1"
+    model="$2"
+    max_length="$3"
+
+    python3 - <<EOF
+from transformers import pipeline
+
+# Load GPT-Neo model
+generator = pipeline('text-generation', model='$model')
+
+# Generate response based on the prompt
+response = generator("$prompt", max_length=$max_length, num_return_sequences=1)
+
+# Print the generated response
+print(response[0]['generated_text'])
+EOF
+}
+
+# Default values for max_length and model
+. ./ai_noapi.conf
+
+# Allow command-line argument for max_length and model
+while getopts "m:l:" opt; do
+    case $opt in
+        m) MODEL="$OPTARG" ;;
+        l) MAX_LENGTH="$OPTARG" ;;
+        *) echo "Usage: $0 [-m model] [-l max_length]"; exit 1 ;;
+    esac
+done
+
+# Main loop to interact with GPT-Neo
+echo "Chat with GPT-Neo! Type 'exit' to quit."
+
+while true; do
+    # Read user input
+    echo -n "You: "
+    read user_input
+
+    # Check if the user wants to exit
+    if [ "$user_input" = "exit" ]; then
+        echo "Exiting chat..."
+        break
+    fi
+
+    # Call the function to generate the GPT-Neo response
+    echo "GPT-Neo: $(chat_with_gpt_neo "$user_input" "$MODEL" "$MAX_LENGTH")"
+done

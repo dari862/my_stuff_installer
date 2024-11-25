@@ -1,7 +1,0 @@
-#!/usr/bin/env zsh
-
-set -eo pipefail
-
-grim -g "$(slurp)" - | wl-copy
-
-notify-send "📸 Screenshot saved to clipboard!" "Press Super+Shift+C to upload." --category transfer.complete

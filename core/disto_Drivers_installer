@@ -109,14 +109,16 @@ if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 		show_im "create envycontrol installtion file."
 		tee "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM <<- 'EOF' > /dev/null
 		#!/bin/sh
-			__distro_path="/usr/share/my_stuff"
+			__distro_path="/usr/share/my_stuff/system_files"
+			PATH="${__distro_path}/bin:$PATH"
 			envycontrol_updater_path="$(mktemp -d)"
-			curl -s 'https://api.github.com/repos/bayasdev/envycontrol/releases/latest' \
+			download_url="$(getURL '2term' 'https://api.github.com/repos/bayasdev/envycontrol/releases/latest' \
   			| grep '"tarball_url"' \
   			| cut -f2,3 -d':' \
   			| tr -d '"' \
-  			| tr -d ',' \
-  			| xargs curl -o "${envycontrol_updater_path}"/envycontrol.tar.gz && tar -xvzf "${envycontrol_updater_path}"/envycontrol.tar.gz -C "${envycontrol_updater_path}" && mv "${envycontrol_updater_path}"/bayasdev* "${envycontrol_updater_path}"/envycontrol
+  			| tr -d ',')"
+  			
+  			getURL 'download2' "${download_url}" "${envycontrol_updater_path}/envycontrol.tar.gz" && tar -xvzf "${envycontrol_updater_path}"/envycontrol.tar.gz -C "${envycontrol_updater_path}" && mv "${envycontrol_updater_path}"/bayasdev* "${envycontrol_updater_path}"/envycontrol
   			
   			[ -d "${__distro_path}/system_files/downloaded/envycontrol" ] && rm -rdf "${__distro_path}/system_files/downloaded/envycontrol"
   			[ ! -d "${__distro_path}/system_files/downloaded" ] && mkdir -p ${__distro_path}/system_files/downloaded

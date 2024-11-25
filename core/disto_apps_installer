@@ -79,7 +79,7 @@ if [ -d "/usr/share/zsh-antigen" ];then
 	then
 		show_im "antigen works fine"
 	else
-		my-superuser curl -SL --progress-bar "https://raw.githubusercontent.com/zsh-users/antigen/develop/bin/antigen.zsh" -o "${temp_path}"/antigen.zsh
+		download_file "my-superuser" "https://raw.githubusercontent.com/zsh-users/antigen/develop/bin/antigen.zsh" "${temp_path}/antigen.zsh"
 		my-superuser chmod +x "${temp_path}"/antigen.zsh
 		my-superuser mv /usr/share/zsh-antigen/antigen.zsh /usr/share/zsh-antigen/antigen.zsh.backup
 		my-superuser mv "${temp_path}"/antigen.zsh /usr/share/zsh-antigen/
