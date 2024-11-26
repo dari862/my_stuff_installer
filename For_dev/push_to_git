@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 push_now(){
 	git_this_repo="${1-}"
 	git remote set-url origin git@github.com:dari862/${git_this_repo}.git
@@ -10,18 +10,18 @@ push_now(){
 	fi
 }
 
-git_repo_Array=(
+git_repo_Array="
 my_stuff
 Theme_Stuff
 my_stuff_installer
 YadAppsStore
-)
+"
 
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/id_rsa
 
-for getthis in "${git_repo_Array[@]}"; do
-	cd $HOME/Desktop/$getthis
+for getthis in ${git_repo_Array}; do
+	cd $HOME/Desktop/$getthis || ( echo "failed to cd $HOME/Desktop/$getthis" && exit 1)
 	echo "###############################################"
 	echo "#		pushing $getthis repo"
 	echo "###############################################"

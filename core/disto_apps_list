@@ -58,14 +58,4 @@ install_better_shell="tar bat fzf trash-cli command-not-found thefuck highlight 
 #######################
 ## extra
 #######################
-install_extra_apps="
-micro 
-multitail 
-ncdu 
-tree
-nitrogen
-nsxiv
-dos2unix
-meld
-btop
-"
+install_extra_apps="micro multitail ncdu tree nitrogen nsxiv dos2unix meld btop"

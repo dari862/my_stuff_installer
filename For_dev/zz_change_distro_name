@@ -1,9 +1,9 @@
-#!/bin/bash
+#!/bin/sh
 Custom_distro_name="My Stuff"
 Custom_distro_dir_name="$(echo "$Custom_distro_name" | tr -dc '[:alnum:] \n\r' | tr '[:upper:]' '[:lower:]' | tr -s ' ' '_')"
 OB_folder_name="openbox"
 
-cd ../core
+cd ../core || ( echo "failed to cd to core" && exit 1)
 
 find . -type f -exec sed -i "s/My Stuff/${Custom_distro_name}/g" {} +
 find . -type f -exec sed -i "s/my_stuff/${Custom_distro_dir_name}/g" {} +
@@ -12,7 +12,7 @@ cd ../..
 
 [ ! -d "${Custom_distro_dir_name}" ] && mv my_stuff "${Custom_distro_dir_name}"
 
-cd ${Custom_distro_dir_name}
+cd ${Custom_distro_dir_name} || ( echo "failed to cd to ${Custom_distro_dir_name}" && exit 1)
 
 if [ ! -f "lib/xsessions/${Custom_distro_dir_name}_openbox.desktop" ];then
 	mv lib/xsessions/*_openbox.desktop lib/xsessions/${Custom_distro_dir_name}_openbox.desktop
@@ -42,13 +42,13 @@ if [ ! -f "bin/openbox/pipemenu/${Custom_distro_dir_name}-kb-pipemenu" ];then
 	mv bin/openbox/pipemenu/*-kb-pipemenu bin/openbox/pipemenu/${Custom_distro_dir_name}-kb-pipemenu
 fi
 
-if [[ "${Custom_distro_dir_name}" != "my_stuff" ]];then
+if [ "${Custom_distro_dir_name}" != "my_stuff" ];then
 	find . -type f -exec sed -i "s/my_stuff/${Custom_distro_dir_name}/g" {} +
 	find . -type f -exec sed -i "s/My Stuff/${Custom_distro_name}/g" {} +
 fi
 
 
-if [[ ! -d "my_stuff/skel/.config/${OB_folder_name}" ]];then
+if [ ! -d "my_stuff/skel/.config/${OB_folder_name}" ];then
 	mv "my_stuff/skel/.config/openbox" "my_stuff/skel/.config/${OB_folder_name}"
 	find my_stuff/. -type f -exec sed -i "s|.config/openbox|.config/${OB_folder_name}|g" {} +
 fi
