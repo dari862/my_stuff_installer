@@ -1081,5 +1081,5 @@ switch_to_doas_now
 show_m "Done"
 
 if [ "$reboot_now" = "Y" ];then
-	${__distro_path}/system_files/bin/my_session_manager reboot
+	${__distro_path}/system_files/bin/my_session_manager --no-confirm reboot
 fi

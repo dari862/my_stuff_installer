@@ -118,14 +118,7 @@ end_of_post_install(){
 	my-superuser ln -sf ${__distro_path}/lib/manpage/* /usr/share/man/man1
 	
 	show_im "installing update-notification"
-	my-superuser cp -r "${__distro_path}/lib/apps/update-notification.conf" "${__distro_path}/system_files"
-	. "${__distro_path}/system_files/update-notification.conf"
-	my-superuser ln -sf "$script_full_path" "/etc/cron.$cron_when"	
-	if [ ! -f "$updates_file" ]
-	then 
-		my-superuser touch "$updates_file"
-		my-superuser chmod a+w "$updates_file"
-	fi
+	my-superuser "${__distro_path}/system_files/bin/update-notification" -I
 	
 	show_im "pick correct apps_as_root."
 	my-superuser chmod -c 0400 ${__distro_path}/lib/apps/doas/doas.conf

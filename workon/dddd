@@ -1,0 +1,25 @@
+xrdb:  "URxvt.keysym." on line 64 overrides entry on line 63
+xrdb:  "URxvt.keysym." on line 66 overrides entry on line 64
+xrdb:  "URxvt.keysym." on line 67 overrides entry on line 66
+xrdb:  "URxvt.keysym." on line 68 overrides entry on line 67
+xrdb:  "URxvt.keysym." on line 69 overrides entry on line 68
+Openbox-Message: Unable to find a valid menu file "/var/lib/openbox/debian-menu.xml"
+Nov 28 17:56 : exception: Database corrupted
+Warning: Unknown key: gtk-application-prefer-dark-theme
+
+Powermenu
+	
+    	-h --help		Show 			this help
+    	-k --lock		Lock 			screen	Does not work for a tty session
+    	-l --logout		Logout			Also works for tty.
+    	-s --suspend	Suspend			State determined by ACPI S0 S1 or S3
+    	-i --hibernate	Suspend to Disk	Requires enough swap to store RAM
+    	-y --hybrid		Hybrid Sleep	ACPI must support sleep state S3
+    	-b --reboot	Reboot    	
+    	-p --poweroff	Shut down
+    	
+    	text menu at a TTY
+
+/usr/share/my_stuff/bin/not_add_2_path/post_launch_wm: 13: welcome.sh: not found
+/usr/share/my_stuff/lib/xsessions/openbox_files/openbox-autostart: 41: exec: /usr/share/my_stuff/lib/xsessions/openbox_files/openbox-xdg-autostart: not found
+/usr/share/my_stuff/system_files/bin/conky-session: Failed to locate /home/dari/.config/conky/conky-sessionfile, generating default...
