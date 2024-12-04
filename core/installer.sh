@@ -484,11 +484,11 @@ fix_time_(){
 		current_date="$(get_current_date "$get_date_from_here")"
 		$_SUPERUSER date -s "$current_date" >/dev/null 2>&1
 		__timezone="$(get_url_content "https://ipinfo.io/" | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/ //g')"
-		if command -v timedatectl >/dev/null 2>&1;then
-			$_SUPERUSER timedatectl set-timezone $__timezone
-		else
+		if ! $_SUPERUSER timedatectl set-timezone $__timezone >/dev/null 2>&1;then
 			$_SUPERUSER ln -sf /usr/share/zoneinfo/$__timezone /etc/localtime
-			$_SUPERUSER hwclock --systohc
+			if ! $_SUPERUSER hwclock --systohc >/dev/null 2>&1;then
+				show_em "failed to set time zone !"
+			fi
 		fi
 	fi
 	touch "${installer_phases}/fix_time_"
@@ -719,16 +719,10 @@ check_if_user_has_root_access(){
     		_SUPERUSER="sudo"
     		sudo_installed=true
 		fi
-		
-		if [ "$sudo_installed" = "true" ] || [ "$doas_installed" = "true" ];then
-			$_SUPERUSER true
-			[ "$sudo_installed" = "true" ] && keep_superuser_refresed &
-		fi
-		
+
 		if [ "$sudo_installed" = "false" ] && [ "$doas_installed" = "true" ];then
 			only_doas_installed="true"
 		fi
-		$_SUPERUSER ln -sf $(which $_SUPERUSER) /usr/bin/my-superuser
     else
     	if command -v doas >/dev/null;then
     		doas_installed=true
@@ -999,6 +993,11 @@ pre_script_create_dir_and_source_stuff
 
 check_if_user_has_root_access
 
+if [ -n "$_SUPERUSER" ];then
+	$_SUPERUSER ln -sf $(which $_SUPERUSER) /usr/bin/my-superuser
+	[ "$sudo_installed" = "true" ] && keep_superuser_refresed &
+fi
+    
 prompt_to_ask_to_what_to_install
 create_prompt_to_install_value_file
 
