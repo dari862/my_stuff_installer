@@ -1,1 +1,1 @@
-/home/dari/Desktop/my_stuff_installer/For_dev/linux-audit.sh
+../For_dev/linux-audit.sh
