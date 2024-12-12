@@ -3,6 +3,9 @@
 [ -f "${installer_phases}/disto_Installapps_list" ] && return
 . "${prompt_to_install_value_file}"
 
+List_of_apt_2_install_=""
+check_if_package_exist_in_repo firefox && install_firefox_="firefox" || :
+check_if_package_exist_in_repo firefox-esr && install_firefox_="firefox-esr" || :
 ##################################################################################
 # main
 ##################################################################################
@@ -21,6 +24,7 @@ add_packages_2_install_list "${install_files_manager_support_app}"
 add_packages_2_install_list "${install_x_lock_extra}"
 add_packages_2_install_list "${install_firefox_}"
 add_packages_2_install_list "${install_cli_sound_app}"
+add_packages_2_install_list "${install_MIDI_sound_app}"
 add_packages_2_install_list "${install_conky_all_app}"
 add_packages_2_install_list "${install_text_editer_app}"
 add_packages_2_install_list "${install_mediaplayer_app}"

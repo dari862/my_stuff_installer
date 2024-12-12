@@ -2,6 +2,20 @@
 [ -f "${installer_phases}/disto_Drivers" ] && return
 . "${prompt_to_install_value_file}"
 
+List_of_apt_2_install_=""
+if ls /sys/class/backlight | head -n 1 | grep -q "intel_"; then
+	install_drivers_if_laptop="${install_drivers_if_laptop} ${install_drivers_if_laptop_xbacklight}"
+else
+	install_drivers_if_laptop="${install_drivers_if_laptop} ${install_drivers_if_laptop_light}"
+fi
+
+if [ "$_cuda_" = "Y" ];then
+	install_nvidia_gpu_drivers="${install_nvidia_gpu_drivers} ${install_nvidia_gpu_drivers_cuda}"
+fi
+
+if [ "$_kernel_open_dkms_" = "Y" ];then
+	install_nvidia_gpu_drivers="${install_nvidia_gpu_drivers} ${install_nvidia_gpu_drivers_dkms}"
+fi
 ##################################################################################
 # var
 ##################################################################################
@@ -82,7 +96,7 @@ fi
 # main
 ##################################################################################
 if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
-	add_packages_2_install_list "${install_if_laptop}"
+	add_packages_2_install_list "${install_drivers_if_laptop}"
 fi
 
 if [ "$fingerprint_exist" = true ];then
