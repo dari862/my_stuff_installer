@@ -3,6 +3,8 @@
 . "${prompt_to_install_value_file}"
 
 List_of_apt_2_install_=""
+install_envycontrol=false
+
 if ls /sys/class/backlight | head -n 1 | grep -q "intel_"; then
 	install_drivers_if_laptop="${install_drivers_if_laptop} ${install_drivers_if_laptop_xbacklight}"
 else
@@ -53,27 +55,30 @@ create_20_intel_conf_file(){
 if [ "${install_GPU_Drivers}" = "Y" ];then
 		
 	number_of_gpus=0
-
-	if [ "$(lspci | grep -i VMware | grep VGA -c)" != "0" ];then
+	lspci_output=$(lspci | grep -i 'vga')
+	
+	if echo "$lspci_output" | grep -iq VMware; then
 		VMware_gpu_exist=true
 		number_of_gpus=$((number_of_gpus + 1))
 	else
-		if [ "$(lspci | grep -i nvidia | grep VGA -c)" != "0" ];then
+		if echo "$lspci_output" | grep -iq nvidia; then
 			nvidia_gpu_exist=true
 			number_of_gpus=$((number_of_gpus + 1))
 		fi
 		
-		if [ "$(lspci | grep -i intel | grep VGA -c)" != "0" ];then
+		if echo "$lspci_output" | grep -iq intel; then
 			intel_gpu_exist=true
 			number_of_gpus=$((number_of_gpus + 1))
 		fi
 		
-		if [ "$(lspci | grep -i amd | grep VGA -c)" != "0" ];then
+		if echo "$lspci_output" | grep -iq amd; then
 			amd_gpu_exist=true
 			number_of_gpus=$((number_of_gpus + 1))
 		fi
 	fi
 	
+	[ $number_of_gpus -gt 1 ] && install_envycontrol=true
+
 	if [ "$(lspci | grep "VGA compatible controller" | grep VMware -c)" != "0" ];then
 		show_im "This is VM"
 	fi
@@ -119,7 +124,7 @@ install_packages
 
 if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 	show_im "this is laptop"
-	if [ "$number_of_gpus" -gt 1 ]; then
+	if [ "$install_envycontrol" = true ]; then
 		show_im "create envycontrol installtion file."
 		tee "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM <<- 'EOF' > /dev/null
 		#!/bin/sh
