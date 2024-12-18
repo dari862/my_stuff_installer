@@ -46,7 +46,7 @@ create_blob_system_files(){
 		show_im "copy polybar blob and extra_blob to system_files/blob ."
 		cd "${__distro_path}"/extra_blob/polybar
 		my-superuser cp -r "${__distro_path}"/blob/polybar "${__distro_path}/system_files/blob" 
-		for app in alacritty geany nitrogen;do
+		for app in alacritty geany;do
 			if command -v $app >/dev/null ; then
 				for theme in *;do
 					my-superuser cp -r "${theme}/config/${app}" "${__distro_path}/system_files/blob/polybar/${theme}/config" 
@@ -71,7 +71,7 @@ create_blob_system_files(){
 		show_im "copy tint2 blob and extra_blob to system_files/blob ."
 		cd "${__distro_path}"/extra_blob/tint2
 		my-superuser cp -r "${__distro_path}"/blob/tint2 "${__distro_path}/system_files/blob" 
-		for app in jgmenu lxterminal nitrogen;do
+		for app in jgmenu lxterminal;do
 			if command -v $app >/dev/null ; then
 				for theme in *;do
 					my-superuser cp -r "${theme}/config/${app}" "${__distro_path}/system_files/blob/tint2/${theme}/config" 
@@ -103,10 +103,7 @@ end_of_post_install(){
 	if [ "$(cat /sys/devices/virtual/dmi/id/chassis_type)" = "1" ];then # 1 eq vm
 		# disable vsync from picom (vsync in virtual machine make issues)
 		show_im "picom vm"
-		my-superuser sed -i 's|# vsync = false|vsync = false;|g' "${__distro_path}"/system_files/skel/.config/picom.conf
-		my-superuser sed -i 's|# vsync = false|vsync = false;|g' "${__distro_path}"/system_files/skel/.config/picom.conf.bunsenlab
-		my-superuser sed -i 's|vsync = true;|# vsync = true|g' "${__distro_path}"/system_files/skel/.config/picom.conf
-		my-superuser sed -i 's|vsync = true;|# vsync = true|g' "${__distro_path}"/system_files/skel/.config/picom.conf.bunsenlab
+		my-superuser sed -i "s/^vsync = .*/vsync = false;/g" "${__distro_path}"/system_files/skel/.config/picom.conf
 	fi
 	
 	show_im "Create lightdm.conf."
