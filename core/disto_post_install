@@ -205,6 +205,26 @@ end_of_post_install(){
 		my-superuser ln -sf ${__distro_path}/lib/apps/sudo/apps_as_root ${__distro_path}/system_files/bin
 	fi	
 	
+	weather_script_config_path="${__distro_path}/system_files/skel/.config/scriptconfig/weather"
+	if [ -z "$place" ]; then
+		show_im "set place var in $weather_script_config_path"
+		. "/usr/share/my_stuff/bin/not_add_2_path/weather/country_list"
+   		# Geolocate IP:
+   		place=$(echo "$__timezone" | awk -F/ '{print $2}')
+   		chosen="$(printf "%s" "$country_list" | grep "$place" )"
+		
+		# Set continent code and radar code.
+		continentcode=$(printf "%s" "$chosen" | cut -d':' -f1 | tr "[:lower:]" "[:upper:]")
+		radarcode=$(printf "%s" "$chosen" | cut -d' ' -f2 | cut -d':' -f1 | tr '[:lower:]' '[:upper:]')
+		place=$(printf "%s" "$chosen" | cut -d':' -f3 | cut -f1 -d',' | sed 's/^ //')
+		place="${place:-$radarcode}" # Default place to radarcode if not set
+	
+		my-superuser sed -i -e "s/continentcode=.*/continentcode=\"$continentcode\"/" \
+				-e "s/radarcode=.*/radarcode=\"$radarcode\"/" \
+				-e "s/place=.*/place=\"$place\"/" \
+			"${weather_script_config_path}"
+	fi
+	
 	show_im "prepare completed"
 	my-superuser touch "${installer_phases}/disto_post_install"
 	

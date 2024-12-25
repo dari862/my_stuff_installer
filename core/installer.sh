@@ -483,7 +483,7 @@ fix_time_(){
 	else
 		current_date="$(get_current_date "$get_date_from_here")"
 		$_SUPERUSER date -s "$current_date" >/dev/null 2>&1
-		__timezone="$(get_url_content "https://ipinfo.io/" | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/ //g')"
+		__timezone="$(get_url_content "https://ipinfo.io/" | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/^[ \t]*//;s/[ \t]*$//')"
 		if ! $_SUPERUSER timedatectl set-timezone $__timezone >/dev/null 2>&1;then
 			$_SUPERUSER ln -sf /usr/share/zoneinfo/$__timezone /etc/localtime
 			if ! $_SUPERUSER hwclock --systohc >/dev/null 2>&1;then

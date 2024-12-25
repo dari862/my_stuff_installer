@@ -148,6 +148,18 @@ if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
   				mv "${envycontrol_updater_path}"/envycontrol "${__distro_path}/system_files/git/"
   				ln -sf "${__distro_path}/system_files/downloaded/envycontrol/envycontrol.py" "${__distro_path}/system_files/bin/envycontrol"
   			fi
+  			
+  			if [ ! -f "${__distro_path}/system_files/skel/.config/autostartscripts/gpu-switcher-session}" ];then
+  				ln -sf "${__distro_path}"/bin/not_add_2_path/gpu_switcher/gpu-switcher-session "${__distro_path}/system_files/skel/.config/autostartscripts"
+  			fi
+  			
+  			if [ ! -f "${__distro_path}/system_files/bin/gui_GPU_Switcher" ];then
+  				ln -sf "${__distro_path}"/bin/not_add_2_path/gpu_switcher/gui_GPU_Switcher "${__distro_path}/system_files/bin"
+  			fi
+  			
+  			if [ ! -f "${__distro_path}/system_files/bin/tray_GPU_Switcher" ];then
+  				ln -sf "${__distro_path}"/bin/not_add_2_path/gpu_switcher/tray_GPU_Switcher "${__distro_path}/system_files/bin"
+  			fi
 		EOF
 		chmod +x "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
 	fi
