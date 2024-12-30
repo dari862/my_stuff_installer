@@ -1,190 +1,194 @@
 #!/bin/sh
-[ -f "${installer_phases}/disto_Drivers" ] && return
-. "${prompt_to_install_value_file}"
-
-List_of_apt_2_install_=""
-install_envycontrol=false
-
-if ls /sys/class/backlight | head -n 1 | grep -q "intel_"; then
-	install_drivers_if_laptop="${install_drivers_if_laptop} ${install_drivers_if_laptop_xbacklight}"
-else
-	install_drivers_if_laptop="${install_drivers_if_laptop} ${install_drivers_if_laptop_light}"
-fi
-
-if [ "$_cuda_" = "Y" ];then
-	install_nvidia_gpu_drivers="${install_nvidia_gpu_drivers} ${install_nvidia_gpu_drivers_cuda}"
-fi
-
-if [ "$_kernel_open_dkms_" = "Y" ];then
-	install_nvidia_gpu_drivers="${install_nvidia_gpu_drivers} ${install_nvidia_gpu_drivers_dkms}"
-fi
-##################################################################################
-# var
-##################################################################################
-if lsusb | grep -i fingerprint >/dev/null || lspci | grep -i fingerprint >/dev/null || ls /sys/bus/usb/devices/* | grep -i fingerprint >/dev/null; then
-    fingerprint_exist=true
-else
-	fingerprint_exist=false
-fi
-
-##################################################################################
-# function
-##################################################################################
-
-create_20_intel_conf_file(){
-	show_im "Create 20-intel.conf file."
-	if [ "${intel_gpu_exist}" = "true" ];then
-		my-superuser mkdir -p /etc/X11/xorg.conf.d/
-		my-superuser tee /etc/X11/xorg.conf.d/20-intel.conf <<- EOF > /dev/null
-		Section "Device"
-			Identifier  "Intel Graphics"
-			Driver      "Intel"
-			Option      "AccelMethod"  "sna"
-			Option      "TearFree"	"True"
-			Option      "Tiling"	"True"
-			Option      "SwapbuffersWait" "True"
-			#Option      "AccelMethod"  "uxa"
-		EndSection
-		EOF
+pre_disto_Drivers_installer(){
+	[ -f "${installer_phases}/disto_Drivers" ] && return
+	. "${prompt_to_install_value_file}"
+	show_im "Adding needed Drivers to install list."
+	install_envycontrol=false
+	
+	if ls /sys/class/backlight | head -n 1 | grep -q "intel_"; then
+		install_drivers_if_laptop="${install_drivers_if_laptop} ${install_drivers_if_laptop_xbacklight}"
+	else
+		install_drivers_if_laptop="${install_drivers_if_laptop} ${install_drivers_if_laptop_light}"
 	fi
+	
+	if [ "$_cuda_" = "Y" ];then
+		install_nvidia_gpu_drivers="${install_nvidia_gpu_drivers} ${install_nvidia_gpu_drivers_cuda}"
+	fi
+	
+	if [ "$_kernel_open_dkms_" = "Y" ];then
+		install_nvidia_gpu_drivers="${install_nvidia_gpu_drivers} ${install_nvidia_gpu_drivers_dkms}"
+	fi
+	##################################################################################
+	# var
+	##################################################################################
+	if lsusb | grep -i fingerprint >/dev/null || lspci | grep -i fingerprint >/dev/null || ls /sys/bus/usb/devices/* | grep -i fingerprint >/dev/null; then
+    	fingerprint_exist=true
+	else
+		fingerprint_exist=false
+	fi
+	
+	##################################################################################
+	# function
+	##################################################################################
+	
+	create_20_intel_conf_file(){
+		show_im "Create 20-intel.conf file."
+		if [ "${intel_gpu_exist}" = "true" ];then
+			my-superuser mkdir -p /etc/X11/xorg.conf.d/
+			my-superuser tee /etc/X11/xorg.conf.d/20-intel.conf <<- EOF > /dev/null
+			Section "Device"
+				Identifier  "Intel Graphics"
+				Driver      "Intel"
+				Option      "AccelMethod"  "sna"
+				Option      "TearFree"	"True"
+				Option      "Tiling"	"True"
+				Option      "SwapbuffersWait" "True"
+				#Option      "AccelMethod"  "uxa"
+			EndSection
+			EOF
+		fi
+	}
+	
+	##################################################################################
+	# GPU Drivers
+	##################################################################################
+	if [ "${install_GPU_Drivers}" = "Y" ];then
+			
+		number_of_gpus=0
+		lspci_output=$(lspci | grep -i 'vga')
+		
+		if echo "$lspci_output" | grep -iq VMware; then
+			VMware_gpu_exist=true
+			number_of_gpus=$((number_of_gpus + 1))
+		else
+			if echo "$lspci_output" | grep -iq nvidia; then
+				nvidia_gpu_exist=true
+				number_of_gpus=$((number_of_gpus + 1))
+			fi
+			
+			if echo "$lspci_output" | grep -iq intel; then
+				intel_gpu_exist=true
+				number_of_gpus=$((number_of_gpus + 1))
+			fi
+			
+			if echo "$lspci_output" | grep -iq amd; then
+				amd_gpu_exist=true
+				number_of_gpus=$((number_of_gpus + 1))
+			fi
+		fi
+		
+		[ $number_of_gpus -gt 1 ] && install_envycontrol=true
+	
+		if [ "$(lspci | grep "VGA compatible controller" | grep VMware -c)" != "0" ];then
+			show_im "This is VM"
+		fi
+		
+		if [ "${nvidia_gpu_exist}" = "true" ];then
+			add_packages_2_install_list "${install_nvidia_gpu_drivers}"
+		fi
+			
+		if [ "${amd_gpu_exist}" = "true" ];then
+			add_packages_2_install_list "${install_amd_gpu_drivers}"
+		fi
+			
+		if [ "${intel_gpu_exist}" = "true" ];then
+			add_packages_2_install_list "${install_intel_gpu_drivers}"
+		fi
+		
+	fi
+	
+	##################################################################################
+	# main
+	##################################################################################
+	if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
+		add_packages_2_install_list "${install_drivers_if_laptop}"
+	fi
+	
+	if [ "$fingerprint_exist" = true ];then
+    	add_packages_2_install_list "${install_fingerprint}"
+	fi
+	
+	if lspci | egrep -i 'wifi|wireless' 1>/dev/null ;then
+		add_packages_2_install_list "${install_wireless}"
+	fi
+	
+	if my-superuser dmesg | grep -i bluetooth 1>/dev/null || my-superuser lsusb | grep -i bluetooth 1>/dev/null ;then
+		add_packages_2_install_list "${install_bluetooth}"
+	fi
+	
+	add_packages_2_install_list "${install_audio}"
+	add_packages_2_install_list "${install_Network}"
+	add_packages_2_install_list "${install_autoinstall_firmware}"
 }
 
-##################################################################################
-# GPU Drivers
-##################################################################################
-if [ "${install_GPU_Drivers}" = "Y" ];then
-		
-	number_of_gpus=0
-	lspci_output=$(lspci | grep -i 'vga')
-	
-	if echo "$lspci_output" | grep -iq VMware; then
-		VMware_gpu_exist=true
-		number_of_gpus=$((number_of_gpus + 1))
-	else
-		if echo "$lspci_output" | grep -iq nvidia; then
-			nvidia_gpu_exist=true
-			number_of_gpus=$((number_of_gpus + 1))
+post_disto_Drivers_installer(){
+	[ -f "${installer_phases}/disto_Drivers" ] && return
+	. "${prompt_to_install_value_file}"
+	show_im "Configer Drivers."
+	if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
+		show_im "this is laptop"
+		if [ "$install_envycontrol" = true ]; then
+			show_im "create envycontrol installtion file."
+			tee "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM <<- 'EOF' > /dev/null
+			#!/bin/sh
+				__distro_path="/usr/share/my_stuff/system_files"
+				PATH="${__distro_path}/bin:$PATH"
+				envycontrol_updater_path="$(mktemp -d)"
+				download_url="$(getURL '2term' 'https://api.github.com/repos/bayasdev/envycontrol/releases/latest' \
+  				| grep '"tarball_url"' \
+  				| cut -f2,3 -d':' \
+  				| tr -d '"' \
+  				| tr -d ',')"
+  				
+  				getURL 'download2' "${download_url}" "${envycontrol_updater_path}/envycontrol.tar.gz" && tar -xvzf "${envycontrol_updater_path}"/envycontrol.tar.gz -C "${envycontrol_updater_path}" && mv "${envycontrol_updater_path}"/bayasdev* "${envycontrol_updater_path}"/envycontrol
+  				
+  				[ -d "${__distro_path}/system_files/downloaded/envycontrol" ] && rm -rdf "${__distro_path}/system_files/downloaded/envycontrol"
+  				[ ! -d "${__distro_path}/system_files/downloaded" ] && mkdir -p ${__distro_path}/system_files/downloaded
+  				[ ! -d "${__distro_path}/system_files/git" ] && mkdir -p ${__distro_path}/system_files/git
+  				
+  				if [ -d "${envycontrol_updater_path}"/envycontrol ];then
+  					chmod +x "${envycontrol_updater_path}"/envycontrol/envycontrol.py 
+  					mv "${envycontrol_updater_path}"/envycontrol "${__distro_path}/system_files/git/"
+  					ln -sf "${__distro_path}/system_files/downloaded/envycontrol/envycontrol.py" "${__distro_path}/system_files/bin/envycontrol"
+  				fi
+  				
+  				if [ ! -f "${__distro_path}/system_files/skel/.config/autostartscripts/gpu-switcher-session}" ];then
+  					ln -sf "${__distro_path}"/bin/not_add_2_path/gpu_switcher/gpu-switcher-session "${__distro_path}/system_files/skel/.config/autostartscripts"
+  				fi
+  				
+  				if [ ! -f "${__distro_path}/system_files/bin/gui_GPU_Switcher" ];then
+  					ln -sf "${__distro_path}"/bin/not_add_2_path/gpu_switcher/gui_GPU_Switcher "${__distro_path}/system_files/bin"
+  				fi
+  				
+  				if [ ! -f "${__distro_path}/system_files/bin/tray_GPU_Switcher" ];then
+  					ln -sf "${__distro_path}"/bin/not_add_2_path/gpu_switcher/tray_GPU_Switcher "${__distro_path}/system_files/bin"
+  				fi
+			EOF
+			chmod +x "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
 		fi
-		
-		if echo "$lspci_output" | grep -iq intel; then
-			intel_gpu_exist=true
-			number_of_gpus=$((number_of_gpus + 1))
-		fi
-		
-		if echo "$lspci_output" | grep -iq amd; then
-			amd_gpu_exist=true
-			number_of_gpus=$((number_of_gpus + 1))
-		fi
+	fi
+	show_im "run isenkram-autoinstall-firmware."
+	my-superuser isenkram-autoinstall-firmware || : # to prevent script from exiting "isenkram-autoinstall-firmware contain exit command"
+	
+	show_im "Configer packages."
+	
+	#create_20_intel_conf_file
+	
+	if [ "$fingerprint_exist" = true ];then
+		touch "${temp_path}"/fingerprint_exist
 	fi
 	
-	[ $number_of_gpus -gt 1 ] && install_envycontrol=true
-
-	if [ "$(lspci | grep "VGA compatible controller" | grep VMware -c)" != "0" ];then
-		show_im "This is VM"
+	if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
+		show_im "some config"
 	fi
 	
-	if [ "${nvidia_gpu_exist}" = "true" ];then
-		add_packages_2_install_list "${install_nvidia_gpu_drivers}"
-	fi
-		
-	if [ "${amd_gpu_exist}" = "true" ];then
-		add_packages_2_install_list "${install_amd_gpu_drivers}"
-	fi
-		
-	if [ "${intel_gpu_exist}" = "true" ];then
-		add_packages_2_install_list "${install_intel_gpu_drivers}"
+	if [ "${install_GPU_Drivers}" = "Y" ];then
+		touch "${temp_path}"/GPU_Drivers_ready
 	fi
 	
-fi
-
-##################################################################################
-# main
-##################################################################################
-if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
-	add_packages_2_install_list "${install_drivers_if_laptop}"
-fi
-
-if [ "$fingerprint_exist" = true ];then
-    add_packages_2_install_list "${install_fingerprint}"
-fi
-
-if lspci | egrep -i 'wifi|wireless' 1>/dev/null ;then
-	add_packages_2_install_list "${install_wireless}"
-fi
-
-if my-superuser dmesg | grep -i bluetooth 1>/dev/null || my-superuser lsusb | grep -i bluetooth 1>/dev/null ;then
-	add_packages_2_install_list "${install_bluetooth}"
-fi
-
-add_packages_2_install_list "${install_audio}"
-add_packages_2_install_list "${install_Network}"
-add_packages_2_install_list "${install_autoinstall_firmware}"
-show_im "Install Drivers."
-install_packages
-
-if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
-	show_im "this is laptop"
-	if [ "$install_envycontrol" = true ]; then
-		show_im "create envycontrol installtion file."
-		tee "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM <<- 'EOF' > /dev/null
-		#!/bin/sh
-			__distro_path="/usr/share/my_stuff/system_files"
-			PATH="${__distro_path}/bin:$PATH"
-			envycontrol_updater_path="$(mktemp -d)"
-			download_url="$(getURL '2term' 'https://api.github.com/repos/bayasdev/envycontrol/releases/latest' \
-  			| grep '"tarball_url"' \
-  			| cut -f2,3 -d':' \
-  			| tr -d '"' \
-  			| tr -d ',')"
-  			
-  			getURL 'download2' "${download_url}" "${envycontrol_updater_path}/envycontrol.tar.gz" && tar -xvzf "${envycontrol_updater_path}"/envycontrol.tar.gz -C "${envycontrol_updater_path}" && mv "${envycontrol_updater_path}"/bayasdev* "${envycontrol_updater_path}"/envycontrol
-  			
-  			[ -d "${__distro_path}/system_files/downloaded/envycontrol" ] && rm -rdf "${__distro_path}/system_files/downloaded/envycontrol"
-  			[ ! -d "${__distro_path}/system_files/downloaded" ] && mkdir -p ${__distro_path}/system_files/downloaded
-  			[ ! -d "${__distro_path}/system_files/git" ] && mkdir -p ${__distro_path}/system_files/git
-  			
-  			if [ -d "${envycontrol_updater_path}"/envycontrol ];then
-  				chmod +x "${envycontrol_updater_path}"/envycontrol/envycontrol.py 
-  				mv "${envycontrol_updater_path}"/envycontrol "${__distro_path}/system_files/git/"
-  				ln -sf "${__distro_path}/system_files/downloaded/envycontrol/envycontrol.py" "${__distro_path}/system_files/bin/envycontrol"
-  			fi
-  			
-  			if [ ! -f "${__distro_path}/system_files/skel/.config/autostartscripts/gpu-switcher-session}" ];then
-  				ln -sf "${__distro_path}"/bin/not_add_2_path/gpu_switcher/gpu-switcher-session "${__distro_path}/system_files/skel/.config/autostartscripts"
-  			fi
-  			
-  			if [ ! -f "${__distro_path}/system_files/bin/gui_GPU_Switcher" ];then
-  				ln -sf "${__distro_path}"/bin/not_add_2_path/gpu_switcher/gui_GPU_Switcher "${__distro_path}/system_files/bin"
-  			fi
-  			
-  			if [ ! -f "${__distro_path}/system_files/bin/tray_GPU_Switcher" ];then
-  				ln -sf "${__distro_path}"/bin/not_add_2_path/gpu_switcher/tray_GPU_Switcher "${__distro_path}/system_files/bin"
-  			fi
-		EOF
-		chmod +x "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
+	if command -v fprintd-verify > /dev/null ;then
+		my-superuser pam-auth-update --enable fprintd
 	fi
-fi
-show_im "run isenkram-autoinstall-firmware."
-my-superuser isenkram-autoinstall-firmware || : # to prevent script from exiting "isenkram-autoinstall-firmware contain exit command"
-
-show_im "Configer packages."
-
-#create_20_intel_conf_file
-
-if [ "$fingerprint_exist" = true ];then
-	touch "${temp_path}"/fingerprint_exist
-fi
-
-if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
-	show_im "some config"
-fi
-
-if [ "${install_GPU_Drivers}" = "Y" ];then
-	touch "${temp_path}"/GPU_Drivers_ready
-fi
-
-if command -v fprintd-verify > /dev/null ;then
-	my-superuser pam-auth-update --enable fprintd
-fi
-
-touch "${installer_phases}/disto_Drivers"
+	
+	touch "${installer_phases}/disto_Drivers"
+}

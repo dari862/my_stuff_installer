@@ -108,8 +108,8 @@ show_wm(){
 
 show_em(){
 	message="${1-}"
-	printf '%b' "\\033[1;31m[-] ${message}\\033[0m\n"
-	exit 1 # show_em
+	printf '%b' "\\033[1;31m[-] ${message}\\033[0m\n" >&2
+	exit 1
 }
 
 show_im(){
@@ -418,10 +418,7 @@ create_prompt_to_install_value_file(){
 pick_file_downloader_and_url_checker(){
 	show_m "picking url command"
 	if command -v curl >/dev/null 2>&1;then
-		show_im "picked url command: curl "
-		internet_tester(){
-			curl -s -X GET ${NETWORK_TEST}
-		}
+		url_package="curl"
 		check_url(){
 			curl -SsL "${1-}" 2>/dev/null
 		}
@@ -438,10 +435,7 @@ pick_file_downloader_and_url_checker(){
 			curl --head -fSs --max-redirs 0 "${1-}" 2>&1 | sed -n 's/^ *Date: *//p'
 		}
 	elif command -v wget >/dev/null 2>&1;then
-		show_im "picked url command: wget "
-		internet_tester(){
-			wget -qS -O- network-test.debian.org >/dev/null 2>&1
-		}
+		url_package="wget"
 		check_url(){
 			wget -q -O- "${1-}" >/dev/null 2>&1
 		}
@@ -458,14 +452,32 @@ pick_file_downloader_and_url_checker(){
 			wget -S -O- -q --no-check-certificate --max-redirect=0 "${1-}" 2>&1 | sed -n 's/^ *Date: *//p'
 		}
 	else
-		show_em "please install curl or wget."
+		show_em "Neither curl nor wget is availabl, please install curl or wget.."
 	fi
-	
-	if command -v nc >/dev/null;then
-		internet_tester(){
-			printf "GET /nm HTTP/1.1\\r\\nHost: ${NETWORK_TEST}\\r\\n\\r\\n" | nc -w1 $NETWORK_TEST 80 | grep -c "NetworkManager is online"
-		}
-	fi
+	show_im "picked url command: $url_package "
+}
+
+internet_tester() {
+    test_with_nc() {
+        printf "GET /nm HTTP/1.1\r\nHost: ${NETWORK_TEST}\r\n\r\n" | nc -w1 "$NETWORK_TEST" 80 | grep -q "NetworkManager is online" >/dev/null 2>&1
+    }
+    test_with_http() {
+        if command -v curl >/dev/null 2>&1; then
+            curl -s -X GET "$url_to_test" >/dev/null 2>&1
+        elif command -v wget >/dev/null 2>&1; then
+            wget -qS -O- "$url_to_test" >/dev/null 2>&1
+        fi
+    }
+    if command -v nc >/dev/null 2>&1; then
+        if ! test_with_nc; then
+            show_im "Failed to check internet using nc (netcat), switching to ${url_package}..."
+            test_with_http
+        fi
+    else
+        show_im "nc (Netcat) not found. Attempting to test internet connectivity..."
+        test_with_http
+    fi
+    show_m "There is an internet connection..."
 }
 
 fix_time_(){
@@ -762,7 +774,7 @@ source_this_script(){
 	message_to_show="${2-}"
 	[ ! -f "${temp_path}"/"${file_to_source_and_check}" ] && show_em "can not source this file ( ${temp_path}/${file_to_source_and_check} ). does not exist."
 	[ -f "${installer_phases}/${file_to_source_and_check}" ] && return
-	show_m "${message_to_show}"
+	show_im "${message_to_show}"
 	. "${temp_path}"/"${file_to_source_and_check}"
 }
 
@@ -1025,14 +1037,38 @@ clear
 
 _unattended_upgrades_ stop
 
+List_of_apt_2_install_=""
+
+if [ "$arg_" = "drivers" ] || [ "$arg_" = "apps" ];then
+	show_m "Sourcing $arg_ files."
+elif [ -z "$arg_" ];then
+	show_m "Sourcing drivers and apps files."
+fi
+
 if [ "$arg_" = "drivers" ] || [ -z "$arg_" ];then
-	source_this_script "disto_Drivers_list" "Install drivers from (disto_Drivers)"
-	source_this_script "disto_Drivers_installer" "Install drivers from (disto_Drivers)"
+	source_this_script "disto_Drivers_list" "Add drivers list from (disto_Drivers_list)"
+	source_this_script "disto_Drivers_installer" "Source Install drivers functions from (disto_Drivers_installer)"
+	pre_disto_Drivers_installer || show_em "failed to run pre_disto_Drivers_installer"
 fi
 
 if [ "$arg_" = "apps" ] || [ -z "$arg_" ];then
-	source_this_script "disto_apps_list" "Install drivers from (disto_Drivers)"
-	source_this_script "disto_apps_installer" "Install apps from (disto_Installapps_list)"
+	source_this_script "disto_apps_list" "Add apps list from (disto_apps_list)"
+	source_this_script "disto_apps_installer" "Source Install apps functions from (disto_apps_installer)"
+	pre_disto_apps_installer || show_em "failed to run pre_disto_apps_installer"
+	
+fi
+
+if [ "$arg_" = "drivers" ] || [ "$arg_" = "apps" ] || [ -z "$arg_" ];then
+	show_im "Install list of apps."
+	install_packages || show_em "failed to run install_packages"
+fi
+
+if [ "$arg_" = "drivers" ] || [ -z "$arg_" ];then
+	post_disto_Drivers_installer || show_em "failed to run post_disto_Drivers_installer"
+fi
+
+if [ "$arg_" = "apps" ] || [ -z "$arg_" ];then
+	post_disto_apps_installer || show_em "failed to run post_disto_apps_installer"
 fi
 
 install_lightdm_now
@@ -1051,6 +1087,7 @@ fi
 # no internet needed  part
 ##################################################################################
 ##################################################################################
+show_m "Sourceing disto_configer."
 source_this_script "disto_configer" "Configering My Stuff."
 
 purge_some_unnecessary_pakages
@@ -1065,7 +1102,9 @@ update_grub_image
 
 run_my_alternatives
 
+show_m "Sourceing disto_post_install."
 source_this_script "disto_post_install" "prepare some script"
+
 pre_post_install
 ${__distro_path}/distro_manager/system_files_creater
 create_blob_system_files

@@ -1,157 +1,159 @@
 #!/bin/sh
-
-[ -f "${installer_phases}/disto_Installapps_list" ] && return
-. "${prompt_to_install_value_file}"
-
-List_of_apt_2_install_=""
-check_if_package_exist_in_repo firefox && install_firefox_="firefox" || :
-check_if_package_exist_in_repo firefox-esr && install_firefox_="firefox-esr" || :
-##################################################################################
-# main
-##################################################################################
-if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
-	add_packages_2_install_list "${install_if_laptop}"
-fi
-add_packages_2_install_list "${install_core_apps}"
-add_packages_2_install_list "${install_X11_apps}"
-add_packages_2_install_list "${install_must_have_apps}"
-add_packages_2_install_list "${install_must_have_apps2}"
-add_packages_2_install_list "${install_themes}"
-add_packages_2_install_list "${install_themes_tools}"
-add_packages_2_install_list "${install_terminal}"
-add_packages_2_install_list "${install_files_manager_app}"
-add_packages_2_install_list "${install_files_manager_support_app}"
-add_packages_2_install_list "${install_x_lock_extra}"
-add_packages_2_install_list "${install_firefox_}"
-add_packages_2_install_list "${install_cli_sound_app}"
-add_packages_2_install_list "${install_MIDI_sound_app}"
-add_packages_2_install_list "${install_conky_all_app}"
-add_packages_2_install_list "${install_text_editer_app}"
-add_packages_2_install_list "${install_mediaplayer_app}"
-add_packages_2_install_list "${install_openbox_}"
-add_packages_2_install_list "${install_fonts}"
-add_packages_2_install_list "${install_for_scripts}"
-add_packages_2_install_list "${install_image_viewer_apps}"
-add_packages_2_install_list "${install_polkit_apps}"
-add_packages_2_install_list "${install_better_bash}"
-add_packages_2_install_list "${install_better_shell}"
-if [ "$install_xfce4_panel" = "xfce4_panel" ];then
-	add_packages_2_install_list "${install_xfce4_panel}"
-	add_packages_2_install_list "${install_clipman_xfce4}"
-fi
-
-if [ "$xfce4_files_manager" = true ];then
-	add_packages_2_install_list "${install_files_manager_xfce4}"
-else
-	add_packages_2_install_list "${install_files_manager_else}"
-fi
+pre_disto_apps_installer(){
+	[ -f "${installer_phases}/disto_Installapps_list" ] && return
+	. "${prompt_to_install_value_file}"
+	show_im "Adding needed packages to install list."
+	check_if_package_exist_in_repo firefox && install_firefox_="firefox" || :
+	check_if_package_exist_in_repo firefox-esr && install_firefox_="firefox-esr" || :
+	##################################################################################
+	# main
+	##################################################################################
+	if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
+		add_packages_2_install_list "${install_if_laptop}"
+	fi
+	add_packages_2_install_list "${install_core_apps}"
+	add_packages_2_install_list "${install_X11_apps}"
+	add_packages_2_install_list "${install_must_have_apps}"
+	add_packages_2_install_list "${install_must_have_apps2}"
+	add_packages_2_install_list "${install_themes}"
+	add_packages_2_install_list "${install_themes_tools}"
+	add_packages_2_install_list "${install_terminal}"
+	add_packages_2_install_list "${install_files_manager_app}"
+	add_packages_2_install_list "${install_files_manager_support_app}"
+	add_packages_2_install_list "${install_x_lock_extra}"
+	add_packages_2_install_list "${install_firefox_}"
+	add_packages_2_install_list "${install_cli_sound_app}"
+	add_packages_2_install_list "${install_MIDI_sound_app}"
+	add_packages_2_install_list "${install_conky_all_app}"
+	add_packages_2_install_list "${install_text_editer_app}"
+	add_packages_2_install_list "${install_mediaplayer_app}"
+	add_packages_2_install_list "${install_openbox_}"
+	add_packages_2_install_list "${install_fonts}"
+	add_packages_2_install_list "${install_for_scripts}"
+	add_packages_2_install_list "${install_image_viewer_apps}"
+	add_packages_2_install_list "${install_polkit_apps}"
+	add_packages_2_install_list "${install_better_bash}"
+	add_packages_2_install_list "${install_better_shell}"
+	if [ "$install_xfce4_panel" = "xfce4_panel" ];then
+		add_packages_2_install_list "${install_xfce4_panel}"
+		add_packages_2_install_list "${install_clipman_xfce4}"
+	fi
 	
-if [ "$install_polybar" = "polybar" ];then
-	add_packages_2_install_list "${install_polybar}"
-fi
-if [ "$install_qt5ct" = "qt5ct" ];then
-	add_packages_2_install_list "${install_qt5ct}"
-fi
-if [ "$install_jgmenu" = "jgmenu" ];then
-	add_packages_2_install_list "${install_jgmenu}"
-fi
-if [ "$install_bspwm" = "bspwm" ];then
-	add_packages_2_install_list "${install_bspwm}"
-fi
-if [ "$install_zsh_now" = "zsh_default" ] || [ "$install_zsh_now" = "zsh" ];then
-	add_packages_2_install_list "${install_zsh}"
-fi
-if [ "$install_extra_now" = "extra" ];then
-	add_packages_2_install_list "${install_extra_apps}"
-fi
-show_im "Install distro packages."
-install_packages
-
-show_im "Configer packages."
-
-if [ "$install_bspwm" = "bspwm" ];then
-	show_im "adding my_stuff_bspwm to xsessions."
-	my-superuser mkdir -p "${__distro_path}/lib/xsessions"
-	my-superuser touch "${__distro_path}/lib/xsessions/my_stuff_bspwm.desktop"
-	my-superuser ln -sf "${__distro_path}/lib/xsessions/my_stuff_bspwm.desktop" /usr/share/xsessions
-	my-superuser rm -rdf "${__distro_path}"
-fi
-
-if [ -d "/usr/share/zsh-antigen" ];then
-	does_antigen_env_setup_works=$(grep -c antigen-env-setup /usr/share/zsh-antigen/antigen.zsh)
-	if [ "$does_antigen_env_setup_works" -gt "1" ]
-	then
-		show_im "antigen works fine"
+	if [ "$xfce4_files_manager" = true ];then
+		add_packages_2_install_list "${install_files_manager_xfce4}"
 	else
-		download_file "my-superuser" "https://raw.githubusercontent.com/zsh-users/antigen/develop/bin/antigen.zsh" "${temp_path}/antigen.zsh"
-		my-superuser chmod +x "${temp_path}"/antigen.zsh
-		my-superuser mv /usr/share/zsh-antigen/antigen.zsh /usr/share/zsh-antigen/antigen.zsh.backup
-		my-superuser mv "${temp_path}"/antigen.zsh /usr/share/zsh-antigen/
+		add_packages_2_install_list "${install_files_manager_else}"
 	fi
-fi
+		
+	if [ "$install_polybar" = "polybar" ];then
+		add_packages_2_install_list "${install_polybar}"
+	fi
+	if [ "$install_qt5ct" = "qt5ct" ];then
+		add_packages_2_install_list "${install_qt5ct}"
+	fi
+	if [ "$install_jgmenu" = "jgmenu" ];then
+		add_packages_2_install_list "${install_jgmenu}"
+	fi
+	if [ "$install_bspwm" = "bspwm" ];then
+		add_packages_2_install_list "${install_bspwm}"
+	fi
+	if [ "$install_zsh_now" = "zsh_default" ] || [ "$install_zsh_now" = "zsh" ];then
+		add_packages_2_install_list "${install_zsh}"
+	fi
+	if [ "$install_extra_now" = "extra" ];then
+		add_packages_2_install_list "${install_extra_apps}"
+	fi
+}
 
-if [ "$install_zsh_now" = "zsh_default" ];then
-	show_im "make zsh default shell "
-	my-superuser chsh -s $(command -v zsh) $__USER
-fi
-
-if command -v mpd >/dev/null
-then
-	if [ -n "$(pidof mpd)" ]; then
-		kill_package_ mpd
+post_disto_apps_installer(){
+	[ -f "${installer_phases}/disto_Installapps_list" ] && return
+	. "${prompt_to_install_value_file}"
+	show_im "Configer packages."
+	
+	if [ "$install_bspwm" = "bspwm" ];then
+		show_im "adding my_stuff_bspwm to xsessions."
+		my-superuser mkdir -p "${__distro_path}/lib/xsessions"
+		my-superuser touch "${__distro_path}/lib/xsessions/my_stuff_bspwm.desktop"
+		my-superuser ln -sf "${__distro_path}/lib/xsessions/my_stuff_bspwm.desktop" /usr/share/xsessions
+		my-superuser rm -rdf "${__distro_path}"
 	fi
 	
-	init_manager stop mpd.socket
-	init_manager stop mpd.service 
-	init_manager disable mpd.socket 
-	init_manager disable mpd.service
-fi
-
-if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
-	show_im "some config"
-	if my-superuser dmesg | grep -i bluetooth 1>/dev/null || my-superuser lsusb | grep -i bluetooth 1>/dev/null ;then
-		[ -f "/etc/tlp.conf" ] && my-superuser sed -i "s/#DEVICES_TO_DISABLE_ON_STARTUP=.*/DEVICES_TO_DISABLE_ON_STARTUP=\"bluetooth\"/g" /etc/tlp.conf
-	fi
-	
-	init_manager enable tlp
-	
-	my-superuser tlp start || tlp_error="true"
-	if [ "$tlp_error" = "true" ];then
-		my-superuser  tlp start | grep '>>> Invoke' >> "${temp_path}"/tlp_error_Invoke
-		if [ -f "${temp_path}/tlp_error_Invoke" ];then
-			sed -i "s/' to correct this.//g" "${temp_path}"/tlp_error_Invoke
-			sed -i "s/>>> Invoke '/my-superuser /g" "${temp_path}"/tlp_error_Invoke
-			. "${temp_path}"/tlp_error_Invoke
-			my-superuser  tlp start
+	if [ -d "/usr/share/zsh-antigen" ];then
+		does_antigen_env_setup_works=$(grep -c antigen-env-setup /usr/share/zsh-antigen/antigen.zsh)
+		if [ "$does_antigen_env_setup_works" -gt "1" ]
+		then
+			show_im "antigen works fine"
+		else
+			download_file "my-superuser" "https://raw.githubusercontent.com/zsh-users/antigen/develop/bin/antigen.zsh" "${temp_path}/antigen.zsh"
+			my-superuser chmod +x "${temp_path}"/antigen.zsh
+			my-superuser mv /usr/share/zsh-antigen/antigen.zsh /usr/share/zsh-antigen/antigen.zsh.backup
+			my-superuser mv "${temp_path}"/antigen.zsh /usr/share/zsh-antigen/
 		fi
-		if my-superuser tlp-stat |  grep '* Install' >/dev/null 2>&1 ;then
-			my-superuser tlp-stat |  grep '* Install' | awk -F' '  '{print "add_packages_2_install_list " $3}' >> "${temp_path}"/tlp_install_exta_apps
-			if [ -f "${temp_path}/tlp_install_exta_apps" ];then
-				. "${temp_path}"/tlp_install_exta_apps
-				install_packages
+	fi
+	
+	if [ "$install_zsh_now" = "zsh_default" ];then
+		show_im "make zsh default shell "
+		my-superuser chsh -s $(command -v zsh) $__USER
+	fi
+	
+	if command -v mpd >/dev/null
+	then
+		if [ -n "$(pidof mpd)" ]; then
+			kill_package_ mpd
+		fi
+		
+		init_manager stop mpd.socket
+		init_manager stop mpd.service 
+		init_manager disable mpd.socket 
+		init_manager disable mpd.service
+	fi
+	
+	if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
+		show_im "some config"
+		if my-superuser dmesg | grep -i bluetooth 1>/dev/null || my-superuser lsusb | grep -i bluetooth 1>/dev/null ;then
+			[ -f "/etc/tlp.conf" ] && my-superuser sed -i "s/#DEVICES_TO_DISABLE_ON_STARTUP=.*/DEVICES_TO_DISABLE_ON_STARTUP=\"bluetooth\"/g" /etc/tlp.conf
+		fi
+		
+		init_manager enable tlp
+		
+		my-superuser tlp start || tlp_error="true"
+		if [ "$tlp_error" = "true" ];then
+			my-superuser  tlp start | grep '>>> Invoke' >> "${temp_path}"/tlp_error_Invoke
+			if [ -f "${temp_path}/tlp_error_Invoke" ];then
+				sed -i "s/' to correct this.//g" "${temp_path}"/tlp_error_Invoke
+				sed -i "s/>>> Invoke '/my-superuser /g" "${temp_path}"/tlp_error_Invoke
+				. "${temp_path}"/tlp_error_Invoke
+				my-superuser  tlp start
+			fi
+			if my-superuser tlp-stat |  grep '* Install' >/dev/null 2>&1 ;then
+				my-superuser tlp-stat |  grep '* Install' | awk -F' '  '{print "add_packages_2_install_list " $3}' >> "${temp_path}"/tlp_install_exta_apps
+				if [ -f "${temp_path}/tlp_install_exta_apps" ];then
+					. "${temp_path}"/tlp_install_exta_apps
+					install_packages
+				fi
 			fi
 		fi
 	fi
-fi
-
-if command -v ufw >/dev/null
-then
-    my-superuser ufw limit 22/tcp
-    show_im "Limiting port 22/tcp (UFW)"
-
-    my-superuser ufw allow 80/tcp
-    show_im "Allowing port 80/tcp (UFW)"
-
-    my-superuser ufw allow 443/tcp
-    show_im "Allowing port 443/tcp (UFW)"
-
-    my-superuser ufw default deny incoming
-    show_im "Denying Incoming Packets by Default(UFW)"
-
-    my-superuser ufw default allow outgoing
-    show_im "Allowing Outcoming Packets by Default(UFW)"
-
-    my-superuser ufw enable
-    show_im "Enabled Firewall with Baselines!"
-fi
-touch "${installer_phases}/disto_Installapps_list"
+	
+	if command -v ufw >/dev/null
+	then
+    	my-superuser ufw limit 22/tcp
+    	show_im "Limiting port 22/tcp (UFW)"
+	
+    	my-superuser ufw allow 80/tcp
+    	show_im "Allowing port 80/tcp (UFW)"
+	
+    	my-superuser ufw allow 443/tcp
+    	show_im "Allowing port 443/tcp (UFW)"
+	
+    	my-superuser ufw default deny incoming
+    	show_im "Denying Incoming Packets by Default(UFW)"
+	
+    	my-superuser ufw default allow outgoing
+    	show_im "Allowing Outcoming Packets by Default(UFW)"
+	
+    	my-superuser ufw enable
+    	show_im "Enabled Firewall with Baselines!"
+	fi
+	touch "${installer_phases}/disto_Installapps_list"
+}

@@ -1,0 +1,22 @@
+fibonacii
+dragcfact
+colorful tags
+shiftview
+
+    https://dwm.suckless.org/patches/barpadding/
+    https://dwm.suckless.org/patches/bottomstack/
+    https://dwm.suckless.org/patches/cfacts/
+    https://dwm.suckless.org/patches/gaplessgrid/
+    https://dwm.suckless.org/patches/movestack/
+    https://dwm.suckless.org/patches/vanitygaps/
+    https://dwm.suckless.org/patches/statuspadding/
+    https://dwm.suckless.org/patches/status2d/
+    https://dwm.suckless.org/patches/notitle/
+    https://dwm.suckless.org/patches/winicon/
+    
+    
+    
+    wget https://dwm.suckless.org/patches/dragmfact/dwm-dragmfact-6.2.diff
+    wget https://dwm.suckless.org/patches/horizgrid/dwm-horizgrid-6.1.diff
+    wget https://dwm.suckless.org/patches/underlinetags/dwm-underlinetags-6.2.diff
+    wget https://dwm.suckless.org/patches/preserveonrestart/dwm-preserveonrestart-6.3.diff
