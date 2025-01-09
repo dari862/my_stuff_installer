@@ -42,9 +42,10 @@ pre_post_install(){
 
 create_blob_system_files(){
 	my-superuser mkdir -p "${__distro_path}/system_files/blob"
+	show_im "copy polybar blob to system_files/blob ."
+	my-superuser cp -r "${__distro_path}"/blob/polybar "${__distro_path}/system_files/blob" 
 	if command -v polybar >/dev/null ; then
-		show_im "copy polybar blob and extra_blob to system_files/blob ."
-		my-superuser cp -r "${__distro_path}"/blob/polybar "${__distro_path}/system_files/blob" 
+		show_im "copy polybar extra_blob to system_files/blob ."
 		cd "${__distro_path}"/extra_blob/polybar
 		for app in alacritty geany;do
 			show_im "copy tint2 $app blob and extra_blob to system_files/blob ."
@@ -219,6 +220,8 @@ end_of_post_install(){
 	fi	
 	
 	weather_script_config_path="${__distro_path}/system_files/skel/.config/scriptconfig/weather"
+	#. "$weather_script_config_path"
+	
 	if [ -z "$place" ]; then
 		show_im "set place var in $weather_script_config_path"
 		. "/usr/share/my_stuff/bin/not_add_2_path/weather/country_list"
@@ -232,10 +235,9 @@ end_of_post_install(){
 		place=$(printf "%s" "$chosen" | cut -d':' -f3 | cut -f1 -d',' | sed 's/^ //')
 		place="${place:-$radarcode}" # Default place to radarcode if not set
 	
-		my-superuser sed -i -e "s/continentcode=.*/continentcode=\"$continentcode\"/" \
-				-e "s/radarcode=.*/radarcode=\"$radarcode\"/" \
-				-e "s/place=.*/place=\"$place\"/" \
-			"${weather_script_config_path}"
+		my-superuser sed -i "s/continentcode=.*/continentcode=\"$continentcode\"/" "${weather_script_config_path}" || show_em "end_of_post_install failed at continentcode"
+		my-superuser sed -i "s/radarcode=.*/radarcode=\"$radarcode\"/" "${weather_script_config_path}" || show_em "end_of_post_install failed at radarcode"
+		my-superuser sed -i "s/place=.*/place=\"$place\"/" "${weather_script_config_path}" || show_em "end_of_post_install failed at place"
 	fi
 	
 	show_im "prepare completed"

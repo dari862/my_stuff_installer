@@ -1004,14 +1004,15 @@ show_m "Loading Script ....."
 pre_script_create_dir_and_source_stuff
 
 check_if_user_has_root_access
-
-if [ -n "$_SUPERUSER" ];then
-	$_SUPERUSER ln -sf $(which $_SUPERUSER) /usr/bin/my-superuser
-	[ "$sudo_installed" = "true" ] && keep_superuser_refresed &
-fi
     
 prompt_to_ask_to_what_to_install
 create_prompt_to_install_value_file
+
+if [ -n "$_SUPERUSER" ];then
+	$_SUPERUSER ln -sf $(which $_SUPERUSER) /usr/bin/my-superuser
+	$_SUPERUSER true
+	[ "$sudo_installed" = "true" ] && keep_superuser_refresed &
+fi
 
 pick_file_downloader_and_url_checker
 
