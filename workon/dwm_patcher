@@ -1,0 +1,62 @@
+#!/bin/sh
+
+# Define variables
+DWM_REPO="https://git.suckless.org/dwm"
+PATCH_DIR="patches"
+DWM_DIR="dwm"
+
+workonthis_PATCHES="
+https://dwm.suckless.org/patches/bottomstack/dwm-bottomstack-6.2.diff
+https://raw.githubusercontent.com/bakkeby/patches/master/dragmfact/dragmfact.c
+https://raw.githubusercontent.com/bakkeby/patches/master/dragcfact/dragcfact.c
+https://dwm.suckless.org/patches/gaplessgrid/dwm-gaplessgrid-6.2.diff
+https://dwm.suckless.org/patches/horizgrid/dwm-horizgrid-6.2.diff
+https://dwm.suckless.org/patches/movestack/dwm-movestack-6.2.diff
+https://raw.githubusercontent.com/fitrh/dwm-colorful-tags/main/dwm-colorful-tags.diff
+https://dwm.suckless.org/patches/statuspadding/dwm-statuspadding-6.2.diff
+https://dwm.suckless.org/patches/preserveonrestart/dwm-preserveonrestart-6.2.diff
+https://dwm.suckless.org/patches/shiftview/dwm-shiftview-6.2.diff
+"
+PATCHES="
+https://dwm.suckless.org/patches/barpadding/dwm-barpadding-6.2.diff
+https://dwm.suckless.org/patches/cfacts/dwm-cfacts-6.2.diff
+https://dwm.suckless.org/patches/fibonacci/dwm-fibonacci-6.2.diff
+https://dwm.suckless.org/patches/vanitygaps/dwm-vanitygaps-6.2.diff
+https://dwm.suckless.org/patches/status2d/dwm-status2d-6.2.diff
+https://dwm.suckless.org/patches/underlinetags/dwm-underlinetags-6.2.diff
+https://dwm.suckless.org/patches/notitle/dwm-notitle-6.2.diff
+https://dwm.suckless.org/patches/winicon/dwm-winicon-6.2.diff
+"
+
+# Clean up any existing directories
+rm -rf "$DWM_DIR" "$PATCH_DIR"
+
+# Clone the original dwm repository
+echo "Cloning dwm repository..."
+git clone "$DWM_REPO" "$DWM_DIR"
+
+# Create a directory for patches
+mkdir -p "$PATCH_DIR"
+
+# Download patches
+echo "Downloading patches..."
+cd "$PATCH_DIR" || exit 1
+for url in $PATCHES; do
+    echo "Downloading $url"
+    curl -O "$url" || wget "$url"
+done
+cd ..
+
+# Apply patches
+echo "Applying patches..."
+cd "$DWM_DIR" || exit 1
+for patch in ../$PATCH_DIR/*.diff; do
+    echo "Applying $(basename "$patch")..."
+    patch -p1 < "$patch" || {
+        echo "Failed to apply $(basename "$patch")"
+        exit 1
+    }
+done
+
+# Success message
+echo "All patches applied successfully. You can now build dwm using 'make'."

@@ -43,7 +43,9 @@ install_extra_now=""
 install_qt5ct=""
 install_jgmenu=""
 install_xfce4_panel=""
-xfce4_files_manager=false
+install_files_manager=true
+thunar_files_manager=false
+pcmanfm_files_manager=false
 install_polybar=polybar
 install_bspwm=bspwm
 reboot_now="Y"
@@ -321,22 +323,28 @@ prompt_to_ask_to_what_to_install(){
 			if ! command -v xfce4-panel >/dev/null;then
 				if do_you_want_2_run_this_yes_or_no 'Do you want to install xfce4-panel?';then
 					install_xfce4_panel=xfce4_panel
-					xfce4_files_manager=true
 				else
 					install_xfce4_panel=""
 				fi
 			fi
 			
-			if [ "$xfce4_files_manager" = false ];then
-				if ! command -v thunar >/dev/null;then
-					if do_you_want_2_run_this_yes_or_no 'Do you want to switch from pcmanfm to thunar?';then
-						xfce4_files_manager=true
+			if [ "$install_files_manager" = false ];then
+				if do_you_want_2_run_this_yes_or_no 'Do you want to File Manager?';then
+					install_files_manager=true
+				fi
+				
+				if [ "$thunar_files_manager" = false ] && [ "$install_files_manager" = true ] ;then
+					if ! command -v thunar >/dev/null;then
+						if do_you_want_2_run_this_yes_or_no 'Do you want to switch from pcmanfm to thunar?';then
+							thunar_files_manager=true
+						else
+							pcmanfm_files_manager=true
+						fi
+					else
+						thunar_files_manager=true
 					fi
-				else
-					xfce4_files_manager=true
 				fi
 			fi
-			
 			if ! command -v polybar >/dev/null;then
 				if do_you_want_2_run_this_yes_or_no 'Do you want to install polybar?';then
 					install_polybar=polybar

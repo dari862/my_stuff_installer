@@ -7,7 +7,7 @@ install_must_have_apps2="psmisc pnmixer gparted inxi s-tui dfc hwinfo synaptic g
 install_openbox_="openbox obconf xcape tint2"
 install_image_viewer_apps="viewnior"
 install_files_manager_support_app="gvfs gvfs-fuse gvfs-backends file-roller baobab"
-install_terminal="kitty terminator"
+install_terminal="kitty"
 install_conky_all_app="conky-all"
 install_if_laptop="tlp tlp-rdw powertop xserver-xorg-input-synaptics"
 install_cli_sound_app="mpd mpc ncmpcpp"
@@ -29,10 +29,9 @@ install_for_scripts="slop ffmpeg at xsel wmctrl"
 #######################
 ## extra apps
 #######################
-install_clipman_xfce4="xfce4-clipman"
-install_clipman_else="diodon"
-install_files_manager_xfce4="thunar thunar-archive-plugin"
-install_files_manager_else="pcmanfm"
+install_clipman_manager="diodon"
+install_files_manager_thunar="thunar thunar-archive-plugin"
+install_files_manager_pcmanfm="pcmanfm"
 install_xfce4_panel="xfce4-panel xfce4-settings xfce4-whiskermenu-plugin network-manager-gnome"
 install_polybar="polybar libnm-dev"
 install_qt5ct="qt5ct qt5-style-kvantum libqt5svg5 qml-module-qtquick-controls"
