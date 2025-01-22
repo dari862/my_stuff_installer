@@ -193,13 +193,18 @@ end_of_post_install(){
 	
 	[greeter]
 	background = will be changed with sed
+	#user-background=
 	theme-name = Arc-Dark
 	icon-theme-name = Bunsen-lightdm
 	font-name = Noto Sans 9
 	xft-antialias=true
+	#xft-dpi=
 	xft-hintstyle=hintfull
 	xft-rgba=rgb
 	reader=orca
+	indicators = ~clock;~language;~session;~a11y;~power
+	clock-format = %H:%M          %a, %b %d
+	position = 57%,start 22%,start
 	EOF
 	
 	my-superuser sed -i "s|background = will be changed with sed|background = ${lightdm_background}|g" /usr/share/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf

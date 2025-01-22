@@ -180,16 +180,22 @@ test_internet_(){
 	fi
 }
 
-do_you_want_2_run_this_yes_or_no(){
+do_you_want_2_run_this_yes_or_no()
+{
 	massage_is_="${1}"
-	yn=""
-	printf "${massage_is_} (yes/no) (default: yes) "
-	read -r yn
-	yn="$(echo "$yn" | cut -c 1 | tr '[:lower:]' '[:upper:]')"
-	[ "$yn" = "" ] && yn="Y"
-	if [ "$yn" != "Y" ];then
-		return 1
-	fi
+	while true; do
+		printf "${massage_is_} (yes/no) (default: yes) "
+		stty -icanon -echo time 0 min 1
+		answer="$(head -c1)"
+		stty icanon echo
+		echo
+        	
+		case "$answer" in
+			[Yy]) return 0;;
+			[Nn]) return 1 ;;
+			*) show_im "invalid response only y[yes] or n[No] are allowed.";;
+		esac
+	done
 }
 
 prompt_to_ask_to_what_to_install(){

@@ -1,0 +1,72 @@
+#!/bin/sh
+
+# Define variables
+DWM_REPO="https://git.suckless.org/dwm"
+PWD="$(pwd)"
+PATCH_DIR="$PWD/patches"
+DWM_DIR="$PWD/dwm"
+DWM_DIR_BACKUP="$PWD/dwm_backup"
+
+workonthis_PATCHES="
+https://raw.githubusercontent.com/bakkeby/patches/refs/heads/master/dwm/dwm-cfacts-dragcfact-6.5.diff
+https://dwm.suckless.org/patches/horizgrid/dwm-horizgrid-6.2.diff
+https://raw.githubusercontent.com/fitrh/dwm-colorful-tags/main/dwm-colorful-tags.diff
+https://dwm.suckless.org/patches/statuspadding/dwm-statuspadding-6.2.diff
+https://dwm.suckless.org/patches/preserveonrestart/dwm-preserveonrestart-6.2.diff
+https://dwm.suckless.org/patches/notitle/dwm-notitle-6.2.diff
+https://dwm.suckless.org/patches/winicon/dwm-winicon-6.3-v2.1.diff
+https://dwm.suckless.org/patches/cfacts/dwm-cfacts_bottomstack-6.2.diff
+"
+
+workonthis_PATCHES="
+https://dwm.suckless.org/patches/movestack/dwm-movestack-6.2.diff
+https://dwm.suckless.org/patches/fibonacci/dwm-fibonacci-6.2.diff
+https://dwm.suckless.org/patches/shiftview/dwm-shiftview-6.2.diff
+"
+
+PATCHES_URL="
+https://dwm.suckless.org/patches/gaplessgrid/dwm-gaplessgrid-20160731-56a31dc.diff
+https://raw.githubusercontent.com/bakkeby/patches/refs/heads/master/dwm/dwm-dragmfact-6.5.diff
+https://raw.githubusercontent.com/bakkeby/patches/refs/heads/master/dwm/dwm-cfacts-vanitygaps-6.5_full.diff
+https://dwm.suckless.org/patches/status2d/dwm-status2d-barpadding-20241018-44e9799.diff
+https://dwm.suckless.org/patches/underlinetags/dwm-underlinetags-6.2.diff
+"
+
+Clone_dwm_repository(){
+	rm -rf "$DWM_DIR"
+	if [ ! -d "$DWM_DIR_BACKUP" ];then
+		echo "Cloning dwm repository..."
+		git clone "$DWM_REPO" "$DWM_DIR_BACKUP"
+	fi
+	cp -r "$DWM_DIR_BACKUP" "$DWM_DIR"
+}
+Download_patches(){
+	mkdir -p "$PATCH_DIR"
+	echo "Downloading patches..."
+	cd "$PATCH_DIR" || exit 1
+	for url in $PATCHES_URL; do
+		patch_name="$(basename "$url")"
+		if [ ! -f "$patch_name" ];then
+    		echo "Downloading $url"
+    		curl -O "$url" || wget "$url"
+    	fi
+    	PATCHE_DIR="$PATCH_DIR/$patch_name"
+    	PATCHES="$PATCHES $PATCHE_DIR"
+	done
+}
+Apply_patches(){
+	echo "Applying patches..."
+	cd "$DWM_DIR" || exit 1
+	for patch in $PATCHES; do
+    	echo "Applying $(basename "$patch")..."
+    	patch -p1 < "$patch" || {
+        	echo "Failed to apply $(basename "$patch")"
+        	exit 1
+    	}
+	done
+}
+
+Clone_dwm_repository
+Download_patches
+Apply_patches
+echo "All patches applied successfully. You can now build dwm using 'make'."
