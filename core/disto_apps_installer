@@ -103,7 +103,7 @@ post_disto_apps_installer(){
 	
 	if command -v mpd >/dev/null
 	then
-		if [ -n "$(pidof mpd)" ]; then
+		if [ -n "$(pidof mpd)" ];then
 			kill_package_ mpd
 		fi
 		

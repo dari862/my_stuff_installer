@@ -3,6 +3,9 @@ __distro_path="/usr/share/my_stuff"
 lightdm_background="/usr/share/my_stuff/my_wallpapers/default_wall-01.jpg"
 
 pre_post_install(){
+	show_im "update gtk icon cache."
+	my-superuser gtk-update-icon-cache
+	
 	show_im "create system ready files"
 	my-superuser mkdir -p "${__distro_path}"/system_files/updater
 	
@@ -44,31 +47,31 @@ create_blob_system_files(){
 	my-superuser mkdir -p "${__distro_path}/system_files/blob"
 	show_im "copy polybar blob to system_files/blob ."
 	my-superuser cp -r "${__distro_path}"/blob/polybar "${__distro_path}/system_files/blob" 
-	if command -v polybar >/dev/null ; then
+	if command -v polybar >/dev/null ;then
 		show_im "copy polybar extra_blob to system_files/blob ."
 		cd "${__distro_path}"/extra_blob/polybar
 		for app in alacritty geany;do
 			show_im "copy tint2 $app blob and extra_blob to system_files/blob ."
-			if command -v $app >/dev/null ; then
+			if command -v $app >/dev/null ;then
 				for theme in *;do
 					my-superuser cp -r "${theme}/config/${app}" "${__distro_path}/system_files/blob/polybar/${theme}/config" 
 				done
 			fi
 		done
-		if command -v xfce4-panel >/dev/null ; then
+		if command -v xfce4-panel >/dev/null ;then
 			show_im "copy tint2 xfce4-panel blob and extra_blob to system_files/blob ."
 			for theme in *;do
 				my-superuser cp -r "${theme}/config/xfce4" "${__distro_path}/system_files/blob/polybar/${theme}/config" 
 			done
 		fi
-		if command -v plank >/dev/null ; then
+		if command -v plank >/dev/null ;then
 			show_im "copy tint2 plank blob and extra_blob to system_files/blob ."
 			for theme in *;do
 				my-superuser cp -r "${theme}/config/plank" "${__distro_path}/system_files/blob/polybar/${theme}/config" 
 				my-superuser cp -r "${theme}/cache" "${__distro_path}/system_files/blob/polybar/${theme}" 
 			done
 		fi
-		if command -v jgmenu >/dev/null ; then
+		if command -v jgmenu >/dev/null ;then
 			show_im "copy polybar jgmenu extra_blob to system_files/blob ."
 			for theme in *;do
 				my-superuser cp -r "${theme}/jgmenu_theme" "${__distro_path}/system_files/blob/polybar/${theme}" 
@@ -77,25 +80,25 @@ create_blob_system_files(){
 	fi
 	
 	
-	if command -v tint2 >/dev/null ; then
+	if command -v tint2 >/dev/null ;then
 		show_im "copy tint2 blob and extra_blob to system_files/blob ."
 		my-superuser cp -r "${__distro_path}"/blob/tint2 "${__distro_path}/system_files/blob" 
 		cd "${__distro_path}"/extra_blob/tint2
-		for app in lxterminal;do
-			if command -v $app >/dev/null ; then
+		for app in lxterminal alacritty geany;do
+			if command -v $app >/dev/null ;then
 				show_im "copy tint2 $app blob and extra_blob to system_files/blob ."
 				for theme in *;do
 					my-superuser cp -r "${theme}/config/${app}" "${__distro_path}/system_files/blob/tint2/${theme}/config" 
 				done
 			fi
 		done
-		if command -v xfce4-panel >/dev/null ; then
+		if command -v xfce4-panel >/dev/null ;then
 			for theme in *;do
 				show_im "copy tint2 xfce4-panel blob and extra_blob to system_files/blob ."
 				my-superuser cp -r "${theme}/config/xfce4" "${__distro_path}/system_files/blob/tint2/${theme}/config" 
 			done
 		fi
-		if command -v jgmenu >/dev/null ; then
+		if command -v jgmenu >/dev/null ;then
 			show_im "copy tint2 jgmenu extra_blob to system_files/blob ."
 			for theme in *;do
 				my-superuser cp -r "${theme}/jgmenu_theme" "${__distro_path}/system_files/blob/tint2/${theme}" 
@@ -227,7 +230,7 @@ end_of_post_install(){
 	weather_script_config_path="${__distro_path}/system_files/skel/.config/scriptconfig/weather"
 	#. "$weather_script_config_path"
 	
-	if [ -z "$place" ]; then
+	if [ -z "$place" ];then
 		show_im "set place var in $weather_script_config_path"
 		. "/usr/share/my_stuff/bin/not_add_2_path/weather/country_list"
    		# Geolocate IP:

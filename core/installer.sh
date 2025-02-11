@@ -8,7 +8,6 @@ lib_file_name="disto_lib"
 auto_run_script="false" # true to enable
 temp_path="/tmp/my_stuff"
 installer_phases="/tmp/my_stuff/installer_phases"
-grub_image_path="${__distro_path}/my_wallpapers/Lithium_Light_Vertical_Networks.png"
 switch_default_xsession_to="openbox"
 switch_to_doas=false
 NETWORK_TEST="network-test.debian.org"
@@ -72,13 +71,13 @@ list_of_apps_file_path="${temp_path}/list_of_apps"
 
 # distro
 this_is_ubuntu=false
-if [ -f /etc/os-release ]; then
+if [ -f /etc/os-release ];then
 	# freedesktop.org and systemd
 	. /etc/os-release
 	version_="$(echo "${VERSION_ID}" | sed 's/.//g')"
 	distro_name_="$ID"
 	distro_name_and_ver_=$ID$version_
-elif [ -f /etc/lsb-release ]; then
+elif [ -f /etc/lsb-release ];then
 	# For some versions of Debian/Ubuntu without lsb_release command
 	. /etc/lsb-release
 	distro_name_="$DISTRIB_ID"
@@ -122,9 +121,9 @@ show_im(){
 test_internet_(){
 	show_m "Testing internet connection."
 	
-	if ! internet_tester ; then
+	if ! internet_tester ;then
 		wifi_interface=""
-		if check_url "$url_to_test"; then
+		if check_url "$url_to_test";then
 			show_im "Internet connection test passed!"
 			return 0
 		else
@@ -160,18 +159,18 @@ test_internet_(){
 			
 			gway=$(ip route | awk '/default/ { print $3 }')
 			
-			if ! ping -q -c 5 "$test_dns" >/dev/null 2>&1; then
+			if ! ping -q -c 5 "$test_dns" >/dev/null 2>&1;then
             	show_em "Problem seems to be with your gateway. $_ip"
-        	elif ! ping -q -c 5 "$gway" >/dev/null 2>&1; then
+        	elif ! ping -q -c 5 "$gway" >/dev/null 2>&1;then
             	show_em "Can not reach your gateway. $_ip"s
     		fi
 	
     		fix_time_
     		
-    		if check_url "$url_to_test"; then
+    		if check_url "$url_to_test";then
 				show_im "Internet connection test passed!"
 				return 0
-			elif ping -q -c 5 "$test_dns" >/dev/null 2>&1; then
+			elif ping -q -c 5 "$test_dns" >/dev/null 2>&1;then
             	show_em "Problem seems to be with your DNS. $_ip"
         	else
             	show_em "Somthing wrong with your network"
@@ -476,14 +475,14 @@ internet_tester() {
         printf "GET /nm HTTP/1.1\r\nHost: ${NETWORK_TEST}\r\n\r\n" | nc -w1 "$NETWORK_TEST" 80 | grep -q "NetworkManager is online" >/dev/null 2>&1
     }
     test_with_http() {
-        if command -v curl >/dev/null 2>&1; then
+        if command -v curl >/dev/null 2>&1;then
             curl -s -X GET "$url_to_test" >/dev/null 2>&1
-        elif command -v wget >/dev/null 2>&1; then
+        elif command -v wget >/dev/null 2>&1;then
             wget -qS -O- "$url_to_test" >/dev/null 2>&1
         fi
     }
-    if command -v nc >/dev/null 2>&1; then
-        if ! test_with_nc; then
+    if command -v nc >/dev/null 2>&1;then
+        if ! test_with_nc;then
             show_im "Failed to check internet using nc (netcat), switching to ${url_package}..."
             test_with_http
         fi
@@ -633,7 +632,7 @@ disable_some_unnecessary_services(){
 			#init_manager mask gvfs-daemon.service || show_wm "fail to disable gvfs.service"
 			#init_manager mask gvfs-metadata.service || show_wm "fail to disable gvfs.service"
 			
-			if init_manager status NetworkManager.service >/dev/null 2>&1; then
+			if init_manager status NetworkManager.service >/dev/null 2>&1;then
 				init_manager disable networking || show_wm "fail to disable networking"
 				init_manager stop systemd-networkd.service || show_wm "fail to stop systemd-networkd.service"
 				init_manager disable systemd-networkd.service || show_wm "fail to disable systemd-networkd.service"
@@ -670,15 +669,19 @@ disable_ipv6_now(){
 		if ! grep 'GRUB_CMDLINE_LINUX=' /etc/default/grub | grep -q 'ipv6.disable=1';then
 			if grep -q 'GRUB_CMDLINE_LINUX=""' /etc/default/grub;then
 				my-superuser sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="ipv6.disable=1"/' /etc/default/grub
+				need_to_update_grub=true
 			else
 				my-superuser sed -i 's/GRUB_CMDLINE_LINUX=\"\(.*\)\"/GRUB_CMDLINE_LINUX=\"\1 ipv6.disable=1\"/' /etc/default/grub
+				need_to_update_grub=true
 			fi
 		fi
 		if ! grep 'GRUB_CMDLINE_LINUX_DEFAULT=' /etc/default/grub | grep -q 'ipv6.disable=1';then
 			if grep -q 'GRUB_CMDLINE_LINUX_DEFAULT=""' /etc/default/grub;then
 				my-superuser sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=""/GRUB_CMDLINE_LINUX_DEFAULT="ipv6.disable=1"/' /etc/default/grub
+				need_to_update_grub=true
 			else
 				my-superuser sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=\"\(.*\)\"/GRUB_CMDLINE_LINUX_DEFAULT=\"\1 ipv6.disable=1\"/' /etc/default/grub
+				need_to_update_grub=true
 			fi
 		fi
 	fi
@@ -705,17 +708,22 @@ run_my_alternatives(){
 	touch "${installer_phases}/my_alternatives"
 }
 
-update_grub_image(){
-	[ -f "${installer_phases}/update_grub_image" ] && return
-	if [ "$run_update_grub_image" = "Y" ];then
+update_grub(){
+	[ -f "${installer_phases}/update_grub" ] && return
+	if [ "$need_to_update_grub" = "true" ];then
 		show_m "update grub"
-		my-superuser ln -sf ${grub_image_path} /boot/grub/
-		# this package added some grub config
 		my-superuser sync
 		my-superuser grub-mkconfig -o /boot/grub/grub.cfg
 	fi
-	# install Themes
-	my-superuser gtk-update-icon-cache
+	touch "${installer_phases}/update_grub"
+}
+
+update_grub_image(){
+	[ -f "${installer_phases}/update_grub_image" ] && return
+	if [ "$run_update_grub_image" = "Y" ];then
+		show_m "update image."
+		my-superuser "${__distro_path}/bin/not_add_2_path/grub2_themes/install.sh"
+	fi
 	touch "${installer_phases}/update_grub_image"
 }
 
@@ -725,14 +733,14 @@ check_if_user_has_root_access(){
     	## Check SuperUser Group
     	SUPERUSERGROUP='wheel sudo root'
     	for sug in ${SUPERUSERGROUP}; do
-        	if groups | grep ${sug} >/dev/null; then
+        	if groups | grep ${sug} >/dev/null;then
             	SUGROUP=${sug}
             	show_im "Super user group are ${SUGROUP}"
         	fi
     	done
     	
     	## Check if member of the SuperUser Group.
-    	if ! groups | grep ${SUGROUP} >/dev/null; then
+    	if ! groups | grep ${SUGROUP} >/dev/null;then
         	show_em "You need to be a member of the SuperUser Group to run me!"
     	fi
     	
@@ -770,13 +778,13 @@ source_my_lib_file(){
 		mv "${disto_lib_location}" "${temp_path}"
 	elif [ ! -f "${temp_path}/${lib_file_name}" ];then 
 		show_im "download lib file"
-		if ! download_file "" "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${lib_file_name}" "${temp_path}/${lib_file_name}"; then
+		if ! download_file "" "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${lib_file_name}" "${temp_path}/${lib_file_name}";then
 			show_em "Error: Failed to download ${lib_file_name} ."
 		fi
 	fi
 		
 	set -a
-	if ! . "${temp_path}"/${lib_file_name} 2> /dev/null; then
+	if ! . "${temp_path}"/${lib_file_name} 2> /dev/null;then
 		show_em "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
 	fi
 	set +a
@@ -851,7 +859,7 @@ install_superuser_tools()
 		kill_package_ ${PACKAGER} && install_packages || (kill_package_ ${PACKAGER}  && install_packages) || (show_em "failed to install doas")
 		$_SUPERUSER adduser "$USER" sudo || :
 		$_SUPERUSER tee -a /etc/bash.bashrc <<- EOF >/dev/null 2>&1
-		if [ -x /usr/bin/doas ]; then
+		if [ -x /usr/bin/doas ];then
 			complete -F _command doas
 		fi
 		EOF
@@ -870,19 +878,20 @@ install_superuser_tools()
 }
 
 set_package_manager(){
+	show_m "running set_package_manager function"
 	if [ -z "${PACKAGER}" ];then
 		show_m "checking which type of package manager is being used."
 		## Check Package Handeler
 		PACKAGEMANAGER='apt-get yum dnf pacman zypper'
 		for pgm in ${PACKAGEMANAGER}; do
-			if command -v ${pgm} >/dev/null; then
+			if command -v ${pgm} >/dev/null;then
 				PACKAGER=${pgm}
 				show_im "Using ${pgm}"
 				break
 			fi
 		done
 		
-		if [ -z "${PACKAGER}" ]; then
+		if [ -z "${PACKAGER}" ];then
 			show_em "Error: Can't find a supported package manager"
 		fi
 		
@@ -890,13 +899,23 @@ set_package_manager(){
 		echo "PACKAGER=\"${PACKAGER}\"" | tee "${save_value_file}" >/dev/null 2>&1
 	fi
 	
-	if ! . "${temp_path}/disto_package_manager_${PACKAGER}" 2> /dev/null; then
+	if ! . "${temp_path}/disto_package_manager_${PACKAGER}" 2> /dev/null;then
 		show_em "Error: Failed to source disto_package_manager_${PACKAGER} from ${temp_path}" >&2
 	fi
 	
-	pre_package_manager_
+	if check_if_package_exist_in_repo --no-list-of-apps-file systemd >/dev/null 2>&1;then
+		init_system_are="systemd"
+	else
+		show_em "Error: variable init_system_are are empty"
+	fi
 	
-	kill_package_ ${PACKAGER} 	
+	check_and_download_ "disto_init_manager"
+	if ! . "${temp_path}/disto_init_manager" 2> /dev/null;then
+		show_em "Error: Failed to source disto_init_manager from ${temp_path}" >&2
+	fi
+	
+	show_im "running pre_package_manager_"
+	pre_package_manager_
 }
 
 switch_default_xsession(){
@@ -945,7 +964,7 @@ pick_clone_rep_commnad(){
 					getthis_location="$(cd "${getthis_location}" && cd .. && pwd)"
 				fi
 				
-				if [ ! -d "${getthis_location}/${getthis}" ]; then 
+				if [ ! -d "${getthis_location}/${getthis}" ];then 
 					git clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}/${getthis}"
 				else
 					show_im "${getthis} Folder does exsist"
@@ -967,7 +986,7 @@ pick_clone_rep_commnad(){
 					getthis_location="$(cd "${getthis_location}" && cd .. && pwd)"
 				fi
 				
-				if [ ! -d "${getthis_location}/${getthis}" ]; then 
+				if [ ! -d "${getthis_location}/${getthis}" ];then 
 					svn clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}/${getthis}"
 				else
 					show_im "${getthis} Folder does exsist"
@@ -1112,6 +1131,8 @@ disable_some_unnecessary_services
 clean_up_now
 
 disable_ipv6_now
+
+update_grub
 
 update_grub_image
 
