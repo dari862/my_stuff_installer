@@ -108,7 +108,10 @@ if [ -d "$HOME/Desktop" ];then
 else
 	dir_2_find_files_in="${temp_path}"
 fi
-	
+
+GPU_Drivers_ready=false
+this_is_laptop=false
+fingerprint_exist=true
 ################################################################################################################################
 # Function
 ################################################################################################################################
@@ -533,6 +536,7 @@ fix_time_(){
 			fi
 		fi
 	fi
+	echo "__timezone=\"$__timezone\"" >> "${save_value_file}"
 	touch "${installer_phases}/fix_time_"
 }
 
@@ -755,7 +759,7 @@ check_if_user_has_root_access(){
             	show_im "Super user group are ${SUGROUP}"
         	fi
     	done
-    	
+    	echo "SUGROUP=\"$SUGROUP\"" >> "${save_value_file}"
     	## Check if member of the SuperUser Group.
     	if ! groups | grep ${SUGROUP} >/dev/null;then
         	show_em "You need to be a member of the SuperUser Group to run me!"
@@ -913,7 +917,7 @@ set_package_manager(){
 		fi
 		
 		check_and_download_ "installer_repo/${PACKAGER}"
-		echo "PACKAGER=\"${PACKAGER}\"" | tee "${save_value_file}" >/dev/null 2>&1
+		echo "PACKAGER=\"${PACKAGER}\"" >> "${save_value_file}"
 	fi
 	
 	if ! . "${temp_path}/${PACKAGER}" 2> /dev/null;then

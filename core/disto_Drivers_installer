@@ -133,7 +133,8 @@ post_disto_Drivers_installer(){
 	#create_20_intel_conf_file
 	
 	if [ "$fingerprint_exist" = true ];then
-		touch "${temp_path}"/fingerprint_exist
+		fingerprint_exist=true
+		echo "fingerprint_exist=true" >> "${value_of_some_var_file}"
 	fi
 	
 	if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
@@ -141,7 +142,8 @@ post_disto_Drivers_installer(){
 	fi
 	
 	if [ "${install_GPU_Drivers}" = "Y" ];then
-		touch "${temp_path}"/GPU_Drivers_ready
+		GPU_Drivers_ready=true
+		echo "GPU_Drivers_ready=true" >> "${value_of_some_var_file}"
 	fi
 	
 	if command -v fprintd-verify > /dev/null ;then

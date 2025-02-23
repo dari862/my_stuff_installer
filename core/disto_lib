@@ -113,9 +113,10 @@ CHECK_IF_THIS_LAPTOP(){
     	fi
 	fi
 	
-	if [ "${is_this_laptop}"  = true ];then
+	if [ "${is_this_laptop}" = true ];then
 		show_im "this is laptop"
-		touch "${temp_path}"/this_is_laptop
+		this_is_laptop=true
+		echo "this_is_laptop=true" >> "${value_of_some_var_file}"
 	else
 		show_im "this is not laptop"
 	fi
