@@ -8,11 +8,16 @@ check_and_download_()
 	check_this_file_="${1-}"
 	base_name_of_file="$(basename "$check_this_file_")"
 	new_check_this_file_="${temp_path}/${base_name_of_file}"
-	check_this_file_location="$(find $HOME/Desktop ${temp_path} -type f -name ${base_name_of_file} | head -1)"
+	if [ -d "$HOME/Desktop" ];then
+		dir_2_find_files_in="$HOME/Desktop ${temp_path}"
+	else
+		dir_2_find_files_in="${temp_path}"
+	fi
+	check_this_file_location="$(find ${dir_2_find_files_in} -type f -name ${base_name_of_file} | head -1)"
 	
 	[ -f "${new_check_this_file_}" ] && return
 	
-	if [ -n "${check_this_file_location}" ];then
+	if [ -n "${check_this_file_location}" ] && [ "${check_this_file_location}" != "${temp_path}/${base_name_of_file}" ];then
 		mv "${check_this_file_location}" "${temp_path}"
 	fi
 	

@@ -103,6 +103,12 @@ mirror="http://deb.debian.org/debian/"
 mirror_security="http://security.debian.org/debian-security"
 only_doas_installed=false
 
+if [ -d "$HOME/Desktop" ];then
+	dir_2_find_files_in="$HOME/Desktop ${temp_path}"
+else
+	dir_2_find_files_in="${temp_path}"
+fi
+	
 ################################################################################################################################
 # Function
 ################################################################################################################################
@@ -782,9 +788,9 @@ check_if_user_has_root_access(){
 source_my_lib_file(){
 	[ -f "${installer_phases}/source_my_lib_file" ] && return
 	show_m "sourcing ${lib_file_name} file."
-	disto_lib_location="$(find $HOME/Desktop ${temp_path} -type f -name ${lib_file_name} | head -1 || :)"
+	disto_lib_location="$(find ${dir_2_find_files_in} -type f -name ${lib_file_name} | head -1 || :)"
 	# source disto_lib
-	if [ -n "${disto_lib_location}" ];then
+	if [ -n "${disto_lib_location}" ] && [ "${disto_lib_location}" != "${temp_path}/${lib_file_name}" ];then
 		mv "${disto_lib_location}" "${temp_path}"
 	elif [ ! -f "${temp_path}/${lib_file_name}" ];then 
 		show_im "download lib file"
@@ -966,7 +972,7 @@ pick_clone_rep_commnad(){
 			getthis="${1-}"
 			if [ ! -f "${installer_phases}/${getthis}" ];then
 				show_im "clone distro files repo ( ${getthis} )."
-				getthis_location="$(find $HOME/Desktop ${temp_path} -type d -name ${getthis} | head -1)"
+				getthis_location="$(find ${dir_2_find_files_in} -type d -name ${getthis} | head -1)"
 				
 				if [ -z "${getthis_location}" ];then
 					getthis_location="${temp_path}"
@@ -981,7 +987,7 @@ pick_clone_rep_commnad(){
 				fi
 				touch "${installer_phases}/${getthis}"
 			else
-				getthis_location="$(find $HOME/Desktop ${temp_path} -type d -name ${getthis} | head -1)"
+				getthis_location="$(find ${dir_2_find_files_in} -type d -name ${getthis} | head -1)"
 				
 				if [ -z "${getthis_location}" ];then
 					getthis_location="${temp_path}"
@@ -996,7 +1002,7 @@ pick_clone_rep_commnad(){
 			getthis="${1-}"
 			if [ ! -f "${installer_phases}/${getthis}" ];then
 				show_im "clone distro files repo ( ${getthis} )."
-				getthis_location="$(find $HOME/Desktop ${temp_path} -type d -name ${getthis} | head -1)"
+				getthis_location="$(find ${dir_2_find_files_in} -type d -name ${getthis} | head -1)"
 				
 				if [ -z "${getthis_location}" ];then
 					getthis_location="${temp_path}"
@@ -1011,7 +1017,7 @@ pick_clone_rep_commnad(){
 				fi
 				touch "${installer_phases}/${getthis}"
 			else
-				getthis_location="$(find $HOME/Desktop ${temp_path} -type d -name ${getthis} | head -1)"
+				getthis_location="$(find ${dir_2_find_files_in} -type d -name ${getthis} | head -1)"
 				
 				if [ -z "${getthis_location}" ];then
 					getthis_location="${temp_path}"
