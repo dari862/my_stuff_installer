@@ -1,27 +1,27 @@
-#!/bin/sh	
+#!/bin/sh
 #must have apps
 install_core_apps="lsb-release arandr autorandr"
-install_X11_apps="xorg xserver-xorg-input-all xinput dbus-x11 xinit xdg-user-dirs x11-xserver-utils xclip xwallpaper"
-install_must_have_apps="jq cbatticon xprintidle yad git rofi picom mlocate ufw htop unzip dunst libnotify-bin"
-install_must_have_apps2="psmisc pnmixer gparted inxi s-tui dfc hwinfo synaptic galternatives xdotool acl lm-sensors ntfs-3g"
+install_X11_apps="xorg-server xorg-xinput dbus xorg-xinit xdg-user-dirs xorg-xdpyinfo xclip xwallpaper"
+install_must_have_apps="jq cbatticon xprintidle yad git rofi picom mlocate ufw htop unzip dunst libnotify"
+install_must_have_apps2="psmisc pnmixer gparted inxi s-tui dfc hwinfo synaptic galternatives xdotool acl lm_sensors ntfs-3g"
 install_openbox_="openbox obconf xcape tint2"
 install_image_viewer_apps="viewnior"
-install_files_manager_support_app="gvfs gvfs-fuse gvfs-backends file-roller baobab"
+install_files_manager_support_app="gvfs gvfs-mtp gvfs-afc file-roller baobab"
 install_terminal="kitty"
-install_conky_all_app="conky-all"
-install_if_laptop="tlp tlp-rdw powertop xserver-xorg-input-synaptics"
+install_conky_all_app="conky"
+install_if_laptop="tlp tlp-rdw powertop xf86-input-synaptics"
 install_cli_sound_app="mpd mpc ncmpcpp"
-install_MIDI_sound_app="wildmidi timidity"
+install_MIDI_sound_app="wildmidi timidity++"
 install_text_editer_app="geany zathura"
 install_mediaplayer_app="mpv"
 install_x_lock_extra="i3lock i3lock-fancy"
-install_fonts="fonts-noto fonts-droid-fallback fonts-cantarell fonts-liberation fonts-opensymbol fonts-noto-core fonts-noto-mono fonts-inconsolata"
-install_themes="papirus-icon-theme fonts-noto-color-emoji fonts-firacode fonts-font-awesome arc-theme gtk3-nocsd numix-icon-theme paper-icon-theme dmz-cursor-theme"
+install_fonts="noto-fonts ttf-droid cantarell-fonts ttf-liberation ttf-opensans noto-fonts noto-fonts-mono ttf-inconsolata"
+install_themes="papirus-icon-theme noto-fonts-emoji ttf-fira-code ttf-font-awesome arc-gtk-theme gtk3-nocsd numix-icon-theme paper-icon-theme dmz-cursor-theme"
 install_themes_tools="xsettingsd lxappearance"
-install_polkit_apps="policykit-1 policykit-1-gnome gnome-keyring"
+install_polkit_apps="polkit polkit-gnome gnome-keyring"
 
 #firefox
-install_firefox_="firefox-esr"
+install_firefox_="firefox"
 
 # slop for ac-shots and screen recoding , ffmpeg for screen recoding , at for bl-beepmein , xsel for files-uploader , wmctrl for style-manager and files-uploader
 install_for_scripts="slop ffmpeg at xsel wmctrl"
@@ -32,9 +32,9 @@ install_for_scripts="slop ffmpeg at xsel wmctrl"
 install_clipman_manager="diodon"
 install_files_manager_thunar="thunar thunar-archive-plugin"
 install_files_manager_pcmanfm="pcmanfm"
-install_xfce4_panel="xfce4-panel xfce4-settings xfce4-whiskermenu-plugin network-manager-gnome"
-install_polybar="polybar libnm-dev"
-install_qt5ct="qt5ct qt5-style-kvantum libqt5svg5 qml-module-qtquick-controls"
+install_xfce4_panel="xfce4-panel xfce4-settings xfce4-whiskermenu-plugin network-manager-applet"
+install_polybar="polybar"
+install_qt5ct="qt5ct kvantum qt5-svg qt5-quickcontrols"
 install_jgmenu="jgmenu"
 install_bspwm="bspwm sxhkd"
 install_zsh="zsh"
@@ -46,7 +46,7 @@ install_better_bash="bash bash-completion"
 #######################
 ## better shell
 #######################
-install_better_shell="tar bat fzf trash-cli command-not-found thefuck highlight lf"
+install_better_shell="tar bat fzf trash-cli pkgfile thefuck highlight lf"
 
 #######################
 ## extra

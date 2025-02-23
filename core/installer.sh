@@ -903,7 +903,7 @@ set_package_manager(){
 	if [ -z "${PACKAGER}" ];then
 		show_m "checking which type of package manager is being used."
 		## Check Package Handeler
-		PACKAGEMANAGER='apt-get yum dnf pacman zypper'
+		PACKAGEMANAGER='apt-get dnf pacman zypper'
 		for pgm in ${PACKAGEMANAGER}; do
 			if command -v ${pgm} >/dev/null;then
 				PACKAGER=${pgm}

@@ -22,7 +22,6 @@ install_lightdm_now(){
 		add_packages_2_install_list "${install_lightdm_}"
 		kill_package_ ${PACKAGER} && install_packages || (kill_package_ ${PACKAGER} && install_packages) || (show_em "failed to install lightdm")
 		echo "/usr/sbin/lightdm" | $_SUPERUSER tee /etc/X11/default-display-manager > /dev/null 2>&1
-		$_SUPERUSER dpkg-reconfigure lightdm
 	else
 		show_im "lightdm already exist."
 	fi
@@ -48,14 +47,14 @@ check_if_package_exist_in_repo(){
 	if [ "$package_name" = "--no-list-of-apps-file" ];then
 		shift 1
 		package_name="${1-}"
-		if apt list --installed ${package_name} 2>/dev/null | grep "^${package_name}/" | grep -q "[installed]";then
+		if rpm -q "${package_name}" > /dev/null 2>&1; then
 			return 0
 		else
 			return 1
 		fi
 	else
-		if ! dpkg -s "${package_name}" > /dev/null 2>&1;then
-			check_apps_in_cache="$(grep "^$package_name/" "${list_of_apps_file_path}" 2>/dev/null || :)"
+		if ! rpm -q "${package_name}" > /dev/null 2>&1; then
+			check_apps_in_cache="$(grep "^$package_name" "${list_of_apps_file_path}" 2>/dev/null || :)"
 			if [ -n "${check_apps_in_cache}" ];then
 				return 0
 			fi
@@ -69,8 +68,8 @@ add_packages_2_install_list()
 	
 	for INDEX in ${localarray}
 	do
-		if ! dpkg -s "${INDEX}" > /dev/null 2>&1;then
-			check_apps_in_cache="$(grep "^$INDEX/" "${list_of_apps_file_path}" 2>/dev/null || :)"
+		if ! rpm -q "${INDEX}" > /dev/null 2>&1;then
+			check_apps_in_cache="$(grep "^$INDEX" "${list_of_apps_file_path}" 2>/dev/null || :)"
 			if [ -n "${check_apps_in_cache}" ];then
 				List_of_apt_2_install_="$List_of_apt_2_install_ $INDEX"
 				show_im "${INDEX} added to install apps" 
@@ -84,7 +83,7 @@ add_packages_2_install_list()
 upgrade_now()
 {
 	$_SUPERUSER ${PACKAGER} refresh
-	$_SUPERUSER ${PACKAGER} -y update
+	$_SUPERUSER ${PACKAGER} update -y
 }
 
 remove_package_with_error2info()
@@ -92,50 +91,37 @@ remove_package_with_error2info()
 	localarray="$@"
 	for package in ${localarray}
 	do
-		if dpkg -s "${package}" >/dev/null 2>&1;then
-			show_im "Purging ${package}."
+		if rpm -q "${package}" >/dev/null 2>&1; then
+			show_im "Removing ${package}."
 			$_SUPERUSER ${PACKAGER} remove -y "$package"
 		fi
 	done
 }
 
 remove_unnecessary_package_manager_stuff(){
-	show_im ""
+	$_SUPERUSER ${PACKAGER} clean --all
 }
 
 run_package_manager_autoclean(){
-	show_im ""
+	$_SUPERUSER ${PACKAGER} clean --all
 }
 
 _unattended_upgrades_()
 {
-	auto_upgrades_file="/etc/apt/apt.conf.d/20auto-upgrades"
-	if [ -f "${auto_upgrades_file}" ];then
-		auto_upgrades_file_bak="/etc/apt/apt.conf.d/20auto-upgrades.bak"
-		case "$1" in
-			start)
-				[ -f "${installer_phases}/_unattended_upgrades_start" ] && return
-				show_im "start unattended upgrades."
-				init_manager stop unattended-upgrades || :
-				if [ ! -f "${auto_upgrades_file_bak}" ];then
-					my-superuser mv "${auto_upgrades_file}" "${auto_upgrades_file_bak}"
-				fi
-				touch "${installer_phases}/_unattended_upgrades_start"
-			;;
-			stop)
-				[ -f "${installer_phases}/_unattended_upgrades_stop" ] && return
-				show_im "stop unattended upgrades."
-				if [ -f "${auto_upgrades_file}" ] && [ -f "${auto_upgrades_file_bak}" ];then
-					my-superuser rm "${auto_upgrades_file}"
-				fi
-					
-				if [ -f "${auto_upgrades_file_bak}" ];then
-					my-superuser mv "${auto_upgrades_file_bak}" "${auto_upgrades_file}"
-				fi
-				touch "${installer_phases}/_unattended_upgrades_stop"
-			;;
-		esac
-	fi
+	case "$1" in
+		start)
+			[ -f "${installer_phases}/_unattended_upgrades_start" ] && return
+			show_im "Starting unattended upgrades (zypper cron setup needed)."
+			$_SUPERUSER systemctl enable --now packagekit-background.timer
+			touch "${installer_phases}/_unattended_upgrades_start"
+		;;
+		stop)
+			[ -f "${installer_phases}/_unattended_upgrades_stop" ] && return
+			show_im "Stopping unattended upgrades."
+			$_SUPERUSER systemctl disable --now packagekit-background.timer
+			touch "${installer_phases}/_unattended_upgrades_stop"
+		;;
+	esac
 }
 
 pre_package_manager_(){
