@@ -29,18 +29,6 @@ pre_post_install(){
 		show_im "runing envycontrol_updater"
 		my-superuser ${__distro_path}/system_files/updater/envycontrol
 	fi
-	
-	show_im "Add current distro name and icon to polybar."	
-	if [ "$distro_name_" = "debian" ];then
-		echo "distro_icon=" | my-superuser tee "${__distro_path}/system_files/disto_icons" >/dev/null 2>&1
-		echo 'distro_name="Debian"' | my-superuser tee -a "${__distro_path}/system_files/disto_icons" >/dev/null 2>&1
-	elif [ "$distro_name_" = "ubuntu" ];then
-		echo "distro_icon=󰕈" | my-superuser tee "${__distro_path}/system_files/disto_icons" >/dev/null 2>&1
-		echo 'distro_name="Ubuntu"' | my-superuser tee -a "${__distro_path}/system_files/disto_icons" >/dev/null 2>&1
-	else
-		echo "distro_icon=" | my-superuser tee "${__distro_path}/system_files/disto_icons" >/dev/null 2>&1
-		echo 'distro_name="Arch Linux"' | my-superuser tee -a "${__distro_path}/system_files/disto_icons" >/dev/null 2>&1
-	fi
 }
 
 create_blob_system_files(){
@@ -50,7 +38,7 @@ create_blob_system_files(){
 	if command -v polybar >/dev/null ;then
 		show_im "copy polybar extra_blob to system_files/blob ."
 		cd "${__distro_path}"/extra_blob/polybar
-		for app in alacritty geany;do
+		for app in alacritty geany bspwm;do
 			show_im "copy tint2 $app blob and extra_blob to system_files/blob ."
 			if command -v $app >/dev/null ;then
 				for theme in *;do
@@ -78,13 +66,12 @@ create_blob_system_files(){
 			done
 		fi
 	fi
-	
-	
+
 	if command -v tint2 >/dev/null ;then
 		show_im "copy tint2 blob and extra_blob to system_files/blob ."
 		my-superuser cp -r "${__distro_path}"/blob/tint2 "${__distro_path}/system_files/blob" 
 		cd "${__distro_path}"/extra_blob/tint2
-		for app in lxterminal alacritty geany;do
+		for app in lxterminal alacritty geany bspwm;do
 			if command -v $app >/dev/null ;then
 				show_im "copy tint2 $app blob and extra_blob to system_files/blob ."
 				for theme in *;do
@@ -107,18 +94,7 @@ create_blob_system_files(){
 	fi
 }
 
-end_of_post_install(){
-	show_im "creating Package-managers library file."
-	cat "${__distro_path}"/lib/Package-managers/common | my-superuser tee "${__distro_path}"/system_files/Package-manager >/dev/null 2>&1
-	cat "${__distro_path}"/lib/Package-managers/${PACKAGER}.sh | my-superuser tee -a "${__distro_path}"/system_files/Package-manager >/dev/null 2>&1
-	
-	show_im "link icons based on distro"
-	if [ -d "${__distro_path}/icons/Distro/${distro_name_}" ];then
-		my-superuser ln -sf "${__distro_path}/icons/Distro/${distro_name_}" "${__distro_path}/system_files/Distro"
-	else
-		my-superuser ln -sf "${__distro_path}/icons/Distro/arch" "${__distro_path}/system_files/Distro"
-	fi
-	
+end_of_post_install(){	
 	show_im "Edit picom.conf ."
 	# test if in virtual machine
 	if [ "$(cat /sys/devices/virtual/dmi/id/chassis_type)" = "1" ];then # 1 eq vm
@@ -247,6 +223,19 @@ end_of_post_install(){
 		my-superuser sed -i "s/radarcode=.*/radarcode=\"$radarcode\"/" "${weather_script_config_path}" || show_em "end_of_post_install failed at radarcode"
 		my-superuser sed -i "s/place=.*/place=\"$place\"/" "${weather_script_config_path}" || show_em "end_of_post_install failed at place"
 	fi
+	
+	. "${__distro_path}/lib/common/DB"
+	. "${__distro_path}/lib/common/my_installer_and_DB_dir"
+	
+	cd "${_APPS_LIBDIR}"
+	
+	for app in podman distrobox;do
+		if command -v ${app} >/dev/null 2>&1;then
+			dir_name="$(basename $(dirname $(find . -type f -name ${app} )))"
+			[ ! -f "${apps_db_path}/$dir_name" ] && my-superuser touch "${apps_db_path}/$dir_name"
+			echo "${app}" | my-superuser tee -a "${apps_db_path}/$dir_name" >/dev/null 2>&1
+		fi
+	done
 	
 	show_im "prepare completed"
 	my-superuser touch "${installer_phases}/disto_post_install"

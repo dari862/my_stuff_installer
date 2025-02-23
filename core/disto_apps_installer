@@ -82,20 +82,7 @@ post_disto_apps_installer(){
 		my-superuser ln -sf "${__distro_path}/lib/xsessions/my_stuff_bspwm.desktop" /usr/share/xsessions
 		my-superuser rm -rdf "${__distro_path}"
 	fi
-	
-	if [ -d "/usr/share/zsh-antigen" ];then
-		does_antigen_env_setup_works=$(grep -c antigen-env-setup /usr/share/zsh-antigen/antigen.zsh)
-		if [ "$does_antigen_env_setup_works" -gt "1" ]
-		then
-			show_im "antigen works fine"
-		else
-			download_file "my-superuser" "https://raw.githubusercontent.com/zsh-users/antigen/develop/bin/antigen.zsh" "${temp_path}/antigen.zsh"
-			my-superuser chmod +x "${temp_path}"/antigen.zsh
-			my-superuser mv /usr/share/zsh-antigen/antigen.zsh /usr/share/zsh-antigen/antigen.zsh.backup
-			my-superuser mv "${temp_path}"/antigen.zsh /usr/share/zsh-antigen/
-		fi
-	fi
-	
+
 	if [ "$install_zsh_now" = "zsh_default" ];then
 		show_im "make zsh default shell "
 		my-superuser chsh -s $(command -v zsh) $__USER

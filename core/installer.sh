@@ -23,7 +23,16 @@ deb_lines_nonfree=""
 export temp_path="${temp_path}"
 prompt_to_install_value_file="${temp_path}/value_of_picked_option_from_prompt_to_install"
 save_value_file="${temp_path}/save_value_file"
+install_drivers=true
+install_apps=true
 arg_="${1-}"
+if [ "$arg_" = "drivers" ];then
+	install_drivers=true
+	install_apps=false
+elif [ "$arg_" = "apps" ];then
+	install_drivers=false
+	install_apps=true
+fi
 SUGROUP=""
 internet_status=""
 disto_lib_location=""
@@ -59,6 +68,7 @@ source_prompt_to_install_file=""
 getthis_location=""
 my_stuff_temp_path=""
 theme_temp_path=""
+Distro_Specific_temp_path=""
 
 doas_installed=false
 sudo_installed=false
@@ -221,7 +231,7 @@ prompt_to_ask_to_what_to_install(){
 			fi
 		fi
 		
-		if [ -z "$arg_" ];then
+		if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
 			if [ -n "$deb_lines_contrib" ];then
 				if do_you_want_2_run_this_yes_or_no 'Do you want enable contrib repo?';then
 					enable_contrib=true
@@ -245,7 +255,7 @@ prompt_to_ask_to_what_to_install(){
 			fi
 		fi
 		
-		if [ -z "$arg_" ] || [ "$arg_" = "drivers" ];then
+		if [ "$install_drivers" = "true" ];then
 			if do_you_want_2_run_this_yes_or_no 'do you want to install GPU drivers?';then
 				install_GPU_Drivers="Y"
 				if lspci | grep -i nvidia | grep VGA -q;then
@@ -270,7 +280,7 @@ prompt_to_ask_to_what_to_install(){
 			fi
 		fi
 		
-		if [ -z "$arg_" ];then
+		if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
 			if do_you_want_2_run_this_yes_or_no 'do you want to purge some unnecessary pakages?';then
 				run_purge_some_unnecessary_pakages="Y"
 			else
@@ -306,7 +316,7 @@ prompt_to_ask_to_what_to_install(){
 			fi
 		fi
 		
-		if [ -z "$arg_" ] || [ "$arg_" = "apps" ];then
+		if [ "$install_apps" = "true" ];then
 			if ! command -v zsh >/dev/null;then
 				if do_you_want_2_run_this_yes_or_no 'Do you want to install zsh?';then
 					if do_you_want_2_run_this_yes_or_no 'Do you want to set zsh as default shell?';then
@@ -391,7 +401,7 @@ prompt_to_ask_to_what_to_install(){
 			fi
 		fi
 		
-		if [ -z "$arg_" ];then
+		if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
 			if do_you_want_2_run_this_yes_or_no 'reboot?';then
 				reboot_now="Y"
 			else
@@ -772,7 +782,7 @@ check_if_user_has_root_access(){
 source_my_lib_file(){
 	[ -f "${installer_phases}/source_my_lib_file" ] && return
 	show_m "sourcing ${lib_file_name} file."
-	disto_lib_location="$(find $HOME -type f -name ${lib_file_name} | head -1 || :)"
+	disto_lib_location="$(find $HOME ${temp_path} -type f -name ${lib_file_name} | head -1 || :)"
 	# source disto_lib
 	if [ -n "${disto_lib_location}" ];then
 		mv "${disto_lib_location}" "${temp_path}"
@@ -895,7 +905,7 @@ set_package_manager(){
 			show_em "Error: Can't find a supported package manager"
 		fi
 		
-		check_and_download_ "disto_package_manager_${PACKAGER}"
+		check_and_download_ "installer_repo/${PACKAGER}"
 		echo "PACKAGER=\"${PACKAGER}\"" | tee "${save_value_file}" >/dev/null 2>&1
 	fi
 	
@@ -956,7 +966,7 @@ pick_clone_rep_commnad(){
 			getthis="${1-}"
 			if [ ! -f "${installer_phases}/${getthis}" ];then
 				show_im "clone distro files repo ( ${getthis} )."
-				getthis_location="$(find $HOME -type d -name ${getthis} | head -1)"
+				getthis_location="$(find $HOME ${temp_path} -type d -name ${getthis} | head -1)"
 				
 				if [ -z "${getthis_location}" ];then
 					getthis_location="${temp_path}"
@@ -969,8 +979,16 @@ pick_clone_rep_commnad(){
 				else
 					show_im "${getthis} Folder does exsist"
 				fi
+				touch "${installer_phases}/${getthis}"
+			else
+				getthis_location="$(find $HOME ${temp_path} -type d -name ${getthis} | head -1)"
+				
+				if [ -z "${getthis_location}" ];then
+					getthis_location="${temp_path}"
+				else
+					getthis_location="$(cd "${getthis_location}" && cd .. && pwd)"
+				fi
 			fi
-			touch "${installer_phases}/${getthis}"
 		}
 	elif command -v svn >/dev/null 2>&1;then
 		show_im "clone repo commnad: svn"
@@ -978,7 +996,7 @@ pick_clone_rep_commnad(){
 			getthis="${1-}"
 			if [ ! -f "${installer_phases}/${getthis}" ];then
 				show_im "clone distro files repo ( ${getthis} )."
-				getthis_location="$(find $HOME -type d -name ${getthis} | head -1)"
+				getthis_location="$(find $HOME ${temp_path} -type d -name ${getthis} | head -1)"
 				
 				if [ -z "${getthis_location}" ];then
 					getthis_location="${temp_path}"
@@ -991,8 +1009,16 @@ pick_clone_rep_commnad(){
 				else
 					show_im "${getthis} Folder does exsist"
 				fi
+				touch "${installer_phases}/${getthis}"
+			else
+				getthis_location="$(find $HOME ${temp_path} -type d -name ${getthis} | head -1)"
+				
+				if [ -z "${getthis_location}" ];then
+					getthis_location="${temp_path}"
+				else
+					getthis_location="$(cd "${getthis_location}" && cd .. && pwd)"
+				fi
 			fi
-			touch "${installer_phases}/${getthis}"
 		}
 	fi
 }
@@ -1000,17 +1026,19 @@ pick_clone_rep_commnad(){
 check_and_download_core_script(){
 	show_m "check if exsit and download core script."
 	
-	if [ "$arg_" = "drivers" ] || [ -z "$arg_" ];then
-		check_and_download_ "disto_Drivers_list"
+	if [ "$install_drivers" = "true" ];then
+		check_and_download_ "installer_repo/${distro_name_}/disto_Drivers_list"
 		check_and_download_ "disto_Drivers_installer"
+		check_and_download_ "installer_repo/${distro_name_}/disto_specific_Drivers_installer"
 	fi
 	
-	if [ "$arg_" = "apps" ] || [ -z "$arg_" ];then
-		check_and_download_ "disto_apps_list"
+	if [ "$install_apps" = "true" ];then
+		check_and_download_ "installer_repo/${distro_name_}/disto_apps_list"
 		check_and_download_ "disto_apps_installer"
+		check_and_download_ "installer_repo/${distro_name_}/disto_specific_apps_installer"
 	fi
 	
-	if [ -z "$arg_" ];then
+	if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
 		check_and_download_ "disto_configer"
 		
 		check_and_download_ "disto_post_install"
@@ -1022,9 +1050,19 @@ check_and_download_core_script(){
 		my_stuff_temp_path="${getthis_location}"
 		clone_rep_ "Theme_Stuff"
 		theme_temp_path="${getthis_location}"
+		clone_rep_ "Distro_Specific"
+		Distro_Specific_temp_path="${getthis_location}"
 		################################
 	fi
 }
+
+mv_Distro_Specific(){
+	[ -f "${installer_phases}/mv_Distro_Specific" ] && return
+	show_m "moving Distro Specific files."
+	"${Distro_Specific_temp_path}"/Distro_Specific/installer "${distro_name_}" "${PACKAGER}"
+	touch "${installer_phases}/mv_Distro_Specific"
+}
+
 ################################################################################################################################
 ################################################################################################################################
 ################################################################################################################################
@@ -1073,36 +1111,39 @@ _unattended_upgrades_ stop
 
 List_of_apt_2_install_=""
 
-if [ "$arg_" = "drivers" ] || [ "$arg_" = "apps" ];then
-	show_m "Sourcing $arg_ files."
-elif [ -z "$arg_" ];then
+if [ "$install_drivers" = "true" ] && [ "$install_apps" = "true" ];then
 	show_m "Sourcing drivers and apps files."
+elif [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
+	show_m "Sourcing $arg_ files."
 fi
 
-if [ "$arg_" = "drivers" ] || [ -z "$arg_" ];then
+if [ "$install_drivers" = "true" ];then
 	source_this_script "disto_Drivers_list" "Add drivers list from (disto_Drivers_list)"
 	source_this_script "disto_Drivers_installer" "Source Install drivers functions from (disto_Drivers_installer)"
+	source_this_script "disto_specific_Drivers_installer" "Source Install drivers functions from (disto_specific_Drivers_installer)"
 	pre_disto_Drivers_installer || show_em "failed to run pre_disto_Drivers_installer"
 fi
 
-if [ "$arg_" = "apps" ] || [ -z "$arg_" ];then
+if [ "$install_apps" = "true" ];then
 	source_this_script "disto_apps_list" "Add apps list from (disto_apps_list)"
 	source_this_script "disto_apps_installer" "Source Install apps functions from (disto_apps_installer)"
+	source_this_script "disto_specific_apps_installer" "Source Install apps functions from (disto_specific_apps_installer)"
 	pre_disto_apps_installer || show_em "failed to run pre_disto_apps_installer"
-	
 fi
 
-if [ "$arg_" = "drivers" ] || [ "$arg_" = "apps" ] || [ -z "$arg_" ];then
+if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
 	show_im "Install list of apps."
 	install_packages || show_em "failed to run install_packages"
 fi
 
-if [ "$arg_" = "drivers" ] || [ -z "$arg_" ];then
+if [ "$install_drivers" = "true" ];then
 	post_disto_Drivers_installer || show_em "failed to run post_disto_Drivers_installer"
+	disto_specific_Drivers_installer || show_em "failed to run disto_specific_Drivers_installer"
 fi
 
-if [ "$arg_" = "apps" ] || [ -z "$arg_" ];then
+if [ "$install_apps" = "true" ];then
 	post_disto_apps_installer || show_em "failed to run post_disto_apps_installer"
+	disto_specific_apps_installer || show_em "failed to run disto_specific_apps_installer"
 fi
 
 install_lightdm_now
@@ -1111,7 +1152,10 @@ switch_to_network_manager
 
 _unattended_upgrades_ start
 
-if [ -n "$arg_" ];then
+if [ "$install_drivers" = "false" ] && [ "$install_apps" = "true" ];then
+	show_m "Done"
+	exit
+elif [ "$install_drivers" = "true" ] && [ "$install_apps" = "false" ];then
 	show_m "Done"
 	exit
 fi
@@ -1123,6 +1167,7 @@ fi
 ##################################################################################
 show_m "Sourceing disto_configer."
 source_this_script "disto_configer" "Configering My Stuff."
+mv_Distro_Specific
 
 purge_some_unnecessary_pakages
 

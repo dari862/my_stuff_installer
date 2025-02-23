@@ -125,48 +125,6 @@ post_disto_Drivers_installer(){
 	[ -f "${installer_phases}/disto_Drivers" ] && return
 	. "${prompt_to_install_value_file}"
 	show_im "Configer Drivers."
-	if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
-		show_im "this is laptop"
-		if [ "$install_envycontrol" = true ];then
-			show_im "create envycontrol installtion file."
-			tee "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM <<- 'EOF' > /dev/null
-			#!/bin/sh
-				__distro_path="/usr/share/my_stuff/system_files"
-				PATH="${__distro_path}/bin:$PATH"
-				envycontrol_updater_path="$(mktemp -d)"
-				download_url="$(getURL '2term' 'https://api.github.com/repos/bayasdev/envycontrol/releases/latest' \
-  				| grep '"tarball_url"' \
-  				| cut -f2,3 -d':' \
-  				| tr -d '"' \
-  				| tr -d ',')"
-  				
-  				getURL 'download2' "${download_url}" "${envycontrol_updater_path}/envycontrol.tar.gz" && tar -xvzf "${envycontrol_updater_path}"/envycontrol.tar.gz -C "${envycontrol_updater_path}" && mv "${envycontrol_updater_path}"/bayasdev* "${envycontrol_updater_path}"/envycontrol
-  				
-  				[ -d "${__distro_path}/system_files/downloaded/envycontrol" ] && rm -rdf "${__distro_path}/system_files/downloaded/envycontrol"
-  				[ ! -d "${__distro_path}/system_files/downloaded" ] && mkdir -p ${__distro_path}/system_files/downloaded
-  				[ ! -d "${__distro_path}/system_files/git" ] && mkdir -p ${__distro_path}/system_files/git
-  				
-  				if [ -d "${envycontrol_updater_path}"/envycontrol ];then
-  					chmod +x "${envycontrol_updater_path}"/envycontrol/envycontrol.py 
-  					mv "${envycontrol_updater_path}"/envycontrol "${__distro_path}/system_files/git/"
-  					ln -sf "${__distro_path}/system_files/downloaded/envycontrol/envycontrol.py" "${__distro_path}/system_files/bin/envycontrol"
-  				fi
-  				
-  				if [ ! -f "${__distro_path}/system_files/skel/.config/autostartscripts/gpu-switcher-session}" ];then
-  					ln -sf "${__distro_path}"/bin/not_add_2_path/gpu_switcher/gpu-switcher-session "${__distro_path}/system_files/skel/.config/autostartscripts"
-  				fi
-  				
-  				if [ ! -f "${__distro_path}/system_files/bin/gui_GPU_Switcher" ];then
-  					ln -sf "${__distro_path}"/bin/not_add_2_path/gpu_switcher/gui_GPU_Switcher "${__distro_path}/system_files/bin"
-  				fi
-  				
-  				if [ ! -f "${__distro_path}/system_files/bin/tray_GPU_Switcher" ];then
-  					ln -sf "${__distro_path}"/bin/not_add_2_path/gpu_switcher/tray_GPU_Switcher "${__distro_path}/system_files/bin"
-  				fi
-			EOF
-			chmod +x "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM
-		fi
-	fi
 	show_im "run isenkram-autoinstall-firmware."
 	my-superuser isenkram-autoinstall-firmware || : # to prevent script from exiting "isenkram-autoinstall-firmware contain exit command"
 	

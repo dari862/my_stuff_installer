@@ -37,7 +37,7 @@ install_polybar="polybar libnm-dev"
 install_qt5ct="qt5ct qt5-style-kvantum libqt5svg5 qml-module-qtquick-controls"
 install_jgmenu="jgmenu"
 install_bspwm="bspwm sxhkd"
-install_zsh="zsh zsh-antigen zsh-autosuggestions zsh-syntax-highlighting"
+install_zsh="zsh"
 #######################
 ## better bash
 #######################

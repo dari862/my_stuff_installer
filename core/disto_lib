@@ -7,7 +7,7 @@ check_and_download_()
 {
 	check_this_file_="${1-}"
 	new_check_this_file_="${temp_path}/${check_this_file_}"
-	check_this_file_location="$(find $HOME -type f -name ${check_this_file_} | head -1)"
+	check_this_file_location="$(find $HOME ${temp_path} -type f -name ${check_this_file_} | head -1)"
 	
 	[ -f "${new_check_this_file_}" ] && return
 	
