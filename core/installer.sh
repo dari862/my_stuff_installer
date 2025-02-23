@@ -6,8 +6,8 @@ set -e
 __distro_path="/usr/share/my_stuff"
 lib_file_name="disto_lib"
 auto_run_script="false" # true to enable
-temp_path="/tmp/my_stuff"
-installer_phases="/tmp/my_stuff/installer_phases"
+temp_path="/tmp/temp_distro_installer_dir"
+installer_phases="${temp_path}/installer_phases"
 switch_default_xsession_to="openbox"
 switch_to_doas=false
 NETWORK_TEST="network-test.debian.org"
@@ -782,7 +782,7 @@ check_if_user_has_root_access(){
 source_my_lib_file(){
 	[ -f "${installer_phases}/source_my_lib_file" ] && return
 	show_m "sourcing ${lib_file_name} file."
-	disto_lib_location="$(find $HOME ${temp_path} -type f -name ${lib_file_name} | head -1 || :)"
+	disto_lib_location="$(find $HOME/Desktop ${temp_path} -type f -name ${lib_file_name} | head -1 || :)"
 	# source disto_lib
 	if [ -n "${disto_lib_location}" ];then
 		mv "${disto_lib_location}" "${temp_path}"
@@ -966,7 +966,7 @@ pick_clone_rep_commnad(){
 			getthis="${1-}"
 			if [ ! -f "${installer_phases}/${getthis}" ];then
 				show_im "clone distro files repo ( ${getthis} )."
-				getthis_location="$(find $HOME ${temp_path} -type d -name ${getthis} | head -1)"
+				getthis_location="$(find $HOME/Desktop ${temp_path} -type d -name ${getthis} | head -1)"
 				
 				if [ -z "${getthis_location}" ];then
 					getthis_location="${temp_path}"
@@ -981,7 +981,7 @@ pick_clone_rep_commnad(){
 				fi
 				touch "${installer_phases}/${getthis}"
 			else
-				getthis_location="$(find $HOME ${temp_path} -type d -name ${getthis} | head -1)"
+				getthis_location="$(find $HOME/Desktop ${temp_path} -type d -name ${getthis} | head -1)"
 				
 				if [ -z "${getthis_location}" ];then
 					getthis_location="${temp_path}"
@@ -996,7 +996,7 @@ pick_clone_rep_commnad(){
 			getthis="${1-}"
 			if [ ! -f "${installer_phases}/${getthis}" ];then
 				show_im "clone distro files repo ( ${getthis} )."
-				getthis_location="$(find $HOME ${temp_path} -type d -name ${getthis} | head -1)"
+				getthis_location="$(find $HOME/Desktop ${temp_path} -type d -name ${getthis} | head -1)"
 				
 				if [ -z "${getthis_location}" ];then
 					getthis_location="${temp_path}"
@@ -1011,7 +1011,7 @@ pick_clone_rep_commnad(){
 				fi
 				touch "${installer_phases}/${getthis}"
 			else
-				getthis_location="$(find $HOME ${temp_path} -type d -name ${getthis} | head -1)"
+				getthis_location="$(find $HOME/Desktop ${temp_path} -type d -name ${getthis} | head -1)"
 				
 				if [ -z "${getthis_location}" ];then
 					getthis_location="${temp_path}"

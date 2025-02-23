@@ -8,7 +8,7 @@ check_and_download_()
 	check_this_file_="${1-}"
 	base_name_of_file="$(basename "$check_this_file_")"
 	new_check_this_file_="${temp_path}/${base_name_of_file}"
-	check_this_file_location="$(find $HOME ${temp_path} -type f -name ${base_name_of_file} | head -1)"
+	check_this_file_location="$(find $HOME/Desktop ${temp_path} -type f -name ${base_name_of_file} | head -1)"
 	
 	[ -f "${new_check_this_file_}" ] && return
 	
