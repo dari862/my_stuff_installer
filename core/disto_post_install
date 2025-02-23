@@ -219,9 +219,9 @@ end_of_post_install(){
 		place=$(printf "%s" "$chosen" | cut -d':' -f3 | cut -f1 -d',' | sed 's/^ //')
 		place="${place:-$radarcode}" # Default place to radarcode if not set
 	
-		my-superuser sed -i "s/continentcode=.*/continentcode=\"$continentcode\"/" "${weather_script_config_path}" || show_em "end_of_post_install failed at continentcode"
-		my-superuser sed -i "s/radarcode=.*/radarcode=\"$radarcode\"/" "${weather_script_config_path}" || show_em "end_of_post_install failed at radarcode"
-		my-superuser sed -i "s/place=.*/place=\"$place\"/" "${weather_script_config_path}" || show_em "end_of_post_install failed at place"
+		my-superuser sed -i "s|continentcode=.*|continentcode=\"$continentcode\"|" "${weather_script_config_path}" || show_em "end_of_post_install failed at continentcode"
+		my-superuser sed -i "s|radarcode=.*|radarcode=\"$radarcode\"|" "${weather_script_config_path}" || show_em "end_of_post_install failed at radarcode"
+		my-superuser sed -i "s|place=.*|place=\"$place\"|" "${weather_script_config_path}" || show_em "end_of_post_install failed at place"
 	fi
 	
 	. "${__distro_path}/lib/common/DB"

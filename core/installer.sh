@@ -299,6 +299,12 @@ prompt_to_ask_to_what_to_install(){
 				run_disable_some_unnecessary_services=""
 			fi
 			
+			if do_you_want_2_run_this_yes_or_no 'update grub image?';then
+				run_update_grub_image="Y"
+			else
+				run_update_grub_image=""
+			fi
+			
 			if do_you_want_2_run_this_yes_or_no 'disable ipv6 stack?';then
 				disable_ipv6_stack="Y"
 			else
@@ -306,11 +312,6 @@ prompt_to_ask_to_what_to_install(){
 					disable_ipv6="Y"
 				else
 					disable_ipv6=""
-				fi
-				if do_you_want_2_run_this_yes_or_no 'update grub image?';then
-					run_update_grub_image="Y"
-				else
-					run_update_grub_image=""
 				fi
 				disable_ipv6_stack=""
 			fi
