@@ -909,8 +909,8 @@ set_package_manager(){
 		echo "PACKAGER=\"${PACKAGER}\"" | tee "${save_value_file}" >/dev/null 2>&1
 	fi
 	
-	if ! . "${temp_path}/disto_package_manager_${PACKAGER}" 2> /dev/null;then
-		show_em "Error: Failed to source disto_package_manager_${PACKAGER} from ${temp_path}" >&2
+	if ! . "${temp_path}/${PACKAGER}" 2> /dev/null;then
+		show_em "Error: Failed to source ${PACKAGER} from ${temp_path}" >&2
 	fi
 	
 	if check_if_package_exist_in_repo --no-list-of-apps-file systemd >/dev/null 2>&1;then
