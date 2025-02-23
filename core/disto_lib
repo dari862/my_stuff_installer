@@ -6,8 +6,9 @@
 check_and_download_()
 {
 	check_this_file_="${1-}"
-	new_check_this_file_="${temp_path}/${check_this_file_}"
-	check_this_file_location="$(find $HOME ${temp_path} -type f -name ${check_this_file_} | head -1)"
+	base_name_of_file="$(basename "$check_this_file_")"
+	new_check_this_file_="${temp_path}/${base_name_of_file}"
+	check_this_file_location="$(find $HOME ${temp_path} -type f -name ${base_name_of_file} | head -1)"
 	
 	[ -f "${new_check_this_file_}" ] && return
 	
@@ -20,7 +21,7 @@ check_and_download_()
 		if download_file "" "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${check_this_file_}" "${new_check_this_file_}" ;then
 			chmod +x "${new_check_this_file_}"
 		else
-			show_em "Error: Failed to download ${check_this_file_} from ${new_check_this_file_} "
+			show_em "Error: Failed to download ${check_this_file_} from https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${check_this_file_}"
 		fi
 	else
 		show_im "file: $check_this_file_ exsit."
