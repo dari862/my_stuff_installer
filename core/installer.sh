@@ -80,7 +80,6 @@ var_for_distro_uninstaller="${__distro_path}/system_files/var_for_distro_uninsta
 list_of_apps_file_path="${temp_path}/list_of_apps"
 
 # distro
-this_is_ubuntu=false
 if [ -f /etc/os-release ];then
 	# freedesktop.org and systemd
 	. /etc/os-release
@@ -97,7 +96,6 @@ else
 	distro_name_="$(uname -s)"
 	distro_name_and_ver_=$(uname -s)$(uname -r)
 fi
-[ "$distro_name_" = "ubuntu" ] && this_is_ubuntu=true
 
 mirror="http://deb.debian.org/debian/"
 mirror_security="http://security.debian.org/debian-security"

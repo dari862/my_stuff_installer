@@ -86,7 +86,7 @@ enable_repo_(){
 		enable_nvidia_gpu_repo
 	fi
 
-	if [ "$this_is_ubuntu" = true ];then
+	if [ "$distro_name_" = "ubuntu" ];then
 		$_SUPERUSER apt-get install -y software-properties-common
 		$_SUPERUSER add-apt-repository -y universe
 		$_SUPERUSER add-apt-repository -y multiverse
