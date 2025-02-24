@@ -9,8 +9,8 @@ PACKAGER="pacman"
 install_AUR_helper(){
     if ! command -v yay >/dev/null && ! command -v paru >/dev/null; then
         echo "Installing yay as AUR helper..."
-        sudo ${PACKAGER} --noconfirm -S base-devel git
-        cd /opt && sudo git clone https://aur.archlinux.org/yay-git.git && sudo chown -R ${USER}:${USER} ./yay-git
+        $_SUPERUSER ${PACKAGER} --noconfirm -S base-devel git
+        cd /opt && $_SUPERUSER git clone https://aur.archlinux.org/yay-git.git && $_SUPERUSER chown -R ${USER}:${USER} ./yay-git
         cd yay-git && makepkg --noconfirm -si
     fi
     
@@ -21,8 +21,8 @@ install_AUR_helper(){
     fi
     
     ${PACKAGER} --noconfirm -S rate-mirrors-bin
-    sudo cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
-    sudo rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch
+    $_SUPERUSER cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
+    $_SUPERUSER rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch
 }
 
 install_lightdm_now(){
@@ -41,8 +41,8 @@ install_lightdm_now(){
     if [ "$lightdm_does_not_exist" = true ]; then
         echo "Installing ${install_lightdm_}..."
         ${PACKAGER} --noconfirm -S ${install_lightdm_}
-        echo "/usr/sbin/lightdm" | sudo tee /etc/X11/default-display-manager > /dev/null 2>&1
-        sudo systemctl enable lightdm
+        echo "/usr/sbin/lightdm" | $_SUPERUSER tee /etc/X11/default-display-manager > /dev/null 2>&1
+        $_SUPERUSER systemctl enable lightdm
     else
         echo "LightDM already exists."
     fi
