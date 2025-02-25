@@ -903,11 +903,9 @@ install_superuser_tools()
 
 set_package_manager(){
 	show_m "running set_package_manager function"
-	if [ -z "${PACKAGER}" ];then
-	show_im "Using ${pgm}"	
+	show_im "Using ${PACKAGER}"	
 	check_and_download_ "${PACKAGER}" "installer_repo"
 	echo "PACKAGER=\"${PACKAGER}\"" >> "${save_value_file}"
-	fi
 	
 	if ! . "${temp_path}/${PACKAGER}" 2> /dev/null;then
 		show_em "Error: Failed to source ${PACKAGER} from ${temp_path}" >&2
