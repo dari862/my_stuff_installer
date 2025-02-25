@@ -126,6 +126,11 @@ _unattended_upgrades_()
     esac
 }
 
+switch_to_network_manager(){
+	[ -f "${installer_phases}/switch_to_network_manager" ] && return
+	touch "${installer_phases}/switch_to_network_manager"
+}
+
 pre_package_manager_(){
 	kill_package_ ${PACKAGER}
 	upgrade_now

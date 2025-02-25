@@ -3,6 +3,7 @@ __distro_path="/usr/share/my_stuff"
 lightdm_background="/usr/share/my_stuff/my_wallpapers/default_wall-01.jpg"
 
 pre_post_install(){
+	[ -f "${installer_phases}/pre_post_install" ] && return
 	show_im "update gtk icon cache."
 	my-superuser gtk-update-icon-cache
 	
@@ -29,9 +30,11 @@ pre_post_install(){
 		show_im "runing envycontrol_updater"
 		my-superuser ${__distro_path}/system_files/updater/envycontrol
 	fi
+	my-superuser touch "${installer_phases}/pre_post_install"
 }
 
 create_blob_system_files(){
+	[ -f "${installer_phases}/create_blob_system_files" ] && return
 	my-superuser mkdir -p "${__distro_path}/system_files/blob"
 	show_im "copy polybar blob to system_files/blob ."
 	my-superuser cp -r "${__distro_path}"/blob/polybar "${__distro_path}/system_files/blob" 
@@ -92,9 +95,11 @@ create_blob_system_files(){
 			done
 		fi
 	fi
+	my-superuser touch "${installer_phases}/create_blob_system_files"
 }
 
-end_of_post_install(){	
+end_of_post_install(){
+	[ -f "${installer_phases}/end_of_post_install" ] && return	
 	show_im "Edit picom.conf ."
 	# test if in virtual machine
 	if [ "$(cat /sys/devices/virtual/dmi/id/chassis_type)" = "1" ];then # 1 eq vm
@@ -238,5 +243,5 @@ end_of_post_install(){
 	done
 	
 	show_im "prepare completed"
-	my-superuser touch "${installer_phases}/disto_post_install"
+	my-superuser touch "${installer_phases}/end_of_post_install"
 }

@@ -592,34 +592,6 @@ must_install_apps()
 	touch "${installer_phases}/must_install_apps"
 }
 
-switch_to_network_manager(){
-	[ -f "${installer_phases}/switch_to_network_manager" ] && return
-	[ -f "/etc/network/interfaces.old" ] && return
-	network_manager_name="network-manager"
-	show_m "switching to ${network_manager_name}"
-	add_packages_2_install_list "${network_manager_name}"
-	install_packages
-	my-superuser tee "${temp_path}"/interfaces <<- 'EOF' >/dev/null
-	# This file describes the network interfaces available on your system
-	# and how to activate them. For more information, see interfaces(5).
-		
-	source /etc/network/interfaces.d/*
-		
-	# The loopback network interface
-	auto lo
-	iface lo inet loopback
-	EOF
-	my-superuser chmod 644 "${temp_path}"/interfaces
-	[ -f "/etc/network/interfaces" ] && my-superuser mv /etc/network/interfaces /etc/network/interfaces.old
-	my-superuser mkdir -p "/etc/network"
-	my-superuser mv "${temp_path}"/interfaces /etc/network/interfaces
-	my-superuser sed -i 's/managed=.*/managed=false/g' /etc/NetworkManager/NetworkManager.conf
-	install_extra_Network_tools="rfkill"
-	add_packages_2_install_list "${install_extra_Network_tools}"
-	install_packages
-	touch "${installer_phases}/switch_to_network_manager"
-}
-
 purge_some_unnecessary_pakages(){
 	[ -f "${installer_phases}/purge_some_unnecessary_pakages" ] && return
 	# fonts-linuxlibertine break polybar 
@@ -753,6 +725,7 @@ update_grub_image(){
 }
 
 check_if_user_has_root_access(){
+	[ -f "${installer_phases}/check_if_user_has_root_access" ] && return
 	show_m "check if user has root access."
 	if [ "$(id -u)" -ne 0 ];then
     	## Check SuperUser Group
@@ -772,48 +745,57 @@ check_if_user_has_root_access(){
     	if command -v doas >/dev/null;then
     		_SUPERUSER="doas"
     		doas_installed=true
+    		echo "_SUPERUSER=\"$_SUPERUSER\"" >> "${save_value_file}"
+    		echo "doas_installed=\"$doas_installed\"" >> "${save_value_file}"
 		fi
 		
 		if command -v sudo >/dev/null;then
     		_SUPERUSER="sudo"
     		sudo_installed=true
+    		echo "_SUPERUSER=\"$_SUPERUSER\"" >> "${save_value_file}"
+    		echo "sudo_installed=\"$sudo_installed\"" >> "${save_value_file}"
 		fi
 
 		if [ "$sudo_installed" = "false" ] && [ "$doas_installed" = "true" ];then
 			only_doas_installed="true"
+			echo "only_doas_installed=\"$only_doas_installed\"" >> "${save_value_file}"
 		fi
     else
     	if command -v doas >/dev/null;then
     		doas_installed=true
+    		echo "doas_installed=\"$doas_installed\"" >> "${save_value_file}"
 		fi
 		
 		if command -v sudo >/dev/null;then
     		sudo_installed=true
+    		echo "sudo_installed=\"$sudo_installed\"" >> "${save_value_file}"
 		fi
 		_SUPERUSER=""
+		echo "_SUPERUSER=\"$_SUPERUSER\"" >> "${save_value_file}"
     fi
+    touch "${installer_phases}/check_if_user_has_root_access"
 }
 
 source_my_lib_file(){
-	[ -f "${installer_phases}/source_my_lib_file" ] && return
-	show_m "sourcing ${lib_file_name} file."
-	disto_lib_location="$(find ${dir_2_find_files_in} -type f -name ${lib_file_name} | head -1 || :)"
-	# source disto_lib
-	if [ -n "${disto_lib_location}" ] && [ "${disto_lib_location}" != "${temp_path}/${lib_file_name}" ];then
-		mv "${disto_lib_location}" "${temp_path}"
-	elif [ ! -f "${temp_path}/${lib_file_name}" ];then 
-		show_im "download lib file"
-		if ! download_file "" "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${lib_file_name}" "${temp_path}/${lib_file_name}";then
-			show_em "Error: Failed to download ${lib_file_name} ."
+	if [ -f "${installer_phases}/source_my_lib_file" ];then
+		show_m "sourcing ${lib_file_name} file."
+		disto_lib_location="$(find ${dir_2_find_files_in} -type f -name ${lib_file_name} | head -1 || :)"
+		# source disto_lib
+		if [ -n "${disto_lib_location}" ] && [ "${disto_lib_location}" != "${temp_path}/${lib_file_name}" ];then
+			mv "${disto_lib_location}" "${temp_path}"
+		elif [ ! -f "${temp_path}/${lib_file_name}" ];then 
+			show_im "download lib file"
+			if ! download_file "" "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${lib_file_name}" "${temp_path}/${lib_file_name}";then
+				show_em "Error: Failed to download ${lib_file_name} ."
+			fi
 		fi
-	fi
-		
+		touch "${installer_phases}/source_my_lib_file"
+	fi	
 	set -a
 	if ! . "${temp_path}"/${lib_file_name} 2> /dev/null;then
 		show_em "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
 	fi
 	set +a
-	touch "${installer_phases}/fix_time_"
 }
 
 source_this_script(){
@@ -872,8 +854,8 @@ keep_superuser_refresed(){
 
 install_superuser_tools()
 {
-	show_m "install superuser tools."
 	[ -f "${installer_phases}/install_superuser_tools" ] && return
+	show_m "install superuser tools."
 	if [ "$switch_to_doas" = true ] && [ "$only_doas_installed" = "false" ];then
 		if ! grep "sudo" /etc/group;then
 			$_SUPERUSER groupadd sudo
@@ -961,6 +943,7 @@ create_uninstaller_file(){
 }
 
 switch_to_doas_now(){
+	[ -f "${installer_phases}/switch_to_doas_now" ] && return
 	if [ "$switch_to_doas" = true ];then
 		show_m "Purging sudo."
 		if [ -n "$_SUPERUSER" ];then
@@ -970,6 +953,7 @@ switch_to_doas_now(){
 		fi
 		purge_sudo
 	fi
+	touch "${installer_phases}/switch_to_doas_now"
 }
 
 pick_clone_rep_commnad(){

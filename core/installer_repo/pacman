@@ -57,7 +57,9 @@ create_package_list(){
 }
 
 install_packages(){
-    ${PACKAGER} --noconfirm -Syu ${List_of_apt_2_install_}
+	if [ -z "${List_of_apt_2_install_}" ];then
+    	${PACKAGER} --noconfirm -Syu ${List_of_apt_2_install_}
+    fi
 }
 
 check_if_package_exist_in_repo(){
@@ -117,6 +119,11 @@ run_package_manager_autoclean(){
 _unattended_upgrades_()
 {
 	:
+}
+
+switch_to_network_manager(){
+	[ -f "${installer_phases}/switch_to_network_manager" ] && return
+	touch "${installer_phases}/switch_to_network_manager"
 }
 
 pre_package_manager_(){

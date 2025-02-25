@@ -241,6 +241,34 @@ _unattended_upgrades_()
 	fi
 }
 
+switch_to_network_manager(){
+	[ -f "${installer_phases}/switch_to_network_manager" ] && return
+	[ -f "/etc/network/interfaces.old" ] && return
+	network_manager_name="network-manager"
+	show_m "switching to ${network_manager_name}"
+	add_packages_2_install_list "${network_manager_name}"
+	install_packages
+	my-superuser tee "${temp_path}"/interfaces <<- 'EOF' >/dev/null
+	# This file describes the network interfaces available on your system
+	# and how to activate them. For more information, see interfaces(5).
+		
+	source /etc/network/interfaces.d/*
+		
+	# The loopback network interface
+	auto lo
+	iface lo inet loopback
+	EOF
+	my-superuser chmod 644 "${temp_path}"/interfaces
+	[ -f "/etc/network/interfaces" ] && my-superuser mv /etc/network/interfaces /etc/network/interfaces.old
+	my-superuser mkdir -p "/etc/network"
+	my-superuser mv "${temp_path}"/interfaces /etc/network/interfaces
+	my-superuser sed -i 's/managed=.*/managed=false/g' /etc/NetworkManager/NetworkManager.conf
+	install_extra_Network_tools="rfkill"
+	add_packages_2_install_list "${install_extra_Network_tools}"
+	install_packages
+	touch "${installer_phases}/switch_to_network_manager"
+}
+
 pre_package_manager_(){
 	kill_package_ apt-get
 	kill_package_ apt

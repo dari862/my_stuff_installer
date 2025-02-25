@@ -1,6 +1,6 @@
 #!/bin/sh
 pre_disto_apps_installer(){
-	[ -f "${installer_phases}/disto_Installapps_list" ] && return
+	[ -f "${installer_phases}/pre_disto_apps_installer" ] && return
 	. "${prompt_to_install_value_file}"
 	show_im "Adding needed packages to install list."
 	##################################################################################
@@ -66,10 +66,11 @@ pre_disto_apps_installer(){
 	if [ "$install_extra_now" = "extra" ];then
 		add_packages_2_install_list "${install_extra_apps}"
 	fi
+	touch "${installer_phases}/pre_disto_apps_installer"
 }
 
 post_disto_apps_installer(){
-	[ -f "${installer_phases}/disto_Installapps_list" ] && return
+	[ -f "${installer_phases}/post_disto_apps_installer" ] && return
 	. "${prompt_to_install_value_file}"
 	show_im "Configer packages."
 	
@@ -145,5 +146,5 @@ post_disto_apps_installer(){
     	my-superuser ufw enable
     	show_im "Enabled Firewall with Baselines!"
 	fi
-	touch "${installer_phases}/disto_Installapps_list"
+	touch "${installer_phases}/post_disto_apps_installer"
 }

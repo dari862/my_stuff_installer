@@ -1,6 +1,6 @@
 #!/bin/sh
 pre_disto_Drivers_installer(){
-	[ -f "${installer_phases}/disto_Drivers" ] && return
+	[ -f "${installer_phases}/pre_disto_Drivers_installer" ] && return
 	. "${prompt_to_install_value_file}"
 	show_im "Adding needed Drivers to install list."
 	install_envycontrol=false
@@ -21,7 +21,7 @@ pre_disto_Drivers_installer(){
 	##################################################################################
 	# var
 	##################################################################################
-	if lsusb | grep -i fingerprint >/dev/null || lspci | grep -i fingerprint >/dev/null || ls /sys/bus/usb/devices/* | grep -i fingerprint >/dev/null;then
+	if lsusb 2>/dev/null | grep -i fingerprint >/dev/null || lspci | grep -i fingerprint >/dev/null || ls /sys/bus/usb/devices/* | grep -i fingerprint >/dev/null;then
     	fingerprint_exist=true
 	else
 		fingerprint_exist=false
@@ -112,22 +112,24 @@ pre_disto_Drivers_installer(){
 		add_packages_2_install_list "${install_wireless}"
 	fi
 	
-	if my-superuser dmesg | grep -i bluetooth 1>/dev/null || my-superuser lsusb | grep -i bluetooth 1>/dev/null;then
+	if my-superuser dmesg | grep -i bluetooth 1>/dev/null || my-superuser lsusb 2>/dev/null | grep -i bluetooth 1>/dev/null || [ -d /sys/class/bluetooth ];then
 		add_packages_2_install_list "${install_bluetooth}"
 	fi
 	
 	add_packages_2_install_list "${install_audio}"
 	add_packages_2_install_list "${install_Network}"
 	add_packages_2_install_list "${install_autoinstall_firmware}"
+	touch "${installer_phases}/pre_disto_Drivers_installer"
 }
 
 post_disto_Drivers_installer(){
-	[ -f "${installer_phases}/disto_Drivers" ] && return
+	[ -f "${installer_phases}/post_disto_Drivers_installer" ] && return
 	. "${prompt_to_install_value_file}"
 	show_im "Configer Drivers."
-	show_im "run isenkram-autoinstall-firmware."
-	my-superuser isenkram-autoinstall-firmware || : # to prevent script from exiting "isenkram-autoinstall-firmware contain exit command"
-	
+	if [ -f "/usr/sbin/isenkram-autoinstall-firmware" ];then
+		show_im "run isenkram-autoinstall-firmware."
+		my-superuser isenkram-autoinstall-firmware || : # to prevent script from exiting "isenkram-autoinstall-firmware contain exit command"
+	fi
 	show_im "Configer packages."
 	
 	#create_20_intel_conf_file
@@ -150,5 +152,5 @@ post_disto_Drivers_installer(){
 		my-superuser pam-auth-update --enable fprintd
 	fi
 	
-	touch "${installer_phases}/disto_Drivers"
+	touch "${installer_phases}/post_disto_Drivers_installer"
 }
