@@ -5,25 +5,31 @@
 
 check_and_download_()
 {
-	check_this_file_="${1-}"
-	base_name_of_file="$(basename "$(dirname "$check_this_file_")")"
-	new_check_this_file_="${temp_path}/${base_name_of_file}"
+	check_this_file_="${1:-}"
+	file_dir="${2:-}"
+	new_check_this_file_="${temp_path}/${check_this_file_}"
 	if [ -d "$HOME/Desktop" ];then
 		dir_2_find_files_in="$HOME/Desktop ${temp_path}"
 	else
 		dir_2_find_files_in="${temp_path}"
 	fi
-	check_this_file_location="$(find ${dir_2_find_files_in} -type f -name ${base_name_of_file})"
-	
+	if [ -z "${file_dir}" ];then
+		url_to_download="${check_this_file_}"
+		check_this_file_location="$(find ${dir_2_find_files_in} -type f -name ${check_this_file_})"
+	else
+		url_to_download="${file_dir}/${check_this_file_}"
+		check_this_file_location="$(find ${dir_2_find_files_in} -type f -name ${check_this_file_} | grep "${file_dir}" )"
+	fi
+		
 	[ -f "${new_check_this_file_}" ] && return
 	
-	if [ -n "${check_this_file_location}" ] && [ "${check_this_file_location}" != "${temp_path}/${base_name_of_file}" ];then
+	if [ -n "${check_this_file_location}" ] && [ "${check_this_file_location}" != "${temp_path}/${check_this_file_}" ];then
 		mv "${check_this_file_location}" "${temp_path}"
 	fi
 	
 	if [ ! -f "${new_check_this_file_}" ];then
 		show_im "Download $check_this_file_ file from www.github.com/dari862/my_stuff_installer ."
-		if download_file "" "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${check_this_file_}" "${new_check_this_file_}" ;then
+		if download_file "" "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${url_to_download}" "${new_check_this_file_}" ;then
 			chmod +x "${new_check_this_file_}"
 		else
 			show_em "Error: Failed to download ${check_this_file_} from https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${check_this_file_}"

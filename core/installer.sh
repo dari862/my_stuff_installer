@@ -914,7 +914,7 @@ set_package_manager(){
 			show_em "Error: Can't find a supported package manager"
 		fi
 		
-		check_and_download_ "installer_repo/${PACKAGER}"
+		check_and_download_ "${PACKAGER}" "installer_repo"
 		echo "PACKAGER=\"${PACKAGER}\"" >> "${save_value_file}"
 	fi
 	
@@ -1036,15 +1036,15 @@ check_and_download_core_script(){
 	show_m "check if exsit and download core script."
 	
 	if [ "$install_drivers" = "true" ];then
-		check_and_download_ "installer_repo/${distro_name_}/disto_Drivers_list"
+		check_and_download_ "disto_Drivers_list" "installer_repo/${distro_name_}" 
 		check_and_download_ "disto_Drivers_installer"
-		check_and_download_ "installer_repo/${distro_name_}/disto_specific_Drivers_installer"
+		check_and_download_ "disto_specific_Drivers_installer" "installer_repo/${distro_name_}"
 	fi
 	
 	if [ "$install_apps" = "true" ];then
-		check_and_download_ "installer_repo/${distro_name_}/disto_apps_list"
+		check_and_download_ "disto_apps_list" "installer_repo/${distro_name_}"
 		check_and_download_ "disto_apps_installer"
-		check_and_download_ "installer_repo/${distro_name_}/disto_specific_apps_installer"
+		check_and_download_ "disto_specific_apps_installer" "installer_repo/${distro_name_}"
 	fi
 	
 	if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
