@@ -3,8 +3,6 @@ pre_disto_apps_installer(){
 	[ -f "${installer_phases}/disto_Installapps_list" ] && return
 	. "${prompt_to_install_value_file}"
 	show_im "Adding needed packages to install list."
-	check_if_package_exist_in_repo firefox && install_firefox_="firefox" || :
-	check_if_package_exist_in_repo firefox-esr && install_firefox_="firefox-esr" || :
 	##################################################################################
 	# main
 	##################################################################################

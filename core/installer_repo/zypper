@@ -99,7 +99,7 @@ remove_package_with_error2info()
 }
 
 remove_unnecessary_package_manager_stuff(){
-	$_SUPERUSER ${PACKAGER} clean --all
+	:
 }
 
 run_package_manager_autoclean(){

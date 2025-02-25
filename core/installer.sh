@@ -610,7 +610,8 @@ switch_to_network_manager(){
 	iface lo inet loopback
 	EOF
 	my-superuser chmod 644 "${temp_path}"/interfaces
-	my-superuser mv /etc/network/interfaces /etc/network/interfaces.old
+	[ -f "/etc/network/interfaces" ] && my-superuser mv /etc/network/interfaces /etc/network/interfaces.old
+	my-superuser mkdir -p "/etc/network"
 	my-superuser mv "${temp_path}"/interfaces /etc/network/interfaces
 	my-superuser sed -i 's/managed=.*/managed=false/g' /etc/NetworkManager/NetworkManager.conf
 	install_extra_Network_tools="rfkill"
@@ -903,33 +904,47 @@ install_superuser_tools()
 
 set_package_manager(){
 	show_m "running set_package_manager function"
-	show_im "Using ${PACKAGER}"	
-	check_and_download_ "${PACKAGER}" "installer_repo"
-	echo "PACKAGER=\"${PACKAGER}\"" >> "${save_value_file}"
-	
-	if ! . "${temp_path}/${PACKAGER}" 2> /dev/null;then
-		show_em "Error: Failed to source ${PACKAGER} from ${temp_path}" >&2
-	fi
-	
-	if check_if_package_exist_in_repo --no-list-of-apps-file systemd >/dev/null 2>&1;then
-		init_system_are="systemd"
+	show_im "Using ${PACKAGER}"
+	if [ ! -f "${installer_phases}/set_package_manager" ];then
+		check_and_download_ "${PACKAGER}" "installer_repo"
+		echo "PACKAGER=\"${PACKAGER}\"" >> "${save_value_file}"
+		
+		if ! . "${temp_path}/${PACKAGER}" 2> /dev/null;then
+			show_em "Error: Failed to source ${PACKAGER} from ${temp_path}" >&2
+		fi
+		
+		if check_if_package_exist_in_repo --no-list-of-apps-file systemd >/dev/null 2>&1;then
+			init_system_are="systemd"
+		else
+			show_em "Error: variable init_system_are are empty"
+		fi
+		
+		check_and_download_ "disto_init_manager"
+		if ! . "${temp_path}/disto_init_manager" 2> /dev/null;then
+			show_em "Error: Failed to source disto_init_manager from ${temp_path}" >&2
+		fi
+		
+		show_im "running pre_package_manager_"
+		pre_package_manager_
+		touch "${installer_phases}/set_package_manager"
 	else
-		show_em "Error: variable init_system_are are empty"
+		if ! . "${temp_path}/${PACKAGER}" 2> /dev/null;then
+			show_em "Error: Failed to source ${PACKAGER} from ${temp_path}" >&2
+		fi
+		if ! . "${temp_path}/disto_init_manager" 2> /dev/null;then
+			show_em "Error: Failed to source disto_init_manager from ${temp_path}" >&2
+		fi
 	fi
-	
-	check_and_download_ "disto_init_manager"
-	if ! . "${temp_path}/disto_init_manager" 2> /dev/null;then
-		show_em "Error: Failed to source disto_init_manager from ${temp_path}" >&2
-	fi
-	
-	show_im "running pre_package_manager_"
-	pre_package_manager_
 }
 
 switch_default_xsession(){
 	[ -f "${installer_phases}/switch_default_xsession" ] && return
 	show_m "switching default xsession to my stuff $switch_default_xsession_to."
-	my-superuser update-alternatives --install /usr/bin/x-session-manager x-session-manager ${__distro_path}/system_files/bin/xsessions/${switch_default_xsession_to} 60
+	if command -v update-alternatives >/dev/null 2>&1;then
+		my-superuser update-alternatives --install /usr/bin/x-session-manager x-session-manager ${__distro_path}/system_files/bin/xsessions/${switch_default_xsession_to} 60
+	else
+		my-superuser ln -sf ${__distro_path}/system_files/bin/xsessions/${switch_default_xsession_to} /usr/bin/x-session-manager
+	fi
 	touch "${installer_phases}/switch_default_xsession"
 }
 
