@@ -915,6 +915,7 @@ set_package_manager(){
 		
 		if check_if_package_exist_in_repo --no-list-of-apps-file systemd >/dev/null 2>&1;then
 			init_system_are="systemd"
+			echo "init_system_are=\"${init_system_are}\"" >> "${save_value_file}"
 		else
 			show_em "Error: variable init_system_are are empty"
 		fi
