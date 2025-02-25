@@ -5,6 +5,7 @@
 
 check_and_download_()
 {
+	show_im "running check_and_download_ function"
 	check_this_file_="${1:-}"
 	file_dir="${2:-}"
 	new_check_this_file_="${temp_path}/${check_this_file_}"

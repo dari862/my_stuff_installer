@@ -86,17 +86,19 @@ if [ -f /etc/os-release ];then
 	version_="$(echo "${VERSION_ID}" | sed 's/.//g')"
 	distro_name_="$ID"
 	distro_name_and_ver_=$ID$version_
-elif [ -f /etc/lsb-release ];then
-	# For some versions of Debian/Ubuntu without lsb_release command
-	. /etc/lsb-release
-	distro_name_="$DISTRIB_ID"
-	distro_name_and_ver_=$DISTRIB_ID$DISTRIB_RELEASE
-else
-	# Fall back to uname, e.g. "Linux <version>", also works for BSD, etc.
-	distro_name_="$(uname -s)"
-	distro_name_and_ver_=$(uname -s)$(uname -r)
 fi
 
+PACKAGEMANAGER='apt-get dnf pacman zypper'
+for pgm in ${PACKAGEMANAGER}; do
+	if command -v ${pgm} >/dev/null;then
+		PACKAGER=${pgm}
+		break
+	fi
+done		
+if [ -z "${PACKAGER}" ];then
+	echo "Error: Can't find a supported package manager"
+fi
+		
 mirror="http://deb.debian.org/debian/"
 mirror_security="http://security.debian.org/debian-security"
 only_doas_installed=false
@@ -219,12 +221,13 @@ prompt_to_ask_to_what_to_install(){
 		return
 	fi
 	
-	mirror="http://deb.debian.org/debian/"
-	mirror_security="http://security.debian.org/debian-security"
-	deb_lines_nonfree_firmware=$(grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non-free-firmware' || :)
-	deb_lines_contrib=$(grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v contrib || :)
-	deb_lines_nonfree=$(grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v "non-free[[:blank:]]" || :)
-	
+	if [ "$distro_name_" = "debian" ];then
+		mirror="http://deb.debian.org/debian/"
+		mirror_security="http://security.debian.org/debian-security"
+		deb_lines_nonfree_firmware=$(grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non-free-firmware' || :)
+		deb_lines_contrib=$(grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v contrib || :)
+		deb_lines_nonfree=$(grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v "non-free[[:blank:]]" || :)
+	fi
 	show_m "prompt for what do you want to install."
 	
 	if [ "$auto_run_script" != "true" ];then
@@ -239,25 +242,27 @@ prompt_to_ask_to_what_to_install(){
 		fi
 		
 		if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
-			if [ -n "$deb_lines_contrib" ];then
-				if do_you_want_2_run_this_yes_or_no 'Do you want enable contrib repo?';then
-					enable_contrib=true
-				else
-					enable_contrib=false
+			if [ "$distro_name_" = "debian" ];then
+				if [ -n "$deb_lines_contrib" ];then
+					if do_you_want_2_run_this_yes_or_no 'Do you want enable contrib repo?';then
+						enable_contrib=true
+					else
+						enable_contrib=false
+					fi
 				fi
-			fi
-			if [ -n "$deb_lines_nonfree_firmware" ];then
-				if do_you_want_2_run_this_yes_or_no 'Do you want enable nonfree_firmware repo?';then
-					enable_nonfree_firmware=true
-				else
-					enable_nonfree_firmware=false
+				if [ -n "$deb_lines_nonfree_firmware" ];then
+					if do_you_want_2_run_this_yes_or_no 'Do you want enable nonfree_firmware repo?';then
+						enable_nonfree_firmware=true
+					else
+						enable_nonfree_firmware=false
+					fi
 				fi
-			fi
-			if [ -n "$deb_lines_nonfree" ];then
-				if do_you_want_2_run_this_yes_or_no 'Do you want enable nonfree repo?';then
-					enable_nonfree=true
-				else
-					enable_nonfree=false
+				if [ -n "$deb_lines_nonfree" ];then
+					if do_you_want_2_run_this_yes_or_no 'Do you want enable nonfree repo?';then
+						enable_nonfree=true
+					else
+						enable_nonfree=false
+					fi
 				fi
 			fi
 		fi
@@ -899,23 +904,9 @@ install_superuser_tools()
 set_package_manager(){
 	show_m "running set_package_manager function"
 	if [ -z "${PACKAGER}" ];then
-		show_m "checking which type of package manager is being used."
-		## Check Package Handeler
-		PACKAGEMANAGER='apt-get dnf pacman zypper'
-		for pgm in ${PACKAGEMANAGER}; do
-			if command -v ${pgm} >/dev/null;then
-				PACKAGER=${pgm}
-				show_im "Using ${pgm}"
-				break
-			fi
-		done
-		
-		if [ -z "${PACKAGER}" ];then
-			show_em "Error: Can't find a supported package manager"
-		fi
-		
-		check_and_download_ "${PACKAGER}" "installer_repo"
-		echo "PACKAGER=\"${PACKAGER}\"" >> "${save_value_file}"
+	show_im "Using ${pgm}"	
+	check_and_download_ "${PACKAGER}" "installer_repo"
+	echo "PACKAGER=\"${PACKAGER}\"" >> "${save_value_file}"
 	fi
 	
 	if ! . "${temp_path}/${PACKAGER}" 2> /dev/null;then
