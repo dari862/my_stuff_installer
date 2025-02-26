@@ -101,7 +101,7 @@ post_disto_apps_installer(){
 	
 	if ls ${temp_path}/this_is_laptop* 2>/dev/null;then
 		show_im "some config"
-		if my-superuser dmesg | grep -i bluetooth 1>/dev/null || my-superuser lsusb | grep -i bluetooth 1>/dev/null ;then
+		if my-superuser dmesg | grep -qi bluetooth || my-superuser lsusb 2>/dev/null | grep -qi bluetooth || [ -d "/sys/class/bluetooth" ];then
 			[ -f "/etc/tlp.conf" ] && my-superuser sed -i "s/#DEVICES_TO_DISABLE_ON_STARTUP=.*/DEVICES_TO_DISABLE_ON_STARTUP=\"bluetooth\"/g" /etc/tlp.conf
 		fi
 		

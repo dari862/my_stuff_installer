@@ -128,7 +128,7 @@ show_wm(){
 
 show_em(){
 	message="${1-}"
-	printf '%b' "\\033[1;31m[-] ${message}\\033[0m\n" >&2
+	printf '%b' "\\033[1;31m[-] ${message}\\033[0m\n"
 	exit 1
 }
 
@@ -425,7 +425,7 @@ prompt_to_ask_to_what_to_install(){
 }
 
 create_prompt_to_install_value_file(){
-	show_m "creating: ${prompt_to_install_value_file}"
+	show_im "creating: ${prompt_to_install_value_file}"
 	tee "${prompt_to_install_value_file}" <<- EOF >/dev/null
 		switch_to_doas="${switch_to_doas}"
 		enable_contrib="${enable_contrib}"
@@ -513,7 +513,7 @@ internet_tester() {
         show_im "nc (Netcat) not found. Attempting to test internet connectivity..."
         test_with_http
     fi
-    show_m "There is an internet connection..."
+    show_im "There is an internet connection..."
 }
 
 fix_time_(){
@@ -523,15 +523,18 @@ fix_time_(){
 	list_to_test="${NETWORK_TEST} ipinfo.io 104.16.132.229"
 	
 	for test in ${list_to_test};do
+		show_im "testing time domain if they are up."
 		ping -c 1 $test >/dev/null 2>&1 && get_date_from_here="$test" && break
 	done
 		
 	if [ -z "$get_date_from_here" ];then 
 		show_em "failed to ping all of this: ${list_to_test}"
 	else
+		show_im "Getting time and timezone."
 		current_date="$(get_current_date "$get_date_from_here")"
 		$_SUPERUSER date -s "$current_date" >/dev/null 2>&1
 		__timezone="$(get_url_content "https://ipinfo.io/" | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/^[ \t]*//;s/[ \t]*$//')"
+		show_im "applying time and timezone."
 		if ! $_SUPERUSER timedatectl set-timezone $__timezone >/dev/null 2>&1;then
 			$_SUPERUSER ln -sf /usr/share/zoneinfo/$__timezone /etc/localtime
 			if ! $_SUPERUSER hwclock --systohc >/dev/null 2>&1;then
@@ -540,6 +543,7 @@ fix_time_(){
 		fi
 	fi
 	echo "__timezone=\"$__timezone\"" >> "${save_value_file}"
+	show_im "fix time done."
 	touch "${installer_phases}/fix_time_"
 }
 
@@ -594,6 +598,7 @@ must_install_apps()
 
 purge_some_unnecessary_pakages(){
 	[ -f "${installer_phases}/purge_some_unnecessary_pakages" ] && return
+	show_m "purge some unnecessary pakages"
 	# fonts-linuxlibertine break polybar 
 	# fonts-linuxlibertine installed from libreoffice
 	if [ "$run_purge_some_unnecessary_pakages" = "Y" ];then
@@ -602,7 +607,7 @@ purge_some_unnecessary_pakages(){
 		show_im "adding fonts-linuxlibertine to purging list (fonts-linuxlibertine break polybar) "
 		to_be_purged="${to_be_purged} linuxlibertine"
 		to_be_purged="${to_be_purged} ${install_autoinstall_firmware}"
-		show_m "purging apps"
+		show_im "purging apps"
 		remove_package_with_error2info "${to_be_purged}"
 	fi
 	touch "${installer_phases}/purge_some_unnecessary_pakages"
@@ -645,7 +650,7 @@ clean_up_now(){
 	
 	remove_unnecessary_package_manager_stuff
 	
-	show_m "removing not needed dotfiles"
+	show_im "removing not needed dotfiles"
 
 	remove_this_Array="
 	.xsession-error
@@ -662,7 +667,7 @@ clean_up_now(){
 disable_ipv6_now(){
 	[ -f "${installer_phases}/disable_ipv6_now" ] && return
 	if [ "$disable_ipv6_stack" = "Y" ];then
-		show_m "disabling IPv6 stack (kernal level)."
+		show_im "disabling IPv6 stack (kernal level)."
 		if ! grep 'GRUB_CMDLINE_LINUX=' /etc/default/grub | grep -q 'ipv6.disable=1';then
 			if grep -q 'GRUB_CMDLINE_LINUX=""' /etc/default/grub;then
 				my-superuser sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="ipv6.disable=1"/' /etc/default/grub
@@ -686,7 +691,7 @@ disable_ipv6_now(){
 	if [ "$disable_ipv6" = "Y" ];then
 		disable_ipv6_conf="/etc/sysctl.d/90-disable_ipv6.conf"
 		if [ ! -f "${disable_ipv6_conf}" ];then
-			show_m "Disabling IPv6."
+			show_im "Disabling IPv6."
 			my-superuser tee "${disable_ipv6_conf}" <<- EOF >/dev/null
 			net.ipv6.conf.all.disable_ipv6 = 1
 			net.ipv6.conf.default.disable_ipv6 = 1
@@ -708,7 +713,7 @@ run_my_alternatives(){
 update_grub(){
 	[ -f "${installer_phases}/update_grub" ] && return
 	if [ "$need_to_update_grub" = "true" ];then
-		show_m "update grub"
+		show_im "update grub"
 		my-superuser sync
 		my-superuser grub-mkconfig -o /boot/grub/grub.cfg
 	fi
@@ -718,7 +723,7 @@ update_grub(){
 update_grub_image(){
 	[ -f "${installer_phases}/update_grub_image" ] && return
 	if [ "$run_update_grub_image" = "Y" ];then
-		show_m "update image."
+		show_im "update image."
 		my-superuser "${__distro_path}/bin/not_add_2_path/grub2_themes/install.sh"
 	fi
 	touch "${installer_phases}/update_grub_image"
@@ -726,8 +731,9 @@ update_grub_image(){
 
 check_if_user_has_root_access(){
 	[ -f "${installer_phases}/check_if_user_has_root_access" ] && return
-	show_m "check if user has root access."
+	show_im "check if user has root access."
 	if [ "$(id -u)" -ne 0 ];then
+		show_im "you are using normal user."
     	## Check SuperUser Group
     	SUPERUSERGROUP='wheel sudo root'
     	for sug in ${SUPERUSERGROUP}; do
@@ -760,8 +766,11 @@ check_if_user_has_root_access(){
 			only_doas_installed="true"
 			echo "only_doas_installed=\"$only_doas_installed\"" >> "${save_value_file}"
 		fi
+		show_im "value of _SUPERUSER are $_SUPERUSER"
     else
+    	show_im "you are elevated user."
     	if command -v doas >/dev/null;then
+    		show_im "doas command exist."
     		doas_installed=true
     		echo "doas_installed=\"$doas_installed\"" >> "${save_value_file}"
 		fi
@@ -772,12 +781,13 @@ check_if_user_has_root_access(){
 		fi
 		_SUPERUSER=""
 		echo "_SUPERUSER=\"$_SUPERUSER\"" >> "${save_value_file}"
+    	show_im "value of _SUPERUSER are $_SUPERUSER"
     fi
     touch "${installer_phases}/check_if_user_has_root_access"
 }
 
 source_my_lib_file(){
-	if [ -f "${installer_phases}/source_my_lib_file" ];then
+	if [ ! -f "${installer_phases}/source_my_lib_file" ];then
 		show_m "sourcing ${lib_file_name} file."
 		disto_lib_location="$(find ${dir_2_find_files_in} -type f -name ${lib_file_name} | head -1 || :)"
 		# source disto_lib
@@ -792,8 +802,9 @@ source_my_lib_file(){
 		touch "${installer_phases}/source_my_lib_file"
 	fi	
 	set -a
-	if ! . "${temp_path}"/${lib_file_name} 2> /dev/null;then
-		show_em "Error: Failed to source ${lib_file_name} from ${temp_path}" >&2
+	show_im "sourcing ${lib_file_name} from ${temp_path}"
+	if ! . "${temp_path}"/${lib_file_name};then
+		show_em "Error: Failed to source ${lib_file_name} from ${temp_path}"
 	fi
 	set +a
 }
@@ -855,8 +866,8 @@ keep_superuser_refresed(){
 install_superuser_tools()
 {
 	[ -f "${installer_phases}/install_superuser_tools" ] && return
-	show_m "install superuser tools."
 	if [ "$switch_to_doas" = true ] && [ "$only_doas_installed" = "false" ];then
+		show_m "install superuser tools."
 		if ! grep "sudo" /etc/group;then
 			$_SUPERUSER groupadd sudo
 		fi
@@ -891,8 +902,8 @@ set_package_manager(){
 		check_and_download_ "${PACKAGER}" "installer_repo"
 		echo "PACKAGER=\"${PACKAGER}\"" >> "${save_value_file}"
 		
-		if ! . "${temp_path}/${PACKAGER}" 2> /dev/null;then
-			show_em "Error: Failed to source ${PACKAGER} from ${temp_path}" >&2
+		if ! . "${temp_path}/${PACKAGER}";then
+			show_em "Error: Failed to source ${PACKAGER} from ${temp_path}"
 		fi
 		
 		if check_if_package_exist_in_repo --no-list-of-apps-file systemd >/dev/null 2>&1;then
@@ -903,19 +914,19 @@ set_package_manager(){
 		fi
 		
 		check_and_download_ "disto_init_manager"
-		if ! . "${temp_path}/disto_init_manager" 2> /dev/null;then
-			show_em "Error: Failed to source disto_init_manager from ${temp_path}" >&2
+		if ! . "${temp_path}/disto_init_manager";then
+			show_em "Error: Failed to source disto_init_manager from ${temp_path}"
 		fi
 		
 		show_im "running pre_package_manager_"
 		pre_package_manager_
 		touch "${installer_phases}/set_package_manager"
 	else
-		if ! . "${temp_path}/${PACKAGER}" 2> /dev/null;then
-			show_em "Error: Failed to source ${PACKAGER} from ${temp_path}" >&2
+		if ! . "${temp_path}/${PACKAGER}";then
+			show_em "Error: Failed to source ${PACKAGER} from ${temp_path}"
 		fi
-		if ! . "${temp_path}/disto_init_manager" 2> /dev/null;then
-			show_em "Error: Failed to source disto_init_manager from ${temp_path}" >&2
+		if ! . "${temp_path}/disto_init_manager";then
+			show_em "Error: Failed to source disto_init_manager from ${temp_path}"
 		fi
 	fi
 }
@@ -945,12 +956,14 @@ create_uninstaller_file(){
 switch_to_doas_now(){
 	[ -f "${installer_phases}/switch_to_doas_now" ] && return
 	if [ "$switch_to_doas" = true ];then
-		show_m "Purging sudo."
+		show_m "switch to doas."
+		show_im "Creating new my-superuser symoblic link."
 		if [ -n "$_SUPERUSER" ];then
 			sudo ln -sf $(which doas) /usr/bin/my-superuser
 		else
 			ln -sf $(which doas) /usr/bin/my-superuser
 		fi
+		show_im "Purging sudo."
 		purge_sudo
 	fi
 	touch "${installer_phases}/switch_to_doas_now"
@@ -1056,7 +1069,7 @@ check_and_download_core_script(){
 
 mv_Distro_Specific(){
 	[ -f "${installer_phases}/mv_Distro_Specific" ] && return
-	show_m "moving Distro Specific files."
+	show_im "moving Distro Specific files."
 	"${Distro_Specific_temp_path}"/Distro_Specific/installer "${distro_name_}" "${PACKAGER}"
 	touch "${installer_phases}/mv_Distro_Specific"
 }
@@ -1071,16 +1084,17 @@ mv_Distro_Specific(){
 show_m "Loading Script ....."
 
 pre_script_create_dir_and_source_stuff
-
 check_if_user_has_root_access
     
 prompt_to_ask_to_what_to_install
 create_prompt_to_install_value_file
 
 if [ -n "$_SUPERUSER" ];then
+	show_m "creating my-superuser command "
 	$_SUPERUSER ln -sf $(which $_SUPERUSER) /usr/bin/my-superuser
 	$_SUPERUSER true
-	[ "$sudo_installed" = "true" ] && keep_superuser_refresed &
+	
+	[ "$sudo_installed" = "true" ] && show_im "running keep_superuser_refresed" && keep_superuser_refresed &
 fi
 
 pick_file_downloader_and_url_checker
@@ -1130,7 +1144,7 @@ if [ "$install_apps" = "true" ];then
 fi
 
 if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
-	show_im "Install list of apps."
+	show_m "Install list of apps."
 	install_packages || show_em "failed to run install_packages"
 fi
 
@@ -1173,10 +1187,9 @@ disable_some_unnecessary_services
 
 clean_up_now
 
+show_m "running Grub scripts."
 disable_ipv6_now
-
 update_grub
-
 update_grub_image
 
 run_my_alternatives
