@@ -742,11 +742,13 @@ check_if_user_has_root_access(){
             	show_im "Super user group are ${SUGROUP}"
         	fi
     	done
-    	echo "SUGROUP=\"$SUGROUP\"" >> "${save_value_file}"
+    	
     	## Check if member of the SuperUser Group.
     	if ! groups | grep ${SUGROUP} >/dev/null;then
         	show_em "You need to be a member of the SuperUser Group to run me!"
     	fi
+    	
+    	echo "SUGROUP=\"$SUGROUP\"" >> "${save_value_file}"
     	
     	if command -v doas >/dev/null;then
     		_SUPERUSER="doas"

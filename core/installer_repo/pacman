@@ -9,9 +9,13 @@ PACKAGER="pacman"
 install_AUR_helper(){
     if ! command -v yay >/dev/null && ! command -v paru >/dev/null; then
         echo "Installing yay as AUR helper..."
+        $_SUPERUSER true
+        keep_superuser_refresed
         $_SUPERUSER ${PACKAGER} --noconfirm -S base-devel git
-        cd /opt && $_SUPERUSER git clone https://aur.archlinux.org/yay-git.git && $_SUPERUSER chown -R ${USER}:${USER} ./yay-git
+        cd /opt && $_SUPERUSER git clone https://aur.archlinux.org/yay-git.git
         cd yay-git && makepkg --noconfirm -si
+        cd ..
+        $_SUPERUSER rm -rdf yay-git
     fi
     
     if command -v yay >/dev/null; then
