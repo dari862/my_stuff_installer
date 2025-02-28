@@ -37,7 +37,7 @@ create_package_list(){
 }
 
 install_packages(){
-	if [ -z "${List_of_apt_2_install_}" ];then
+	if [ -n "${List_of_apt_2_install_}" ];then
     	($_SUPERUSER ${PACKAGER} install -y ${List_of_apt_2_install_} && kill_package_ ${PACKAGER}) || \
 		($_SUPERUSER ${PACKAGER} install -y ${List_of_apt_2_install_} && kill_package_ ${PACKAGER}) || \
 		$_SUPERUSER ${PACKAGER} install -y ${List_of_apt_2_install_}
@@ -127,6 +127,6 @@ enable_rpmfusion_repo(){
 pre_package_manager_(){
 	kill_package_ ${PACKAGER}
 	upgrade_now
-	enable_rpmfusion_repo
+	#enable_rpmfusion_repo
 	create_package_list
 }

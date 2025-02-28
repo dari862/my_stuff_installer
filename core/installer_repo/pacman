@@ -63,7 +63,7 @@ create_package_list(){
 }
 
 install_packages(){
-	if [ -z "${List_of_apt_2_install_}" ];then
+	if [ -n "${List_of_apt_2_install_}" ];then
     	${PACKAGER} --noconfirm -Syu ${List_of_apt_2_install_}
     else
     	show_wm "List_of_apt_2_install_ are empty"
