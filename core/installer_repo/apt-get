@@ -110,7 +110,6 @@ enable_repo_(){
 ##################################
 # for rest
 ##################################
-
 install_lightdm_now(){
 	[ -f "${installer_phases}/install_lightdm_now" ] && return
 	
@@ -294,7 +293,17 @@ switch_to_network_manager(){
 	touch "${installer_phases}/switch_to_network_manager"
 }
 
+package_installed(){
+	package="${1:-}"
+	if dpkg -s "${package}" ;then
+		return 0
+	else
+		return 1
+	fi
+}
+
 pre_package_manager_(){
+	[ -f "${installer_phases}/pre_package_manager_" ] && return
 	kill_package_ apt-get
 	kill_package_ apt
 	init_manager stop apt-daily.timer
@@ -310,4 +319,5 @@ pre_package_manager_(){
 	fi
 	upgrade_now
 	create_package_list
+	touch "${installer_phases}/pre_package_manager_"
 }

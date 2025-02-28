@@ -134,8 +134,19 @@ switch_to_network_manager(){
 	touch "${installer_phases}/switch_to_network_manager"
 }
 
+package_installed(){
+	package="${1:-}"
+	if rpm -q "${package}" ;then
+		return 0
+	else
+		return 1
+	fi
+}
+
 pre_package_manager_(){
+	[ -f "${installer_phases}/pre_package_manager_" ] && return
 	kill_package_ ${PACKAGER}
 	upgrade_now
 	create_package_list
+	touch "${installer_phases}/pre_package_manager_"
 }

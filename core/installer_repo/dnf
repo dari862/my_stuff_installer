@@ -124,9 +124,21 @@ switch_to_network_manager(){
 enable_rpmfusion_repo(){
 	$_SUPERUSER ${PACKAGER} install -y https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
 }
+
+package_installed(){
+	package="${1:-}"
+	if rpm -q "${package}" ;then
+		return 0
+	else
+		return 1
+	fi
+}
+
 pre_package_manager_(){
+	[ -f "${installer_phases}/pre_package_manager_" ] && return
 	kill_package_ ${PACKAGER}
 	upgrade_now
 	#enable_rpmfusion_repo
 	create_package_list
+	touch "${installer_phases}/pre_package_manager_"
 }
