@@ -8,6 +8,7 @@ lib_file_name="disto_lib"
 auto_run_script="false" # true to enable
 temp_path="/tmp/temp_distro_installer_dir"
 installer_phases="${temp_path}/installer_phases"
+switch_default_xsession=""
 switch_default_xsession_to="openbox"
 switch_to_doas=false
 NETWORK_TEST="network-test.debian.org"
@@ -139,7 +140,7 @@ show_im(){
 
 show_sm(){
 	message="${1-}"
-	printf '%b' "\\033[1;34m  ==> \\033[0m${message}\n"
+	printf '%b' "\\033[1;36m[**] \\033[0m${message}\n"
 }
 
 test_internet_(){
@@ -595,6 +596,8 @@ must_install_apps()
 {
 	[ -f "${installer_phases}/must_install_apps" ] && return
 	show_m "installing req apps"
+	add_packages_2_install_list "locate"
+	add_packages_2_install_list "xrandr"
 	add_packages_2_install_list "mlocate"
 	add_packages_2_install_list "git"
 	install_packages
@@ -943,6 +946,7 @@ switch_default_xsession(){
 	show_m "switching default xsession to my stuff $switch_default_xsession_to."
 	if command -v update-alternatives >/dev/null 2>&1;then
 		my-superuser update-alternatives --install /usr/bin/x-session-manager x-session-manager ${__distro_path}/system_files/bin/xsessions/${switch_default_xsession_to} 60
+		switch_default_xsession="$(realpath /etc/alternatives/x-session-manager)"
 	else
 		my-superuser ln -sf ${__distro_path}/system_files/bin/xsessions/${switch_default_xsession_to} /usr/bin/x-session-manager
 	fi
@@ -956,7 +960,7 @@ create_uninstaller_file(){
 	my-superuser tee "${var_for_distro_uninstaller}" <<- EOF >/dev/null
 	grub_image_name=\"${grub_image_name}\"
 	List_of_pakages_installed_=\"${List_of_installed_packages_}\"
-	switch_default_xsession=\"$(realpath /etc/alternatives/x-session-manager)\"
+	switch_default_xsession=\"$switch_default_xsession\"
 	EOF
 }
 
