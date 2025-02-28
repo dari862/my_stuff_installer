@@ -596,9 +596,6 @@ must_install_apps()
 {
 	[ -f "${installer_phases}/must_install_apps" ] && return
 	show_m "installing req apps"
-	add_packages_2_install_list "locate"
-	add_packages_2_install_list "xrandr"
-	add_packages_2_install_list "mlocate"
 	add_packages_2_install_list "git"
 	install_packages
 	touch "${installer_phases}/must_install_apps"
@@ -1151,6 +1148,8 @@ if [ "$install_drivers" = "true" ];then
 	pre_disto_Drivers_installer || show_em "failed to run pre_disto_Drivers_installer"
 fi
 
+List_of_apt_2_install_=""
+
 if [ "$install_apps" = "true" ];then
 	source_this_script "disto_apps_list" "Add apps list from (disto_apps_list)"
 	source_this_script "disto_apps_installer" "Source Install apps functions from (disto_apps_installer)"
@@ -1160,7 +1159,8 @@ fi
 
 if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
 	show_m "Install list of apps."
-	echo "List_of_apt_2_install_=\"$List_of_drives_2_install_ $List_of_apps_2_install_\"" >> "${save_value_file}"
+	List_of_apt_2_install_="$List_of_drives_2_install_ $List_of_apps_2_install_"
+	echo "List_of_apt_2_install_=\"$List_of_apt_2_install_\"" >> "${save_value_file}"
 	install_packages || show_em "failed to run install_packages"
 fi
 

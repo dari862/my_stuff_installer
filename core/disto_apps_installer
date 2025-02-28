@@ -66,6 +66,7 @@ pre_disto_apps_installer(){
 	if [ "$install_extra_now" = "extra" ];then
 		add_packages_2_install_list "${install_extra_apps}"
 	fi
+	List_of_apps_2_install_="$List_of_apt_2_install_"
 	echo "List_of_apps_2_install_=\"$List_of_apt_2_install_\"" >> "${save_value_file}"
 	touch "${installer_phases}/pre_disto_apps_installer"
 }

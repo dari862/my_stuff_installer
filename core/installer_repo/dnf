@@ -42,7 +42,7 @@ install_packages(){
 		($_SUPERUSER ${PACKAGER} install -y ${List_of_apt_2_install_} && kill_package_ ${PACKAGER}) || \
 		$_SUPERUSER ${PACKAGER} install -y ${List_of_apt_2_install_}
     else
-    	show_im "List_of_apt_2_install_ are empty"
+    	show_wm "List_of_apt_2_install_ are empty"
     	sleep 1
     fi
 }
@@ -121,8 +121,12 @@ switch_to_network_manager(){
 	touch "${installer_phases}/switch_to_network_manager"
 }
 
+enable_rpmfusion_repo(){
+	$_SUPERUSER ${PACKAGER} install -y https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
+}
 pre_package_manager_(){
 	kill_package_ ${PACKAGER}
 	upgrade_now
+	enable_rpmfusion_repo
 	create_package_list
 }
