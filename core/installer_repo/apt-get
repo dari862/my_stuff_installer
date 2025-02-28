@@ -7,32 +7,37 @@ remove_aria2=false
 # only for apt
 ##################################
 aptupdate(){
-	show_im "updating your system"
+	show_sm "updating your system"
 	[ "$(find /var/cache/apt/pkgcache.bin -mtime 0 2>/dev/null)" ] || $_SUPERUSER apt-get update
 }
 
 aptfixer(){
-		if grep -q 'deb cdrom' /etc/apt/sources.list;then
-			$_SUPERUSER sed -i '/deb cdrom/d' /etc/apt/sources.list
-		fi
-		aptupdate
-		### Fix broken packages for good measure (why not?)
-		$_SUPERUSER apt-get install -yq -f 2>/dev/null || show_em "failed to $_SUPERUSER apt-get install -yq -f"
+	show_sm "running aptfixer"
+	if grep -q 'deb cdrom' /etc/apt/sources.list;then
+		$_SUPERUSER sed -i '/deb cdrom/d' /etc/apt/sources.list
+	fi
+	aptupdate
+	$_SUPERUSER apt-get install -yq -f 2>/dev/null || show_em "failed to $_SUPERUSER apt-get install -yq -f"
 }	
 
 install_apt_fast(){
 	if ! type aria2c >/dev/null 2>&1;then
+		show_sm "add aria2c to purge list"
   		$_SUPERUSER apt-get install -y aria2
   		remove_aria2=true
 	fi
+	
+	show_sm "download apt-fast"
 	apt_fast_url='https://raw.githubusercontent.com/ilikenwf/apt-fast/master'
 	download_file "$_SUPERUSER" "${apt_fast_url}/apt-fast" "/usr/local/bin/apt-fast"
 	
+	show_sm "install apt-fast"
 	$_SUPERUSER chmod +x /usr/local/bin/apt-fast
   	[ ! -f /etc/apt-fast.conf ] && download_file "$_SUPERUSER" "${apt_fast_url}/apt-fast.conf" "/etc/apt-fast.conf"
 }
 
 enable_repo_contrib(){
+	show_sm "enable_repo_contrib"
 	while IFS= read -r line;do
 		if echo "${line}" | grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" | grep -qv contrib;then
 			$_SUPERUSER sed -i "s|^${line}$|${line} contrib|g" /etc/apt/sources.list
@@ -41,6 +46,7 @@ enable_repo_contrib(){
 }
 
 enable_repo_nonfree_firmware(){
+	show_sm "enable_repo_nonfree_firmware"
 	while IFS= read -r line;do
 		if echo "${line}" | grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" | grep -qv 'non-free-firmware';then
 			$_SUPERUSER sed -i "s|^${line}$|${line} nonfreefirmware|g" /etc/apt/sources.list
@@ -50,6 +56,7 @@ enable_repo_nonfree_firmware(){
 }
 
 enable_repo_nonfree(){
+	show_sm "enable_repo_nonfree"
 	while IFS= read -r line;do
 		if echo "${line}" | grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" | grep -qv "non-free[[:blank:]]";then
 			$_SUPERUSER sed -i "s|^${line}$|${line} nonfreeonly|g" /etc/apt/sources.list
@@ -60,10 +67,12 @@ enable_repo_nonfree(){
 
 enable_nvidia_gpu_repo(){
 	if [ ! -f "/usr/share/keyrings/nvidia-drivers.gpg" ];then
+		show_sm "add nvidia-drivers keyrings"
 		get_url_content "https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/3bf863cc.pub" | $_SUPERUSER gpg --dearmor | $_SUPERUSER tee /usr/share/keyrings/nvidia-drivers.gpg > /dev/null 2>&1
 	fi
 				
-	if [ ! -f "/etc/apt/sources.list.d/nvidia-drivers.list" ];then 
+	if [ ! -f "/etc/apt/sources.list.d/nvidia-drivers.list" ];then
+		show_sm "add nvidia-drivers repo"
 		echo "deb [signed-by=/usr/share/keyrings/nvidia-drivers.gpg] https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/ /" | $_SUPERUSER tee /etc/apt/sources.list.d/nvidia-drivers.list > /dev/null 2>&1
 	fi
 }
@@ -87,6 +96,7 @@ enable_repo_(){
 	fi
 
 	if [ "$distro_name_" = "ubuntu" ];then
+		show_sm "enable  universe  multiverse repo"
 		$_SUPERUSER apt-get install -y software-properties-common
 		$_SUPERUSER add-apt-repository -y universe
 		$_SUPERUSER add-apt-repository -y multiverse
@@ -180,9 +190,14 @@ add_packages_2_install_list()
 
 upgrade_now()
 {
+	show_im "Run upgrade_now function"
+	show_sm "Run upgrade" 
 	$_SUPERUSER DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true apt-get -y upgrade
+	show_sm "Run dist-upgrade" 
 	$_SUPERUSER DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true apt-get -y dist-upgrade
+	show_sm "Run full-upgrade" 
 	$_SUPERUSER DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true apt-get -y full-upgrade
+	show_im "end upgrade_now" 
 }
 
 remove_package_with_error2info()
@@ -199,9 +214,9 @@ remove_package_with_error2info()
 
 remove_unnecessary_package_manager_stuff(){
 	show_im "removing apt-fast and conf"
-	[ "$remove_aria2" = true ] && show_im "removing aria2 package" && $_SUPERUSER apt-get purge -y aria2
-	[ -f /usr/local/bin/apt-fast ] && show_im "removing apt-fast" && $_SUPERUSER rm -f /usr/local/bin/apt-fast
-	[ -f /etc/apt-fast.conf ] && show_im "removing apt-fast.conf" && $_SUPERUSER rm -f /etc/apt-fast.conf
+	[ "$remove_aria2" = true ] && show_sm "removing aria2 package" && $_SUPERUSER apt-get purge -y aria2
+	[ -f /usr/local/bin/apt-fast ] && show_sm "removing apt-fast" && $_SUPERUSER rm -f /usr/local/bin/apt-fast
+	[ -f /etc/apt-fast.conf ] && show_sm "removing apt-fast.conf" && $_SUPERUSER rm -f /etc/apt-fast.conf
 }
 
 run_package_manager_autoclean(){
@@ -244,10 +259,12 @@ _unattended_upgrades_()
 switch_to_network_manager(){
 	[ -f "${installer_phases}/switch_to_network_manager" ] && return
 	[ -f "/etc/network/interfaces.old" ] && return
+	show_m "runing switch_to_network_manager."
 	network_manager_name="network-manager"
-	show_m "switching to ${network_manager_name}"
+	show_im "switching to ${network_manager_name}"
 	add_packages_2_install_list "${network_manager_name}"
 	install_packages
+	show_im "create to interfaces file"
 	my-superuser tee "${temp_path}"/interfaces <<- 'EOF' >/dev/null
 	# This file describes the network interfaces available on your system
 	# and how to activate them. For more information, see interfaces(5).
@@ -259,11 +276,14 @@ switch_to_network_manager(){
 	iface lo inet loopback
 	EOF
 	my-superuser chmod 644 "${temp_path}"/interfaces
+	show_im "create backup of interfaces file"
 	[ -f "/etc/network/interfaces" ] && my-superuser mv /etc/network/interfaces /etc/network/interfaces.old
 	my-superuser mkdir -p "/etc/network"
 	my-superuser mv "${temp_path}"/interfaces /etc/network/interfaces
+	show_im "Disable NetworkManager"
 	my-superuser sed -i 's/managed=.*/managed=false/g' /etc/NetworkManager/NetworkManager.conf
 	install_extra_Network_tools="rfkill"
+	show_im "installing ${install_extra_Network_tools}"
 	add_packages_2_install_list "${install_extra_Network_tools}"
 	install_packages
 	touch "${installer_phases}/switch_to_network_manager"

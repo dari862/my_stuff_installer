@@ -123,7 +123,7 @@ CHECK_IF_THIS_LAPTOP(){
 	if [ "${is_this_laptop}" = true ];then
 		show_im "this is laptop"
 		this_is_laptop=true
-		echo "this_is_laptop=true" >> "${value_of_some_var_file}"
+		echo "this_is_laptop=true" >> "${save_value_file}"
 	else
 		show_im "this is not laptop"
 	fi

@@ -137,6 +137,11 @@ show_im(){
 	printf '%b' "\\033[1;34m[*] \\033[0m${message}\n"
 }
 
+show_sm(){
+	message="${1-}"
+	printf '%b' "\\033[1;34m  ==> \\033[0m${message}\n"
+}
+
 test_internet_(){
 	show_m "Testing internet connection."
 	

@@ -8,22 +8,24 @@ PACKAGER="pacman"
 
 install_AUR_helper(){
     if ! command -v yay >/dev/null && ! command -v paru >/dev/null; then
-        echo "Installing yay as AUR helper..."
+        show_im "Installing yay as AUR helper..."
         $_SUPERUSER true
-        keep_superuser_refresed
-        $_SUPERUSER ${PACKAGER} --noconfirm -S base-devel git
-        cd /opt && $_SUPERUSER git clone https://aur.archlinux.org/yay-git.git
-        cd yay-git && makepkg --noconfirm -si
-        cd ..
-        $_SUPERUSER rm -rdf yay-git
+        add_packages_2_install_list "base-devel git"
+		install_packages
+        show_sm "clone yay-git..."
+        (cd /tmp && git clone https://aur.archlinux.org/yay-bin.git)
+        (cd /tmp/yay-bin && makepkg --noconfirm -si)
     fi
     
     if command -v yay >/dev/null; then
+    	show_sm "swtiching to yay..."
         PACKAGER="yay"
     elif command -v paru >/dev/null; then
+    	show_sm "swtiching to paru..."
         PACKAGER="paru"
     fi
     
+    show_sm "updating rate-mirrors..."
     ${PACKAGER} --noconfirm -S rate-mirrors-bin
     $_SUPERUSER cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
     $_SUPERUSER rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch
@@ -33,7 +35,7 @@ install_lightdm_now(){
     [ -f "${installer_phases}/install_lightdm_now" ] && return
     
     install_lightdm_="lightdm lightdm-gtk-greeter-settings"
-    echo "Installing lightdm..."
+    show_im "Installing lightdm..."
     
     if [ -f "/etc/X11/default-display-manager" ]; then
         d_d_m="$(basename "$(cat /etc/X11/default-display-manager)")"
@@ -43,19 +45,19 @@ install_lightdm_now(){
     fi
     
     if [ "$lightdm_does_not_exist" = true ]; then
-        echo "Installing ${install_lightdm_}..."
+        show_sm "Installing ${install_lightdm_}..."
         ${PACKAGER} --noconfirm -S ${install_lightdm_}
-        echo "/usr/sbin/lightdm" | $_SUPERUSER tee /etc/X11/default-display-manager > /dev/null 2>&1
+        show_sm "/usr/sbin/lightdm" | $_SUPERUSER tee /etc/X11/default-display-manager > /dev/null 2>&1
         $_SUPERUSER systemctl enable lightdm
     else
-        echo "LightDM already exists."
+        show_sm "LightDM already exists."
     fi
     touch "${installer_phases}/install_lightdm_now"
 }
 
 create_package_list(){
     if [ ! -f "${list_of_apps_file_path}" ]; then
-        echo "Creating package list..."
+        show_im "Creating package list..."
         ${PACKAGER} -Qq > "${list_of_apps_file_path}"
     fi
 }
