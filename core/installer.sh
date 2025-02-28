@@ -723,7 +723,11 @@ update_grub(){
 	if [ "$need_to_update_grub" = "true" ];then
 		show_im "update grub"
 		my-superuser sync
-		my-superuser grub-mkconfig -o /boot/grub/grub.cfg
+		if command -v grub2-mkconfig >/dev/null 2>&1;then
+			my-superuser grub2-mkconfig -o /boot/grub/grub.cfg
+		else
+			my-superuser grub-mkconfig -o /boot/grub/grub.cfg
+		fi
 	fi
 	touch "${installer_phases}/update_grub"
 }
@@ -1156,6 +1160,7 @@ fi
 
 if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
 	show_m "Install list of apps."
+	echo "List_of_apt_2_install_=\"$List_of_drives_2_install_ $List_of_apps_2_install_\"" >> "${save_value_file}"
 	install_packages || show_em "failed to run install_packages"
 fi
 

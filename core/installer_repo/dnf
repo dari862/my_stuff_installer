@@ -32,14 +32,19 @@ create_package_list(){
 	# create list_of_apps file
 	if [ ! -f "${list_of_apps_file_path}" ];then
 		show_im "create_list_of_apps"
-		${PACKAGER} list installed 2>/dev/null > "${list_of_apps_file_path}"
+		${PACKAGER} list 2>/dev/null > "${list_of_apps_file_path}"
 	fi
 }
 
 install_packages(){
-	($_SUPERUSER ${PACKAGER} install -y ${List_of_apt_2_install_} && kill_package_ ${PACKAGER}) || \
-	($_SUPERUSER ${PACKAGER} install -y ${List_of_apt_2_install_} && kill_package_ ${PACKAGER}) || \
-	$_SUPERUSER ${PACKAGER} install -y ${List_of_apt_2_install_}
+	if [ -z "${List_of_apt_2_install_}" ];then
+    	($_SUPERUSER ${PACKAGER} install -y ${List_of_apt_2_install_} && kill_package_ ${PACKAGER}) || \
+		($_SUPERUSER ${PACKAGER} install -y ${List_of_apt_2_install_} && kill_package_ ${PACKAGER}) || \
+		$_SUPERUSER ${PACKAGER} install -y ${List_of_apt_2_install_}
+    else
+    	show_im "List_of_apt_2_install_ are empty"
+    	sleep 1
+    fi
 }
 
 check_if_package_exist_in_repo(){
@@ -47,7 +52,7 @@ check_if_package_exist_in_repo(){
 	if [ "$package_name" = "--no-list-of-apps-file" ];then
 		shift 1
 		package_name="${1-}"
-		if dnf list installed ${package_name} 2>/dev/null | grep "^${package_name}" | grep -q "@";then
+		if dnf list ${package_name} 2>/dev/null | grep -q "^${package_name}";then
 			return 0
 		else
 			return 1
@@ -108,22 +113,7 @@ run_package_manager_autoclean(){
 
 _unattended_upgrades_()
 {
-	action="$1"
-
-    case "$action" in
-        start)
-            show_im "Starting dnf-automatic service..."
-            $_SUPERUSER systemctl enable --now dnf-automatic.timer
-            ;;
-        stop)
-            show_im "Stopping dnf-automatic service..."
-            $_SUPERUSER systemctl disable --now dnf-automatic.timer
-            ;;
-        *)
-            show_em "Usage: manage_dnf_automatic {start|stop}"
-            return 1
-            ;;
-    esac
+	:
 }
 
 switch_to_network_manager(){
