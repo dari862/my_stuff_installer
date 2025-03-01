@@ -312,9 +312,9 @@ pre_package_manager_(){
 	aptfixer
 	enable_repo_
 	install_apt_fast || :
-	if command -v apt-get >/dev/null 2>&1;then
+	if command_exist apt-get;then
 		PACKAGER="apt-get"
-	elif command -v apt-fast >/dev/null 2>&1;then
+	elif command_exist apt-fast;then
 		PACKAGER="apt-fast"
 	fi
 	upgrade_now

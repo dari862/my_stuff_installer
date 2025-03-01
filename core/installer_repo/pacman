@@ -4,24 +4,29 @@ set -e
 ##################################
 # only for ${PACKAGER}
 ##################################
-PACKAGER="pacman"
+if [ -z "$PACKAGER" ];then
+	PACKAGER="pacman"
+else
+	if command_exist yay; then
+        PACKAGER="yay"
+    fi
+fi
 
 install_AUR_helper(){
 	[ -f "${installer_phases}/install_AUR_helper" ] && return
-    if ! command -v yay >/dev/null && ! command -v paru >/dev/null; then
+    if ! command_exist yay && ! command_exist paru; then
         show_im "Installing yay as AUR helper..."
         $_SUPERUSER true
-        add_packages_2_install_list "base-devel git"
-		install_packages
+        $_SUPERUSER ${PACKAGER} --noconfirm -Syu base-devel git
         show_sm "clone yay-git..."
         (cd /tmp && git clone https://aur.archlinux.org/yay-bin.git)
         (cd /tmp/yay-bin && makepkg --noconfirm -si)
     fi
     
-    if command -v yay >/dev/null; then
+    if command_exist yay; then
     	show_sm "swtiching to yay..."
         PACKAGER="yay"
-    elif command -v paru >/dev/null; then
+    elif command_exist paru; then
     	show_sm "swtiching to paru..."
         PACKAGER="paru"
     fi

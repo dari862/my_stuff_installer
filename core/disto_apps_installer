@@ -36,7 +36,7 @@ pre_disto_apps_installer(){
 	fi
 	
 	if [ "$install_files_manager" = "true" ];then
-		if ! command -v xfce4-clipman >/dev/null 2>&1;then
+		if ! command_exist xfce4-clipman;then
 			add_packages_2_install_list "${install_clipman_manager}"
 		fi
 	fi
@@ -81,10 +81,10 @@ post_disto_apps_installer(){
 
 	if [ "$install_zsh_now" = "zsh_default" ];then
 		show_im "make zsh default shell "
-		my-superuser chsh -s $(command -v zsh) $__USER
+		my-superuser chsh -s $(command_exist zsh) $__USER
 	fi
 	
-	if command -v mpd >/dev/null
+	if command_exist mpd >/dev/null
 	then
 		if [ -n "$(pidof mpd)" ];then
 			kill_package_ mpd
@@ -123,7 +123,7 @@ post_disto_apps_installer(){
 		fi
 	fi
 	
-	if command -v ufw >/dev/null
+	if command_exist ufw >/dev/null
 	then
     	my-superuser ufw limit 22/tcp
     	show_im "Limiting port 22/tcp (UFW)"

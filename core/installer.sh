@@ -92,7 +92,7 @@ fi
 
 PACKAGEMANAGER='apt-get dnf pacman zypper'
 for pgm in ${PACKAGEMANAGER}; do
-	if command -v ${pgm} >/dev/null;then
+	if command -v ${pgm} >/dev/null 2>&1;then
 		PACKAGER=${pgm}
 		break
 	fi
@@ -117,6 +117,11 @@ fingerprint_exist=true
 ################################################################################################################################
 # Function
 ################################################################################################################################
+
+command_exist() {
+  command -v $1 > /dev/null 2>&1
+}
+
 show_m(){
 	message="${1-}"
 	printf '%b' "\n==[ \\033[1;32m${message}\\033[0m ]==\n"
@@ -336,7 +341,7 @@ prompt_to_ask_to_what_to_install(){
 		fi
 		
 		if [ "$install_apps" = "true" ];then
-			if ! command -v zsh >/dev/null;then
+			if ! command_exist zsh;then
 				if do_you_want_2_run_this_yes_or_no 'Do you want to install zsh?';then
 					if do_you_want_2_run_this_yes_or_no 'Do you want to set zsh as default shell?';then
 						install_zsh_now=zsh_default
@@ -354,7 +359,7 @@ prompt_to_ask_to_what_to_install(){
 				fi
 			fi
 			
-			if ! command -v xfce4-panel >/dev/null;then
+			if ! command_exist xfce4-panel ;then
 				if do_you_want_2_run_this_yes_or_no 'Do you want to install xfce4-panel?';then
 					install_xfce4_panel=xfce4_panel
 				else
@@ -368,7 +373,7 @@ prompt_to_ask_to_what_to_install(){
 				fi
 				
 				if [ "$thunar_files_manager" = false ] && [ "$install_files_manager" = true ] ;then
-					if ! command -v thunar >/dev/null;then
+					if ! command_exist thunar;then
 						if do_you_want_2_run_this_yes_or_no 'Do you want to switch from pcmanfm to thunar?';then
 							thunar_files_manager=true
 						else
@@ -379,7 +384,7 @@ prompt_to_ask_to_what_to_install(){
 					fi
 				fi
 			fi
-			if ! command -v polybar >/dev/null;then
+			if ! command_exist polybar;then
 				if do_you_want_2_run_this_yes_or_no 'Do you want to install polybar?';then
 					install_polybar=polybar
 				else
@@ -387,7 +392,7 @@ prompt_to_ask_to_what_to_install(){
 				fi
 			fi
 			
-			if ! command -v qt5ct >/dev/null;then
+			if ! command_exist qt5ct;then
 				if do_you_want_2_run_this_yes_or_no 'Do you want to install qt5ct?';then
 					install_qt5ct=qt5ct
 				else
@@ -395,7 +400,7 @@ prompt_to_ask_to_what_to_install(){
 				fi
 			fi
 			
-			if ! command -v jgmenu >/dev/null;then
+			if ! command_exist jgmenu;then
 				if do_you_want_2_run_this_yes_or_no 'Do you want to install jgmenu?';then
 					install_jgmenu=jgmenu
 				else
@@ -403,7 +408,7 @@ prompt_to_ask_to_what_to_install(){
 				fi
 			fi
 			
-			if ! command -v bspwm >/dev/null;then
+			if ! command_exist bspwm;then
 				if do_you_want_2_run_this_yes_or_no 'Do you want to install bspwm?';then
 					install_bspwm=bspwm
 					if do_you_want_2_run_this_yes_or_no 'Do you want to switch to bspwm session?';then
@@ -459,7 +464,7 @@ create_prompt_to_install_value_file(){
 }
 pick_file_downloader_and_url_checker(){
 	show_m "picking url command"
-	if command -v curl >/dev/null 2>&1;then
+	if command_exist curl;then
 		url_package="curl"
 		check_url(){
 			curl -SsL "${1-}" 2>/dev/null
@@ -476,7 +481,7 @@ pick_file_downloader_and_url_checker(){
 		get_current_date(){
 			curl --head -fSs --max-redirs 0 "${1-}" 2>&1 | sed -n 's/^ *Date: *//p'
 		}
-	elif command -v wget >/dev/null 2>&1;then
+	elif command_exist wget;then
 		url_package="wget"
 		check_url(){
 			wget -q -O- "${1-}" >/dev/null 2>&1
@@ -504,13 +509,13 @@ internet_tester() {
         printf "GET /nm HTTP/1.1\r\nHost: ${NETWORK_TEST}\r\n\r\n" | nc -w1 "$NETWORK_TEST" 80 | grep -q "NetworkManager is online" >/dev/null 2>&1
     }
     test_with_http() {
-        if command -v curl >/dev/null 2>&1;then
+        if command_exist curl;then
             curl -s -X GET "$url_to_test" >/dev/null 2>&1
-        elif command -v wget >/dev/null 2>&1;then
+        elif command_exist wget;then
             wget -qS -O- "$url_to_test" >/dev/null 2>&1
         fi
     }
-    if command -v nc >/dev/null 2>&1;then
+    if command_exist nc;then
         if ! test_with_nc;then
             show_im "Failed to check internet using nc (netcat), switching to ${url_package}..."
             test_with_http
@@ -558,15 +563,13 @@ wifi_mode_installation(){
 	
 	ip link set "$wifi_interface" up
 		
-	if command -v nmcli >/dev/null 2>&1
-	then
+	if command_exist nmcli;then
 		nmcli radio wifi on
 		while :
 		do
 			nmcli --ask dev wifi connect && break
 		done
-	elif command -v wpa_supplicant >/dev/null 2>&1
-	then
+	elif command_exist wpa_supplicant;then
 		tmpfile="$(mktemp)"
 		while :
 		do
@@ -672,10 +675,18 @@ update_grub(){
 	if [ "$need_to_update_grub" = "true" ];then
 		show_im "update grub"
 		my-superuser sync
-		if command -v grub2-mkconfig >/dev/null 2>&1;then
-			my-superuser grub2-mkconfig -o /boot/grub/grub.cfg
-		else
+		if command_exist update-grub; then
+			my-superuser update-grub
+		elif command_exist grub-mkconfig; then
 			my-superuser grub-mkconfig -o /boot/grub/grub.cfg
+		elif command_exist zypper || command_exist transactional-update; then
+			my-superuser grub2-mkconfig -o /boot/grub2/grub.cfg
+		elif command_exist dnf || command_exist rpm-ostree; then
+			if [ -f "/boot/grub2/grub.cfg" ]; then
+				my-superuser grub2-mkconfig -o /boot/grub2/grub.cfg
+			elif [ -f "/boot/efi/EFI/fedora/grub.cfg" ]; then
+				my-superuser grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
+			fi
 		fi
 	fi
 	touch "${installer_phases}/update_grub"
@@ -711,14 +722,14 @@ check_if_user_has_root_access(){
     	
     	echo "SUGROUP=\"$SUGROUP\"" >> "${save_value_file}"
     	
-    	if command -v doas >/dev/null;then
+    	if command_exist doas;then
     		_SUPERUSER="doas"
     		doas_installed=true
     		echo "_SUPERUSER=\"$_SUPERUSER\"" >> "${save_value_file}"
     		echo "doas_installed=\"$doas_installed\"" >> "${save_value_file}"
 		fi
 		
-		if command -v sudo >/dev/null;then
+		if command_exist sudo;then
     		_SUPERUSER="sudo"
     		sudo_installed=true
     		echo "_SUPERUSER=\"$_SUPERUSER\"" >> "${save_value_file}"
@@ -732,13 +743,13 @@ check_if_user_has_root_access(){
 		show_im "value of _SUPERUSER are $_SUPERUSER"
     else
     	show_im "you are elevated user."
-    	if command -v doas >/dev/null;then
+    	if command_exist doas;then
     		show_im "doas command exist."
     		doas_installed=true
     		echo "doas_installed=\"$doas_installed\"" >> "${save_value_file}"
 		fi
 		
-		if command -v sudo >/dev/null;then
+		if command_exist sudo;then
     		sudo_installed=true
     		echo "sudo_installed=\"$sudo_installed\"" >> "${save_value_file}"
 		fi
@@ -805,7 +816,7 @@ pre_script_create_dir_and_source_stuff(){
 
 purge_sudo(){
 	[ -f "${installer_phases}/purge_sudo" ] && return
-	if command -v sudo >/dev/null;then
+	if command_exist sudo;then
 		export SUDO_FORCE_REMOVE=yes
 		PASSWORD=$(tr -dc 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' < /dev/urandom | head -c 30 | base64)	
 		echo "root:${PASSWORD}" | $_SUPERUSER chpasswd
@@ -837,7 +848,7 @@ install_superuser_tools()
 		show_im "Installing doas"
 		add_packages_2_install_list "doas"
 		add_packages_2_install_list "expect"
-		kill_package_ ${PACKAGER} && install_packages || (kill_package_ ${PACKAGER}  && install_packages) || (show_em "failed to install doas")
+		install_packages
 		$_SUPERUSER adduser "$USER" sudo || :
 		$_SUPERUSER tee -a /etc/bash.bashrc <<- EOF >/dev/null 2>&1
 		if [ -x /usr/bin/doas ];then
@@ -863,9 +874,9 @@ set_package_manager(){
 	show_im "Using ${PACKAGER}"
 	if [ ! -f "${installer_phases}/set_package_manager" ];then
 		check_and_download_ "${PACKAGER}" "installer_repo"
-		
-		if ! . "${temp_path}/${PACKAGER}";then
-			show_em "Error: Failed to source ${PACKAGER} from ${temp_path}"
+		mv "${temp_path}/${PACKAGER}" "${temp_path}/PACKAGE_MANAGER"
+		if ! . "${temp_path}/PACKAGE_MANAGER";then
+			show_em "Error: Failed to source PACKAGE_MANAGER from ${temp_path}"
 		fi
 		
 		create_package_list
@@ -887,8 +898,8 @@ set_package_manager(){
 		echo "init_system_are=\"${init_system_are}\"" >> "${save_value_file}"
 		touch "${installer_phases}/set_package_manager"
 	else
-		if ! . "${temp_path}/${PACKAGER}";then
-			show_em "Error: Failed to source ${PACKAGER} from ${temp_path}"
+		if ! . "${temp_path}/PACKAGE_MANAGER";then
+			show_em "Error: Failed to source PACKAGE_MANAGER from ${temp_path}"
 		fi
 		if ! . "${temp_path}/disto_init_manager";then
 			show_em "Error: Failed to source disto_init_manager from ${temp_path}"
@@ -899,7 +910,7 @@ set_package_manager(){
 switch_default_xsession(){
 	[ -f "${installer_phases}/switch_default_xsession" ] && return
 	show_m "switching default xsession to my stuff $switch_default_xsession_to."
-	if command -v update-alternatives >/dev/null 2>&1;then
+	if command_exist update-alternatives;then
 		my-superuser update-alternatives --install /usr/bin/x-session-manager x-session-manager ${__distro_path}/system_files/bin/xsessions/${switch_default_xsession_to} 60
 		switch_default_xsession="$(realpath /etc/alternatives/x-session-manager)"
 	else
@@ -937,7 +948,7 @@ switch_to_doas_now(){
 
 pick_clone_rep_commnad(){
 	show_m "pick clone repo commnad"
-	if command -v git >/dev/null 2>&1;then
+	if command_exist git;then
 		show_im "clone repo commnad: git"
 		clone_rep_(){
 			getthis="${1-}"
@@ -967,7 +978,7 @@ pick_clone_rep_commnad(){
 				fi
 			fi
 		}
-	elif command -v svn >/dev/null 2>&1;then
+	elif command_exist svn;then
 		show_im "clone repo commnad: svn"
 		clone_rep_(){
 			getthis="${1-}"

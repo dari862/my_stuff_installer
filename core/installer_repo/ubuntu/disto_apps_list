@@ -1,6 +1,6 @@
 #!/bin/sh	
 #must have apps
-install_core_apps="lsb-release arandr autorandr"
+install_core_apps="arandr autorandr"
 install_X11_apps="xorg xserver-xorg-input-all xinput dbus-x11 xinit xdg-user-dirs x11-xserver-utils xclip xwallpaper"
 install_must_have_apps="jq cbatticon xprintidle yad git rofi picom mlocate ufw htop unzip dunst libnotify-bin"
 install_must_have_apps2="psmisc pnmixer gparted inxi s-tui dfc hwinfo synaptic galternatives xdotool acl lm-sensors ntfs-3g"
