@@ -1,6 +1,5 @@
 #!/bin/sh
 pre_disto_Drivers_installer(){
-	[ -f "${installer_phases}/pre_disto_Drivers_installer" ] && return
 	. "${prompt_to_install_value_file}"
 	show_im "Adding needed Drivers to install list."
 	install_envycontrol=false
@@ -122,13 +121,9 @@ pre_disto_Drivers_installer(){
 	
 	add_packages_2_install_list "${install_Network}"
 	add_packages_2_install_list "${install_autoinstall_firmware}"
-	List_of_drives_2_install_="$List_of_apt_2_install_"
-	echo "List_of_drives_2_install_=\"$List_of_apt_2_install_\"" >> "${save_value_file}"
-	touch "${installer_phases}/pre_disto_Drivers_installer"
 }
 
 post_disto_Drivers_installer(){
-	[ -f "${installer_phases}/post_disto_Drivers_installer" ] && return
 	. "${prompt_to_install_value_file}"
 	show_im "Configer Drivers."
 	if [ -f "/usr/sbin/isenkram-autoinstall-firmware" ];then
@@ -157,5 +152,5 @@ post_disto_Drivers_installer(){
 		my-superuser pam-auth-update --enable fprintd
 	fi
 	
-	touch "${installer_phases}/post_disto_Drivers_installer"
+	touch "${installer_phases}/disto_Drivers_installer"
 }

@@ -1,4 +1,4 @@
 #!/bin/sh
 disto_specific_Drivers_installer(){
-	:
+	touch "${installer_phases}/disto_specific_Drivers_installer"
 }

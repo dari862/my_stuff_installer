@@ -1,4 +1,4 @@
 #!/bin/sh
 disto_specific_apps_installer(){
-	:
+	touch "${installer_phases}/disto_specific_apps_installer"
 }

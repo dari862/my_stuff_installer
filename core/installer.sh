@@ -79,6 +79,7 @@ PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:$PATH
 var_for_distro_uninstaller="${__distro_path}/system_files/var_for_distro_uninstaller"
 
 list_of_apps_file_path="${temp_path}/list_of_apps"
+list_of_installed_apps_file_path="${temp_path}/list_of_installed_apps"
 
 # distro
 if [ -f /etc/os-release ];then
@@ -116,7 +117,6 @@ fingerprint_exist=true
 ################################################################################################################################
 # Function
 ################################################################################################################################
-
 show_m(){
 	message="${1-}"
 	printf '%b' "\n==[ \\033[1;32m${message}\\033[0m ]==\n"
@@ -601,54 +601,6 @@ must_install_apps()
 	touch "${installer_phases}/must_install_apps"
 }
 
-purge_some_unnecessary_pakages(){
-	[ -f "${installer_phases}/purge_some_unnecessary_pakages" ] && return
-	show_m "purge some unnecessary pakages"
-	# fonts-linuxlibertine break polybar 
-	# fonts-linuxlibertine installed from libreoffice
-	if [ "$run_purge_some_unnecessary_pakages" = "Y" ];then
-		to_be_purged=" aisleriot anthy kasumi aspell debian-reference-common fcitx fcitx-bin fcitx-frontend-gtk2 fcitx-frontend-gtk3 fcitx-mozc five-or-more four-in-a-row gnome-chess gnome-klotski gnome-mahjongg gnome-mines gnome-music gnome-nibbles gnome-robots gnome-sudoku gnome-taquin gnome-tetravex gnote goldendict hamster-applet hdate-applet hexchat hitori iagno khmerconverter lightsoff mate-themes malcontent mlterm mlterm-tiny mozc-utils-gui quadrapassel reportbug rhythmbox scim simple-scan sound-juicer swell-foop tali uim xboard xiterm+thai xterm im-config xfce4-notifyd xfce4-power-manager* "
-		
-		show_im "adding fonts-linuxlibertine to purging list (fonts-linuxlibertine break polybar) "
-		to_be_purged="${to_be_purged} linuxlibertine"
-		to_be_purged="${to_be_purged} ${install_autoinstall_firmware}"
-		show_im "purging apps"
-		remove_package_with_error2info "${to_be_purged}"
-	fi
-	touch "${installer_phases}/purge_some_unnecessary_pakages"
-}
-
-disable_some_unnecessary_services(){
-	[ -f "${installer_phases}/disable_some_unnecessary_services" ] && return
-	
-	if [ "$init_system_are" = "systemd" ];then
-		if [ "$run_disable_some_unnecessary_services" = "Y" ];then
-			show_m "Disable some unnecessary services"
-			
-			# INFO: Some boot services included in Debian are unnecesary for most usres (like NetworkManager-wait-online.service, ModemManager.service or pppd-dns.service)
-			for service in NetworkManager-wait-online.service ModemManager.service pppd-dns.service;do
-				init_manager stop $service || show_wm "fail to stop $service"
-				init_manager mask $service || show_wm "fail to mask $service"
-			done
-	
-			# Disable tracker (Data indexing for GNOME mostly)
-			for service in tracker-store.service tracker-miner-fs.service tracker-miner-rss.service tracker-extract.service tracker-miner-apps.service tracker-writeback.service;do
-				init_manager mask $service  || show_wm "fail to disable $service"
-			done
-			#init_manager mask gvfs-udisks2-volume-monitor.service || show_im "fail to disable gvfs.service"
-			#init_manager mask gvfs-daemon.service || show_wm "fail to disable gvfs.service"
-			#init_manager mask gvfs-metadata.service || show_wm "fail to disable gvfs.service"
-			
-			if init_manager status NetworkManager.service >/dev/null 2>&1;then
-				init_manager disable networking || show_wm "fail to disable networking"
-				init_manager stop systemd-networkd.service || show_wm "fail to stop systemd-networkd.service"
-				init_manager disable systemd-networkd.service || show_wm "fail to disable systemd-networkd.service"
-			fi
-		fi
-	fi
-	touch "${installer_phases}/disable_some_unnecessary_services"
-}
-
 clean_up_now(){
 	[ -f "${installer_phases}/clean_up_now" ] && return
 	show_m "clean_up_now"
@@ -911,15 +863,15 @@ set_package_manager(){
 	show_im "Using ${PACKAGER}"
 	if [ ! -f "${installer_phases}/set_package_manager" ];then
 		check_and_download_ "${PACKAGER}" "installer_repo"
-		echo "PACKAGER=\"${PACKAGER}\"" >> "${save_value_file}"
 		
 		if ! . "${temp_path}/${PACKAGER}";then
 			show_em "Error: Failed to source ${PACKAGER} from ${temp_path}"
 		fi
 		
-		if check_if_package_exist_in_repo --no-list-of-apps-file systemd >/dev/null 2>&1;then
+		create_package_list
+		
+		if package_installed systemd >/dev/null 2>&1;then
 			init_system_are="systemd"
-			echo "init_system_are=\"${init_system_are}\"" >> "${save_value_file}"
 		else
 			show_em "Error: variable init_system_are are empty"
 		fi
@@ -931,6 +883,8 @@ set_package_manager(){
 		
 		show_im "running pre_package_manager_"
 		pre_package_manager_
+		echo "PACKAGER=\"${PACKAGER}\"" >> "${save_value_file}"
+		echo "init_system_are=\"${init_system_are}\"" >> "${save_value_file}"
 		touch "${installer_phases}/set_package_manager"
 	else
 		if ! . "${temp_path}/${PACKAGER}";then
@@ -1077,6 +1031,7 @@ check_and_download_core_script(){
 		Distro_Specific_temp_path="${getthis_location}"
 		################################
 	fi
+	check_and_download_ "disto_specific_extra" "installer_repo/${distro_name_}"
 }
 
 mv_Distro_Specific(){
@@ -1084,6 +1039,16 @@ mv_Distro_Specific(){
 	show_im "moving Distro Specific files."
 	"${Distro_Specific_temp_path}"/Distro_Specific/installer "${distro_name_}" "${PACKAGER}"
 	touch "${installer_phases}/mv_Distro_Specific"
+}
+
+__Done(){
+	show_m "Done"
+	
+	if [ "$reboot_now" = "Y" ];then
+		${__distro_path}/system_files/bin/my_session_manager --no-confirm reboot
+	fi
+	
+	exit
 }
 
 ################################################################################################################################
@@ -1133,69 +1098,96 @@ clear
 
 _unattended_upgrades_ stop
 
-List_of_apt_2_install_=""
-
 if [ "$install_drivers" = "true" ] && [ "$install_apps" = "true" ];then
 	show_m "Sourcing drivers and apps files."
 elif [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
 	show_m "Sourcing $arg_ files."
 fi
-
+	
 if [ "$install_drivers" = "true" ];then
-	source_this_script "disto_Drivers_list" "Add drivers list from (disto_Drivers_list)"
 	source_this_script "disto_Drivers_installer" "Source Install drivers functions from (disto_Drivers_installer)"
 	source_this_script "disto_specific_Drivers_installer" "Source Install drivers functions from (disto_specific_Drivers_installer)"
-	pre_disto_Drivers_installer || show_em "failed to run pre_disto_Drivers_installer"
 fi
-
-List_of_apt_2_install_=""
-
+	
 if [ "$install_apps" = "true" ];then
-	source_this_script "disto_apps_list" "Add apps list from (disto_apps_list)"
 	source_this_script "disto_apps_installer" "Source Install apps functions from (disto_apps_installer)"
 	source_this_script "disto_specific_apps_installer" "Source Install apps functions from (disto_specific_apps_installer)"
-	pre_disto_apps_installer || show_em "failed to run pre_disto_apps_installer"
+fi
+	
+if [ ! -f "${installer_phases}/create_List_of_apt_2_install_" ];then
+	List_of_apt_2_install_=""
+	if [ "$install_drivers" = "true" ];then
+		source_this_script "disto_Drivers_list" "Add drivers list from (disto_Drivers_list)"
+	fi
+		
+	if [ "$install_apps" = "true" ];then
+		source_this_script "disto_apps_list" "Add apps list from (disto_apps_list)"
+	fi
+	if [ "$install_drivers" = "true" ] && [ "$install_apps" = "true" ];then
+		show_m "Sourcing drivers and apps files."
+	elif [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
+		show_m "Sourcing $arg_ files."
+	fi
+	
+	if [ "$install_drivers" = "true" ];then
+		pre_disto_Drivers_installer || show_em "failed to run pre_disto_Drivers_installer"
+	fi
+	
+	if [ "$install_apps" = "true" ];then
+		pre_disto_apps_installer || show_em "failed to run pre_disto_apps_installer"
+	fi
+	install_lightdm_now
+	
+	install_network_manager
+	
+	if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
+		echo "List_of_apt_2_install_=\"$List_of_apt_2_install_\"" >> "${save_value_file}"
+	fi
+	touch "${installer_phases}/create_List_of_apt_2_install_"
 fi
 
-if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
-	show_m "Install list of apps."
-	List_of_apt_2_install_="$List_of_drives_2_install_ $List_of_apps_2_install_"
-	echo "List_of_apt_2_install_=\"$List_of_apt_2_install_\"" >> "${save_value_file}"
-	install_packages || show_em "failed to run install_packages"
+if [ ! -f "${installer_phases}/install_List_of_apt_2_install_" ];then
+	if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
+		show_m "Install list of apps."
+		install_packages || show_em "failed to run install_packages"
+		touch "${installer_phases}/install_List_of_apt_2_install_"
+	fi
 fi
+##################################################################################
+##################################################################################
+# no internet needed  part
+##################################################################################
+##################################################################################
 
 if [ "$install_drivers" = "true" ];then
-	post_disto_Drivers_installer || show_em "failed to run post_disto_Drivers_installer"
-	disto_specific_Drivers_installer || show_em "failed to run disto_specific_Drivers_installer"
+	[ ! -f "${installer_phases}/disto_Drivers_installer" ] && (post_disto_Drivers_installer || show_em "failed to run post_disto_Drivers_installer")
+	[ ! -f "${installer_phases}/disto_specific_Drivers_installer" ] && (disto_specific_Drivers_installer || show_em "failed to run disto_specific_Drivers_installer")
 fi
 
 if [ "$install_apps" = "true" ];then
-	post_disto_apps_installer || show_em "failed to run post_disto_apps_installer"
-	disto_specific_apps_installer || show_em "failed to run disto_specific_apps_installer"
+	[ ! -f "${installer_phases}/disto_apps_installer" ] && (post_disto_apps_installer || show_em "failed to run post_disto_apps_installer")
+	[ ! -f "${installer_phases}/disto_specific_apps_installer" ] && (disto_specific_apps_installer || show_em "failed to run disto_specific_apps_installer")
 fi
 
-install_lightdm_now
+switch_lightdm_now
 
 switch_to_network_manager
 
 _unattended_upgrades_ start
 
 if [ "$install_drivers" = "false" ] && [ "$install_apps" = "true" ];then
-	show_m "Done"
-	exit
+	__Done
 elif [ "$install_drivers" = "true" ] && [ "$install_apps" = "false" ];then
-	show_m "Done"
-	exit
+	__Done
 fi
 
 ##################################################################################
-##################################################################################
-# no internet needed  part
-##################################################################################
-##################################################################################
+
 show_m "Sourceing disto_configer."
 source_this_script "disto_configer" "Configering My Stuff."
 mv_Distro_Specific
+
+source_this_script "disto_specific_extra" "Source purge_some_unnecessary_pakages and  disable_some_unnecessary_services from (disto_specific_extra)"
 
 purge_some_unnecessary_pakages
 
@@ -1224,8 +1216,4 @@ switch_default_xsession
 
 switch_to_doas_now
 
-show_m "Done"
-
-if [ "$reboot_now" = "Y" ];then
-	${__distro_path}/system_files/bin/my_session_manager --no-confirm reboot
-fi
+__Done
