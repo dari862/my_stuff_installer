@@ -148,7 +148,7 @@ post_disto_Drivers_installer(){
 		echo "GPU_Drivers_ready=true" >> "${save_value_file}"
 	fi
 	
-	if command_exist fprintd-verify;then
+	if command_exist fprintd-verify && command_exist pam-auth-update;then
 		my-superuser pam-auth-update --enable fprintd
 	fi
 	

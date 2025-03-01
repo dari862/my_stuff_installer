@@ -90,6 +90,30 @@ if [ -f /etc/os-release ];then
 	distro_name_and_ver_=$ID$version_
 fi
 
+case ${distro_name_} in
+	*arch*)
+		distro_name_="arch"
+	;;
+
+	*debian*)
+		distro_name_="debian"
+	;;
+
+	*fedora*)
+		distro_name_="fedora"
+	;;
+	
+	*opensuse*)
+		distro_name_="opensuse"
+	;;
+	
+	*ubuntu*)
+		distro_name_="ubuntu"
+	;;
+esac
+
+
+
 PACKAGEMANAGER='apt-get dnf pacman zypper'
 for pgm in ${PACKAGEMANAGER}; do
 	if command -v ${pgm} >/dev/null 2>&1;then
