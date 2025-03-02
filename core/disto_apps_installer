@@ -5,6 +5,12 @@ pre_disto_apps_installer(){
 	##################################################################################
 	# main
 	##################################################################################
+	if lsmod | grep -q ip_tables;then
+		add_packages_2_install_list "${install_ufw_apps}"
+	else
+		failed_2_install_ufw=true
+	fi
+	
 	if [ "$this_is_laptop" = true ];then
 		add_packages_2_install_list "${install_if_laptop}"
 	fi
@@ -125,6 +131,9 @@ post_disto_apps_installer(){
 	
 	if command_exist ufw >/dev/null
 	then
+		my-superuser ufw disable >/dev/null 2>&1
+		show_im "Disableing (UFW)"
+		
     	my-superuser ufw limit 22/tcp
     	show_im "Limiting port 22/tcp (UFW)"
 	

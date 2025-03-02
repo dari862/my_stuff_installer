@@ -206,6 +206,21 @@ run_package_manager_autoclean(){
 	show_im "autoremove unwanted pakages"
 	$_SUPERUSER apt-get autoremove -y
 	$_SUPERUSER apt-get autoclean -y
+	my-superuser du -h /var/cache/apt
+      
+    if [ -d /var/tmp ]; then
+        my-superuser find /var/tmp -type f -atime +5 -delete
+    fi
+    if [ -d /tmp ]; then
+        my-superuser find /tmp -type f -atime +5 -delete
+    fi
+    if [ -d /var/log ]; then
+        my-superuser find /var/log -type f -name "*.log" -exec truncate -s 0 {} \;
+    fi
+
+	if [ "$init_system_are" = "systemd" ]; then
+        my-superuser journalctl --vacuum-time=3d
+    fi
 }
 
 _unattended_upgrades_()

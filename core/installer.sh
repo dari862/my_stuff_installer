@@ -137,7 +137,8 @@ fi
 
 GPU_Drivers_ready=false
 this_is_laptop=false
-fingerprint_exist=true
+fingerprint_exist=false
+failed_2_install_ufw=false
 ################################################################################################################################
 # Function
 ################################################################################################################################
@@ -905,8 +906,10 @@ set_package_manager(){
 		
 		create_package_list
 		
-		if package_installed systemd >/dev/null 2>&1;then
+		if package_installed systemd ;then
 			init_system_are="systemd"
+		elif package_installed openrc;then
+			init_system_are="openrc"
 		else
 			show_em "Error: variable init_system_are are empty"
 		fi
@@ -1078,7 +1081,12 @@ mv_Distro_Specific(){
 
 __Done(){
 	show_m "Done"
-	
+	if [ "$failed_2_install_ufw" = true ];then
+		echo "Press any key to reboot."
+		stty -icanon -echo time 0 min 1
+		head -c1 >/dev/null
+		stty icanon echo
+	fi
 	if [ "$reboot_now" = "Y" ];then
 		${__distro_path}/system_files/bin/my_session_manager --no-confirm reboot
 	fi
@@ -1251,4 +1259,7 @@ switch_default_xsession
 
 switch_to_doas_now
 
+if [ "$failed_2_install_ufw" = true ];then
+	show_wm "failed to install ${install_ufw_apps}."
+fi
 __Done
