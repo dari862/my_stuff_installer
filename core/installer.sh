@@ -85,30 +85,34 @@ list_of_installed_apps_file_path="${temp_path}/list_of_installed_apps"
 if [ -f /etc/os-release ];then
 	# freedesktop.org and systemd
 	. /etc/os-release
-	version_="$(echo "${VERSION_ID}" | sed 's/.//g')"
-	distro_name_="$ID"
-	distro_name_and_ver_=$ID$version_
+	version_="$(echo "${VERSION_ID}" | tr -d '.')"
+	distro_name="$ID"
+	distro_desc="$PRETTY_NAME"
+	distro_name_and_ver_="$ID$version_"
+	distro_name_and_ver_2="${ID}_${version_}"
+	version_codename="${VERSION_CODENAME}"
+	VERSION_ID="$VERSION_ID"
 fi
 
-case ${distro_name_} in
+case ${distro_name} in
 	*arch*)
-		distro_name_="arch"
+		distro_name="arch"
 	;;
 
 	*debian*)
-		distro_name_="debian"
+		distro_name="debian"
 	;;
 
 	*fedora*)
-		distro_name_="fedora"
+		distro_name="fedora"
 	;;
 	
 	*opensuse*)
-		distro_name_="opensuse"
+		distro_name="opensuse"
 	;;
 	
 	*ubuntu*)
-		distro_name_="ubuntu"
+		distro_name="ubuntu"
 	;;
 esac
 
@@ -257,7 +261,7 @@ prompt_to_ask_to_what_to_install(){
 		return
 	fi
 	
-	if [ "$distro_name_" = "debian" ];then
+	if [ "$distro_name" = "debian" ];then
 		mirror="http://deb.debian.org/debian/"
 		mirror_security="http://security.debian.org/debian-security"
 		deb_lines_nonfree_firmware=$(grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non-free-firmware' || :)
@@ -278,7 +282,7 @@ prompt_to_ask_to_what_to_install(){
 		fi
 		
 		if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
-			if [ "$distro_name_" = "debian" ];then
+			if [ "$distro_name" = "debian" ];then
 				if [ -n "$deb_lines_contrib" ];then
 					if do_you_want_2_run_this_yes_or_no 'Do you want enable contrib repo?';then
 						enable_contrib=true
@@ -1042,15 +1046,15 @@ check_and_download_core_script(){
 	show_m "check if exsit and download core script."
 	
 	if [ "$install_drivers" = "true" ];then
-		check_and_download_ "disto_Drivers_list" "installer_repo/${distro_name_}" 
+		check_and_download_ "disto_Drivers_list" "installer_repo/${distro_name}" 
 		check_and_download_ "disto_Drivers_installer"
-		check_and_download_ "disto_specific_Drivers_installer" "installer_repo/${distro_name_}"
+		check_and_download_ "disto_specific_Drivers_installer" "installer_repo/${distro_name}"
 	fi
 	
 	if [ "$install_apps" = "true" ];then
-		check_and_download_ "disto_apps_list" "installer_repo/${distro_name_}"
+		check_and_download_ "disto_apps_list" "installer_repo/${distro_name}"
 		check_and_download_ "disto_apps_installer"
-		check_and_download_ "disto_specific_apps_installer" "installer_repo/${distro_name_}"
+		check_and_download_ "disto_specific_apps_installer" "installer_repo/${distro_name}"
 	fi
 	
 	if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
@@ -1069,14 +1073,29 @@ check_and_download_core_script(){
 		Distro_Specific_temp_path="${getthis_location}"
 		################################
 	fi
-	check_and_download_ "disto_specific_extra" "installer_repo/${distro_name_}"
+	check_and_download_ "disto_specific_extra" "installer_repo/${distro_name}"
 }
 
 mv_Distro_Specific(){
 	[ -f "${installer_phases}/mv_Distro_Specific" ] && return
 	show_im "moving Distro Specific files."
-	"${Distro_Specific_temp_path}"/Distro_Specific/installer "${distro_name_}" "${PACKAGER}"
+	"${Distro_Specific_temp_path}"/Distro_Specific/installer "${distro_name}" "${PACKAGER}"
 	touch "${installer_phases}/mv_Distro_Specific"
+}
+
+create_new_os_release_file(){
+	[ -f "${installer_phases}/create_new_os_release_file" ] && return
+	cp -r "/etc/os-release" "/usr/share/my_stuff/os-release"
+	my-superuser tee "/usr/share/my_stuff/os-release" <<- EOF > /dev/null 2>&1
+	version_="$version_"
+	distro_name="$distro_name"
+	distro_desc="$distro_desc"
+	distro_name_and_ver_="$distro_name_and_ver_"
+	distro_name_and_ver_2="$distro_name_and_ver_2"
+	version_codename="${version_codename}"
+	VERSION_ID="$VERSION_ID"
+	EOF
+	touch "${installer_phases}/create_new_os_release_file"
 }
 
 __Done(){
@@ -1258,6 +1277,8 @@ create_uninstaller_file
 switch_default_xsession
 
 switch_to_doas_now
+
+create_new_os_release_file
 
 if [ "$failed_2_install_ufw" = true ];then
 	show_wm "failed to install ${install_ufw_apps}."
