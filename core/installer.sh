@@ -1084,8 +1084,7 @@ mv_Distro_Specific(){
 }
 
 create_new_os_release_file(){
-	[ -f "${installer_phases}/create_new_os_release_file" ] && return
-	cp -r "/etc/os-release" "/usr/share/my_stuff/os-release"
+	[ -f "${installer_phases}/create_new_os_release_file" ] && returns
 	my-superuser tee "/usr/share/my_stuff/os-release" <<- EOF > /dev/null 2>&1
 	version_="$version_"
 	distro_name="$distro_name"
