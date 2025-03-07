@@ -88,10 +88,15 @@ remove_unnecessary_package_manager_stuff(){
 	:
 }
 
-run_package_manager_autoclean(){
+run_autoclean(){
+	show_im "run autoremove autoclean."
 	$_SUPERUSER dnf clean all
 	$_SUPERUSER dnf autoremove -y
-       
+}
+
+run_package_manager_autoclean(){
+	show_im "autoremove unwanted pakages"
+	run_autoclean       
     if [ -d /var/tmp ]; then
         my-superuser find /var/tmp -type f -atime +5 -delete
     fi
@@ -112,7 +117,8 @@ _unattended_upgrades_()
 }
 
 install_network_manager(){
-	:
+	network_manager_name="NetworkManager-1"
+	add_packages_2_install_list "${network_manager_name}"
 }
 
 install_lightdm_now(){
@@ -154,6 +160,12 @@ package_installed(){
 	else
 		return 1
 	fi
+}
+
+removeSnaps(){
+	[ -f "${installer_phases}/removeSnaps" ] && return
+	 my-superuser "$PACKAGER" remove -y snapd
+	touch "${installer_phases}/removeSnaps"
 }
 
 pre_package_manager_(){

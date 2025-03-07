@@ -596,6 +596,14 @@ wifi_mode_installation(){
 		nmcli radio wifi on
 		while :
 		do
+			show_im "Scanning for WiFi networks..."
+    		networks=$(nmcli -t -f SSID,BSSID,SIGNAL dev wifi list | awk -F: '!seen[$1]++' | head -n 10)
+    		if [ -z "$networks" ]; then
+        		show_wm "No networks found."
+    		else
+        		printf "%b\n" "Top 10 Networks found:"
+        		echo "$networks" | awk -F: '{printf("%d. SSID: %-25s \n", NR, $1)}'
+    		fi
 			nmcli --ask dev wifi connect && break
 		done
 	elif command_exist wpa_supplicant;then
@@ -650,6 +658,7 @@ clean_up_now(){
 	done
 	
 	[ "$autoclean_and_autoremove" = "Y" ] && run_package_manager_autoclean
+	removeSnaps
 	touch "${installer_phases}/clean_up_now"
 }
 

@@ -202,10 +202,15 @@ remove_unnecessary_package_manager_stuff(){
 	[ -f /etc/apt-fast.conf ] && show_sm "removing apt-fast.conf" && $_SUPERUSER rm -f /etc/apt-fast.conf
 }
 
-run_package_manager_autoclean(){
-	show_im "autoremove unwanted pakages"
+run_autoclean(){
+	show_im "run autoremove autoclean."
 	$_SUPERUSER apt-get autoremove -y
 	$_SUPERUSER apt-get autoclean -y
+}
+
+run_package_manager_autoclean(){
+	show_im "autoremove unwanted pakages"
+	run_autoclean
 	my-superuser du -h /var/cache/apt
       
     if [ -d /var/tmp ]; then
@@ -316,6 +321,14 @@ package_installed(){
 	else
 		return 1
 	fi
+}
+
+removeSnaps(){
+	[ -f "${installer_phases}/removeSnaps" ] && return
+	my-superuser "$PACKAGER" remove --purge -y snapd
+	my-superuser "$PACKAGER" autoremove -y
+	[ "$distro_name" = ubuntu ] && my-superuser apt-mark hold snapd
+	touch "${installer_phases}/removeSnaps"
 }
 
 pre_package_manager_(){

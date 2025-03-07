@@ -17,10 +17,7 @@ install_AUR_helper(){
     if ! command_exist yay && ! command_exist paru; then
         show_im "Installing yay as AUR helper..."
         $_SUPERUSER true
-        $_SUPERUSER ${PACKAGER} --noconfirm -Syu base-devel git
-        show_sm "clone yay-git..."
-        (cd /tmp && git clone https://aur.archlinux.org/yay-bin.git)
-        (cd /tmp/yay-bin && makepkg --noconfirm -si)
+        $_SUPERUSER ${PACKAGER} --noconfirm -Syu yay
     fi
     
     if command_exist yay; then
@@ -112,10 +109,15 @@ remove_unnecessary_package_manager_stuff(){
 	:
 }
 
-run_package_manager_autoclean(){
+run_autoclean(){
+	show_im "run autoremove autoclean."
 	${PACKAGER} -Sc --noconfirm
 	${PACKAGER} -Rns "$(pacman -Qtdq)" --noconfirm > /dev/null || true
-            
+}
+
+run_package_manager_autoclean(){
+	show_im "autoremove unwanted pakages"
+	run_autoclean            
     if [ -d /var/tmp ]; then
         my-superuser find /var/tmp -type f -atime +5 -delete
     fi
@@ -136,7 +138,8 @@ _unattended_upgrades_()
 }
 
 install_network_manager(){
-	:
+	network_manager_name="networkmanager"
+	add_packages_2_install_list "${network_manager_name}"
 }
 
 install_lightdm_now(){
@@ -176,6 +179,12 @@ package_installed(){
 	else
 		return 1
 	fi
+}
+
+removeSnaps(){
+	[ -f "${installer_phases}/removeSnaps" ] && return
+	my-superuser "$PACKAGER" -Rns snapd --noconfirm
+	touch "${installer_phases}/removeSnaps"
 }
 
 pre_package_manager_(){
