@@ -911,8 +911,10 @@ set_package_manager(){
 	show_m "running set_package_manager function"
 	show_im "Using ${PACKAGER}"
 	if [ ! -f "${installer_phases}/set_package_manager" ];then
-		check_and_download_ "${PACKAGER}" "installer_repo"
-		mv "${temp_path}/${PACKAGER}" "${temp_path}/PACKAGE_MANAGER"
+		if [ ! -f "${temp_path}/PACKAGE_MANAGER" ];then
+			check_and_download_ "${PACKAGER}" "installer_repo"
+			mv "${temp_path}/${PACKAGER}" "${temp_path}/PACKAGE_MANAGER"
+		fi
 		if ! . "${temp_path}/PACKAGE_MANAGER";then
 			show_em "Error: Failed to source PACKAGE_MANAGER from ${temp_path}"
 		fi

@@ -18,7 +18,7 @@ install_AUR_helper(){
     if ! command_exist yay && ! command_exist paru; then
     	$_SUPERUSER ${PACKAGER} --noconfirm -Syu
     	for package in yay yay-bin yay-git;do
-    		pacman -Ss $package >/dev/null 2>&1 && yay_package_name="$package"
+    		pacman -Ss $package 2>/dev/null | grep -q "/$package " && yay_package_name="$package"
     		break
     	done
         if [ -n "$yay_package_name" ];then
