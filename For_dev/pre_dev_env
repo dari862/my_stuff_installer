@@ -56,7 +56,7 @@ set_date_and_time(){
 }
 
 remove_cdrom_from_apt(){
-	if grep 'deb cdrom' /etc/apt/sources.list;then
+	if grep -q 'deb cdrom' /etc/apt/sources.list;then
 		$__superuser sed -i '/deb cdrom/d' /etc/apt/sources.list
 	fi
 }
@@ -82,6 +82,7 @@ git_clone_repos(){
 	done
 	
 	ln -sf my_stuff_installer/For_dev/push_to_git .
+	ln -sf my_stuff_installer/For_dev/dev_scripts .
 	ln -sf my_stuff_installer/workon .
 }
 

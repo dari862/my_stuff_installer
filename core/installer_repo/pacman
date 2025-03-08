@@ -14,10 +14,25 @@ fi
 
 install_AUR_helper(){
 	[ -f "${installer_phases}/install_AUR_helper" ] && return
+	$_SUPERUSER true
+	$_SUPERUSER ${PACKAGER} --noconfirm -Syu
     if ! command_exist yay && ! command_exist paru; then
+    	for package in yay yay-bin yay-git;do
+    		pacman -Ss $package >/dev/null 2>&1 && yay_package_name="$package"
+    		break
+    	done
         show_im "Installing yay as AUR helper..."
-        $_SUPERUSER true
-        $_SUPERUSER ${PACKAGER} --noconfirm -Syu yay
+        if [ -n "$yay_package_name" ];then
+        	$_SUPERUSER ${PACKAGER} --noconfirm -Syu $yay_package_name
+        else
+        	show_im "building yay from source..."
+        	$_SUPERUSER pacman -S --needed git base-devel
+        	cd /tmp
+        	git clone https://aur.archlinux.org/yay-bin.git
+        	chmod -R 700 yay-bin
+			cd yay-bin
+			makepkg -si
+        fi
     fi
     
     if command_exist yay; then
@@ -183,7 +198,7 @@ package_installed(){
 
 removeSnaps(){
 	[ -f "${installer_phases}/removeSnaps" ] && return
-	my-superuser "$PACKAGER" -Rns snapd --noconfirm
+	command -v snap >/dev/null 2>&1 && my-superuser "$PACKAGER" -Rns snapd --noconfirm
 	touch "${installer_phases}/removeSnaps"
 }
 

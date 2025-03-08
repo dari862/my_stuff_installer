@@ -161,7 +161,7 @@ package_installed(){
 
 removeSnaps(){
 	[ -f "${installer_phases}/removeSnaps" ] && return
-	 my-superuser "$PACKAGER" remove -y snapd
+	command -v snap >/dev/null 2>&1 && my-superuser "$PACKAGER" remove -y snapd
 	touch "${installer_phases}/removeSnaps"
 }
 

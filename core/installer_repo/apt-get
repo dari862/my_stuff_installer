@@ -325,9 +325,11 @@ package_installed(){
 
 removeSnaps(){
 	[ -f "${installer_phases}/removeSnaps" ] && return
-	my-superuser "$PACKAGER" remove --purge -y snapd
-	my-superuser "$PACKAGER" autoremove -y
-	[ "$distro_name" = ubuntu ] && my-superuser apt-mark hold snapd
+	if command -v snap >/dev/null 2>&1 ;then
+		my-superuser "$PACKAGER" remove --purge -y snapd
+		my-superuser "$PACKAGER" autoremove -y
+		[ "$distro_name" = ubuntu ] && my-superuser apt-mark hold snapd
+	fi
 	touch "${installer_phases}/removeSnaps"
 }
 
