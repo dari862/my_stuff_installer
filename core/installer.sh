@@ -871,7 +871,7 @@ purge_sudo(){
 keep_superuser_refresed(){
 	while true;do
 		sudo true
-		sleep 10m
+		sleep 30
 	done
 }
 

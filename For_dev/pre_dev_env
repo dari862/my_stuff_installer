@@ -87,7 +87,8 @@ git_clone_repos(){
 }
 
 install_all_packages_in_repo(){
-	all_packages_are="$(cat my_stuff_installer/core/disto_apps_list my_stuff_installer/core/disto_Drivers_list | grep "install_" | grep "=" | grep -vE "${dont_install}" | grep -oP '(?<=\")[^\"]*(?=\")')"
+	. /etc/os-release
+	all_packages_are="$(cat my_stuff_installer/core/installer_repo/$ID/disto_apps_list my_stuff_installer/core/installer_repo/$ID/disto_Drivers_list | grep "install_" | grep "=" | grep -vE "${dont_install}" | grep -oP '(?<=\")[^\"]*(?=\")')"
 	
 	printf ""
 	printf "Do you want to install all software in disto_Installapps_list disto_Drivers? [y|n]"

@@ -26,12 +26,11 @@ install_AUR_helper(){
         	$_SUPERUSER pacman --noconfirm -Syu $yay_package_name
         else
         	show_im "building yay from source..."
-        	$_SUPERUSER pacman -S --needed git base-devel
-        	cd /tmp
-        	git clone https://aur.archlinux.org/yay-bin.git
-        	chmod -R 700 yay-bin
-			cd yay-bin
-			makepkg -si
+        	$_SUPERUSER pacman -Syu --needed git base-devel
+        	[ -d "/tmp/yay-bin" ] && rm -rdf /tmp/yay-bin
+        	git clone https://aur.archlinux.org/yay-bin.git /tmp/yay-bin
+        	chmod -R 700 /tmp/yay-bin
+			(cd /tmp/yay-bin && makepkg -si)
         fi
     else
     	${PACKAGER} --noconfirm -Syu
