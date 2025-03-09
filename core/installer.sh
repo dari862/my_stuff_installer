@@ -178,6 +178,7 @@ show_sm(){
 }
 
 test_internet_(){
+	[ -f "${installer_phases}/no_internet_needed" ] && return
 	show_m "Testing internet connection."
 	
 	if ! internet_tester ;then
@@ -1225,6 +1226,8 @@ if [ ! -f "${installer_phases}/install_List_of_apt_2_install_" ];then
 		touch "${installer_phases}/install_List_of_apt_2_install_"
 	fi
 fi
+
+touch "${installer_phases}/no_internet_needed" 
 ##################################################################################
 ##################################################################################
 # no internet needed  part
