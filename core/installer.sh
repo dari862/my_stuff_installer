@@ -870,6 +870,8 @@ purge_sudo(){
 }
 
 keep_superuser_refresed(){
+	[ "$sudo_installed" = "false" ] && return
+	show_im "running keep_superuser_refresed"
 	while true;do
 		sudo true
 		sleep 30
@@ -1144,7 +1146,8 @@ if [ -n "$_SUPERUSER" ];then
 	$_SUPERUSER ln -sf $(which $_SUPERUSER) /usr/bin/my-superuser
 	$_SUPERUSER true
 	
-	[ "$sudo_installed" = "true" ] && show_im "running keep_superuser_refresed" && keep_superuser_refresed &
+	keep_superuser_refresed &
+	sleep 0.5
 fi
 
 pick_file_downloader_and_url_checker
