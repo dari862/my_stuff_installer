@@ -1,0 +1,4 @@
+#!/bin/sh
+for package in xdotool wmctrl;do
+	grep -r "${package}" -I ~/Desktop/my_stuff | awk -F: '{print $1}' | sort -u > ~/Desktop/${package}.txt
+done

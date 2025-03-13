@@ -30,7 +30,7 @@ install_AUR_helper(){
         	[ -d "/tmp/yay-bin" ] && rm -rdf /tmp/yay-bin
         	git clone https://aur.archlinux.org/yay-bin.git /tmp/yay-bin
         	chmod -R 700 /tmp/yay-bin
-			(cd /tmp/yay-bin && makepkg -si)
+			(cd /tmp/yay-bin && makepkg -si --noconfirm)
         fi
     else
     	${PACKAGER} --noconfirm -Syu

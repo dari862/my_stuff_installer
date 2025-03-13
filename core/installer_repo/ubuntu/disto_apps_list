@@ -2,7 +2,7 @@
 #must have apps
 install_core_apps="arandr autorandr"
 install_ufw_apps="ufw"
-install_X11_apps="xorg xserver-xorg-input-all xinput dbus-x11 xinit xdg-user-dirs x11-xserver-utils xclip xwallpaper"
+install_X11_apps="x11-utils xorg xserver-xorg-input-all xinput dbus-x11 xinit xdg-user-dirs x11-xserver-utils xclip xwallpaper"
 install_must_have_apps="jq cbatticon xprintidle yad git rofi picom mlocate htop unzip dunst libnotify-bin"
 install_must_have_apps2="psmisc pnmixer gparted inxi s-tui dfc hwinfo synaptic galternatives xdotool acl lm-sensors ntfs-3g"
 install_openbox_="openbox obconf xcape tint2"
@@ -24,8 +24,8 @@ install_polkit_apps="policykit-1 policykit-1-gnome gnome-keyring"
 #firefox
 install_firefox_="firefox-esr"
 
-# slop for ac-shots and screen recoding , ffmpeg for screen recoding , at for bl-beepmein , xsel for files-uploader , wmctrl for style-manager and files-uploader
-install_for_scripts="slop ffmpeg at xsel wmctrl"
+# slop for ac-shots and screen recoding , ffmpeg for screen recoding , at for bl-beepmein , wmctrl for style-manager and files-uploader
+install_for_scripts="slop ffmpeg at wmctrl"
 
 #######################
 ## extra apps

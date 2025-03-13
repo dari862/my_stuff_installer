@@ -105,7 +105,7 @@ end_of_post_install(){
 	if [ "$(cat /sys/devices/virtual/dmi/id/chassis_type)" = "1" ];then # 1 eq vm
 		# disable vsync from picom (vsync in virtual machine make issues)
 		show_im "picom vm"
-		my-superuser sed -i "s/^vsync = .*/vsync = false;/g" "${__distro_path}"/system_files/skel/.config/picom/Backend.conf
+		my-superuser sed -i "s/^vsync = .*/vsync = false;/g" "${__distro_path}"/system_files/skel/.config/picom.conf
 	fi
 	
 	show_im "Create lightdm.conf."
