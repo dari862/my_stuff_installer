@@ -24,12 +24,7 @@ pre_post_install(){
 		show_im "fingerprint ready ."
 		my-superuser touch "${__distro_path}"/system_files/fingerprint_exist
 	fi
-	
-	if [ -f "${temp_path}/envycontrol_updater_DmDmDmdMdMdM" ];then
-		my-superuser mv "${temp_path}"/envycontrol_updater_DmDmDmdMdMdM "${__distro_path}"/system_files/updater/envycontrol
-		show_im "runing envycontrol_updater"
-		my-superuser ${__distro_path}/system_files/updater/envycontrol
-	fi
+
 	my-superuser touch "${installer_phases}/pre_post_install"
 }
 

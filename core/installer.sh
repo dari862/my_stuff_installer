@@ -15,12 +15,6 @@ NETWORK_TEST="network-test.debian.org"
 url_to_test=debian.org
 test_dns="1.1.1.1"
 
-mirror=""
-mirror_security=""
-deb_lines_contrib=""
-deb_lines_nonfree_firmware=""
-deb_lines_nonfree=""
-
 export temp_path="${temp_path}"
 prompt_to_install_value_file="${temp_path}/value_of_picked_option_from_prompt_to_install"
 save_value_file="${temp_path}/save_value_file"
@@ -38,9 +32,6 @@ SUGROUP=""
 internet_status=""
 disto_lib_location=""
 
-install_GPU_Drivers="install_GPU"
-_cuda_=""
-_kernel_open_dkms_=""
 run_purge_some_unnecessary_pakages="Y"
 run_disable_some_unnecessary_services="Y"
 disable_ipv6_stack="Y"
@@ -129,8 +120,6 @@ if [ -z "${PACKAGER}" ];then
 	echo "Error: Can't find a supported package manager"
 fi
 		
-mirror="http://deb.debian.org/debian/"
-mirror_security="http://security.debian.org/debian-security"
 only_doas_installed=false
 
 if [ -d "$HOME/Desktop" ];then
@@ -139,7 +128,6 @@ else
 	dir_2_find_files_in="${temp_path}"
 fi
 
-GPU_Drivers_ready=false
 this_is_laptop=false
 fingerprint_exist=false
 failed_2_install_ufw=false
@@ -261,14 +249,7 @@ prompt_to_ask_to_what_to_install(){
 	if [ "${source_prompt_to_install_file}" = "true" ];then
 		return
 	fi
-	
-	if [ "$distro_name" = "debian" ];then
-		mirror="http://deb.debian.org/debian/"
-		mirror_security="http://security.debian.org/debian-security"
-		deb_lines_nonfree_firmware=$(grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v 'non-free-firmware' || :)
-		deb_lines_contrib=$(grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v contrib || :)
-		deb_lines_nonfree=$(grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" /etc/apt/sources.list | grep -v "non-free[[:blank:]]" || :)
-	fi
+
 	show_m "prompt for what do you want to install."
 	
 	if [ "$auto_run_script" != "true" ];then
@@ -281,58 +262,7 @@ prompt_to_ask_to_what_to_install(){
 				switch_to_doas=true
 			fi
 		fi
-		
-		if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
-			if [ "$distro_name" = "debian" ];then
-				if [ -n "$deb_lines_contrib" ];then
-					if do_you_want_2_run_this_yes_or_no 'Do you want enable contrib repo?';then
-						enable_contrib=true
-					else
-						enable_contrib=false
-					fi
-				fi
-				if [ -n "$deb_lines_nonfree_firmware" ];then
-					if do_you_want_2_run_this_yes_or_no 'Do you want enable nonfree_firmware repo?';then
-						enable_nonfree_firmware=true
-					else
-						enable_nonfree_firmware=false
-					fi
-				fi
-				if [ -n "$deb_lines_nonfree" ];then
-					if do_you_want_2_run_this_yes_or_no 'Do you want enable nonfree repo?';then
-						enable_nonfree=true
-					else
-						enable_nonfree=false
-					fi
-				fi
-			fi
-		fi
-		
-		if [ "$install_drivers" = "true" ];then
-			if do_you_want_2_run_this_yes_or_no 'do you want to install GPU drivers?';then
-				install_GPU_Drivers="Y"
-				if lspci | grep -i nvidia | grep VGA -q;then
-					enable_nvidia_repo="true"
-					if do_you_want_2_run_this_yes_or_no 'do you want to add Cuda Support?';then
-						_cuda_="Y"
-					else
-						_cuda_=""
-					fi
-					
-					if do_you_want_2_run_this_yes_or_no 'do you want to install opensource nvidia-kernel?';then
-						_kernel_open_dkms_="Y"
-					else
-						_kernel_open_dkms_=""
-					fi
-				else
-					_cuda_=""
-					_kernel_open_dkms_=""
-				fi
-			else
-				install_GPU_Drivers=""
-			fi
-		fi
-		
+
 		if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
 			if do_you_want_2_run_this_yes_or_no 'do you want to purge some unnecessary pakages?';then
 				run_purge_some_unnecessary_pakages="Y"
@@ -472,9 +402,6 @@ create_prompt_to_install_value_file(){
 		enable_contrib="${enable_contrib}"
 		enable_nonfree_firmware="${enable_nonfree_firmware}"
 		enable_nonfree="${enable_nonfree}"
-		install_GPU_Drivers="${install_GPU_Drivers}"
-		_cuda_="${_cuda_}"
-		_kernel_open_dkms_="${_kernel_open_dkms_}"
 		run_purge_some_unnecessary_pakages="${run_purge_some_unnecessary_pakages}"
 		run_disable_some_unnecessary_services="${run_disable_some_unnecessary_services}"
 		disable_ipv6="${disable_ipv6}"
@@ -1093,7 +1020,7 @@ check_and_download_core_script(){
 mv_Distro_Specific(){
 	[ -f "${installer_phases}/mv_Distro_Specific" ] && return
 	show_im "moving Distro Specific files."
-	"${Distro_Specific_temp_path}"/Distro_Specific/installer "${distro_name}" "${PACKAGER}"
+	my-superuser "${Distro_Specific_temp_path}"/Distro_Specific/installer "${distro_name}" "${PACKAGER}"
 	touch "${installer_phases}/mv_Distro_Specific"
 }
 

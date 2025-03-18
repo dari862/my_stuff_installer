@@ -35,77 +35,6 @@ install_apt_fast(){
   	[ ! -f /etc/apt-fast.conf ] && download_file "$_SUPERUSER" "${apt_fast_url}/apt-fast.conf" "/etc/apt-fast.conf"
 }
 
-enable_repo_contrib(){
-	show_sm "enable_repo_contrib"
-	while IFS= read -r line;do
-		if echo "${line}" | grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" | grep -qv contrib;then
-			$_SUPERUSER sed -i "s|^${line}$|${line} contrib|g" /etc/apt/sources.list
-		fi
-	done < /etc/apt/sources.list
-}
-
-enable_repo_nonfree_firmware(){
-	show_sm "enable_repo_nonfree_firmware"
-	while IFS= read -r line;do
-		if echo "${line}" | grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" | grep -qv 'non-free-firmware';then
-			$_SUPERUSER sed -i "s|^${line}$|${line} nonfreefirmware|g" /etc/apt/sources.list
-		fi
-	done < /etc/apt/sources.list
-	$_SUPERUSER sed -i 's/nonfreefirmware/non-free-firmware/g'  /etc/apt/sources.list
-}
-
-enable_repo_nonfree(){
-	show_sm "enable_repo_nonfree"
-	while IFS= read -r line;do
-		if echo "${line}" | grep -E "^(deb|deb-src) (${mirror}|${mirror_security})" | grep -qv "non-free[[:blank:]]";then
-			$_SUPERUSER sed -i "s|^${line}$|${line} nonfreeonly|g" /etc/apt/sources.list
-		fi
-	done < /etc/apt/sources.list
-	$_SUPERUSER sed -i 's/nonfreeonly/non-free/g'  /etc/apt/sources.list
-}
-
-enable_nvidia_gpu_repo(){
-	if [ ! -f "/usr/share/keyrings/nvidia-drivers.gpg" ];then
-		show_sm "add nvidia-drivers keyrings"
-		get_url_content "https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/3bf863cc.pub" | $_SUPERUSER gpg --dearmor | $_SUPERUSER tee /usr/share/keyrings/nvidia-drivers.gpg > /dev/null 2>&1
-	fi
-				
-	if [ ! -f "/etc/apt/sources.list.d/nvidia-drivers.list" ];then
-		show_sm "add nvidia-drivers repo"
-		echo "deb [signed-by=/usr/share/keyrings/nvidia-drivers.gpg] https://developer.download.nvidia.com/compute/cuda/repos/$distro_name_and_ver_/x86_64/ /" | $_SUPERUSER tee /etc/apt/sources.list.d/nvidia-drivers.list > /dev/null 2>&1
-	fi
-}
-
-enable_repo_(){
-	update_now=false
-	if [ "$enable_contrib" = true ];then
-		enable_repo_contrib && update_now=true
-	fi
-	
-	if [ "$enable_nonfree_firmware" = true ];then
-		enable_repo_nonfree_firmware && update_now=true
-	fi
-	
-	if [ "$enable_nonfree" = true ];then
-		enable_repo_nonfree && update_now=true
-	fi
-	
-	if [ "${enable_nvidia_repo}" = "true" ];then
-		enable_nvidia_gpu_repo
-	fi
-
-	if [ "$distro_name" = "ubuntu" ];then
-		show_sm "enable  universe  multiverse repo"
-		$_SUPERUSER apt-get install -y software-properties-common
-		$_SUPERUSER add-apt-repository -y universe
-		$_SUPERUSER add-apt-repository -y multiverse
-	fi
-		
-	if [ "$update_now" = true ];then
-		aptupdate
-	fi
-}
-
 ##################################
 # for rest
 ##################################
@@ -340,7 +269,6 @@ pre_package_manager_(){
 	init_manager stop apt-daily.timer
 	init_manager stop apt-daily-upgrade.timer
 	aptfixer
-	enable_repo_
 	install_apt_fast || :
 	if command_exist apt-get;then
 		PACKAGER="apt-get"

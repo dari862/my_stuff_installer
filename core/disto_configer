@@ -44,8 +44,13 @@ for e in ${__distro_path}/Theme_Stuff/fonts/* ; do
 	my-superuser ln -sf "$e" /usr/share/fonts
 done
 
-show_im "update fonts cache"
+show_im "update fonts cache."
 my-superuser fc-cache -vf
-show_im "update icons cache"
+
+show_im "update icons cache."
 my-superuser gtk-update-icon-cache
+
+show_im "create Distro_Specific dir."
+my-superuser ln -sf "${__distro_path}/All_Distro_Specific/${distro_name}" "/usr/share/my_stuff/Distro_Specific"
+
 touch "${installer_phases}/disto_configer"
