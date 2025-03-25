@@ -4,7 +4,6 @@ install_audio="pulseaudio pavucontrol"
 install_drivers_if_laptop="acpi upower"
 install_drivers_if_laptop_xbacklight="xorg-xbacklight"
 install_drivers_if_laptop_light="light"
-install_fingerprint="fprintd libfprint"
 install_wireless="wireless_tools"
 install_bluetooth="bluez bluez-utils blueman"
 install_autoinstall_firmware="" # No direct equivalent in Arch, use 'linux-firmware' if needed

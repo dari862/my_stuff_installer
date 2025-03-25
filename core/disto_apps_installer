@@ -11,7 +11,7 @@ pre_disto_apps_installer(){
 		failed_2_install_ufw=true
 	fi
 	
-	if [ "$this_is_laptop" = true ];then
+	if [ "$machine_type_are" = "laptop" ];then
 		add_packages_2_install_list "${install_if_laptop}"
 	fi
 	add_packages_2_install_list "${install_core_apps}"
@@ -102,7 +102,7 @@ post_disto_apps_installer(){
 		init_manager disable mpd.service
 	fi
 	
-	if [ "$this_is_laptop" = true ];then
+	if [ "$machine_type_are" = "laptop" ];then
 		show_im "some config"
 		if my-superuser dmesg | grep -qi bluetooth || my-superuser lsusb 2>/dev/null | grep -qi bluetooth || [ -d "/sys/class/bluetooth" ];then
 			[ -f "/etc/tlp.conf" ] && my-superuser sed -i "s/#DEVICES_TO_DISABLE_ON_STARTUP=.*/DEVICES_TO_DISABLE_ON_STARTUP=\"bluetooth\"/g" /etc/tlp.conf

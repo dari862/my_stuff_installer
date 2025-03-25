@@ -4,7 +4,6 @@ set -e
 # Var
 ################################################################################################################################
 __distro_path="/usr/share/my_stuff"
-lib_file_name="disto_lib"
 auto_run_script="false" # true to enable
 temp_path="/tmp/temp_distro_installer_dir"
 installer_phases="${temp_path}/installer_phases"
@@ -30,7 +29,6 @@ elif [ "$arg_" = "apps" ];then
 fi
 SUGROUP=""
 internet_status=""
-disto_lib_location=""
 
 run_purge_some_unnecessary_pakages="Y"
 run_disable_some_unnecessary_services="Y"
@@ -60,14 +58,13 @@ source_prompt_to_install_file=""
 getthis_location=""
 my_stuff_temp_path=""
 theme_temp_path=""
-Distro_Specific_temp_path=""
 
 doas_installed=false
 sudo_installed=false
 
 PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:$PATH
-
-var_for_distro_uninstaller="${__distro_path}/system_files/var_for_distro_uninstaller"
+never_remove_dir_path="${__distro_path}/never_remove"
+var_for_distro_uninstaller="${never_remove_dir_path}/var_for_distro_uninstaller"
 
 list_of_apps_file_path="${temp_path}/list_of_apps"
 list_of_installed_apps_file_path="${temp_path}/list_of_installed_apps"
@@ -128,9 +125,10 @@ else
 	dir_2_find_files_in="${temp_path}"
 fi
 
-this_is_laptop=false
-fingerprint_exist=false
 failed_2_install_ufw=false
+
+machine_type_are=""
+
 ################################################################################################################################
 # Function
 ################################################################################################################################
@@ -419,6 +417,48 @@ create_prompt_to_install_value_file(){
 		reboot_now="${reboot_now}"		
 	EOF
 }
+
+check_and_download_()
+{
+	check_this_file_="${1:-}"
+	file_dir="${2:-}"
+	show_im "running check_and_download_ function on \"$check_this_file_\" \"$file_dir\""
+	new_check_this_file_="${temp_path}/${check_this_file_}"
+	if [ -d "$HOME/Desktop" ];then
+		dir_2_find_files_in="$HOME/Desktop ${temp_path}"
+	else
+		dir_2_find_files_in="${temp_path}"
+	fi
+	if [ -z "${file_dir}" ];then
+		url_to_download="${check_this_file_}"
+		check_this_file_location="$(find ${dir_2_find_files_in} -type f -name ${check_this_file_} || :)"
+	else
+		url_to_download="${file_dir}/${check_this_file_}"
+		check_this_file_location="$(find ${dir_2_find_files_in} -type f -name ${check_this_file_} | grep "${file_dir}" || :)"
+	fi
+		
+	[ -f "${new_check_this_file_}" ] && return
+	
+	if [ -n "${check_this_file_location}" ] && [ "${check_this_file_location}" != "${temp_path}/${check_this_file_}" ];then
+		mv "${check_this_file_location}" "${temp_path}"
+	fi
+	
+	if [ ! -f "${new_check_this_file_}" ];then
+		show_im "Download $check_this_file_ file from www.github.com/dari862/my_stuff_installer ."
+		if download_file "" "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${url_to_download}" "${new_check_this_file_}" ;then
+			chmod +x "${new_check_this_file_}"
+		else
+			show_em "Error: Failed to download ${check_this_file_} from https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${check_this_file_}"
+		fi
+	else
+		show_im "file: $check_this_file_ exsit."
+	fi
+}
+
+kill_package_(){
+	my-superuser ps aux | grep "${1}" | awk '{print $2}' | xargs my-superuser kill -9 >/dev/null 2>&1 || :
+}
+
 pick_file_downloader_and_url_checker(){
 	show_m "picking url command"
 	if command_exist curl;then
@@ -726,29 +766,6 @@ check_if_user_has_root_access(){
     touch "${installer_phases}/check_if_user_has_root_access"
 }
 
-source_my_lib_file(){
-	if [ ! -f "${installer_phases}/source_my_lib_file" ];then
-		show_m "sourcing ${lib_file_name} file."
-		disto_lib_location="$(find ${dir_2_find_files_in} -type f -name ${lib_file_name} | head -1 || :)"
-		# source disto_lib
-		if [ -n "${disto_lib_location}" ] && [ "${disto_lib_location}" != "${temp_path}/${lib_file_name}" ];then
-			mv "${disto_lib_location}" "${temp_path}"
-		elif [ ! -f "${temp_path}/${lib_file_name}" ];then 
-			show_im "download lib file"
-			if ! download_file "" "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${lib_file_name}" "${temp_path}/${lib_file_name}";then
-				show_em "Error: Failed to download ${lib_file_name} ."
-			fi
-		fi
-		touch "${installer_phases}/source_my_lib_file"
-	fi	
-	set -a
-	show_im "sourcing ${lib_file_name} from ${temp_path}"
-	if ! . "${temp_path}"/${lib_file_name};then
-		show_em "Error: Failed to source ${lib_file_name} from ${temp_path}"
-	fi
-	set +a
-}
-
 source_this_script(){
 	file_to_source_and_check="${1-}"
 	message_to_show="${2-}"
@@ -895,6 +912,7 @@ create_uninstaller_file(){
 	[ -f "${var_for_distro_uninstaller}" ] && return
 	show_m "Creating uninstaller file."
 	List_of_installed_packages_="${List_of_apt_2_install_}"
+	my-superuser mkdir -p "${never_remove_dir_path}"
 	my-superuser tee "${var_for_distro_uninstaller}" <<- EOF >/dev/null
 	grub_image_name=\"${grub_image_name}\"
 	List_of_pakages_installed_=\"${List_of_installed_packages_}\"
@@ -1010,18 +1028,36 @@ check_and_download_core_script(){
 		my_stuff_temp_path="${getthis_location}"
 		clone_rep_ "Theme_Stuff"
 		theme_temp_path="${getthis_location}"
-		clone_rep_ "Distro_Specific"
-		Distro_Specific_temp_path="${getthis_location}"
 		################################
 	fi
 	check_and_download_ "disto_specific_extra" "installer_repo/${distro_name}"
 }
 
-mv_Distro_Specific(){
-	[ -f "${installer_phases}/mv_Distro_Specific" ] && return
-	show_im "moving Distro Specific files."
-	my-superuser "${Distro_Specific_temp_path}"/Distro_Specific/installer "${distro_name}" "${PACKAGER}"
-	touch "${installer_phases}/mv_Distro_Specific"
+source_and_set_machine_type(){
+	[ -f "${installer_phases}/check_machine_type" ] && returns
+	
+	if [ -f "/usr/share/my_stuff/lib/common/machine_type" ];then
+		. "/usr/share/my_stuff/lib/common/machine_type"
+	elif [ -f "${my_stuff_temp_path}/my_stuff/lib/common/machine_type" ];then
+		. "${my_stuff_temp_path}/my_stuff/lib/common/machine_type"
+	else
+		show_em "failed to source machine_type"
+	fi
+	
+	show_m "check machine type"
+	
+	machine_type_are="$(check_machine_type)"
+	
+	if [ "${machine_type_are}" = "laptop" ];then
+		show_im "this is laptop"
+	elif [ -n "${machine_type_are}" ];then
+		show_im "this is not laptop"
+	else
+		show_em "failed to set machine_type var"
+	fi
+	
+	echo "machine_type_are=$machine_type_are" >> "${save_value_file}"
+	touch "${installer_phases}/check_machine_type"
 }
 
 create_new_os_release_file(){
@@ -1083,10 +1119,6 @@ test_internet_
 
 fix_time_
 
-source_my_lib_file
-
-CHECK_IF_THIS_LAPTOP
-
 set_package_manager
 
 install_superuser_tools
@@ -1096,6 +1128,8 @@ must_install_apps
 pick_clone_rep_commnad
 
 check_and_download_core_script
+
+source_and_set_machine_type
 
 clear
 
@@ -1190,7 +1224,6 @@ fi
 
 show_m "Sourceing disto_configer."
 source_this_script "disto_configer" "Configering My Stuff."
-mv_Distro_Specific
 
 source_this_script "disto_specific_extra" "Source purge_some_unnecessary_pakages and  disable_some_unnecessary_services from (disto_specific_extra)"
 
@@ -1211,8 +1244,12 @@ show_m "Sourceing disto_post_install."
 source_this_script "disto_post_install" "prepare some script"
 
 pre_post_install
-${__distro_path}/distro_manager/system_files_creater
-create_blob_system_files
+
+if [ ! -f "${installer_phases}/create_blob_system_files" ];then
+	${__distro_path}/distro_manager/system_files_creater "${machine_type_are}"
+	my-superuser touch "${installer_phases}/create_blob_system_files"
+fi
+
 end_of_post_install
 
 create_uninstaller_file

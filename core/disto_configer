@@ -17,38 +17,32 @@ for f in ${__distro_path}/applications/* ; do
 	my-superuser ln -sf "$f" /usr/share/applications
 done
 
-show_im "Moving themes from /usr/share/themes that exist in Theme_Stuff ${__distro_path}/system_files/backup"
+show_im "Moving themes from /usr/share/themes that exist in Theme_Stuff ${__distro_path}/backup"
 my-superuser mkdir -p /usr/share/themes
-my-superuser mkdir -p "${__distro_path}"/system_files/backup/themes
+my-superuser mkdir -p "${__distro_path}"/backup/themes
 for d in ${__distro_path}/Theme_Stuff/themes/* ; do
 	Directory_name="$(basename "${d}")"
-	[ -d "/usr/share/themes/${Directory_name}" ] && my-superuser mv "/usr/share/themes/${Directory_name}" "${__distro_path}"/system_files/backup/themes
+	[ -d "/usr/share/themes/${Directory_name}" ] && my-superuser mv "/usr/share/themes/${Directory_name}" "${__distro_path}"/backup/themes
 	my-superuser ln -sf "$d" /usr/share/themes
 done
 
-show_im "Moving icons from /usr/share/icons that exist in Theme_Stuff ${__distro_path}/system_files/backup"
+show_im "Moving icons from /usr/share/icons that exist in Theme_Stuff ${__distro_path}/backup"
 my-superuser mkdir -p /usr/share/icons
-my-superuser mkdir -p "${__distro_path}/system_files/backup/icons"
+my-superuser mkdir -p "${__distro_path}/backup/icons"
 for d in ${__distro_path}/Theme_Stuff/icons/* ; do
 	Directory_name="$(basename "${d}")"
-	[ -d "/usr/share/icons/${Directory_name}" ] && my-superuser mv "/usr/share/icons/${Directory_name}" "${__distro_path}/system_files/backup/icons"
+	[ -d "/usr/share/icons/${Directory_name}" ] && my-superuser mv "/usr/share/icons/${Directory_name}" "${__distro_path}/backup/icons"
 	my-superuser ln -sf "$d" /usr/share/icons
 done
 
-show_im "Moving fonts from /usr/share/fonts that exist in Theme_Stuff ${__distro_path}/system_files/backup"
+show_im "Moving fonts from /usr/share/fonts that exist in Theme_Stuff ${__distro_path}/backup"
 my-superuser mkdir -p /usr/share/fonts
-my-superuser mkdir -p "${__distro_path}/system_files/backup/fonts"
+my-superuser mkdir -p "${__distro_path}/backup/fonts"
 for e in ${__distro_path}/Theme_Stuff/fonts/* ; do
 	Directory_name="$(basename "${e}")"
-	[ -d "/usr/share/fonts/${Directory_name}" ] && my-superuser mv "/usr/share/fonts/${Directory_name}" "${__distro_path}/system_files/backup/fonts"
+	[ -d "/usr/share/fonts/${Directory_name}" ] && my-superuser mv "/usr/share/fonts/${Directory_name}" "${__distro_path}/backup/fonts"
 	my-superuser ln -sf "$e" /usr/share/fonts
 done
-
-show_im "update fonts cache."
-my-superuser fc-cache -vf
-
-show_im "update icons cache."
-my-superuser gtk-update-icon-cache
 
 show_im "create Distro_Specific dir."
 my-superuser ln -sf "${__distro_path}/All_Distro_Specific/${distro_name}" "/usr/share/my_stuff/Distro_Specific"

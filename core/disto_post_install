@@ -4,104 +4,18 @@ lightdm_background="/usr/share/my_stuff/my_wallpapers/default_wall-01.jpg"
 
 pre_post_install(){
 	[ -f "${installer_phases}/pre_post_install" ] && return
-	show_im "update gtk icon cache."
+	
+	show_im "update fonts cache."
+	my-superuser fc-cache -vf
+	
+	show_im "update icons cache."
 	my-superuser gtk-update-icon-cache
 	
-	show_im "create system ready files"
-	my-superuser mkdir -p "${__distro_path}"/system_files/updater
-	
-	if [ "$this_is_laptop" = true ];then 
-		show_im "this is laptop"
-		my-superuser touch "${__distro_path}"/system_files/this_is_laptop
-	fi
-		
-	if [ "$GPU_Drivers_ready" = true ];then 
-		show_im "GPU_Drivers ready ."
-		my-superuser touch "${__distro_path}"/system_files/GPU_Drivers_ready
-	fi
-	
-	if [ "$fingerprint_exist" = true ];then 
-		show_im "fingerprint ready ."
-		my-superuser touch "${__distro_path}"/system_files/fingerprint_exist
-	fi
-
 	my-superuser touch "${installer_phases}/pre_post_install"
-}
-
-create_blob_system_files(){
-	[ -f "${installer_phases}/create_blob_system_files" ] && return
-	my-superuser mkdir -p "${__distro_path}/system_files/blob"
-	show_im "copy polybar blob to system_files/blob ."
-	my-superuser cp -r "${__distro_path}"/blob/polybar "${__distro_path}/system_files/blob" 
-	if command_exist polybar;then
-		show_im "copy polybar extra_blob to system_files/blob ."
-		cd "${__distro_path}"/extra_blob/polybar
-		for app in alacritty geany bspwm;do
-			show_im "copy tint2 $app blob and extra_blob to system_files/blob ."
-			if command_exist $app;then
-				for theme in *;do
-					my-superuser cp -r "${theme}/config/${app}" "${__distro_path}/system_files/blob/polybar/${theme}/config" 
-				done
-			fi
-		done
-		if command_exist xfce4-panel;then
-			show_im "copy tint2 xfce4-panel blob and extra_blob to system_files/blob ."
-			for theme in *;do
-				my-superuser cp -r "${theme}/config/xfce4" "${__distro_path}/system_files/blob/polybar/${theme}/config" 
-			done
-		fi
-		if command_exist plank;then
-			show_im "copy tint2 plank blob and extra_blob to system_files/blob ."
-			for theme in *;do
-				my-superuser cp -r "${theme}/config/plank" "${__distro_path}/system_files/blob/polybar/${theme}/config" 
-				my-superuser cp -r "${theme}/cache" "${__distro_path}/system_files/blob/polybar/${theme}" 
-			done
-		fi
-		if command_exist jgmenu;then
-			show_im "copy polybar jgmenu extra_blob to system_files/blob ."
-			for theme in *;do
-				my-superuser cp -r "${theme}/jgmenu_theme" "${__distro_path}/system_files/blob/polybar/${theme}" 
-			done
-		fi
-	fi
-
-	if command_exist tint2;then
-		show_im "copy tint2 blob and extra_blob to system_files/blob ."
-		my-superuser cp -r "${__distro_path}"/blob/tint2 "${__distro_path}/system_files/blob" 
-		cd "${__distro_path}"/extra_blob/tint2
-		for app in lxterminal alacritty geany bspwm;do
-			if command_exist $app;then
-				show_im "copy tint2 $app blob and extra_blob to system_files/blob ."
-				for theme in *;do
-					my-superuser cp -r "${theme}/config/${app}" "${__distro_path}/system_files/blob/tint2/${theme}/config" 
-				done
-			fi
-		done
-		if command_exist xfce4-panel;then
-			for theme in *;do
-				show_im "copy tint2 xfce4-panel blob and extra_blob to system_files/blob ."
-				my-superuser cp -r "${theme}/config/xfce4" "${__distro_path}/system_files/blob/tint2/${theme}/config" 
-			done
-		fi
-		if command_exist jgmenu;then
-			show_im "copy tint2 jgmenu extra_blob to system_files/blob ."
-			for theme in *;do
-				my-superuser cp -r "${theme}/jgmenu_theme" "${__distro_path}/system_files/blob/tint2/${theme}" 
-			done
-		fi
-	fi
-	my-superuser touch "${installer_phases}/create_blob_system_files"
 }
 
 end_of_post_install(){
 	[ -f "${installer_phases}/end_of_post_install" ] && return	
-	show_im "Edit picom.conf ."
-	# test if in virtual machine
-	if [ "$(cat /sys/devices/virtual/dmi/id/chassis_type)" = "1" ];then # 1 eq vm
-		# disable vsync from picom (vsync in virtual machine make issues)
-		show_im "picom vm"
-		my-superuser sed -i "s/^vsync = .*/vsync = false;/g" "${__distro_path}"/system_files/skel/.config/picom.conf
-	fi
 	
 	show_im "Create lightdm.conf."
 	

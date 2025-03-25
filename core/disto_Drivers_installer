@@ -9,23 +9,13 @@ pre_disto_Drivers_installer(){
 		install_drivers_if_laptop="${install_drivers_if_laptop} ${install_drivers_if_laptop_light}"
 	fi
 
-	if lsusb 2>/dev/null | grep -qi fingerprint || lspci | grep -qi fingerprint || ls /sys/bus/usb/devices/* | grep -qi fingerprint;then
-    	fingerprint_exist=true
-	else
-		fingerprint_exist=false
-	fi
-
 	##################################################################################
 	# main
 	##################################################################################
-	if [ "$this_is_laptop" = true ];then
+	if [ "$machine_type_are" = "laptop" ];then
 		add_packages_2_install_list "${install_drivers_if_laptop}"
 	fi
-	
-	if [ "$fingerprint_exist" = true ];then
-    	add_packages_2_install_list "${install_fingerprint}"
-	fi
-	
+
 	if lspci | grep -qEi 'wifi|wireless' ;then
 		add_packages_2_install_list "${install_wireless}"
 	fi
@@ -50,23 +40,11 @@ post_disto_Drivers_installer(){
 		my-superuser isenkram-autoinstall-firmware || : # to prevent script from exiting "isenkram-autoinstall-firmware contain exit command"
 	fi
 	show_im "Configer packages."
-	
-	#create_20_intel_conf_file
-	
-	if [ "$fingerprint_exist" = true ];then
-		fingerprint_exist=true
-		echo "fingerprint_exist=true" >> "${save_value_file}"
-	fi
-	
-	if [ "$this_is_laptop" = true ];then
+
+	if [ "$machine_type_are" = "laptop" ];then
 		show_im "some config"
 	fi
-	
-	if [ "${install_GPU_Drivers}" = "Y" ];then
-		GPU_Drivers_ready=true
-		echo "GPU_Drivers_ready=true" >> "${save_value_file}"
-	fi
-	
+
 	if command_exist fprintd-verify && command_exist pam-auth-update;then
 		my-superuser pam-auth-update --enable fprintd
 	fi
