@@ -1034,7 +1034,7 @@ check_and_download_core_script(){
 }
 
 source_and_set_machine_type(){
-	[ -f "${installer_phases}/check_machine_type" ] && returns
+	[ -f "${installer_phases}/check_machine_type" ] && return
 	
 	if [ -f "/usr/share/my_stuff/lib/common/machine_type" ];then
 		. "/usr/share/my_stuff/lib/common/machine_type"
@@ -1061,7 +1061,7 @@ source_and_set_machine_type(){
 }
 
 create_new_os_release_file(){
-	[ -f "${installer_phases}/create_new_os_release_file" ] && returns
+	[ -f "/usr/share/my_stuff/os-release" ] && return
 	my-superuser tee "/usr/share/my_stuff/os-release" <<- EOF > /dev/null 2>&1
 	version_="$version_"
 	distro_name="$distro_name"
