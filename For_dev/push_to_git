@@ -7,6 +7,10 @@ push_now(){
 		if ! git push --set-upstream origin main;then
 			git push --force
 		fi
+	else
+		if ! git push --set-upstream origin main;then
+			git push --force
+		fi
 	fi
 }
 
