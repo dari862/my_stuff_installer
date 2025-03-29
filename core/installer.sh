@@ -163,6 +163,121 @@ show_sm(){
 	printf '%b' "\\033[1;36m[**] \\033[0m${message}\n"
 }
 
+do_you_want_2_run_this_yes_or_no()
+{
+	massage_is_="${1}"
+	while true; do
+		printf "${massage_is_} (yes/no) (default: yes) "
+		stty -icanon -echo time 0 min 1
+		answer="$(head -c1)"
+		stty icanon echo
+		echo
+        	
+		case "$answer" in
+			[Yy]) return 0;;
+			[Nn]) return 1 ;;
+			*) show_im "invalid response only y[yes] or n[No] are allowed.";;
+		esac
+	done
+}
+
+pre_script(){
+	show_m "Loading Script ....."
+	
+	if [ -f "${installer_phases}/Done" ];then
+		show_m "my_stuff installed successfully ....."
+		if do_you_want_2_run_this_yes_or_no 'reboot?';then
+			reboot_now="Y"
+		else
+			reboot_now=""
+		fi
+		__Done
+	fi
+	create_dir_and_source_stuff
+	check_if_user_has_root_access
+}
+
+create_dir_and_source_stuff(){
+	show_m "pre-script: create dir and source files."
+	show_im "create dir ${installer_phases}"
+	
+	mkdir -p "${temp_path}"
+	chmod 700 "${temp_path}"
+	
+	mkdir -p "${installer_phases}"
+		
+	if [ -f "${save_value_file}" ];then
+		. "${save_value_file}"
+	fi
+	
+	if [ -f "${prompt_to_install_value_file}" ];then
+		show_im "file exist : ${prompt_to_install_value_file} form previce run."
+		if do_you_want_2_run_this_yes_or_no 'Do you want source it?';then
+			. "${prompt_to_install_value_file}"
+			source_prompt_to_install_file=true
+		fi
+	fi
+}
+
+check_if_user_has_root_access(){
+	[ -f "${installer_phases}/check_if_user_has_root_access" ] && return
+	show_im "check if user has root access."
+	if [ "$(id -u)" -ne 0 ];then
+		show_im "you are using normal user."
+    	## Check SuperUser Group
+    	SUPERUSERGROUP='wheel sudo root'
+    	for sug in ${SUPERUSERGROUP}; do
+        	if groups | grep ${sug} >/dev/null;then
+            	SUGROUP=${sug}
+            	show_im "Super user group are ${SUGROUP}"
+        	fi
+    	done
+    	
+    	## Check if member of the SuperUser Group.
+    	if ! groups | grep ${SUGROUP} >/dev/null;then
+        	show_em "You need to be a member of the SuperUser Group to run me!"
+    	fi
+    	
+    	echo "SUGROUP=\"$SUGROUP\"" >> "${save_value_file}"
+    	
+    	if command_exist doas;then
+    		_SUPERUSER="doas"
+    		doas_installed=true
+    		echo "_SUPERUSER=\"$_SUPERUSER\"" >> "${save_value_file}"
+    		echo "doas_installed=\"$doas_installed\"" >> "${save_value_file}"
+		fi
+		
+		if command_exist sudo;then
+    		_SUPERUSER="sudo"
+    		sudo_installed=true
+    		echo "_SUPERUSER=\"$_SUPERUSER\"" >> "${save_value_file}"
+    		echo "sudo_installed=\"$sudo_installed\"" >> "${save_value_file}"
+		fi
+
+		if [ "$sudo_installed" = "false" ] && [ "$doas_installed" = "true" ];then
+			only_doas_installed="true"
+			echo "only_doas_installed=\"$only_doas_installed\"" >> "${save_value_file}"
+		fi
+		show_im "value of _SUPERUSER are $_SUPERUSER"
+    else
+    	show_im "you are elevated user."
+    	if command_exist doas;then
+    		show_im "doas command exist."
+    		doas_installed=true
+    		echo "doas_installed=\"$doas_installed\"" >> "${save_value_file}"
+		fi
+		
+		if command_exist sudo;then
+    		sudo_installed=true
+    		echo "sudo_installed=\"$sudo_installed\"" >> "${save_value_file}"
+		fi
+		_SUPERUSER=""
+		echo "_SUPERUSER=\"$_SUPERUSER\"" >> "${save_value_file}"
+    	show_im "value of _SUPERUSER are $_SUPERUSER"
+    fi
+    touch "${installer_phases}/check_if_user_has_root_access"
+}
+
 test_internet_(){
 	[ -f "${installer_phases}/no_internet_needed" ] && return
 	show_m "Testing internet connection."
@@ -223,24 +338,6 @@ test_internet_(){
     		fi
     	fi  
 	fi
-}
-
-do_you_want_2_run_this_yes_or_no()
-{
-	massage_is_="${1}"
-	while true; do
-		printf "${massage_is_} (yes/no) (default: yes) "
-		stty -icanon -echo time 0 min 1
-		answer="$(head -c1)"
-		stty icanon echo
-		echo
-        	
-		case "$answer" in
-			[Yy]) return 0;;
-			[Nn]) return 1 ;;
-			*) show_im "invalid response only y[yes] or n[No] are allowed.";;
-		esac
-	done
 }
 
 prompt_to_ask_to_what_to_install(){
@@ -700,65 +797,6 @@ update_grub_image(){
 	touch "${installer_phases}/update_grub_image"
 }
 
-check_if_user_has_root_access(){
-	[ -f "${installer_phases}/check_if_user_has_root_access" ] && return
-	show_im "check if user has root access."
-	if [ "$(id -u)" -ne 0 ];then
-		show_im "you are using normal user."
-    	## Check SuperUser Group
-    	SUPERUSERGROUP='wheel sudo root'
-    	for sug in ${SUPERUSERGROUP}; do
-        	if groups | grep ${sug} >/dev/null;then
-            	SUGROUP=${sug}
-            	show_im "Super user group are ${SUGROUP}"
-        	fi
-    	done
-    	
-    	## Check if member of the SuperUser Group.
-    	if ! groups | grep ${SUGROUP} >/dev/null;then
-        	show_em "You need to be a member of the SuperUser Group to run me!"
-    	fi
-    	
-    	echo "SUGROUP=\"$SUGROUP\"" >> "${save_value_file}"
-    	
-    	if command_exist doas;then
-    		_SUPERUSER="doas"
-    		doas_installed=true
-    		echo "_SUPERUSER=\"$_SUPERUSER\"" >> "${save_value_file}"
-    		echo "doas_installed=\"$doas_installed\"" >> "${save_value_file}"
-		fi
-		
-		if command_exist sudo;then
-    		_SUPERUSER="sudo"
-    		sudo_installed=true
-    		echo "_SUPERUSER=\"$_SUPERUSER\"" >> "${save_value_file}"
-    		echo "sudo_installed=\"$sudo_installed\"" >> "${save_value_file}"
-		fi
-
-		if [ "$sudo_installed" = "false" ] && [ "$doas_installed" = "true" ];then
-			only_doas_installed="true"
-			echo "only_doas_installed=\"$only_doas_installed\"" >> "${save_value_file}"
-		fi
-		show_im "value of _SUPERUSER are $_SUPERUSER"
-    else
-    	show_im "you are elevated user."
-    	if command_exist doas;then
-    		show_im "doas command exist."
-    		doas_installed=true
-    		echo "doas_installed=\"$doas_installed\"" >> "${save_value_file}"
-		fi
-		
-		if command_exist sudo;then
-    		sudo_installed=true
-    		echo "sudo_installed=\"$sudo_installed\"" >> "${save_value_file}"
-		fi
-		_SUPERUSER=""
-		echo "_SUPERUSER=\"$_SUPERUSER\"" >> "${save_value_file}"
-    	show_im "value of _SUPERUSER are $_SUPERUSER"
-    fi
-    touch "${installer_phases}/check_if_user_has_root_access"
-}
-
 source_this_script(){
 	file_to_source_and_check="${1-}"
 	message_to_show="${2-}"
@@ -766,28 +804,6 @@ source_this_script(){
 	[ -f "${installer_phases}/${file_to_source_and_check}" ] && return
 	show_im "${message_to_show}"
 	. "${temp_path}"/"${file_to_source_and_check}"
-}
-
-pre_script_create_dir_and_source_stuff(){
-	show_m "pre-script: create dir and source files."
-	show_im "create dir ${installer_phases}"
-	
-	mkdir -p "${temp_path}"
-	chmod 700 "${temp_path}"
-	
-	mkdir -p "${installer_phases}"
-		
-	if [ -f "${save_value_file}" ];then
-		. "${save_value_file}"
-	fi
-	
-	if [ -f "${prompt_to_install_value_file}" ];then
-		show_im "file exist : ${prompt_to_install_value_file} form previce run."
-		if do_you_want_2_run_this_yes_or_no 'Do you want source it?';then
-			. "${prompt_to_install_value_file}"
-			source_prompt_to_install_file=true
-		fi
-	fi
 }
 
 keep_superuser_refresed(){
@@ -1076,10 +1092,12 @@ __Done(){
 		head -c1 >/dev/null
 		stty icanon echo
 	fi
+	
 	if [ "$reboot_now" = "Y" ];then
 		${__distro_path}/system_files/bin/my_session_manager --no-confirm reboot
 	fi
 	
+	touch "${installer_phases}/Done"
 	exit
 }
 
@@ -1090,11 +1108,9 @@ __Done(){
 ################################################################################################################################
 ################################################################################################################################
 ################################################################################################################################
-show_m "Loading Script ....."
 
-pre_script_create_dir_and_source_stuff
-check_if_user_has_root_access
-    
+pre_script
+
 prompt_to_ask_to_what_to_install
 create_prompt_to_install_value_file
 
@@ -1258,4 +1274,5 @@ if [ "$failed_2_install_ufw" = true ];then
 	show_wm "sleep 10."
 	sleep 10
 fi
+
 __Done
