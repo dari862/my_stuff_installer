@@ -669,13 +669,6 @@ disable_ipv6_now(){
 	touch "${installer_phases}/disable_ipv6_now"
 }
 
-run_my_alternatives(){
-	[ -f "${installer_phases}/my_alternatives" ] && return
-	show_m "update alternatives apps"
-	${__distro_path}/bin/bin/my-alternatives --install
-	touch "${installer_phases}/my_alternatives"
-}
-
 update_grub(){
 	[ -f "${installer_phases}/update_grub" ] && return
 	if [ "$need_to_update_grub" = "true" ];then
@@ -894,33 +887,6 @@ create_uninstaller_file(){
 	EOF
 }
 
-purge_sudo(){
-	[ -f "${installer_phases}/purge_sudo" ] && return
-	if command_exist sudo;then
-		export SUDO_FORCE_REMOVE=yes
-		PASSWORD=$(tr -dc 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' < /dev/urandom | head -c 30 | base64)	
-		echo "root:${PASSWORD}" | $_SUPERUSER chpasswd
-		remove_package_with_error2info "sudo" 
-		echo "$PASSWORD" | su -c "dpkg -i ${__distro_path}/lib/fake_empty_apps/sudo.deb" root
-		echo "$PASSWORD" | su -c "ln -sf $(which doas) /usr/bin/sudo" root
-		echo "$PASSWORD" | su -c "passwd -l root" root
-		PASSWORD=""
-		unset PASSWORD
-	fi
-	touch "${installer_phases}/purge_sudo"
-}
-
-switch_to_doas_now(){
-	[ -f "${installer_phases}/switch_to_doas_now" ] && return
-	if [ "$switch_to_doas" = true ];then
-		show_m "switch to doas."
-		_SUPERUSER="doas"
-		show_im "Purging sudo."
-		purge_sudo
-	fi
-	touch "${installer_phases}/switch_to_doas_now"
-}
-
 pick_clone_rep_commnad(){
 	show_m "pick clone repo commnad"
 	if command_exist git;then
@@ -1056,6 +1022,34 @@ create_new_os_release_file(){
 	version_codename="${version_codename}"
 	VERSION_ID="$VERSION_ID"
 	EOF
+}
+
+run_my_alternatives(){
+	[ -f "${installer_phases}/my_alternatives" ] && return
+	show_m "update alternatives apps"
+	${__distro_path}/bin/bin/my-alternatives --install
+	touch "${installer_phases}/my_alternatives"
+}
+
+switch_to_doas_now(){
+	[ -f "${installer_phases}/switch_to_doas_now" ] && return
+	if [ "$switch_to_doas" = true ];then
+		if command_exist sudo;then
+			show_im "pre Purge sudo."
+			export SUDO_FORCE_REMOVE=yes
+			show_im "changing root password"	
+			PASSWORD=$(tr -dc 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' < /dev/urandom | head -c 30 | base64)
+			echo "root:${PASSWORD}" | $_SUPERUSER chpasswd || show_em "failed to change root password"
+			unset PASSWORD
+			PASSWORD="1234"
+			show_im "Purging sudo."
+			remove_package_with_error2info "sudo" || show_em "failed to purge sudo"
+			show_im "install fake sudo package and disable root user."
+			$_SUPERUSER dpkg -i "${__distro_path}/lib/fake_empty_apps/sudo.deb"  || show_em "failed to install fake sudo."
+			$_SUPERUSER passwd -l root || show_em "failed to disable root user."
+		fi
+	fi
+	touch "${installer_phases}/switch_to_doas_now"
 }
 
 __Done(){
@@ -1237,11 +1231,11 @@ create_uninstaller_file
 
 switch_default_xsession
 
-switch_to_doas_now
-
 create_new_os_release_file
 
 run_my_alternatives
+
+switch_to_doas_now
 
 if [ "$failed_2_install_ufw" = true ];then
 	show_wm "failed to install ${install_ufw_apps}."
