@@ -2,6 +2,7 @@
 set -e
 
 remove_aria2=false
+__remove_package="apt-get purge -y"
 
 ##################################
 # only for apt
@@ -118,7 +119,7 @@ remove_package_with_error2info()
 	packages="$@"
 	if [ -n "$packages" ];then
 		show_im "Removing ${packages}."
-		$_SUPERUSER apt-get purge -y $packages
+		$_SUPERUSER ${__remove_package} $packages
 	else
 		show_wm "no packages to remove."
 	fi
@@ -126,7 +127,7 @@ remove_package_with_error2info()
 
 remove_unnecessary_package_manager_stuff(){
 	show_im "removing apt-fast and conf"
-	[ "$remove_aria2" = true ] && show_sm "removing aria2 package" && $_SUPERUSER apt-get purge -y aria2
+	[ "$remove_aria2" = true ] && show_sm "removing aria2 package" && $_SUPERUSER ${__remove_package} aria2
 	[ -f /usr/local/bin/apt-fast ] && show_sm "removing apt-fast" && $_SUPERUSER rm -f /usr/local/bin/apt-fast
 	[ -f /etc/apt-fast.conf ] && show_sm "removing apt-fast.conf" && $_SUPERUSER rm -f /etc/apt-fast.conf
 }
@@ -255,8 +256,8 @@ package_installed(){
 removeSnaps(){
 	[ -f "${installer_phases}/removeSnaps" ] && return
 	if command -v snap >/dev/null 2>&1 ;then
-		$_SUPERUSER "$PACKAGER" remove --purge -y snapd
-		$_SUPERUSER "$PACKAGER" autoremove -y
+		$_SUPERUSER ${__remove_package} snapd
+		run_autoclean
 		[ "$distro_name" = ubuntu ] && $_SUPERUSER apt-mark hold snapd
 	fi
 	touch "${installer_phases}/removeSnaps"

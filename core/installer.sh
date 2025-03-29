@@ -1035,18 +1035,34 @@ switch_to_doas_now(){
 	[ -f "${installer_phases}/switch_to_doas_now" ] && return
 	if [ "$switch_to_doas" = true ];then
 		if command_exist sudo;then
-			show_im "pre Purge sudo."
+			show_m "pre Purge sudo."
 			export SUDO_FORCE_REMOVE=yes
+			
 			show_im "changing root password"	
 			PASSWORD=$(tr -dc 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' < /dev/urandom | head -c 30 | base64)
 			echo "root:${PASSWORD}" | $_SUPERUSER chpasswd || show_em "failed to change root password"
+			
+			if [ -z "${_SUPERUSER}" ];then
+				show_im "Purging sudo."
+				remove_package_with_error2info "sudo" || show_em "failed to purge sudo"
+				show_im "install fake sudo package and disable root user."
+				dpkg -i "${__distro_path}/lib/fake_empty_apps/sudo.deb" || show_em "failed to install fake sudo."
+				passwd -l root || show_em "failed to disable root user."
+			else
+				show_im "Purging sudo and install fake sudo package and disable root user."
+				echo "${PASSWORD}"
+				sudo su -s /bin/sh -c "
+					show_em(){
+						massage='${1:-}'
+						printf '%b' \"\\033[1;31m[-] ${massage}\\033[0m\n\"
+					}
+					$__remove_package sudo || show_em 'failed to purge sudo'
+					dpkg -i ${__distro_path}/lib/fake_empty_apps/sudo.deb || show_em 'failed to install fake sudo.'
+					passwd -l root || show_em 'failed to disable root user.'
+				"
+			fi
 			unset PASSWORD
 			PASSWORD="1234"
-			show_im "Purging sudo."
-			remove_package_with_error2info "sudo" || show_em "failed to purge sudo"
-			show_im "install fake sudo package and disable root user."
-			$_SUPERUSER dpkg -i "${__distro_path}/lib/fake_empty_apps/sudo.deb"  || show_em "failed to install fake sudo."
-			$_SUPERUSER passwd -l root || show_em "failed to disable root user."
 		fi
 	fi
 	touch "${installer_phases}/switch_to_doas_now"
