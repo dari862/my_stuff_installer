@@ -54,9 +54,9 @@ create_package_list(){
 
 install_packages(){
 	if [ -n "${List_of_apt_2_install_}" ];then
-    	($_SUPERUSER DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true ${PACKAGER} install -yq ${List_of_apt_2_install_} && kill_package_ ${PACKAGER}) || \
-		($_SUPERUSER DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true ${PACKAGER} install -yq ${List_of_apt_2_install_} && kill_package_ ${PACKAGER}) || \
-		$_SUPERUSER DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true ${PACKAGER} install -yq ${List_of_apt_2_install_}
+    	($_SUPERUSER ${PACKAGER} install -yq ${List_of_apt_2_install_} && kill_package_ ${PACKAGER}) || \
+		($_SUPERUSER ${PACKAGER} install -yq ${List_of_apt_2_install_} && kill_package_ ${PACKAGER}) || \
+		$_SUPERUSER ${PACKAGER} install -yq ${List_of_apt_2_install_}
     else
     	show_wm "List_of_apt_2_install_ are empty"
     	sleep 1
@@ -105,11 +105,11 @@ upgrade_now()
 {
 	show_im "Run upgrade_now function"
 	show_sm "Run upgrade" 
-	$_SUPERUSER DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true apt-get -y upgrade
+	$_SUPERUSER apt-get -y upgrade
 	show_sm "Run dist-upgrade" 
-	$_SUPERUSER DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true apt-get -y dist-upgrade
+	$_SUPERUSER apt-get -y dist-upgrade
 	show_sm "Run full-upgrade" 
-	$_SUPERUSER DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true apt-get -y full-upgrade
+	$_SUPERUSER apt-get -y full-upgrade
 	show_im "end upgrade_now" 
 }
 
@@ -236,7 +236,7 @@ switch_lightdm_now(){
 	
 	if [ "$lightdm_does_not_exist" = true  ];then
 		echo "/usr/sbin/lightdm" | $_SUPERUSER tee /etc/X11/default-display-manager > /dev/null 2>&1 || (show_em "failed to change default-display-manager")
-		$_SUPERUSER DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true dpkg-reconfigure lightdm || (show_em "failed to dpkg-reconfigure lightdm")
+		$_SUPERUSER dpkg-reconfigure lightdm || (show_em "failed to dpkg-reconfigure lightdm")
 	else
 		show_im "lightdm already exist."
 	fi
@@ -264,6 +264,9 @@ removeSnaps(){
 
 pre_package_manager_(){
 	[ -f "${installer_phases}/pre_package_manager_" ] && return
+	export DEBIAN_FRONTEND=noninteractive
+	export DEBCONF_NONINTERACTIVE_SEEN=true
+	
 	kill_package_ apt-get
 	kill_package_ apt
 	init_manager stop apt-daily.timer

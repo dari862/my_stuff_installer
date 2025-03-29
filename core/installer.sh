@@ -1058,18 +1058,6 @@ create_new_os_release_file(){
 	EOF
 }
 
-Creating_my_superuser_symoblic_link(){
-	[ -f "${installer_phases}/Creating_my_superuser_symoblic_link" ] && return
-	if command_exist doas;then
-		show_im "Creating my-superuser (doas) symoblic link."
-		$_SUPERUSER ln -sf $(which doas) /usr/bin/my-superuser
-	elif command_exist sudo;then
-		show_im "Creating my-superuser (sudo) symoblic link."	
-		$_SUPERUSER ln -sf $(which sudo) /usr/bin/my-superuser
-	fi
-	touch "${installer_phases}/Creating_my_superuser_symoblic_link"
-}
-
 __Done(){
 	show_m "Done"
 	if [ "$failed_2_install_ufw" = true ];then
@@ -1233,8 +1221,6 @@ disable_ipv6_now
 update_grub
 update_grub_image
 
-run_my_alternatives
-
 show_m "Sourceing disto_post_install."
 source_this_script "disto_post_install" "prepare some script"
 
@@ -1255,7 +1241,7 @@ switch_to_doas_now
 
 create_new_os_release_file
 
-Creating_my_superuser_symoblic_link
+run_my_alternatives
 
 if [ "$failed_2_install_ufw" = true ];then
 	show_wm "failed to install ${install_ufw_apps}."
