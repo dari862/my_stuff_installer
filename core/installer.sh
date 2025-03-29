@@ -456,7 +456,7 @@ check_and_download_()
 }
 
 kill_package_(){
-	my-superuser ps aux | grep "${1}" | awk '{print $2}' | xargs my-superuser kill -9 >/dev/null 2>&1 || :
+	$_SUPERUSER ps aux | grep "${1}" | awk '{print $2}' | xargs $_SUPERUSER kill -9 >/dev/null 2>&1 || :
 }
 
 pick_file_downloader_and_url_checker(){
@@ -636,19 +636,19 @@ disable_ipv6_now(){
 		show_im "disabling IPv6 stack (kernal level)."
 		if ! grep 'GRUB_CMDLINE_LINUX=' /etc/default/grub | grep -q 'ipv6.disable=1';then
 			if grep -q 'GRUB_CMDLINE_LINUX=""' /etc/default/grub;then
-				my-superuser sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="ipv6.disable=1"/' /etc/default/grub
+				$_SUPERUSER sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="ipv6.disable=1"/' /etc/default/grub
 				need_to_update_grub=true
 			else
-				my-superuser sed -i 's/GRUB_CMDLINE_LINUX=\"\(.*\)\"/GRUB_CMDLINE_LINUX=\"\1 ipv6.disable=1\"/' /etc/default/grub
+				$_SUPERUSER sed -i 's/GRUB_CMDLINE_LINUX=\"\(.*\)\"/GRUB_CMDLINE_LINUX=\"\1 ipv6.disable=1\"/' /etc/default/grub
 				need_to_update_grub=true
 			fi
 		fi
 		if ! grep 'GRUB_CMDLINE_LINUX_DEFAULT=' /etc/default/grub | grep -q 'ipv6.disable=1';then
 			if grep -q 'GRUB_CMDLINE_LINUX_DEFAULT=""' /etc/default/grub;then
-				my-superuser sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=""/GRUB_CMDLINE_LINUX_DEFAULT="ipv6.disable=1"/' /etc/default/grub
+				$_SUPERUSER sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=""/GRUB_CMDLINE_LINUX_DEFAULT="ipv6.disable=1"/' /etc/default/grub
 				need_to_update_grub=true
 			else
-				my-superuser sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=\"\(.*\)\"/GRUB_CMDLINE_LINUX_DEFAULT=\"\1 ipv6.disable=1\"/' /etc/default/grub
+				$_SUPERUSER sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=\"\(.*\)\"/GRUB_CMDLINE_LINUX_DEFAULT=\"\1 ipv6.disable=1\"/' /etc/default/grub
 				need_to_update_grub=true
 			fi
 		fi
@@ -658,12 +658,12 @@ disable_ipv6_now(){
 		disable_ipv6_conf="/etc/sysctl.d/90-disable_ipv6.conf"
 		if [ ! -f "${disable_ipv6_conf}" ];then
 			show_im "Disabling IPv6."
-			my-superuser tee "${disable_ipv6_conf}" <<- EOF >/dev/null
+			$_SUPERUSER tee "${disable_ipv6_conf}" <<- EOF >/dev/null
 			net.ipv6.conf.all.disable_ipv6 = 1
 			net.ipv6.conf.default.disable_ipv6 = 1
 			net.ipv6.conf.lo.disable_ipv6 = 1
 			EOF
-			my-superuser sysctl -p "${disable_ipv6_conf}"
+			$_SUPERUSER sysctl -p "${disable_ipv6_conf}"
 		fi
 	fi
 	touch "${installer_phases}/disable_ipv6_now"
@@ -680,18 +680,18 @@ update_grub(){
 	[ -f "${installer_phases}/update_grub" ] && return
 	if [ "$need_to_update_grub" = "true" ];then
 		show_im "update grub"
-		my-superuser sync
+		$_SUPERUSER sync
 		if command_exist update-grub; then
-			my-superuser update-grub
+			$_SUPERUSER update-grub
 		elif command_exist grub-mkconfig; then
-			my-superuser grub-mkconfig -o /boot/grub/grub.cfg
+			$_SUPERUSER grub-mkconfig -o /boot/grub/grub.cfg
 		elif command_exist zypper || command_exist transactional-update; then
-			my-superuser grub2-mkconfig -o /boot/grub2/grub.cfg
+			$_SUPERUSER grub2-mkconfig -o /boot/grub2/grub.cfg
 		elif command_exist dnf || command_exist rpm-ostree; then
 			if [ -f "/boot/grub2/grub.cfg" ]; then
-				my-superuser grub2-mkconfig -o /boot/grub2/grub.cfg
+				$_SUPERUSER grub2-mkconfig -o /boot/grub2/grub.cfg
 			elif [ -f "/boot/efi/EFI/fedora/grub.cfg" ]; then
-				my-superuser grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
+				$_SUPERUSER grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
 			fi
 		fi
 	fi
@@ -702,7 +702,7 @@ update_grub_image(){
 	[ -f "${installer_phases}/update_grub_image" ] && return
 	if [ "$run_update_grub_image" = "Y" ];then
 		show_im "update image."
-		my-superuser "${__distro_path}/bin/not_add_2_path/grub2_themes/install.sh"
+		$_SUPERUSER "${__distro_path}/bin/not_add_2_path/grub2_themes/install.sh"
 	fi
 	touch "${installer_phases}/update_grub_image"
 }
@@ -797,22 +797,6 @@ pre_script_create_dir_and_source_stuff(){
 	fi
 }
 
-purge_sudo(){
-	[ -f "${installer_phases}/purge_sudo" ] && return
-	if command_exist sudo;then
-		export SUDO_FORCE_REMOVE=yes
-		PASSWORD=$(tr -dc 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' < /dev/urandom | head -c 30 | base64)	
-		echo "root:${PASSWORD}" | $_SUPERUSER chpasswd
-		remove_package_with_error2info "sudo" 
-		echo "$PASSWORD" | su -c "dpkg -i ${__distro_path}/lib/fake_empty_apps/sudo.deb" root
-		echo "$PASSWORD" | su -c "ln -sf $(which doas) /usr/bin/sudo" root
-		echo "$PASSWORD" | su -c "passwd -l root" root
-		PASSWORD=""
-		unset PASSWORD
-	fi
-	touch "${installer_phases}/purge_sudo"
-}
-
 keep_superuser_refresed(){
 	[ "$sudo_installed" = "false" ] && return
 	show_im "running keep_superuser_refresed"
@@ -822,9 +806,9 @@ keep_superuser_refresed(){
 	done
 }
 
-install_superuser_tools()
+install_doas_tools()
 {
-	[ -f "${installer_phases}/install_superuser_tools" ] && return
+	[ -f "${installer_phases}/install_doas_tools" ] && return
 	if [ "$switch_to_doas" = true ] && [ "$only_doas_installed" = "false" ];then
 		show_m "install superuser tools."
 		if ! grep "sudo" /etc/group;then
@@ -840,18 +824,8 @@ install_superuser_tools()
 			complete -F _command doas
 		fi
 		EOF
-		
-    	$_SUPERUSER tee /etc/doas.conf <<- EOF >/dev/null 
-		permit nopass $USER as root			
-		EOF
-		if ! $_SUPERUSER doas -C /etc/doas.conf;then
-			show_em "config error"
-		fi
-		$_SUPERUSER chmod -c 0400 /etc/doas.conf
-		doas_path="$(which doas)"
-		$_SUPERUSER ln -sf "$doas_path" "/usr/bin/my-superuser"
 	fi
-	touch "${installer_phases}/install_superuser_tools"
+	touch "${installer_phases}/install_doas_tools"
 }
 
 set_package_manager(){
@@ -900,10 +874,10 @@ switch_default_xsession(){
 	[ -f "${installer_phases}/switch_default_xsession" ] && return
 	show_m "switching default xsession to my stuff $switch_default_xsession_to."
 	if command_exist update-alternatives;then
-		my-superuser update-alternatives --install /usr/bin/x-session-manager x-session-manager ${__distro_path}/system_files/bin/xsessions/${switch_default_xsession_to} 60
+		$_SUPERUSER update-alternatives --install /usr/bin/x-session-manager x-session-manager ${__distro_path}/system_files/bin/xsessions/${switch_default_xsession_to} 60
 		switch_default_xsession="$(realpath /etc/alternatives/x-session-manager)"
 	else
-		my-superuser ln -sf ${__distro_path}/system_files/bin/xsessions/${switch_default_xsession_to} /usr/bin/x-session-manager
+		$_SUPERUSER ln -sf ${__distro_path}/system_files/bin/xsessions/${switch_default_xsession_to} /usr/bin/x-session-manager
 	fi
 	touch "${installer_phases}/switch_default_xsession"
 }
@@ -912,24 +886,35 @@ create_uninstaller_file(){
 	[ -f "${var_for_distro_uninstaller}" ] && return
 	show_m "Creating uninstaller file."
 	List_of_installed_packages_="${List_of_apt_2_install_}"
-	my-superuser mkdir -p "${never_remove_dir_path}"
-	my-superuser tee "${var_for_distro_uninstaller}" <<- EOF >/dev/null
+	$_SUPERUSER mkdir -p "${never_remove_dir_path}"
+	$_SUPERUSER tee "${var_for_distro_uninstaller}" <<- EOF >/dev/null
 	grub_image_name=\"${grub_image_name}\"
 	List_of_pakages_installed_=\"${List_of_installed_packages_}\"
 	switch_default_xsession=\"$switch_default_xsession\"
 	EOF
 }
 
+purge_sudo(){
+	[ -f "${installer_phases}/purge_sudo" ] && return
+	if command_exist sudo;then
+		export SUDO_FORCE_REMOVE=yes
+		PASSWORD=$(tr -dc 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' < /dev/urandom | head -c 30 | base64)	
+		echo "root:${PASSWORD}" | $_SUPERUSER chpasswd
+		remove_package_with_error2info "sudo" 
+		echo "$PASSWORD" | su -c "dpkg -i ${__distro_path}/lib/fake_empty_apps/sudo.deb" root
+		echo "$PASSWORD" | su -c "ln -sf $(which doas) /usr/bin/sudo" root
+		echo "$PASSWORD" | su -c "passwd -l root" root
+		PASSWORD=""
+		unset PASSWORD
+	fi
+	touch "${installer_phases}/purge_sudo"
+}
+
 switch_to_doas_now(){
 	[ -f "${installer_phases}/switch_to_doas_now" ] && return
 	if [ "$switch_to_doas" = true ];then
 		show_m "switch to doas."
-		show_im "Creating new my-superuser symoblic link."
-		if [ -n "$_SUPERUSER" ];then
-			sudo ln -sf $(which doas) /usr/bin/my-superuser
-		else
-			ln -sf $(which doas) /usr/bin/my-superuser
-		fi
+		_SUPERUSER="doas"
 		show_im "Purging sudo."
 		purge_sudo
 	fi
@@ -1062,7 +1047,7 @@ source_and_set_machine_type(){
 
 create_new_os_release_file(){
 	[ -f "/usr/share/my_stuff/os-release" ] && return
-	my-superuser tee "/usr/share/my_stuff/os-release" <<- EOF > /dev/null 2>&1
+	$_SUPERUSER tee "/usr/share/my_stuff/os-release" <<- EOF > /dev/null 2>&1
 	version_="$version_"
 	distro_name="$distro_name"
 	distro_desc="$distro_desc"
@@ -1071,7 +1056,18 @@ create_new_os_release_file(){
 	version_codename="${version_codename}"
 	VERSION_ID="$VERSION_ID"
 	EOF
-	touch "${installer_phases}/create_new_os_release_file"
+}
+
+Creating_my_superuser_symoblic_link(){
+	[ -f "${installer_phases}/Creating_my_superuser_symoblic_link" ] && return
+	if command_exist doas;then
+		show_im "Creating my-superuser (doas) symoblic link."
+		$_SUPERUSER ln -sf $(which doas) /usr/bin/my-superuser
+	elif command_exist sudo;then
+		show_im "Creating my-superuser (sudo) symoblic link."	
+		$_SUPERUSER ln -sf $(which sudo) /usr/bin/my-superuser
+	fi
+	touch "${installer_phases}/Creating_my_superuser_symoblic_link"
 }
 
 __Done(){
@@ -1105,8 +1101,7 @@ prompt_to_ask_to_what_to_install
 create_prompt_to_install_value_file
 
 if [ -n "$_SUPERUSER" ];then
-	show_m "creating my-superuser command "
-	$_SUPERUSER ln -sf $(which $_SUPERUSER) /usr/bin/my-superuser
+	show_m "creating $_SUPERUSER command "
 	$_SUPERUSER true
 	
 	keep_superuser_refresed &
@@ -1121,7 +1116,7 @@ fix_time_
 
 set_package_manager
 
-install_superuser_tools
+install_doas_tools
 
 must_install_apps
 
@@ -1246,8 +1241,8 @@ source_this_script "disto_post_install" "prepare some script"
 pre_post_install
 
 if [ ! -f "${installer_phases}/create_blob_system_files" ];then
-	${__distro_path}/distro_manager/system_files_creater "${machine_type_are}"
-	my-superuser touch "${installer_phases}/create_blob_system_files"
+	$_SUPERUSER ${__distro_path}/distro_manager/system_files_creater "${machine_type_are}"
+	$_SUPERUSER touch "${installer_phases}/create_blob_system_files"
 fi
 
 end_of_post_install
@@ -1260,7 +1255,11 @@ switch_to_doas_now
 
 create_new_os_release_file
 
+Creating_my_superuser_symoblic_link
+
 if [ "$failed_2_install_ufw" = true ];then
 	show_wm "failed to install ${install_ufw_apps}."
+	show_wm "sleep 10."
+	sleep 10
 fi
 __Done

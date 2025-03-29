@@ -6,12 +6,12 @@ pre_post_install(){
 	[ -f "${installer_phases}/pre_post_install" ] && return
 	
 	show_im "update fonts cache."
-	my-superuser fc-cache -vf
+	$_SUPERUSER fc-cache -vf
 	
 	show_im "update icons cache."
-	my-superuser gtk-update-icon-cache
+	$_SUPERUSER gtk-update-icon-cache
 	
-	my-superuser touch "${installer_phases}/pre_post_install"
+	$_SUPERUSER touch "${installer_phases}/pre_post_install"
 }
 
 end_of_post_install(){
@@ -19,10 +19,10 @@ end_of_post_install(){
 	
 	show_im "Create lightdm.conf."
 	
-	my-superuser mkdir -p "/usr/share/lightdm/lightdm.conf.d"
-	my-superuser mkdir -p "/usr/share/lightdm/lightdm-gtk-greeter.conf.d"
+	$_SUPERUSER mkdir -p "/usr/share/lightdm/lightdm.conf.d"
+	$_SUPERUSER mkdir -p "/usr/share/lightdm/lightdm-gtk-greeter.conf.d"
 
-	my-superuser tee /usr/share/lightdm/lightdm.conf.d/50_my_stuff.conf <<- 'EOF' >/dev/null 2>&1
+	$_SUPERUSER tee /usr/share/lightdm/lightdm.conf.d/50_my_stuff.conf <<- 'EOF' >/dev/null 2>&1
 	# My Stuff specific defaults for lightdm
 	#
 	
@@ -31,7 +31,7 @@ end_of_post_install(){
 	greeter-hide-users=false
 	user-session=my_stuff_openbox
 	EOF
-	my-superuser tee /usr/share/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf <<- 'EOF' >/dev/null 2>&1
+	$_SUPERUSER tee /usr/share/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf <<- 'EOF' >/dev/null 2>&1
 	# My Stuff specific defaults for lightdm-gtk-greeter
 	#
 	# LightDM GTK+ Configuration
@@ -100,19 +100,19 @@ end_of_post_install(){
 	position = 57%,start 22%,start
 	EOF
 	
-	my-superuser sed -i "s|background = will be changed with sed|background = ${lightdm_background}|g" /usr/share/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf
+	$_SUPERUSER sed -i "s|background = will be changed with sed|background = ${lightdm_background}|g" /usr/share/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf
 	
 	show_im "copy manpages."
-	my-superuser ln -sf ${__distro_path}/lib/manpage/* /usr/share/man/man1
+	$_SUPERUSER ln -sf ${__distro_path}/lib/manpage/* /usr/share/man/man1
 	
 	show_im "installing update-notification"
-	my-superuser "${__distro_path}/system_files/bin/update-notification" -I
+	$_SUPERUSER "${__distro_path}/system_files/bin/update-notification" -I
 	
 	show_im "pick correct apps_as_root."
 	if command_exist doas;then
-		my-superuser ln -sf ${__distro_path}/bin/doas/doasedit ${__distro_path}/system_files/bin
-		my-superuser cp -rp ${__distro_path}/system_files/doas.conf /etc
-		if ! my-superuser doas -C /etc/doas.conf;then
+		$_SUPERUSER ln -sf ${__distro_path}/bin/doas/doasedit ${__distro_path}/system_files/bin
+		$_SUPERUSER cp -rp ${__distro_path}/system_files/doas.conf /etc
+		if ! $_SUPERUSER doas -C /etc/doas.conf;then
 			show_em "config error"
 		fi
 	fi	
@@ -133,9 +133,9 @@ end_of_post_install(){
 		place=$(printf "%s" "$chosen" | cut -d':' -f3 | cut -f1 -d',' | sed 's/^ //')
 		place="${place:-$radarcode}" # Default place to radarcode if not set
 	
-		my-superuser sed -i "s|continentcode=.*|continentcode=\"$continentcode\"|" "${weather_script_config_path}" || show_em "end_of_post_install failed at continentcode"
-		my-superuser sed -i "s|radarcode=.*|radarcode=\"$radarcode\"|" "${weather_script_config_path}" || show_em "end_of_post_install failed at radarcode"
-		my-superuser sed -i "s|place=.*|place=\"$place\"|" "${weather_script_config_path}" || show_em "end_of_post_install failed at place"
+		$_SUPERUSER sed -i "s|continentcode=.*|continentcode=\"$continentcode\"|" "${weather_script_config_path}" || show_em "end_of_post_install failed at continentcode"
+		$_SUPERUSER sed -i "s|radarcode=.*|radarcode=\"$radarcode\"|" "${weather_script_config_path}" || show_em "end_of_post_install failed at radarcode"
+		$_SUPERUSER sed -i "s|place=.*|place=\"$place\"|" "${weather_script_config_path}" || show_em "end_of_post_install failed at place"
 	fi
 	
 	. "${__distro_path}/lib/common/DB"
@@ -146,11 +146,11 @@ end_of_post_install(){
 	for app in podman distrobox;do
 		if command_exist ${app};then
 			dir_name="$(basename $(dirname $(find . -type f -name ${app} )))"
-			[ ! -f "${apps_db_path}/$dir_name" ] && my-superuser touch "${apps_db_path}/$dir_name"
-			echo "${app}" | my-superuser tee -a "${apps_db_path}/$dir_name" >/dev/null 2>&1
+			[ ! -f "${apps_db_path}/$dir_name" ] && $_SUPERUSER touch "${apps_db_path}/$dir_name"
+			echo "${app}" | $_SUPERUSER tee -a "${apps_db_path}/$dir_name" >/dev/null 2>&1
 		fi
 	done
 	
 	show_im "prepare completed"
-	my-superuser touch "${installer_phases}/end_of_post_install"
+	$_SUPERUSER touch "${installer_phases}/end_of_post_install"
 }

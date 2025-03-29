@@ -99,16 +99,16 @@ run_package_manager_autoclean(){
 	show_im "autoremove unwanted pakages"
 	run_autoclean
     if [ -d /var/tmp ]; then
-        my-superuser find /var/tmp -type f -atime +5 -delete
+        $_SUPERUSER find /var/tmp -type f -atime +5 -delete
     fi
     if [ -d /tmp ]; then
-        my-superuser find /tmp -type f -atime +5 -delete
+        $_SUPERUSER find /tmp -type f -atime +5 -delete
     fi
     if [ -d /var/log ]; then
-        my-superuser find /var/log -type f -name "*.log" -exec truncate -s 0 {} \;
+        $_SUPERUSER find /var/log -type f -name "*.log" -exec truncate -s 0 {} \;
     fi
 	if [ "$init_system_are" = "systemd" ]; then
-        my-superuser journalctl --vacuum-time=3d
+        $_SUPERUSER journalctl --vacuum-time=3d
     fi
 }
 
@@ -161,7 +161,7 @@ package_installed(){
 
 removeSnaps(){
 	[ -f "${installer_phases}/removeSnaps" ] && return
-	command -v snap >/dev/null 2>&1 && my-superuser "$PACKAGER" remove -y snapd
+	command -v snap >/dev/null 2>&1 && $_SUPERUSER "$PACKAGER" remove -y snapd
 	touch "${installer_phases}/removeSnaps"
 }
 

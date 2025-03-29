@@ -4,15 +4,15 @@ if [ "$init_system_are" = "systemd" ];then
 		_command="${1-}"
 		_file="${2-}"
 		if [ "${_command}" = "stop" ];then
-			my-superuser systemctl stop ${_file}
+			$_SUPERUSER systemctl stop ${_file}
 		elif [ "${_command}" = "enable" ];then
-			my-superuser systemctl enable --now ${_file}
+			$_SUPERUSER systemctl enable --now ${_file}
 		elif [ "${_command}" = "disable" ];then
-			my-superuser systemctl disable ${_file}
+			$_SUPERUSER systemctl disable ${_file}
 		elif [ "${_command}" = "status" ];then
-			my-superuser systemctl status ${_file}
+			$_SUPERUSER systemctl status ${_file}
 		elif [ "${_command}" = "mask" ];then
-			my-superuser systemctl mask ${_file}
+			$_SUPERUSER systemctl mask ${_file}
 		fi
 	}
 elif [ "$init_system_are" = "openrc" ];then
@@ -20,15 +20,15 @@ elif [ "$init_system_are" = "openrc" ];then
 		_command="${1-}"
 		_file="${2-}"
 		if [ "${_command}" = "stop" ];then
-			my-superuser rc-service ${_file} stop
+			$_SUPERUSER rc-service ${_file} stop
 		elif [ "${_command}" = "enable" ];then
-			my-superuser rc-update add ${_file}
+			$_SUPERUSER rc-update add ${_file}
 		elif [ "${_command}" = "disable" ];then
-			my-superuser rc-update del ${_file}
+			$_SUPERUSER rc-update del ${_file}
 		elif [ "${_command}" = "status" ];then
-			my-superuser rc-service ${_file} status --quiet
+			$_SUPERUSER rc-service ${_file} status --quiet
 		elif [ "${_command}" = "mask" ];then
-			my-superuser rc-update del ${_file}
+			$_SUPERUSER rc-update del ${_file}
 		fi
 	}
 else

@@ -1,4 +1,6 @@
 #!/bin/sh
 disto_specific_apps_installer(){
+	[ -f "${installer_phases}/disto_specific_apps_installer" ] && return
+	sudo pkgfile --update
 	touch "${installer_phases}/disto_specific_apps_installer"
 }

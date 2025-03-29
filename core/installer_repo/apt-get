@@ -140,20 +140,20 @@ run_autoclean(){
 run_package_manager_autoclean(){
 	show_im "autoremove unwanted pakages"
 	run_autoclean
-	my-superuser du -h /var/cache/apt
+	$_SUPERUSER du -h /var/cache/apt
       
     if [ -d /var/tmp ]; then
-        my-superuser find /var/tmp -type f -atime +5 -delete
+        $_SUPERUSER find /var/tmp -type f -atime +5 -delete
     fi
     if [ -d /tmp ]; then
-        my-superuser find /tmp -type f -atime +5 -delete
+        $_SUPERUSER find /tmp -type f -atime +5 -delete
     fi
     if [ -d /var/log ]; then
-        my-superuser find /var/log -type f -name "*.log" -exec truncate -s 0 {} \;
+        $_SUPERUSER find /var/log -type f -name "*.log" -exec truncate -s 0 {} \;
     fi
 
 	if [ "$init_system_are" = "systemd" ]; then
-        my-superuser journalctl --vacuum-time=3d
+        $_SUPERUSER journalctl --vacuum-time=3d
     fi
 }
 
@@ -168,7 +168,7 @@ _unattended_upgrades_()
 				show_im "start unattended upgrades."
 				init_manager stop unattended-upgrades || :
 				if [ ! -f "${auto_upgrades_file_bak}" ];then
-					my-superuser mv "${auto_upgrades_file}" "${auto_upgrades_file_bak}"
+					$_SUPERUSER mv "${auto_upgrades_file}" "${auto_upgrades_file_bak}"
 				fi
 				touch "${installer_phases}/_unattended_upgrades_start"
 			;;
@@ -176,11 +176,11 @@ _unattended_upgrades_()
 				[ -f "${installer_phases}/_unattended_upgrades_stop" ] && return
 				show_im "stop unattended upgrades."
 				if [ -f "${auto_upgrades_file}" ] && [ -f "${auto_upgrades_file_bak}" ];then
-					my-superuser rm "${auto_upgrades_file}"
+					$_SUPERUSER rm "${auto_upgrades_file}"
 				fi
 					
 				if [ -f "${auto_upgrades_file_bak}" ];then
-					my-superuser mv "${auto_upgrades_file_bak}" "${auto_upgrades_file}"
+					$_SUPERUSER mv "${auto_upgrades_file_bak}" "${auto_upgrades_file}"
 				fi
 				touch "${installer_phases}/_unattended_upgrades_stop"
 			;;
@@ -203,7 +203,7 @@ switch_to_network_manager(){
 	[ -f "/etc/network/interfaces.old" ] && return
 	show_m "runing switch_to_network_manager."
 	show_im "create to interfaces file"
-	my-superuser tee "${temp_path}"/interfaces <<- 'EOF' >/dev/null
+	$_SUPERUSER tee "${temp_path}"/interfaces <<- 'EOF' >/dev/null
 	# This file describes the network interfaces available on your system
 	# and how to activate them. For more information, see interfaces(5).
 		
@@ -213,13 +213,13 @@ switch_to_network_manager(){
 	auto lo
 	iface lo inet loopback
 	EOF
-	my-superuser chmod 644 "${temp_path}"/interfaces
+	$_SUPERUSER chmod 644 "${temp_path}"/interfaces
 	show_im "create backup of interfaces file"
-	[ -f "/etc/network/interfaces" ] && my-superuser mv /etc/network/interfaces /etc/network/interfaces.old
-	my-superuser mkdir -p "/etc/network"
-	my-superuser mv "${temp_path}"/interfaces /etc/network/interfaces
+	[ -f "/etc/network/interfaces" ] && $_SUPERUSER mv /etc/network/interfaces /etc/network/interfaces.old
+	$_SUPERUSER mkdir -p "/etc/network"
+	$_SUPERUSER mv "${temp_path}"/interfaces /etc/network/interfaces
 	show_im "Disable NetworkManager"
-	my-superuser sed -i 's/managed=.*/managed=false/g' /etc/NetworkManager/NetworkManager.conf
+	$_SUPERUSER sed -i 's/managed=.*/managed=false/g' /etc/NetworkManager/NetworkManager.conf
 	touch "${installer_phases}/switch_to_network_manager"
 }
 
@@ -255,9 +255,9 @@ package_installed(){
 removeSnaps(){
 	[ -f "${installer_phases}/removeSnaps" ] && return
 	if command -v snap >/dev/null 2>&1 ;then
-		my-superuser "$PACKAGER" remove --purge -y snapd
-		my-superuser "$PACKAGER" autoremove -y
-		[ "$distro_name" = ubuntu ] && my-superuser apt-mark hold snapd
+		$_SUPERUSER "$PACKAGER" remove --purge -y snapd
+		$_SUPERUSER "$PACKAGER" autoremove -y
+		[ "$distro_name" = ubuntu ] && $_SUPERUSER apt-mark hold snapd
 	fi
 	touch "${installer_phases}/removeSnaps"
 }
