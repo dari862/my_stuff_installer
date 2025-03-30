@@ -16,7 +16,15 @@ __remove_package="${PACKAGER} -Rns --noconfirm"
 
 install_AUR_helper(){
 	[ -f "${installer_phases}/install_AUR_helper" ] && return
+	        
 	$_SUPERUSER true
+	
+	show_im "Updating your system..."
+	$_SUPERUSER pacman -Syu --noconfirm
+	
+	show_im "Installing git base-devel archlinux-keyring..."
+	$_SUPERUSER pacman -Syu --needed git base-devel archlinux-keyring
+
     if ! command_exist yay && ! command_exist paru; then
     	$_SUPERUSER ${PACKAGER} --noconfirm -Syu
     	for package in yay yay-bin yay-git;do
@@ -28,7 +36,6 @@ install_AUR_helper(){
         	$_SUPERUSER pacman --noconfirm -Syu $yay_package_name
         else
         	show_im "building yay from source..."
-        	$_SUPERUSER pacman -Syu --needed git base-devel
         	[ -d "/tmp/yay-bin" ] && rm -rdf /tmp/yay-bin
         	git clone https://aur.archlinux.org/yay-bin.git /tmp/yay-bin
         	chmod -R 700 /tmp/yay-bin
@@ -208,7 +215,6 @@ removeSnaps(){
 
 pre_package_manager_(){
 	[ -f "${installer_phases}/pre_package_manager_" ] && return
-    upgrade_now
     install_AUR_helper
     touch "${installer_phases}/pre_package_manager_"
 }
