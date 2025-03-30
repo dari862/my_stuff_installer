@@ -32,7 +32,8 @@ install_AUR_helper(){
         	[ -d "/tmp/yay-bin" ] && rm -rdf /tmp/yay-bin
         	git clone https://aur.archlinux.org/yay-bin.git /tmp/yay-bin
         	chmod -R 700 /tmp/yay-bin
-			(cd /tmp/yay-bin && makepkg -si --noconfirm)
+			(cd /tmp/yay-bin && makepkg -s --noconfirm)
+			$_SUPERUSER pacman --noconfirm -U /tmp/yay-bin/yay-bin*.zst
         fi
     else
     	${PACKAGER} --noconfirm -Syu
@@ -207,7 +208,7 @@ removeSnaps(){
 
 pre_package_manager_(){
 	[ -f "${installer_phases}/pre_package_manager_" ] && return
-    install_AUR_helper
     upgrade_now
+    install_AUR_helper
     touch "${installer_phases}/pre_package_manager_"
 }
