@@ -31,6 +31,7 @@ pre_disto_apps_installer(){
 	add_packages_2_install_list "${install_text_editer_app}"
 	add_packages_2_install_list "${install_mediaplayer_app}"
 	add_packages_2_install_list "${install_openbox_}"
+	add_packages_2_install_list "${install_audio_tray_app}"
 	add_packages_2_install_list "${install_fonts}"
 	add_packages_2_install_list "${install_for_scripts}"
 	add_packages_2_install_list "${install_image_viewer_apps}"
