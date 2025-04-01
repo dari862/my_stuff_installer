@@ -7,9 +7,9 @@ create_to_be_purged_list(){
 		# fonts-linuxlibertine break polybar 
 		# fonts-linuxlibertine installed from libreoffice
 		[ "$remove_aria2" = true ] && show_sm "adding aria2 package to remove list" && aria2="aria2" || aria2=""
-		show_im "adding fonts-linuxlibertine to purging list (fonts-linuxlibertine break polybar) "
-		to_be_purged="${to_be_purged} linuxlibertine"
-		to_be_purged="${to_be_purged} ${install_autoinstall_firmware} ${aria2}"
+		package_installed snap && show_sm "adding snap package to remove list" && snap="snap" || snap=""
+		package_installed linuxlibertine && show_sm "adding fonts-linuxlibertine to purging list (fonts-linuxlibertine break polybar) " && linuxlibertine="linuxlibertine" || linuxlibertine=""
+		to_be_purged="${to_be_purged} ${install_autoinstall_firmware} ${aria2} ${snap} ${linuxlibertine}"
 		for package in ${to_be_purged};do
 			if package_installed "$package";then
 				_purge_it="$_purge_it $package"
@@ -29,6 +29,7 @@ purge_some_unnecessary_pakages(){
 		show_im "purging apps"
 		remove_packages "${_purge_it}"
 	fi
+	run_autoclean
 	show_im "removing apt-fast and conf"
 	[ -f /usr/local/bin/apt-fast ] && show_sm "removing apt-fast" && $_SUPERUSER rm -f /usr/local/bin/apt-fast
 	[ -f /etc/apt-fast.conf ] && show_sm "removing apt-fast.conf" && $_SUPERUSER rm -f /etc/apt-fast.conf

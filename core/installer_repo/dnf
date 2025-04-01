@@ -139,12 +139,6 @@ package_installed(){
 	fi
 }
 
-removeSnaps(){
-	[ -f "${installer_phases}/removeSnaps" ] && return
-	package_installed snapd && remove_packages snapd
-	touch "${installer_phases}/removeSnaps"
-}
-
 pre_package_manager_(){
 	[ -f "${installer_phases}/pre_package_manager_" ] && return
 	kill_package_ ${PACKAGER}

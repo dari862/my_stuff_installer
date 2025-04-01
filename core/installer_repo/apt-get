@@ -226,16 +226,6 @@ package_installed(){
 	fi
 }
 
-removeSnaps(){
-	[ -f "${installer_phases}/removeSnaps" ] && return
-	if package_installed snap;then
-		remove_packages snapd
-		run_autoclean
-		[ "$distro_name" = ubuntu ] && $_SUPERUSER apt-mark hold snapd
-	fi
-	touch "${installer_phases}/removeSnaps"
-}
-
 pre_package_manager_(){
 	[ -f "${installer_phases}/pre_package_manager_" ] && return
 	export DEBIAN_FRONTEND=noninteractive

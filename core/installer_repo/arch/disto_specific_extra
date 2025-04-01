@@ -1,8 +1,9 @@
 #!/bin/sh
 create_to_be_purged_list(){
 	[ -f "${installer_phases}/create_to_be_purged_list" ] && return
+		package_installed snapd && show_sm "adding snap package to remove list" && snap="snapd" || snap=""
 		_purge_it=""
-		to_be_purged="xterm ${install_autoinstall_firmware}"
+		to_be_purged="xterm ${install_autoinstall_firmware} ${snap}"
 		for package in ${to_be_purged};do
 			if package_installed "$package";then
 				_purge_it="$_purge_it $package"
@@ -22,6 +23,7 @@ purge_some_unnecessary_pakages(){
 		show_im "purging apps"
 		remove_packages "${_purge_it}"
 	fi
+	run_autoclean
 	touch "${installer_phases}/purge_some_unnecessary_pakages"
 }
 

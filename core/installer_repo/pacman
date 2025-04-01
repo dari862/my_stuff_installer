@@ -54,11 +54,6 @@ install_AUR_helper(){
     	show_sm "swtiching to paru..."
         PACKAGER="paru"
     fi
-    
-    show_sm "updating rate-mirrors..."
-    ${PACKAGER} --noconfirm -S rate-mirrors-bin
-    $_SUPERUSER cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
-    $_SUPERUSER rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch
 	touch "${installer_phases}/install_AUR_helper"
 }
 
@@ -186,6 +181,15 @@ switch_lightdm_now(){
     touch "${installer_phases}/switch_lightdm_now"
 }
 
+updating_rate_mirrors(){
+	[ -f "${installer_phases}/updating_rate_mirrors" ] && return
+	show_sm "updating rate-mirrors..."
+    ${PACKAGER} --noconfirm -S rate-mirrors-bin
+    $_SUPERUSER cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
+    $_SUPERUSER rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch
+    touch "${installer_phases}/updating_rate_mirrors"
+}
+
 package_installed(){
 	package="${1:-}"
 	if grep -q "^$package" "$list_of_installed_apps_file_path";then
@@ -195,14 +199,9 @@ package_installed(){
 	fi
 }
 
-removeSnaps(){
-	[ -f "${installer_phases}/removeSnaps" ] && return
-	package_installed snapd && remove_packages snapd
-	touch "${installer_phases}/removeSnaps"
-}
-
 pre_package_manager_(){
 	[ -f "${installer_phases}/pre_package_manager_" ] && return
     install_AUR_helper
+    updating_rate_mirrors
     touch "${installer_phases}/pre_package_manager_"
 }

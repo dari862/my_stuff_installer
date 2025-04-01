@@ -729,7 +729,6 @@ clean_up_now(){
 	done
 	
 	[ "$autoclean_and_autoremove" = "Y" ] && run_package_manager_autoclean
-	removeSnaps
 	touch "${installer_phases}/clean_up_now"
 }
 
