@@ -13,6 +13,7 @@ else
 fi
 
 __remove_package="${PACKAGER} -Rns --noconfirm"
+List_of_apt_2_install_pacman=""
 
 install_AUR_helper(){
 	[ -f "${installer_phases}/install_AUR_helper" ] && return
@@ -75,16 +76,16 @@ create_package_list(){
 
 install_packages(){
 	if [ -n "${List_of_apt_2_install_}" ];then
-    	${PACKAGER} --noconfirm -Syu ${List_of_apt_2_install_}
+    	$_SUPERUSER pacman --noconfirm -Syu ${List_of_apt_2_install_}
     else
     	show_wm "List_of_apt_2_install_ are empty"
-    	sleep 1
     fi
-}
-
-check_if_package_exist_in_repo(){
-    package_name="$1"
-    
+    if [ -n "${List_of_apt_2_install_pacman}" ];then
+    	${PACKAGER} --noconfirm -Syu ${List_of_apt_2_install_pacman}
+    else
+    	show_wm "List_of_apt_2_install_pacman are empty"
+    fi
+    sleep 1
 }
 
 check_if_package_exist_in_repo(){
@@ -108,7 +109,10 @@ check_if_package_exist_in_repo(){
 }
 add_packages_2_install_list(){
     for package in "$@"; do
-        if ! ${PACKAGER} -Q "$package" >/dev/null 2>&1; then
+        if ! pacman -Q "$package" >/dev/null 2>&1; then
+            List_of_apt_2_install_pacman="$List_of_apt_2_install_pacman $package"
+            echo "$package added to install list."
+        elif ! ${PACKAGER} -Q "$package" >/dev/null 2>&1; then
             List_of_apt_2_install_="$List_of_apt_2_install_ $package"
             echo "$package added to install list."
         fi
