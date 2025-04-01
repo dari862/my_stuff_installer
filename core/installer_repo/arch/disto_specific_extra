@@ -20,7 +20,7 @@ purge_some_unnecessary_pakages(){
 	create_to_be_purged_list
 	if [ "$run_purge_some_unnecessary_pakages" = "Y" ];then
 		show_im "purging apps"
-		remove_package_with_error2info "${_purge_it}"
+		remove_packages "${_purge_it}"
 	fi
 	touch "${installer_phases}/purge_some_unnecessary_pakages"
 }

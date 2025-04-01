@@ -54,34 +54,15 @@ create_package_list(){
 }
 
 install_packages(){
-	if [ -n "${List_of_apt_2_install_}" ];then
-    	($_SUPERUSER ${PACKAGER} install -yq ${List_of_apt_2_install_} && kill_package_ ${PACKAGER}) || \
-		($_SUPERUSER ${PACKAGER} install -yq ${List_of_apt_2_install_} && kill_package_ ${PACKAGER}) || \
-		$_SUPERUSER ${PACKAGER} install -yq ${List_of_apt_2_install_}
+	packages_to_install="${1:-${List_of_apt_2_install_}}"
+	if [ -n "${packages_to_install}" ];then
+    	($_SUPERUSER ${PACKAGER} install -yq ${packages_to_install} && kill_package_ ${PACKAGER}) || \
+		($_SUPERUSER ${PACKAGER} install -yq ${packages_to_install} && kill_package_ ${PACKAGER}) || \
+		$_SUPERUSER ${PACKAGER} install -yq ${packages_to_install}
     else
     	show_wm "List_of_apt_2_install_ are empty"
     	sleep 1
     fi
-}
-
-check_if_package_exist_in_repo(){
-	package_name="${1-}"
-	if [ "$package_name" = "--no-list-of-apps-file" ];then
-		shift 1
-		package_name="${1-}"
-		if apt list --installed ${package_name} 2>/dev/null | grep "^${package_name}/" | grep -q "[installed]";then
-			return 0
-		else
-			return 1
-		fi
-	else
-		if ! dpkg -s "${package_name}" > /dev/null 2>&1;then
-			check_apps_in_cache="$(grep "^$package_name/" "${list_of_apps_file_path}" 2>/dev/null || :)"
-			if [ -n "${check_apps_in_cache}" ];then
-				return 0
-			fi
-		fi
-	fi
 }
 
 add_packages_2_install_list()
@@ -90,9 +71,8 @@ add_packages_2_install_list()
 	
 	for INDEX in ${localarray}
 	do
-		if ! dpkg -s "${INDEX}" > /dev/null 2>&1;then
-			check_apps_in_cache="$(grep "^$INDEX/" "${list_of_apps_file_path}" 2>/dev/null || :)"
-			if [ -n "${check_apps_in_cache}" ];then
+		if ! package_installed "${INDEX}";then
+			if grep "^$INDEX/" "${list_of_apps_file_path}" 2>/dev/null;then
 				List_of_apt_2_install_="$List_of_apt_2_install_ $INDEX"
 				show_im "${INDEX} added to install apps" 
 			else
@@ -114,7 +94,7 @@ upgrade_now()
 	show_im "end upgrade_now" 
 }
 
-remove_package_with_error2info()
+remove_packages()
 {
 	packages="$@"
 	if [ -n "$packages" ];then
@@ -123,13 +103,6 @@ remove_package_with_error2info()
 	else
 		show_wm "no packages to remove."
 	fi
-}
-
-remove_unnecessary_package_manager_stuff(){
-	show_im "removing apt-fast and conf"
-	[ "$remove_aria2" = true ] && show_sm "removing aria2 package" && $_SUPERUSER ${__remove_package} aria2
-	[ -f /usr/local/bin/apt-fast ] && show_sm "removing apt-fast" && $_SUPERUSER rm -f /usr/local/bin/apt-fast
-	[ -f /etc/apt-fast.conf ] && show_sm "removing apt-fast.conf" && $_SUPERUSER rm -f /etc/apt-fast.conf
 }
 
 run_autoclean(){
@@ -255,8 +228,8 @@ package_installed(){
 
 removeSnaps(){
 	[ -f "${installer_phases}/removeSnaps" ] && return
-	if command -v snap >/dev/null 2>&1 ;then
-		$_SUPERUSER ${__remove_package} snapd
+	if package_installed snap;then
+		remove_packages snapd
 		run_autoclean
 		[ "$distro_name" = ubuntu ] && $_SUPERUSER apt-mark hold snapd
 	fi

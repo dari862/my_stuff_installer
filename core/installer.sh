@@ -556,10 +556,24 @@ kill_package_(){
 	$_SUPERUSER ps aux | grep "${1}" | awk '{print $2}' | xargs $_SUPERUSER kill -9 >/dev/null 2>&1 || :
 }
 
-pick_file_downloader_and_url_checker(){
+detect_file_downloader_and_url_checker(){
+	[ -f "${installer_phases}/pick_file_downloader_and_url_checker" ] && return
 	show_m "picking url command"
 	if command_exist curl;then
 		url_package="curl"
+	elif command_exist wget;then
+		url_package="wget"
+	else
+		show_em "Neither curl nor wget is availabl, please install curl or wget.."
+	fi
+	echo "url_package=\"$url_package\"" >> "${save_value_file}"
+	touch "${installer_phases}/pick_file_downloader_and_url_checker"
+}
+
+pick_file_downloader_and_url_checker(){
+	show_im "picked url command: $url_package "
+	
+	if [ "$url_package" = "curl" ];then
 		check_url(){
 			curl -SsL "${1-}" 2>/dev/null
 		}
@@ -575,8 +589,7 @@ pick_file_downloader_and_url_checker(){
 		get_current_date(){
 			curl --head -fSs --max-redirs 0 "${1-}" 2>&1 | sed -n 's/^ *Date: *//p'
 		}
-	elif command_exist wget;then
-		url_package="wget"
+	elif [ "$url_package" = "wget" ];then
 		check_url(){
 			wget -q -O- "${1-}" >/dev/null 2>&1
 		}
@@ -592,10 +605,7 @@ pick_file_downloader_and_url_checker(){
 		get_current_date(){
 			wget -S -O- -q --no-check-certificate --max-redirect=0 "${1-}" 2>&1 | sed -n 's/^ *Date: *//p'
 		}
-	else
-		show_em "Neither curl nor wget is availabl, please install curl or wget.."
 	fi
-	show_im "picked url command: $url_package "
 }
 
 internet_tester() {
@@ -701,17 +711,13 @@ must_install_apps()
 {
 	[ -f "${installer_phases}/must_install_apps" ] && return
 	show_m "installing req apps"
-	add_packages_2_install_list "git"
-	install_packages
+	install_packages "git"
 	touch "${installer_phases}/must_install_apps"
 }
 
 clean_up_now(){
 	[ -f "${installer_phases}/clean_up_now" ] && return
 	show_m "clean_up_now"
-	
-	remove_unnecessary_package_manager_stuff
-	
 	show_im "removing not needed dotfiles"
 
 	remove_this_Array="
@@ -824,9 +830,8 @@ install_doas_tools()
 			$_SUPERUSER groupadd sudo
 		fi
 		show_im "Installing doas"
-		add_packages_2_install_list "doas"
-		add_packages_2_install_list "expect"
-		install_packages
+		install_this_packages_for_doas="doas expect"
+		install_packages "$install_this_packages_for_doas"
 		$_SUPERUSER adduser "$USER" sudo || :
 		$_SUPERUSER tee -a /etc/bash.bashrc <<- EOF >/dev/null 2>&1
 		if [ -x /usr/bin/doas ];then
@@ -1060,7 +1065,7 @@ switch_to_doas_now(){
 			
 			if [ -z "${_SUPERUSER}" ];then
 				show_im "Purging sudo."
-				remove_package_with_error2info "sudo" || show_em "failed to purge sudo"
+				remove_packages "sudo" || show_em "failed to purge sudo"
 				show_im "install fake sudo package and disable root user."
 				dpkg -i "${__distro_path}/lib/fake_empty_apps/sudo.deb" || show_em "failed to install fake sudo."
 				passwd -l root || show_em "failed to disable root user."
@@ -1122,6 +1127,7 @@ if [ -n "$_SUPERUSER" ];then
 	sleep 0.5
 fi
 
+detect_file_downloader_and_url_checker
 pick_file_downloader_and_url_checker
 
 test_internet_

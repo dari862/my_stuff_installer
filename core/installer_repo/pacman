@@ -13,7 +13,7 @@ else
 fi
 
 __remove_package="${PACKAGER} -Rns --noconfirm"
-List_of_apt_2_install_pacman=""
+packages_to_install_pacman=""
 
 install_AUR_helper(){
 	[ -f "${installer_phases}/install_AUR_helper" ] && return
@@ -66,6 +66,7 @@ create_package_list(){
     if [ ! -f "${list_of_apps_file_path}" ]; then
         show_im "Creating package list..."
         ${PACKAGER} -Qq > "${list_of_apps_file_path}"
+        pacman -Qq > "${list_of_apps_file_path}_pacman"
     fi
     
     if [ ! -f "${list_of_installed_apps_file_path}" ];then
@@ -75,46 +76,33 @@ create_package_list(){
 }
 
 install_packages(){
-	if [ -n "${List_of_apt_2_install_}" ];then
-    	$_SUPERUSER pacman --noconfirm -Syu ${List_of_apt_2_install_}
+	packages_to_install="${1:-${List_of_apt_2_install_}}"
+	if [ -n "${packages_to_install}" ];then
+    	$_SUPERUSER pacman --noconfirm -Syu ${packages_to_install}
     else
-    	show_wm "List_of_apt_2_install_ are empty"
+    	show_wm "packages_to_install are empty"
     fi
-    if [ -n "${List_of_apt_2_install_pacman}" ];then
-    	${PACKAGER} --noconfirm -Syu ${List_of_apt_2_install_pacman}
+    if [ -n "${packages_to_install_pacman}" ];then
+    	${PACKAGER} --noconfirm -Syu ${packages_to_install_pacman}
     else
-    	show_wm "List_of_apt_2_install_pacman are empty"
+    	show_wm "packages_to_install_pacman are empty"
     fi
     sleep 1
 }
 
-check_if_package_exist_in_repo(){
-	package_name="${1-}"
-	if [ "$package_name" = "--no-list-of-apps-file" ];then
-		shift 1
-		package_name="${1-}"
-		if ${PACKAGER} -Q "$package_name" >/dev/null 2>&1; then
-			return 0
-		else
-			return 1
-		fi
-	else
-		if ! ${PACKAGER} -Q "$package_name" >/dev/null 2>&1; then
-			check_apps_in_cache="$(grep "^$package_name" "${list_of_apps_file_path}" 2>/dev/null || :)"
-			if [ -n "${check_apps_in_cache}" ];then
-				return 0
-			fi
-		fi
-	fi
-}
 add_packages_2_install_list(){
+	packages_to_install="${1:-${List_of_apt_2_install_}}"
     for package in "$@"; do
-        if ! pacman -Q "$package" >/dev/null 2>&1; then
-            List_of_apt_2_install_pacman="$List_of_apt_2_install_pacman $package"
-            echo "$package added to install list."
-        elif ! ${PACKAGER} -Q "$package" >/dev/null 2>&1; then
-            List_of_apt_2_install_="$List_of_apt_2_install_ $package"
-            echo "$package added to install list."
+    	if ! package_installed "${INDEX}";then
+        	if grep "^${INDEX}$" "${list_of_apps_file_path}" 2>/dev/null;then
+            	packages_to_install_pacman="$packages_to_install_pacman $package"
+            	echo "$package added to install list."
+        	elif grep "^${INDEX}$" "${${list_of_apps_file_path}_pacman}" 2>/dev/null;then
+            	packages_to_install="$packages_to_install $package"
+            	echo "$package added to install list."
+            else
+				show_wm "${INDEX} does not exist." 
+        	fi
         fi
     done
 }
@@ -124,25 +112,21 @@ upgrade_now(){
     ${PACKAGER} -Syu --noconfirm
 }
 
-remove_package_with_error2info()
+remove_packages()
 {
 	packages="$@"
 	if [ -n "$packages" ];then
 		show_im "Removing ${packages}."
-		$_SUPERUSER ${__remove_package} "$package"
+		${__remove_package} "$package"
 	else
 		show_wm "no packages to remove."
 	fi
 }
 
-remove_unnecessary_package_manager_stuff(){
-	:
-}
-
 run_autoclean(){
 	show_im "run autoremove autoclean."
 	${PACKAGER} -Sc --noconfirm
-	$_SUPERUSER ${__remove_package} "$(pacman -Qtdq)" > /dev/null || true
+	remove_packages "$(pacman -Qtdq)" > /dev/null || true
 }
 
 run_package_manager_autoclean(){
@@ -213,7 +197,7 @@ package_installed(){
 
 removeSnaps(){
 	[ -f "${installer_phases}/removeSnaps" ] && return
-	command -v snap >/dev/null 2>&1 && $_SUPERUSER ${__remove_package} snapd
+	package_installed snapd && remove_packages snapd
 	touch "${installer_phases}/removeSnaps"
 }
 

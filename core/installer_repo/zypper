@@ -20,34 +20,15 @@ create_package_list(){
 }
 
 install_packages(){
-	if [ -n "${List_of_apt_2_install_}" ];then
-    	($_SUPERUSER ${PACKAGER} install -y ${List_of_apt_2_install_} && kill_package_ ${PACKAGER}) || \
-		($_SUPERUSER ${PACKAGER} install -y ${List_of_apt_2_install_} && kill_package_ ${PACKAGER}) || \
-		$_SUPERUSER ${PACKAGER} install -y ${List_of_apt_2_install_}
+	packages_to_install="${1:-${List_of_apt_2_install_}}"
+	if [ -n "${packages_to_install}" ];then
+    	($_SUPERUSER ${PACKAGER} install -y ${packages_to_install} && kill_package_ ${PACKAGER}) || \
+		($_SUPERUSER ${PACKAGER} install -y ${packages_to_install} && kill_package_ ${PACKAGER}) || \
+		$_SUPERUSER ${PACKAGER} install -y ${packages_to_install}
     else
-    	show_wm "List_of_apt_2_install_ are empty"
+    	show_wm "packages_to_install are empty"
     	sleep 1
     fi
-}
-
-check_if_package_exist_in_repo(){
-	package_name="${1-}"
-	if [ "$package_name" = "--no-list-of-apps-file" ];then
-		shift 1
-		package_name="${1-}"
-		if rpm -q "${package_name}" > /dev/null 2>&1; then
-			return 0
-		else
-			return 1
-		fi
-	else
-		if ! rpm -q "${package_name}" > /dev/null 2>&1; then
-			check_apps_in_cache="$(grep "^$package_name" "${list_of_apps_file_path}" 2>/dev/null || :)"
-			if [ -n "${check_apps_in_cache}" ];then
-				return 0
-			fi
-		fi
-	fi
 }
 
 add_packages_2_install_list()
@@ -56,10 +37,9 @@ add_packages_2_install_list()
 	
 	for INDEX in ${localarray}
 	do
-		if ! rpm -q "${INDEX}" > /dev/null 2>&1;then
-			check_apps_in_cache="$(grep "^$INDEX" "${list_of_apps_file_path}" 2>/dev/null || :)"
-			if [ -n "${check_apps_in_cache}" ];then
-				List_of_apt_2_install_="$List_of_apt_2_install_ $INDEX"
+		if ! package_installed "${INDEX}";then
+			if grep "^$INDEX" "${list_of_apps_file_path}" 2>/dev/null;then
+				packages_to_install="$packages_to_install $INDEX"
 				show_im "${INDEX} added to install apps" 
 			else
 				show_wm "${INDEX} does not exist." 
@@ -74,7 +54,7 @@ upgrade_now()
 	$_SUPERUSER ${PACKAGER} update -y
 }
 
-remove_package_with_error2info()
+remove_packages()
 {
 	packages="$@"
 	if [ -n "$packages" ];then
@@ -83,10 +63,6 @@ remove_package_with_error2info()
 	else
 		show_wm "no packages to remove."
 	fi
-}
-
-remove_unnecessary_package_manager_stuff(){
-	:
 }
 
 run_autoclean(){
@@ -162,7 +138,7 @@ package_installed(){
 
 removeSnaps(){
 	[ -f "${installer_phases}/removeSnaps" ] && return
-	command -v snap >/dev/null 2>&1 && $_SUPERUSER ${__remove_package} snapd
+	package_installed snapd && remove_packages snapd
 	touch "${installer_phases}/removeSnaps"
 }
 
