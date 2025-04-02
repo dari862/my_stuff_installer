@@ -14,6 +14,7 @@ fi
 
 __remove_package="${PACKAGER} -Rns --noconfirm"
 packages_to_install_pacman=""
+packages_to_install_AUR=""
 
 install_AUR_helper(){
 	[ -f "${installer_phases}/install_AUR_helper" ] && return
@@ -76,14 +77,14 @@ install_packages(){
 		return
 	fi
 	
-	if [ -n "${package_to_install}" ];then
-    	$_SUPERUSER pacman --noconfirm -Syu ${packages_to_install}
+	if [ -n "${packages_to_install_AUR}" ];then
+    	${PACKAGER} --noconfirm -Syu ${packages_to_install_AUR}
     else
-    	show_wm "packages_to_install are empty"
+    	show_wm "packages_to_install_AUR are empty"
     fi
     
     if [ -n "${packages_to_install_pacman}" ];then
-    	${PACKAGER} --noconfirm -Syu ${packages_to_install_pacman}
+    	$_SUPERUSER pacman --noconfirm -Syu ${packages_to_install_pacman}
     else
     	show_wm "packages_to_install_pacman are empty"
     fi
@@ -99,7 +100,7 @@ add_packages_2_install_list(){
             	packages_to_install_pacman="$packages_to_install_pacman $package"
             	echo "$package added to install list."
         	elif ${PACKAGER} -Ss 2>/dev/null;then
-            	packages_to_install="$packages_to_install $package"
+            	packages_to_install_AUR="$packages_to_install_AUR $package"
             	echo "$package added to install list."
             else
 				show_wm "${INDEX} does not exist." 
