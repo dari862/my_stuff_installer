@@ -60,7 +60,6 @@ install_AUR_helper(){
 create_package_list(){
     if [ ! -f "${list_of_apps_file_path}" ]; then
         show_im "Creating package list..."
-        ${PACKAGER} -Qq > "${list_of_apps_file_path}"
         pacman -Qq > "${list_of_apps_file_path}_pacman"
     fi
     
@@ -73,7 +72,7 @@ create_package_list(){
 install_packages(){
 	single_package_to_install="${1:-}"
 	if [ -n "${single_package_to_install}" ];then
-		$_SUPERUSER pacman --noconfirm -Syu ${packages_to_install}
+		$_SUPERUSER pacman --noconfirm -Syu ${single_package_to_install}
 		return
 	fi
 	
@@ -99,7 +98,7 @@ add_packages_2_install_list(){
         	if grep "^${INDEX}$" "${list_of_apps_file_path}" 2>/dev/null;then
             	packages_to_install_pacman="$packages_to_install_pacman $package"
             	echo "$package added to install list."
-        	elif grep "^${INDEX}$" "${${list_of_apps_file_path}_pacman}" 2>/dev/null;then
+        	elif ${PACKAGER} -Ss 2>/dev/null;then
             	packages_to_install="$packages_to_install $package"
             	echo "$package added to install list."
             else
