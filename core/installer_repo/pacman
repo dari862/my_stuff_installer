@@ -71,23 +71,30 @@ create_package_list(){
 }
 
 install_packages(){
-	packages_to_install="${1:-${List_of_apt_2_install_}}"
-	if [ -n "${packages_to_install}" ];then
+	single_package_to_install="${1:-}"
+	if [ -n "${single_package_to_install}" ];then
+		$_SUPERUSER pacman --noconfirm -Syu ${packages_to_install}
+		return
+	fi
+	
+	if [ -n "${package_to_install}" ];then
     	$_SUPERUSER pacman --noconfirm -Syu ${packages_to_install}
     else
     	show_wm "packages_to_install are empty"
     fi
+    
     if [ -n "${packages_to_install_pacman}" ];then
     	${PACKAGER} --noconfirm -Syu ${packages_to_install_pacman}
     else
     	show_wm "packages_to_install_pacman are empty"
     fi
+    
     sleep 1
 }
 
 add_packages_2_install_list(){
-	packages_to_install="${1:-${List_of_apt_2_install_}}"
-    for package in "$@"; do
+	localarray="$@"
+	for INDEX in ${localarray};do
     	if ! package_installed "${INDEX}";then
         	if grep "^${INDEX}$" "${list_of_apps_file_path}" 2>/dev/null;then
             	packages_to_install_pacman="$packages_to_install_pacman $package"
