@@ -1193,6 +1193,8 @@ if [ ! -f "${installer_phases}/create_List_of_apt_2_install_" ];then
 	
 	if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
 		echo "List_of_apt_2_install_=\"$List_of_apt_2_install_\"" >> "${save_value_file}"
+		echo "packages_to_install_pacman=\"$packages_to_install_pacman\"" >> "${save_value_file}"
+		echo "packages_to_install_AUR=\"$packages_to_install_AUR\"" >> "${save_value_file}"
 	fi
 	touch "${installer_phases}/create_List_of_apt_2_install_"
 fi

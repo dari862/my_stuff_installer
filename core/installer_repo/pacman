@@ -98,9 +98,11 @@ add_packages_2_install_list(){
     	if ! package_installed "${INDEX}";then
         	if grep "^${INDEX}$" "${list_of_apps_file_path}" 2>/dev/null;then
             	packages_to_install_pacman="$packages_to_install_pacman $package"
+            	List_of_apt_2_install_="$List_of_apt_2_install_ $INDEX"
             	echo "$package added to install list."
         	elif ${PACKAGER} -Ss 2>/dev/null;then
             	packages_to_install_AUR="$packages_to_install_AUR $package"
+            	List_of_apt_2_install_="$List_of_apt_2_install_ $INDEX"
             	echo "$package added to install list."
             else
 				show_wm "${INDEX} does not exist." 
