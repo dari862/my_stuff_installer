@@ -1,5 +1,6 @@
 #!/bin/sh
 pre_disto_apps_installer(){
+	[ -f "${installer_phases}/disto_apps_installer" ] && return
 	. "${prompt_to_install_value_file}"
 	show_im "Adding needed packages to install list."
 	##################################################################################
@@ -75,6 +76,7 @@ pre_disto_apps_installer(){
 }
 
 post_disto_apps_installer(){
+	[ -f "${installer_phases}/disto_apps_installer" ] && return
 	. "${prompt_to_install_value_file}"
 	show_im "Configer packages."
 	
@@ -91,8 +93,7 @@ post_disto_apps_installer(){
 		$_SUPERUSER chsh -s $(command_exist zsh) $__USER
 	fi
 	
-	if command_exist mpd >/dev/null
-	then
+	if command_exist mpd;then
 		if [ -n "$(pidof mpd)" ];then
 			kill_package_ mpd
 		fi
@@ -130,8 +131,7 @@ post_disto_apps_installer(){
 		fi
 	fi
 	
-	if command_exist ufw >/dev/null
-	then
+	if command_exist ufw;then
 		$_SUPERUSER ufw disable >/dev/null 2>&1
 		show_im "Disableing (UFW)"
 		
@@ -154,4 +154,40 @@ post_disto_apps_installer(){
     	show_im "Enabled Firewall with Baselines!"
 	fi
 	touch "${installer_phases}/disto_apps_installer"
+}
+
+install_ads_block_for_firefox(){
+	[ -f "${installer_phases}/install_ads_block_for_firefox" ] && return
+	show_im "Downloading uBlock to firefox."
+	ads_block_api_contant="$(get_url_content "https://api.github.com/repos/gorhill/uBlock/releases/latest")"
+	ads_block_url="$(echo "$ads_block_api_contant" | grep -oP '(?<=browser_download_url": ")[^"]*' | grep firefox)"
+	ads_block_name="$(echo "$ads_block_api_contant" | grep -oP '(?<=name": ")[^"]*' | grep firefox)"
+	ads_block_tmp_path="/tmp/ads_block"
+	ads_block_downloaded_tmp_path="${ads_block_tmp_path}/${ads_block_name}"
+	ads_block_contant_tmp_path="${ads_block_tmp_path}/ads_block_contant"
+			
+	$_SUPERUSER mkdir -p "${ads_block_contant_tmp_path}"
+	
+	download_file "$_SUPERUSER" "${ads_block_url}" "${ads_block_tmp_path}/${ads_block_name}"
+	$_SUPERUSER unzip "${ads_block_downloaded_tmp_path}" -d "${ads_block_contant_tmp_path}"
+	
+	ads_block_tmp_path="${ads_block_tmp_path}/$(grep -oP '(?<=id": ")[^"]*' "${ads_block_contant_tmp_path}/manifest.json").xpi"
+	
+	$_SUPERUSER mv "${ads_block_downloaded_tmp_path}" "${ads_block_tmp_path}"
+	
+	for d in /home/*; do
+		if [ -d "$d/.mozilla/firefox" ];then
+			show_im "Installing uBlock to ($d) firefox."
+			user_and_group=$(stat "$(dirname "$d/.config")" -c %u:%g)
+			profiles="$(cat "$d/.mozilla/firefox/profiles.ini" | grep "Path=" | awk -F= '{print $2}')"
+			for p in $profiles;do
+				$_SUPERUSER mkdir -p "$d/.mozilla/firefox/$p/extensions"
+				$_SUPERUSER cp -r "${ads_block_tmp_path}" "$d/.mozilla/firefox/$p/extensions"
+			done
+			$_SUPERUSER chown -R "$user_and_group" "$d"
+		else
+			show_im "Skipping install of uBlock to ($d) firefox."
+		fi
+	done
+	touch "${installer_phases}/install_ads_block_for_firefox"
 }

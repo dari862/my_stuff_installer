@@ -1215,13 +1215,14 @@ touch "${installer_phases}/no_internet_needed"
 ##################################################################################
 
 if [ "$install_drivers" = "true" ];then
-	[ ! -f "${installer_phases}/disto_Drivers_installer" ] && (post_disto_Drivers_installer || show_em "failed to run post_disto_Drivers_installer")
-	[ ! -f "${installer_phases}/disto_specific_Drivers_installer" ] && (disto_specific_Drivers_installer || show_em "failed to run disto_specific_Drivers_installer")
+	post_disto_Drivers_installer || show_em "failed to run post_disto_Drivers_installer"
+	disto_specific_Drivers_installer || show_em "failed to run disto_specific_Drivers_installer"
 fi
 
 if [ "$install_apps" = "true" ];then
-	[ ! -f "${installer_phases}/disto_apps_installer" ] && (post_disto_apps_installer || show_em "failed to run post_disto_apps_installer")
-	[ ! -f "${installer_phases}/disto_specific_apps_installer" ] && (disto_specific_apps_installer || show_em "failed to run disto_specific_apps_installer")
+	post_disto_apps_installer || show_em "failed to run post_disto_apps_installer"
+	disto_specific_apps_installer || show_em "failed to run disto_specific_apps_installer"
+	install_ads_block_for_firefox || show_em "failed to run install_ads_block_for_firefox"
 fi
 
 switch_lightdm_now
