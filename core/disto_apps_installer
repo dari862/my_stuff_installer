@@ -169,7 +169,7 @@ install_ads_block_for_firefox(){
 	$_SUPERUSER mkdir -p "${ads_block_contant_tmp_path}"
 	
 	download_file "$_SUPERUSER" "${ads_block_url}" "${ads_block_tmp_path}/${ads_block_name}"
-	$_SUPERUSER unzip "${ads_block_downloaded_tmp_path}" -d "${ads_block_contant_tmp_path}"
+	$_SUPERUSER unzip "${ads_block_downloaded_tmp_path}" -d "${ads_block_contant_tmp_path}" >/dev/null 2>&1
 	
 	ads_block_tmp_path="${ads_block_tmp_path}/$(grep -oP '(?<=id": ")[^"]*' "${ads_block_contant_tmp_path}/manifest.json").xpi"
 	
