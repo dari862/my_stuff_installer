@@ -519,36 +519,27 @@ check_and_download_()
 {
 	check_this_file_="${1:-}"
 	file_dir="${2:-}"
+	
 	show_im "running check_and_download_ function on \"$check_this_file_\" \"$file_dir\""
-	new_check_this_file_="${temp_path}/${check_this_file_}"
-	if [ -d "$HOME/Desktop" ];then
-		dir_2_find_files_in="$HOME/Desktop ${temp_path}"
-	else
-		dir_2_find_files_in="${temp_path}"
-	fi
-	if [ -z "${file_dir}" ];then
-		url_to_download="${check_this_file_}"
-		check_this_file_location="$(find ${dir_2_find_files_in} -type f -name ${check_this_file_} || :)"
-	else
-		url_to_download="${file_dir}/${check_this_file_}"
-		check_this_file_location="$(find ${dir_2_find_files_in} -type f -name ${check_this_file_} | grep "${file_dir}" || :)"
-	fi
-		
-	[ -f "${new_check_this_file_}" ] && return
 	
-	if [ -n "${check_this_file_location}" ] && [ "${check_this_file_location}" != "${temp_path}/${check_this_file_}" ];then
-		mv "${check_this_file_location}" "${temp_path}"
+	if [ -z "${check_this_file_}" ];then
+		path_2_file="my_stuff_installer/core/${check_this_file_}"
+	else
+		path_2_file="my_stuff_installer/core/${file_dir}/${check_this_file_}"
 	fi
 	
-	if [ ! -f "${new_check_this_file_}" ];then
+	if [ -f "$HOME/Desktop/${path_2_file}" ];then
+		mv "${check_this_file_location}" "${temp_path}" || show_em "failed to move ($HOME/Desktop/${path_2_file}) to (${temp_path})"
+		show_im "${check_this_file_} already exist."
+	elif [ -f "${temp_path}/${check_this_file_}" ];then
+		show_im "${check_this_file_} already exist."
+	else
 		show_im "Download $check_this_file_ file from www.github.com/dari862/my_stuff_installer ."
-		if download_file "" "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${url_to_download}" "${new_check_this_file_}" ;then
+		if download_file "" "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${check_this_file_}" "${temp_path}/${check_this_file_}" ;then
 			chmod +x "${new_check_this_file_}"
 		else
 			show_em "Error: Failed to download ${check_this_file_} from https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${check_this_file_}"
 		fi
-	else
-		show_im "file: $check_this_file_ exsit."
 	fi
 }
 
@@ -908,67 +899,36 @@ create_uninstaller_file(){
 }
 
 pick_clone_rep_commnad(){
+	[ -f "${installer_phases}/pick_clone_rep_commnad" ] && return
 	show_m "pick clone repo commnad"
 	if command_exist git;then
 		show_im "clone repo commnad: git"
-		clone_rep_(){
-			getthis="${1-}"
-			if [ ! -f "${installer_phases}/${getthis}" ];then
-				show_im "clone distro files repo ( ${getthis} )."
-				getthis_location="$(find ${dir_2_find_files_in} -type d -name ${getthis} | head -1)"
-				
-				if [ -z "${getthis_location}" ];then
-					getthis_location="${temp_path}"
-				else
-					getthis_location="$(cd "${getthis_location}" && cd .. && pwd)"
-				fi
-				
-				if [ ! -d "${getthis_location}/${getthis}" ];then 
-					git clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}/${getthis}"
-				else
-					show_im "${getthis} Folder does exsist"
-				fi
-				touch "${installer_phases}/${getthis}"
-			else
-				getthis_location="$(find ${dir_2_find_files_in} -type d -name ${getthis} | head -1)"
-				
-				if [ -z "${getthis_location}" ];then
-					getthis_location="${temp_path}"
-				else
-					getthis_location="$(cd "${getthis_location}" && cd .. && pwd)"
-				fi
-			fi
-		}
+		repo_commnad="git clone --depth=1"
 	elif command_exist svn;then
 		show_im "clone repo commnad: svn"
-		clone_rep_(){
-			getthis="${1-}"
-			if [ ! -f "${installer_phases}/${getthis}" ];then
-				show_im "clone distro files repo ( ${getthis} )."
-				getthis_location="$(find ${dir_2_find_files_in} -type d -name ${getthis} | head -1)"
-				
-				if [ -z "${getthis_location}" ];then
-					getthis_location="${temp_path}"
-				else
-					getthis_location="$(cd "${getthis_location}" && cd .. && pwd)"
-				fi
-				
-				if [ ! -d "${getthis_location}/${getthis}" ];then 
-					svn clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}/${getthis}"
-				else
-					show_im "${getthis} Folder does exsist"
-				fi
-				touch "${installer_phases}/${getthis}"
-			else
-				getthis_location="$(find ${dir_2_find_files_in} -type d -name ${getthis} | head -1)"
-				
-				if [ -z "${getthis_location}" ];then
-					getthis_location="${temp_path}"
-				else
-					getthis_location="$(cd "${getthis_location}" && cd .. && pwd)"
-				fi
-			fi
-		}
+		repo_commnad="svn clone --depth=1"
+	fi
+	echo "repo_commnad=\"${repo_commnad}\"" >> "${save_value_file}"
+	touch "${installer_phases}/pick_clone_rep_commnad"
+}
+
+clone_rep_(){
+	getthis="${1-}"
+	
+	if [ -d "$HOME/Desktop/${getthis}" ];then
+		getthis_location="$HOME/Desktop"
+	else
+		getthis_location="${temp_path}"
+	fi
+	
+	if [ ! -f "${installer_phases}/${getthis}" ];then
+		show_im "clone distro files repo ( ${getthis} )."
+		if [ ! -d "${getthis_location}/${getthis}" ];then 
+			$repo_commnad "https://github.com/dari862/${getthis}.git" "${getthis_location}/${getthis}"
+		else
+			show_im "${getthis} Folder does exsist"
+		fi
+		touch "${installer_phases}/${getthis}"	
 	fi
 }
 
@@ -1007,8 +967,8 @@ check_and_download_core_script(){
 source_and_set_machine_type(){
 	[ -f "${installer_phases}/check_machine_type" ] && return
 	
-	if [ -f "/usr/share/my_stuff/lib/common/machine_type" ];then
-		. "/usr/share/my_stuff/lib/common/machine_type"
+	if [ -f "${__distro_path}/lib/common/machine_type" ];then
+		. "${__distro_path}/lib/common/machine_type"
 	elif [ -f "${my_stuff_temp_path}/my_stuff/lib/common/machine_type" ];then
 		. "${my_stuff_temp_path}/my_stuff/lib/common/machine_type"
 	else
@@ -1032,8 +992,8 @@ source_and_set_machine_type(){
 }
 
 create_new_os_release_file(){
-	[ -f "/usr/share/my_stuff/os-release" ] && return
-	$_SUPERUSER tee "/usr/share/my_stuff/os-release" <<- EOF > /dev/null 2>&1
+	[ -f "${__distro_path}/os-release" ] && return
+	$_SUPERUSER tee "${__distro_path}/os-release" <<- EOF > /dev/null 2>&1
 	version_="$version_"
 	distro_name="$distro_name"
 	distro_desc="$distro_desc"

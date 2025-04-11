@@ -1,6 +1,6 @@
 #!/bin/sh
 __distro_path="/usr/share/my_stuff"
-lightdm_background="/usr/share/my_stuff/my_wallpapers/default_wall-01.jpg"
+lightdm_background="${__distro_path}/my_wallpapers/default_wall-01.jpg"
 
 pre_post_install(){
 	[ -f "${installer_phases}/pre_post_install" ] && return
@@ -122,7 +122,7 @@ end_of_post_install(){
 	
 	if [ -z "$place" ];then
 		show_im "set place var in $weather_script_config_path"
-		. "/usr/share/my_stuff/bin/not_add_2_path/weather/country_list"
+		. "${__distro_path}/bin/not_add_2_path/weather/country_list"
    		# Geolocate IP:
    		place=$(echo "$__timezone" | awk -F/ '{print $2}')
    		chosen="$(printf "%s" "$country_list" | grep "$place" )"

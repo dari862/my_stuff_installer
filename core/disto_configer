@@ -45,6 +45,6 @@ for e in ${__distro_path}/Theme_Stuff/fonts/* ; do
 done
 
 show_im "create Distro_Specific dir."
-$_SUPERUSER ln -sf "${__distro_path}/All_Distro_Specific/${distro_name}" "/usr/share/my_stuff/Distro_Specific"
+$_SUPERUSER ln -sf "${__distro_path}/All_Distro_Specific/${distro_name}" "${__distro_path}/Distro_Specific"
 
 touch "${installer_phases}/disto_configer"
