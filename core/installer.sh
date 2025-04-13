@@ -529,7 +529,7 @@ check_and_download_()
 	fi
 	
 	if [ -f "$HOME/Desktop/${path_2_file}" ];then
-		mv "${check_this_file_location}" "${temp_path}" || show_em "failed to move ($HOME/Desktop/${path_2_file}) to (${temp_path})"
+		mv "$HOME/Desktop/${path_2_file}" "${temp_path}" || show_em "failed to move ($HOME/Desktop/${path_2_file}) to (${temp_path})"
 		show_im "${check_this_file_} already exist."
 	elif [ -f "${temp_path}/${check_this_file_}" ];then
 		show_im "${check_this_file_} already exist."
