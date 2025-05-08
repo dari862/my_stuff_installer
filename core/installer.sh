@@ -163,6 +163,12 @@ show_sm(){
 	printf '%b' "\\033[1;36m[**] \\033[0m${message}\n"
 }
 
+show_filed_2_add_pakage_m(){
+	message="${1-}"
+	printf '%b' "\\033[1;36m[**] \\033[0m${message}\n"
+	printf '%s\n' "${message}" >> $HOME/filed_2_add_pakages
+}
+
 do_you_want_2_run_this_yes_or_no()
 {
 	massage_is_="${1}"
@@ -518,27 +524,22 @@ create_prompt_to_install_value_file(){
 check_and_download_()
 {
 	check_this_file_="${1:-}"
-	file_dir="${2:-}"
+	filename="$(basename "${check_this_file_}")"
+	show_im "running check_and_download_ function on ($check_this_file_)"
 	
-	show_im "running check_and_download_ function on \"$check_this_file_\" \"$file_dir\""
-	
-	if [ -z "${check_this_file_}" ];then
-		path_2_file="my_stuff_installer/core/${check_this_file_}"
-	else
-		path_2_file="my_stuff_installer/core/${file_dir}/${check_this_file_}"
-	fi
+	path_2_file="my_stuff_installer/core/${check_this_file_}"
 	
 	if [ -f "$HOME/Desktop/${path_2_file}" ];then
 		mv "$HOME/Desktop/${path_2_file}" "${temp_path}" || show_em "failed to move ($HOME/Desktop/${path_2_file}) to (${temp_path})"
-		show_im "${check_this_file_} already exist."
-	elif [ -f "${temp_path}/${check_this_file_}" ];then
-		show_im "${check_this_file_} already exist."
+		show_im "${filename} already exist."
+	elif [ -f "${temp_path}/${filename}" ];then
+		show_im "${filename} already exist."
 	else
 		show_im "Download $check_this_file_ file from www.github.com/dari862/my_stuff_installer ."
-		if download_file "" "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${check_this_file_}" "${temp_path}/${check_this_file_}" ;then
+		if download_file "" "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${check_this_file_}" "${temp_path}/${filename}" ;then
 			chmod +x "${new_check_this_file_}"
 		else
-			show_em "Error: Failed to download ${check_this_file_} from https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${check_this_file_}"
+			show_em "Error: Failed to download ${filename} from https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${check_this_file_}"
 		fi
 	fi
 }
@@ -837,7 +838,7 @@ set_package_manager(){
 	show_im "Using ${PACKAGER}"
 	if [ ! -f "${installer_phases}/set_package_manager" ];then
 		if [ ! -f "${temp_path}/PACKAGE_MANAGER" ];then
-			check_and_download_ "${PACKAGER}" "installer_repo"
+			check_and_download_ "installer_repo/${PACKAGER}"
 			mv "${temp_path}/${PACKAGER}" "${temp_path}/PACKAGE_MANAGER"
 		fi
 		if ! . "${temp_path}/PACKAGE_MANAGER";then
@@ -936,15 +937,15 @@ check_and_download_core_script(){
 	show_m "check if exsit and download core script."
 	
 	if [ "$install_drivers" = "true" ];then
-		check_and_download_ "disto_Drivers_list" "installer_repo/${distro_name}" 
+		check_and_download_ "installer_repo/${distro_name}/disto_Drivers_list" 
 		check_and_download_ "disto_Drivers_installer"
-		check_and_download_ "disto_specific_Drivers_installer" "installer_repo/${distro_name}"
+		check_and_download_ "installer_repo/${distro_name}/disto_specific_Drivers_installer"
 	fi
 	
 	if [ "$install_apps" = "true" ];then
-		check_and_download_ "disto_apps_list" "installer_repo/${distro_name}"
+		check_and_download_ "installer_repo/${distro_name}/disto_apps_list"
 		check_and_download_ "disto_apps_installer"
-		check_and_download_ "disto_specific_apps_installer" "installer_repo/${distro_name}"
+		check_and_download_ "installer_repo/${distro_name}/disto_specific_apps_installer"
 	fi
 	
 	if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
@@ -961,7 +962,7 @@ check_and_download_core_script(){
 		theme_temp_path="${getthis_location}"
 		################################
 	fi
-	check_and_download_ "disto_specific_extra" "installer_repo/${distro_name}"
+	check_and_download_ "installer_repo/${distro_name}/disto_specific_extra"
 }
 
 source_and_set_machine_type(){
