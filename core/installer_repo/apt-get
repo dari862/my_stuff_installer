@@ -69,7 +69,7 @@ add_packages_2_install_list(){
 	localarray="$@"
 	for INDEX in ${localarray};do
 		if ! package_installed "${INDEX}";then
-			if grep "^$INDEX/" "${list_of_apps_file_path}" 2>/dev/null;then
+			if grep -q "^$INDEX/" "${list_of_apps_file_path}";then
 				List_of_apt_2_install_="$List_of_apt_2_install_ $INDEX"
 				show_im "${INDEX} added to install apps" 
 			else

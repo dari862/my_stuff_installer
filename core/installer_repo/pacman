@@ -61,7 +61,7 @@ install_AUR_helper(){
 create_package_list(){
     if [ ! -f "${list_of_apps_file_path}" ]; then
         show_im "Creating package list..."
-        pacman -Qq > "${list_of_apps_file_path}_pacman"
+        pacman -Ss > "${list_of_apps_file_path}_pacman"
     fi
     
     if [ ! -f "${list_of_installed_apps_file_path}" ];then
@@ -96,14 +96,14 @@ add_packages_2_install_list(){
 	localarray="$@"
 	for INDEX in ${localarray};do
     	if ! package_installed "${INDEX}";then
-        	if grep "^${INDEX}$" "${list_of_apps_file_path}" 2>/dev/null;then
-            	packages_to_install_pacman="$packages_to_install_pacman $package"
+        	if grep -q "/${INDEX} " "${list_of_apps_file_path}_pacman";then
+            	packages_to_install_pacman="$packages_to_install_pacman $INDEX"
             	List_of_apt_2_install_="$List_of_apt_2_install_ $INDEX"
-            	echo "$package added to install list."
-        	elif ${PACKAGER} -Ss 2>/dev/null;then
-            	packages_to_install_AUR="$packages_to_install_AUR $package"
+            	echo "$INDEX added to install list."
+        	elif ${PACKAGER} -Si "${INDEX}" >/dev/null 2>&1;then
+            	packages_to_install_AUR="$packages_to_install_AUR $INDEX"
             	List_of_apt_2_install_="$List_of_apt_2_install_ $INDEX"
-            	echo "$package added to install list."
+            	echo "$INDEX added to install list."
             else
 				show_filed_2_add_pakage_m "${INDEX} does not exist." 
         	fi
