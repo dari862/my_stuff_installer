@@ -1,6 +1,5 @@
 #!/bin/sh
 pre_disto_apps_installer(){
-	[ -f "${installer_phases}/disto_apps_installer" ] && return
 	. "${prompt_to_install_value_file}"
 	show_im "Adding needed packages to install list."
 	##################################################################################
@@ -155,7 +154,6 @@ post_disto_apps_installer(){
 }
 
 install_ads_block_for_firefox(){
-	[ -f "${installer_phases}/install_ads_block_for_firefox" ] && return
 	show_im "Downloading uBlock to firefox."
 	ads_block_api_contant="$(get_url_content "https://api.github.com/repos/gorhill/uBlock/releases/latest")"
 	ads_block_url="$(echo "$ads_block_api_contant" | grep -oP '(?<=browser_download_url": ")[^"]*' | grep firefox)"
@@ -187,5 +185,5 @@ install_ads_block_for_firefox(){
 			show_im "Skipping install of uBlock to ($d) firefox."
 		fi
 	done
-	touch "${installer_phases}/install_ads_block_for_firefox"
+	touch "${installer_phases}/disto_apps_installer"
 }

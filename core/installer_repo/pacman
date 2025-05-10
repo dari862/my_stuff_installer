@@ -15,6 +15,7 @@ fi
 __remove_package="${PACKAGER} -Rns --noconfirm"
 packages_to_install_pacman=""
 packages_to_install_AUR=""
+yay_package_name=""
 
 install_AUR_helper(){
 	[ -f "${installer_phases}/install_AUR_helper" ] && return
@@ -30,19 +31,30 @@ install_AUR_helper(){
     if ! command_exist yay && ! command_exist paru; then
     	$_SUPERUSER ${PACKAGER} --noconfirm -Syu
     	for package in yay yay-bin yay-git;do
-    		pacman -Ss $package 2>/dev/null | grep -q "/$package " && yay_package_name="$package"
+    		pacman -Si $package 2>/dev/null | grep -q "/$package " && yay_package_name="$package"
     		break
     	done
         if [ -n "$yay_package_name" ];then
         	show_im "Installing yay as AUR helper..."
         	$_SUPERUSER pacman --noconfirm -Syu $yay_package_name
         else
-        	show_im "building yay from source..."
-        	[ -d "/tmp/yay-bin" ] && rm -rdf /tmp/yay-bin
-        	git clone https://aur.archlinux.org/yay-bin.git /tmp/yay-bin
-        	chmod -R 700 /tmp/yay-bin
-			(cd /tmp/yay-bin && makepkg -s --noconfirm)
-			$_SUPERUSER pacman --noconfirm -U /tmp/yay-bin/yay-bin*.zst
+        	show_im "installing yay..."
+        	temp_yay_bin="/tmp/temp_yay"
+        	if [ ! -f "$temp_yay_bin" ];then
+        		temp_yay_dir="/tmp/yay-bin"
+        		[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir"
+        		mkdir -p "$temp_yay_dir"
+        		if command -v curl >/dev/null;then
+					url2downloadyay="$(curl -fsSL "https://api.github.com/repos/Jguer/yay/releases/latest" | grep -oP '(?<=browser_download_url": ")[^"]*' | grep "x86_64.tar.gz")"
+					curl -fSLo "${temp_yay_dir}/yay_bin.tar.gz" "${url2downloadyay}" --progress-bar
+				elif command -v wget >/dev/null;then
+					url2downloadyay="$(wget -qO- "https://api.github.com/repos/Jguer/yay/releases/latest" | grep -oP '(?<=browser_download_url": ")[^"]*' | grep "x86_64.tar.gz")"
+					wget -q --show-progress -O "${temp_yay_dir}/yay_bin.tar.gz" "${url2downloadyay}"
+				fi
+				( cd "$temp_yay_dir" && tar -xzf yay_bin.tar.gz && rm -rf yay_bin.tar.gz && mv yay_*/yay "${temp_yay_bin}")
+				[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir"
+			fi
+			"${temp_yay_bin}" --noconfirm -Syu yay
         fi
     else
     	${PACKAGER} --noconfirm -Syu

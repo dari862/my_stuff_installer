@@ -1,6 +1,5 @@
 #!/bin/sh
 pre_disto_Drivers_installer(){
-	[ -f "${installer_phases}/disto_Drivers_installer" ] && return
 	. "${prompt_to_install_value_file}"
 	show_im "Adding needed Drivers to install list."
 
@@ -34,7 +33,6 @@ pre_disto_Drivers_installer(){
 }
 
 post_disto_Drivers_installer(){
-	[ -f "${installer_phases}/disto_Drivers_installer" ] && return
 	. "${prompt_to_install_value_file}"
 	show_im "Configer Drivers."
 	if [ -f "/usr/sbin/isenkram-autoinstall-firmware" ];then
