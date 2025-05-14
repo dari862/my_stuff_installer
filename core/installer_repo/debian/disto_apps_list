@@ -16,7 +16,7 @@ install_cli_sound_app="mpd mpc ncmpcpp"
 install_MIDI_sound_app="wildmidi timidity"
 install_text_editer_app="geany zathura"
 install_mediaplayer_app="mpv cava"
-install_x_lock_extra="i3lock i3lock-fancy"
+install_x_lock_extra="i3lock"
 install_themes_tools="xsettingsd lxappearance"
 install_polkit_apps="policykit-1 policykit-1-gnome gnome-keyring"
 
