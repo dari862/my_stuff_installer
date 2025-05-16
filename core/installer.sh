@@ -10,7 +10,7 @@ installer_phases="${temp_path}/installer_phases"
 switch_default_xsession=""
 switch_default_xsession_to="openbox"
 switch_to_doas=false
-NETWORK_TEST="network-test.debian.org"
+NETWORK_TEST="http://network-test.debian.org/nm"
 url_to_test=debian.org
 test_dns="1.1.1.1"
 
@@ -578,8 +578,8 @@ pick_file_downloader_and_url_checker(){
 		get_url_content(){
 			curl -s "${1-}" 2>/dev/null
 		}
-		get_current_date(){
-			curl --head -fSs --max-redirs 0 "${1-}" 2>&1 | sed -n 's/^ *Date: *//p'
+		get_full_header(){
+			curl -fSi "${1-}" 2>&1
 		}
 	elif [ "$url_package" = "wget" ];then
 		check_url(){
@@ -594,59 +594,34 @@ pick_file_downloader_and_url_checker(){
 		get_url_content(){
 			wget -q -O- "${1-}" 2>/dev/null
 		}
-		get_current_date(){
-			wget -S -O- -q --no-check-certificate --max-redirect=0 "${1-}" 2>&1 | sed -n 's/^ *Date: *//p'
+		get_full_header(){
+			wget -S -O- -q --no-check-certificate "${1-}" 2>&1
 		}
 	fi
 }
 
 internet_tester() {
-    test_with_nc() {
-        printf "GET /nm HTTP/1.1\r\nHost: ${NETWORK_TEST}\r\n\r\n" | nc -w1 "$NETWORK_TEST" 80 | grep -q "NetworkManager is online" >/dev/null 2>&1
-    }
-    test_with_http() {
-        if command_exist curl;then
-            curl -s -X GET "$url_to_test" >/dev/null 2>&1
-        elif command_exist wget;then
-            wget -qS -O- "$url_to_test" >/dev/null 2>&1
-        fi
-    }
-    if command_exist nc;then
-        if ! test_with_nc;then
-            show_im "Failed to check internet using nc (netcat), switching to ${url_package}..."
-            test_with_http
-        fi
+	show_im "Checking internet."
+    if check_url "${NETWORK_TEST}" | grep -q "NetworkManager is online";then
+    	show_im "There is an internet connection..."
+    	return 0
     else
-        show_im "nc (Netcat) not found. Attempting to test internet connectivity..."
-        test_with_http
+    	return 1
     fi
-    show_im "There is an internet connection..."
 }
 
 fix_time_(){
 	[ -f "${installer_phases}/fix_time_" ] && return
 	show_m "Setting date ,time ,and timezone."
-	get_date_from_here=""
-	list_to_test="${NETWORK_TEST} ipinfo.io 104.16.132.229"
-	
-	for test in ${list_to_test};do
-		show_im "testing time domain if they are up."
-		ping -c 1 $test >/dev/null 2>&1 && get_date_from_here="$test" && break
-	done
-		
-	if [ -z "$get_date_from_here" ];then 
-		show_em "failed to ping all of this: ${list_to_test}"
-	else
-		show_im "Getting time and timezone."
-		current_date="$(get_current_date "$get_date_from_here")"
-		$_SUPERUSER date -s "$current_date" >/dev/null 2>&1
-		__timezone="$(get_url_content "https://ipinfo.io/" | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/^[ \t]*//;s/[ \t]*$//')"
-		show_im "applying time and timezone."
-		if ! $_SUPERUSER timedatectl set-timezone $__timezone >/dev/null 2>&1;then
-			$_SUPERUSER ln -sf /usr/share/zoneinfo/$__timezone /etc/localtime
-			if ! $_SUPERUSER hwclock --systohc >/dev/null 2>&1;then
-				show_em "failed to set time zone !"
-			fi
+	ipinfo_full_head="$(get_full_header "https://ipinfo.io/")"
+	current_date="$(echo "$ipinfo_full_head" | sed -n 's/^ *date: *//p')"
+	$_SUPERUSER date -s "$current_date" >/dev/null 2>&1
+	__timezone="$(echo "$ipinfo_full_head" | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/^[ \t]*//;s/[ \t]*$//')"
+	show_im "applying time and timezone."
+	if ! $_SUPERUSER timedatectl set-timezone $__timezone >/dev/null 2>&1;then
+		$_SUPERUSER ln -sf /usr/share/zoneinfo/$__timezone /etc/localtime
+		if ! $_SUPERUSER hwclock --systohc >/dev/null 2>&1;then
+			show_em "failed to set time zone !"
 		fi
 	fi
 	echo "__timezone=\"$__timezone\"" >> "${save_value_file}"
