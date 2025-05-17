@@ -1,4 +1,5 @@
-#!/bin/sh	
+#!/bin/sh
+must_purge="system-config-printer light-locker zeitgeist zeitgeist-core"
 #must have apps
 install_core_apps="arandr autorandr"
 install_ufw_apps="ufw"
@@ -8,7 +9,7 @@ install_must_have_apps2="psmisc gparted inxi s-tui dfc hwinfo synaptic galternat
 install_openbox_="openbox obconf xcape tint2"
 install_audio_tray_app="pnmixer"
 install_image_viewer_apps="viewnior"
-install_files_manager_support_app="gvfs gvfs-fuse gvfs-backends file-roller baobab"
+install_files_manager_support_app="gvfs gvfs-fuse gvfs-backends file-roller baobab avahi-utils"
 install_terminal="kitty"
 install_conky_all_app="conky-all"
 install_if_laptop="tlp tlp-rdw powertop xserver-xorg-input-synaptics"

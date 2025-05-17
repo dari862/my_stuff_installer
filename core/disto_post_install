@@ -10,7 +10,7 @@ pre_post_install(){
 	
 	show_im "update icons cache."
 	$_SUPERUSER gtk-update-icon-cache
-	
+
 	$_SUPERUSER touch "${installer_phases}/pre_post_install"
 }
 

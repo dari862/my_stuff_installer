@@ -1121,6 +1121,7 @@ if [ ! -f "${installer_phases}/create_List_of_apt_2_install_" ];then
 	fi
 	
 	if [ "$install_apps" = "true" ];then
+		must_purge_first || show_em "failed to run must_purge_first"
 		pre_disto_apps_installer || show_em "failed to run pre_disto_apps_installer"
 	fi
 	install_lightdm_now

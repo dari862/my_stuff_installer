@@ -1,4 +1,17 @@
 #!/bin/sh
+must_purge_first(){
+	show_im "purging apps"
+	for package in ${must_purge};do
+		if package_installed "$package";then
+			must_purge_first="$must_purge $package"
+		else
+			show_wm "$package does not exist"
+		fi
+	done
+	remove_packages "${must_purge_first}"
+	run_autoclean
+}
+
 pre_disto_apps_installer(){
 	. "${prompt_to_install_value_file}"
 	show_im "Adding needed packages to install list."
