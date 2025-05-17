@@ -537,7 +537,7 @@ check_and_download_()
 	else
 		show_im "Download $check_this_file_ file from www.github.com/dari862/my_stuff_installer ."
 		if download_file "" "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${check_this_file_}" "${temp_path}/${filename}" ;then
-			chmod +x "${new_check_this_file_}"
+			chmod +x "${temp_path}/${filename}"
 		else
 			show_em "Error: Failed to download ${filename} from https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${check_this_file_}"
 		fi

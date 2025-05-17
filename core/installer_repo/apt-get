@@ -189,6 +189,7 @@ switch_to_network_manager(){
 	$_SUPERUSER mv "${temp_path}"/interfaces /etc/network/interfaces
 	show_im "Disable NetworkManager"
 	$_SUPERUSER sed -i 's/managed=.*/managed=false/g' /etc/NetworkManager/NetworkManager.conf
+	init_manager enable NetworkManager
 	touch "${installer_phases}/switch_to_network_manager"
 }
 

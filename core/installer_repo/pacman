@@ -177,6 +177,7 @@ install_lightdm_now(){
 
 switch_to_network_manager(){
 	[ -f "${installer_phases}/switch_to_network_manager" ] && return
+	init_manager enable NetworkManager
 	touch "${installer_phases}/switch_to_network_manager"
 }
 
