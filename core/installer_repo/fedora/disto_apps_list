@@ -20,6 +20,7 @@ install_mediaplayer_app="mpv cava"
 install_x_lock_extra="i3lock"
 install_themes_tools="xsettingsd lxappearance"
 install_polkit_apps="polkit polkit-gnome gnome-keyring"
+install_fonts="google-noto-sans-fonts google-droid-sans-mono-fonts google-cantarell-fonts liberation-fonts opensymbol-fonts noto-fonts noto-fonts-mono inconsolata-fonts"
 
 #firefox
 install_firefox_="firefox"
@@ -47,8 +48,8 @@ install_better_bash="bash bash-completion"
 #######################
 ## better shell
 #######################
-#install_better_shell="tar bat fzf trash-cli command-not-found thefuck highlight lf"
-install_better_shell="tar bat fzf trash-cli command-not-found thefuck highlight"
+#install_better_shell="tar bat fzf command-not-found thefuck highlight lf"
+install_better_shell="tar bat fzf command-not-found thefuck highlight"
 
 #######################
 ## extra
