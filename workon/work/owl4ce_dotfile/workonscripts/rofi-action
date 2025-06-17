@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+cd "$HOME/.config/rofi/modi"
+exec rofi -config "config.rasi" -theme-str '@import "action.rasi"' -no-show-icons -no-lazy-grab -no-plugins -dmenu -mesg 'Context Menu'

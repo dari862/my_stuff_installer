@@ -1,0 +1,28 @@
+origin = top-right
+offset = 25x50
+
+frame_color = "#f9f9f9"
+separator_color = "#f5f5f5"
+
+format = "<span size='x-large' font_desc='Cantarell,mplus Nerd Font 9' weight='bold' foreground='#63c5ea'>%s</span>\n%b"
+
+icon_position = left
+icon_theme = "Papirus-Custom"
+
+[urgency_low]
+timeout = 3
+background = "#f9f9f9"
+foreground = "#373e4d"
+highlight = "#fa74b2"
+
+[urgency_normal]
+timeout = 6
+background = "#f9f9f9"
+foreground = "#373e4d"
+highlight = "#fa74b2"
+
+[urgency_critical]
+timeout = 0
+background = "#f9f9f9"
+foreground = "#373e4d"
+highlight = "#fa74b2"

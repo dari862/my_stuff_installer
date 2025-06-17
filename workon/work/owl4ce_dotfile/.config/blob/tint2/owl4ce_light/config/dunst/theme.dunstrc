@@ -1,0 +1,62 @@
+# Defines color of the frame around the notification window.
+frame_color = "#202120"
+
+# Define a color for the separator.
+# possible values are:
+#  * auto: dunst tries to find a color fitting to the background;
+#  * foreground: use the same color as the foreground;
+#  * frame: use the same color as the frame;
+#  * anything else will be interpreted as a X color.
+separator_color = auto
+
+
+# The transparency of the window.  Range: [0; 100].
+# This option will only work if a compositing window manager is
+# present (e.g. xcompmgr, compiz, etc.).
+transparency = 0
+
+# Position the notification in the top right corner
+origin = top-right
+
+# Offset from the origin
+offset = 10x48
+
+# Defines width in pixels of frame around the notification window.
+# Set to 0 to disable.
+frame_width = 6
+
+### Text ###
+
+font = JetBrains Mono 10
+
+# The format of the message.  Possible variables are:
+#   %a  appname
+#   %s  summary
+#   %b  body
+#   %i  iconname (including its path)
+#   %I  iconname (without its path)
+#   %p  progress value if set ([  0%] to [100%]) or nothing
+#   %n  progress value if set without any extra characters
+#   %%  Literal %
+format = "<b>%a</b>\n%s\n%b"
+
+# IMPORTANT: colors have to be defined in quotation marks.
+# Otherwise the "#" and following would be interpreted as a comment.
+[urgency_low]
+timeout = 2
+background = "#202120"
+foreground = "#c7c7c7"
+frame_color = "#202120"
+
+[urgency_normal]
+timeout = 5
+background = "#202120"
+foreground = "#c7c7c7"
+frame_color = "#88a8a3"
+
+[urgency_critical]
+timeout = 0
+background = "#202120"
+foreground = "#c7c7c7"
+frame_color = "#a4a9a3"
+

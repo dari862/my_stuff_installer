@@ -1,0 +1,86 @@
+#!/bin/sh
+_panel_name_="tint2"
+ROFI_STYLE="default"
+polybar_STYLE=""
+conky_sessionfile=""
+
+CHK_THEME="owl4ce_dark"
+CHK_MODE="artistic"
+
+#owl4ce_dark
+CHK_OB_BUTTON_STYLE_owl4ce_dark_artistic="Backslash"
+CHK_OB_BUTTON_LOC_owl4ce_dark_artistic="left"
+CHK_WALLPAPER_owl4ce_dark_artistic="owl4ce_dark_wall-01.jpg"
+	
+CHK_OB_BUTTON_STYLE_owl4ce_dark_interactive="Nav"
+CHK_OB_BUTTON_LOC_owl4ce_dark_interactive="right"
+CHK_WALLPAPER_owl4ce_dark_interactive="owl4ce_dark_wall-02.jpg"
+
+#owl4ce_light
+CHK_OB_BUTTON_STYLE_owl4ce_light_artistic="Lovely"
+CHK_OB_BUTTON_LOC_owl4ce_light_artistic="right"
+CHK_WALLPAPER_owl4ce_light_artistic="owl4ce_light_wall-01.jpg"
+	
+CHK_OB_BUTTON_STYLE_owl4ce_light_interactive="Dots2"
+CHK_OB_BUTTON_LOC_owl4ce_light_interactive="left"
+CHK_WALLPAPER_owl4ce_light_interactive="owl4ce_light_wall-02.jpg"
+
+CHK_PANEL_ORT="vertical"
+CHK_PANEL_ORT_V="left"
+CHK_PANEL_ORT_H="bottom"
+
+if [ "$CHK_THEME" = "owl4ce_dark" ];then
+	if [ "$CHK_MODE" = "artistic" ];then
+		CHK_OB_BUTTON_STYLE="$CHK_OB_BUTTON_STYLE_owl4ce_dark_artistic"
+		CHK_OB_BUTTON_LOC="$CHK_OB_BUTTON_LOC_owl4ce_dark_artistic"
+		CHK_WALLPAPER="$CHK_WALLPAPER_owl4ce_dark_artistic"
+	else
+		CHK_OB_BUTTON_STYLE="$CHK_OB_BUTTON_STYLE_owl4ce_dark_interactive"
+		CHK_OB_BUTTON_LOC="$CHK_OB_BUTTON_LOC_owl4ce_dark_interactive"
+		CHK_WALLPAPER="$CHK_WALLPAPER_owl4ce_dark_interactive"
+	fi
+else
+	if [ "$CHK_MODE" = "artistic" ];then
+		CHK_OB_BUTTON_STYLE="$CHK_OB_BUTTON_STYLE_owl4ce_light_artistic"
+		CHK_OB_BUTTON_LOC="$CHK_OB_BUTTON_LOC_owl4ce_light_artistic"
+		CHK_WALLPAPER="$CHK_WALLPAPER_owl4ce_light_artistic"
+	else
+		CHK_OB_BUTTON_STYLE="$CHK_OB_BUTTON_STYLE_owl4ce_light_interactive"
+		CHK_OB_BUTTON_LOC="$CHK_OB_BUTTON_LOC_owl4ce_light_interactive"
+		CHK_WALLPAPER="$CHK_WALLPAPER_owl4ce_light_interactive"
+	fi
+fi
+
+#########################
+OB_MARGIN='10'
+
+ICONS_DIR="${HOME}/.icons"
+CONFIG_DIR="${HOME}/.config"
+THEMES_DIR="${HOME}/.themes"
+
+OB_DIR="${CONFIG_DIR}/openbox"
+OB_CONFIG="${OB_DIR}/rc.xml"
+
+GLADIENT_ICON_DIR="${ICONS_DIR}/Gladient"
+OB_DIR="${CONFIG_DIR}/openbox"
+
+MPD_DIR="${CONFIG_DIR}/mpd"
+MPD_CONFIG="${MPD_DIR}/mpd.conf"
+music_player_path="${MPD_DIR}/music_player"
+CHK_MPD_PORT="$(awk -F'"' '/port/ {print $2}' "$MPD_CONFIG")"
+CHK_MPD_MUSIC_DIR="$(awk -F'"' '/music_directory/ {print $2}' "$MPD_CONFIG")"
+
+MUSIC_ICON="${GLADIENT_ICON_DIR}/music.png"
+
+WALLPAPERS_DIR="${HOME}/.wallpapers"
+ROFI_SHARED_CONFIG="${CONFIG_DIR}/rofi/themes/shared.rasi"
+DUNST_DIR="${CONFIG_DIR}/dunst"
+TINT2_DIR="${CONFIG_DIR}/tint2"
+OB_BUTTON_STYLE_DIR="${THEMES_DIR}/Joyful.OBB"
+OB_CONFIG="${OB_DIR}/rc.xml"
+OB_TRAY="${OB_DIR}/tray"
+GLADIENT_ICON_DIR="${ICONS_DIR}/Gladient"
+WALLPAPER_ICON="${GLADIENT_ICON_DIR}/wallpaper.png"
+
+tint2_sessionfile="/.config/tint2/owl4ce_dark-horizontal.${CHK_MODE}.tint2rc"
+#########################

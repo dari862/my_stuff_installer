@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE menu [
+  <!ENTITY icons "/home/dari/.icons">
+]>
+<openbox_menu xmlns="http://openbox.org/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://openbox.org/  file:///usr/share/openbox/menu.xsd">
+  <menu id="root-menu" title="Menu" label="Openbox 3">
+
+    <separator label="QUICK START"/>
+    <menu id="applications-menu" label="Applications" execute="obamenu.py" icon="&icons;/Gladient/find.png"/>
+    <separator/>
+
+    <item label="Open Terminal" icon="&icons;/Gladient/terminal.png">
+      <action name="Execute">
+        <command>my-terminal-emulator</command>
+      </action>
+    </item>
+
+    <item label="Open File Manager" icon="&icons;/Gladient/file-manager.png">
+      <action name="Execute">
+        <command>my-file-manager</command>
+      </action>
+    </item>
+
+    <separator/>
+
+    <menu id="screenshot" label="Screenshot" icon="&icons;/Gladient/screenshot.png">
+      <item label="Screen" icon="&icons;/Gladient/screenshot.png">
+        <action name="Execute">
+          <command>my-shots</command>
+        </action>
+      </item>
+      <item label="Select or Draw" icon="&icons;/Gladient/screenshot.png">
+        <action name="Execute">
+          <command>my-shots --area</command>
+        </action>
+      </item>
+      <item label="Countdown ?s" icon="&icons;/Gladient/screenshot.png">
+        <action name="Execute">
+          <command>my-shots --delay 5</command>
+        </action>
+      </item>
+    </menu>
+
+    <separator/>
+
+	<menu id="monitor-settings" execute="randr-pipemenu" label="Monitor Settings" icon="&icons;/Gladient/monitor-settings.png"/>
+
+    <menu id="advanced-settings" execute="sh -c 'cat /usr/share/my_stuff/system_files/pipemenu/ac'" label="Advanced Settings" icon="&icons;/Gladient/advanced-settings.png"/>
+
+    <separator/>
+    <separator label="SESSIONS"/>
+
+    <menu id="appearance" label="Appearance" icon="&icons;/Gladient/appearance.png">
+      <item label="Reverse Terminal BG/FG" icon="&icons;/Gladient/terminal-reverse-visual.png">
+        <action name="Execute">
+          <command>owl4ce_scripts terminal</command>
+        </action>
+      </item>
+      <item label="Change X Wallpaper" icon="&icons;/Gladient/wallpaper.png">
+        <action name="Execute">
+          <command>owl4ce_scripts wallpaper</command>
+        </action>
+      </item>
+      <separator/>
+      <item label="Change Window Button-Style" icon="&icons;/Gladient/ob-button-change.png">
+        <action name="Execute">
+          <command>owl4ce_scripts button</command>
+        </action>
+      </item>
+      <item label="Swap Window Button-Location" icon="&icons;/Gladient/ob-button-swap.png">
+        <action name="Execute">
+          <command>owl4ce_scripts button swap</command>
+        </action>
+      </item>
+      <separator/>
+      <item label="Toggle Mode" icon="&icons;/Gladient/mode.png">
+        <action name="Execute">
+          <command>owl4ce_scripts mode mode</command>
+        </action>
+      </item>
+      <item label="Switch Theme" icon="&icons;/Gladient/theme.png">
+        <action name="Execute">
+          <command>owl4ce_scripts mode</command>
+        </action>
+      </item>
+    </menu>
+
+    <separator/>
+
+    <item label="Restart UI" icon="&icons;/Gladient/restart-ui.png">
+      <action name="Execute">
+        <command>owl4ce_scripts mode apply</command>
+      </action>
+    </item>
+
+    <separator/>
+
+    <item label="Lock" icon="&icons;/Gladient/lock.png">
+      <action name="Execute">
+        <command>loginctl --no-ask-password lock-session</command>
+      </action>
+    </item>
+
+    <separator/>
+
+    <item label="Exit Openbox" icon="&icons;/Gladient/logout.png">
+      <action name="Exit"/>
+    </item>
+  </menu>
+</openbox_menu>

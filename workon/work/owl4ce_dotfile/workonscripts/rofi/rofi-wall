@@ -1,0 +1,26 @@
+#!/usr/bin/env sh
+. "${Distro_config_file}"
+. "${HOME}/workonscripts/toggle_lib.sh"
+
+WALLPAPER="$(cd "$HOME/.config/rofi/modi" && \
+    for LS in "$CHK_WALLPAPER_DIR"/*.*; do
+        [ ! -f "$LS" ] || echo "${LS##*/}"
+    done | rofi -config "config.rasi" -theme-str '@import "action.rasi"' \
+                                   -no-show-icons \
+                                   -no-lazy-grab \
+                                   -no-plugins \
+                                   -dmenu \
+                                   -mesg 'Select X Wallpaper'
+)"
+	
+[ -n "$WALLPAPER" ] || exit ${?}
+	
+nitrogen --force-setter=xwindows --set-zoom-fill --save "${CHK_WALLPAPER_DIR}/${WALLPAPER}"
+	
+sed_Distro_config "CHK_WALLPAPER_${CHK_THEME}_${CHK_MODE}" "${WALLPAPER}"
+			
+dunstify '' "<span size='small'><u>${WALLPAPER}</u></span>\nSuccessfully applied!" \
+     	-h string:synchronous:wallpaper-set \
+     	-a joyful_desktop \
+     	-i "$WALLPAPER_ICON" \
+     	-u low

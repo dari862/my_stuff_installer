@@ -1,0 +1,10 @@
+#!/bin/sh
+tint2_script_path="$HOME"
+opt="${1-}"
+opt2="${2-}"
+
+case "$opt" in
+		network) "${tint2_script_path}"/scripts/tint2/tint2_network.sh ${opt2} ;;
+		temp) "${tint2_script_path}"/scripts/tint2/tint2_temp.sh ${opt2} ;;
+		volume) "${tint2_script_path}"/scripts/tint2/tint2_volume.sh ${opt2} ;;
+esac

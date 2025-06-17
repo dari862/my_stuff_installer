@@ -1,0 +1,227 @@
+#!/bin/sh
+
+#########################################
+# Variables
+#########################################
+
+icons_dir="/usr/share/my_stuff/icons/dunst"
+error_log="/tmp/$USER/my-shots"
+__no_notify=false
+__no_copy=false
+__no_view=false
+
+# Check if a screenshot package is installed
+if command -v ffmpeg >/dev/null 2>&1;then
+	package_screenshot="ffmpeg"
+elif command -v imagemagick >/dev/null 2>&1;then
+	package_screenshot="ImageMagick"
+elif command -v maim >/dev/null 2>&1;then
+	package_screenshot="maim"
+else
+	echo "$0: ffmpeg, ImageMagick, or maim not installed"
+	exit 1
+fi
+
+# Define screenshot file path and name
+if command -v xdg-user-dir >/dev/null 2>&1;then
+	__dir="$(xdg-user-dir PICTURES)/Screenshots"
+else
+	__dir="$HOME/Pictures/Screenshots"
+fi
+
+__file=""
+
+# help
+for arg in "$@"; do
+	case "$arg" in
+	--help)
+		echo "Available Options : --now --in5 --in10 --win --area --thumbs -d"
+		exit
+		;;
+	esac
+done
+
+# Iterate over all arguments
+for arg in "$@"; do
+	case "$arg" in
+		--DECORATIONS)
+			__DECORATIONS=true
+			;;
+		--area|-a)
+			__area=true
+			;;
+		--win|-w)
+			__win=true
+			;;
+		--full)
+			__full=true
+			;;
+		--delay|-d)
+			__delay="$2"
+			;;
+		--thumb)
+			__size="$2"
+			;;
+		--path)
+			__dir="$2"
+			;;
+		--name)
+			__file="$2"
+			;;
+		--no-view)
+			__no_view=true
+			;;
+		--no-copy)
+			__no_copy=true
+			;;
+		--no-notify)
+			__no_notify=true
+			;;
+		--delete)
+			__delete=true
+			;;
+		--help)
+			_help
+			;;
+	esac
+	shift
+done
+extension="png"
+if [ -z "${__file}" ];then
+	__time=$(date +%Y-%m-%d-%H-%M-%S)
+	__geometry=$(xrandr | grep 'current' | head -n1 | cut -d',' -f2 | tr -d '[:blank:],current')
+	__file="Screenshot_${__time}_${__geometry}"
+else
+	if echo "$__file" | grep -q '\.'; then
+    	extension=$(echo "$__file" | sed 's/.*\.\(.*\)/\1/')
+    	__file=$(echo "$__file" | sed 's/\(.*\)\..*/\1/')
+	fi
+fi
+
+IMAGE_FILE="${__dir}/${__file}.${extension}"
+IMAGE_THUMB="${__dir}/${__file}-thumb.${extension}"
+
+if [ "$__delete" = true ];then
+	[ -f "${IMAGE_FILE}" ] && rm -f "${IMAGE_FILE}"
+	[ -f "${IMAGE_THUMB}" ] && rm -f "${IMAGE_THUMB}"
+fi
+
+# Set screenshot command based on the selected package
+if [ "$package_screenshot" = "ImageMagick" ] || [ "$package_screenshot" = "ffmpeg" ];then
+	if [ "$__DECORATIONS" = true ];then
+		DEC_ARG="-c"
+	else
+		DEC_ARG="-nc"
+	fi
+
+	if [ "$package_screenshot" = "ffmpeg" ];then
+		if [ "$__full" = true ];then
+			W=$(xrandr | grep 'current' | cut -f2 -d"," | sed 's:current ::g' | cut -f2 -d" ")
+			H=$(xrandr | grep 'current' | cut -f2 -d"," | sed 's:current ::g' | cut -f4 -d" ")
+		elif [ "$__area" = true ];then	
+			MAXW=$(xrandr | grep 'current' | cut -f2 -d"," | sed 's:current ::g' | cut -f2 -d" ")
+			MAXH=$(xrandr | grep 'current' | cut -f2 -d"," | sed 's:current ::g' | cut -f4 -d" ")
+			output=$(slop --nokeyboard $DEC_ARG 0,119,255,0.34 -f "%x %y %w %h %g %i")
+  			X="$(echo "$output" | cut -d " " -f1)"
+  			Y="$(echo "$output" | cut -d " " -f2)"
+  			W="$(echo "$output" | cut -d " " -f3)"
+  			H="$(echo "$output" | cut -d " " -f4)"
+  			G="$(echo "$output" | cut -d " " -f5)"
+  			ID="$(echo "$output" | cut -d " " -f6)"
+			[ "$W" -eq 1921 ] && W=1920
+			[ "$W" -gt "$MAXW" ] && W="$MAXW"
+			[ "$H" -gt "$MAXH" ] && H="$MAXH"
+			[ "$X" -gt "$MAXW" ] && X="$MAXW"
+			[ "$Y" -gt "$MAXH" ] && Y="$MAXH"
+		else
+			W=$(xrandr | grep 'current' | cut -f2 -d"," | sed 's:current ::g' | cut -f2 -d" ")
+			H=$(xrandr | grep 'current' | cut -f2 -d"," | sed 's:current ::g' | cut -f4 -d" ")
+		fi
+		__cmd="ffmpeg -f x11grab -s ${W}x${H} -i :0.0+${X},${Y} -vframes 1"
+	elif [ "$package_screenshot" = "ImageMagick" ];then
+		if [ "$__full" = true ];then
+			SEL_ARG=""
+		elif [ "$__area" = true ];then
+			slop --nokeyboard $DEC_ARG 0,119,255,0.34 -f "%g" | while IFS= read -r G; do
+  				echo "G=$G"
+			done
+			SEL_ARG="-crop $G"
+		else
+			SEL_ARG=""
+		fi
+		if [ -f "./ImageMagick" ];then
+			__cmd="./ImageMagick import -window root"
+		else
+			__cmd="import -window root $SEL_ARG"
+		fi
+	fi
+elif [ "$package_screenshot" = "maim" ];then
+	if [ "$__win" = true ];then
+		__cmd="maim -u -i \$(xdotool getactivewindow)"
+	elif [ "$__area" = true ];then
+		__cmd="maim -u -s -b 2 -c 0.35,0.55,0.85,0.25 -l"
+	elif [ "$__full" = true ];then
+		__cmd="maim -u"
+	else
+		__cmd="maim -u"
+	fi
+fi
+
+#########################################
+# Functions
+#########################################
+
+countdown() {
+	for sec in $(seq "$1" -1 1); do
+		dunstify -t 1000 -h string:x-dunst-stack-tag:screenshottimer -i "${icons_dir}/timer.png" "Taking shot in : $sec"
+		sleep 1
+	done
+}
+
+#########################################
+# Main
+#########################################
+
+# Add delay if specified
+if [ -n "$__delay" ];then
+	if [ "$__no_notify" = false ];then
+		countdown "$__delay"
+	else
+		sleep "$__delay"
+	fi
+	sleep 0.5
+fi
+
+# Ensure the screenshots directory exists
+[ ! -d "${__dir}" ] &&	mkdir -p "${__dir}"
+
+$__cmd "$IMAGE_FILE" 1>/dev/null 2>"${error_log}"
+
+# Copy screenshot to clipboard if not disabled
+if [ "$__no_copy" = false ];then
+	xclip -selection clipboard -t image/png -i "$IMAGE_FILE"
+fi
+
+# Send notification if not disabled
+if [ "$__no_notify" = false ];then
+	notify_cmd_shot="dunstify -u low -h string:x-dunst-stack-tag:obscreenshot -i ${icons_dir}/picture.png"
+	${notify_cmd_shot} "Copied to clipboard."
+	paplay /usr/share/sounds/freedesktop/stereo/screen-capture.oga >/dev/null 2>&1 &
+	if [ -e "$IMAGE_FILE" ];then
+		${notify_cmd_shot} "Screenshot Saved."
+	else
+		${notify_cmd_shot} "Screenshot Deleted."
+	fi
+fi
+
+# View the image if not disabled
+if [ "$__no_view" = false ];then
+	my-image-viewer "$IMAGE_FILE"
+fi
+
+# Resize image for thumbnail if requested
+if [ -n "$__size" ];then
+	convert "$IMAGE_FILE" -resize "$__size%" "$IMAGE_THUMB"
+fi
+
+exit 0

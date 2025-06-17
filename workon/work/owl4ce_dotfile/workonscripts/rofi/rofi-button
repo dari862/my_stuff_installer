@@ -1,0 +1,22 @@
+#!/usr/bin/env sh
+. "${Distro_config_file}"
+. "${HOME}/workonscripts/toggle_lib.sh"
+
+BUTTON="$(cd "$HOME/.config/rofi/modi" && \
+                    for LS in "$OB_BUTTON_STYLE_DIR"/*; do
+                      	[ ! -d "$LS" ] || echo "${LS##*/}"
+                  	done \
+                  	| rofi -config "config.rasi" -theme-str '@import "action.rasi"' \
+                         	-no-show-icons \
+                         	-no-lazy-grab \
+                         	-no-plugins \
+                         	-dmenu \
+                         	-mesg 'Select Window Button-Style')"
+
+[ -n "$BUTTON" ] || exit ${?}
+GTK_THEME_NAME="$(awk -F= '/^gtk-theme-name=/{print $2}' $HOME/.config/gtk-3.0/settings.ini)"
+OB_GTK_THEME="$HOME/.themes/$GTK_THEME_NAME/openbox-3"
+
+ln -fnrs "${OB_BUTTON_STYLE_DIR}/${BUTTON}"/*.'xbm' "${OB_GTK_THEME}"
+
+sed_Distro_config "CHK_OB_BUTTON_STYLE_${CHK_THEME}_${CHK_MODE}" "${BUTTON}"

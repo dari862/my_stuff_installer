@@ -1,0 +1,522 @@
+#!/bin/sh
+
+SYSTEM_LANG="$LANG"
+export LANG='POSIX'
+exec >/dev/null 2>&1
+. "${Distro_config_file}"
+. "${HOME}/workonscripts/toggle_lib.sh"
+# music = music-controller.sh
+# button = ob-button-set.sh
+# mode = toggle-mode.sh
+# orientation = toggle-orientation.sh
+# wallpaper = wallpaper-set.sh
+
+opt="${1-}"
+opt2="${2-}"
+sed_Distro_config()
+{
+	var_key="$1"
+	var_value="$2"
+	sed -i "s/^${var_key}=.*/${var_key}=\"${var_value}\"/g" "${Distro_config_file}"
+}
+
+sed_openbox_rc()
+{
+	var_key="$1"
+	var_value="$2"
+	sed -i "s|<${var_key}>.*|<${var_key}>${var_value}</${var_key}>|g" "${OB_CONFIG}"
+}
+
+___rever_terminal()
+{
+	if grep -q "owl4ce-light.conf" "$HOME/.config/kitty/theme.conf";then
+		sed -i 's/owl4ce-light.conf/owl4ce.conf/g' "$HOME/.config/kitty/theme.conf"
+		kitty @ set-colors -a ~/.config/kitty/themes/owl4ce.conf || :
+	elif grep -q "owl4ce.conf" "$HOME/.config/kitty/theme.conf";then
+		sed -i 's/owl4ce.conf/owl4ce-light.conf/g' "$HOME/.config/kitty/theme.conf"
+		kitty @ set-colors -a ~/.config/kitty/themes/owl4ce-light.conf || :
+	fi
+}
+
+___mode(){
+	switch_mode()
+	{
+		sed_Distro_config "CHK_MODE" "$CHK_MODE"
+	
+    	owl4ce_scripts theme mode_only
+    	
+    	case "${CHK_THEME}" in
+        	mech*) BODY='Mechanical Theme'
+        	;;
+        	eyec*) BODY='EyeCandy Theme'
+        	;;
+    	esac
+	
+    	case "${CHK_MODE}" in
+        	art*) SUMMARY='Artistic Mode'
+        	;;
+        	int*) SUMMARY='Interactive Mode'
+        	;;
+    	esac
+	
+    	dunstify "$SUMMARY" "$BODY" -h string:synchronous:toggle-mode \
+                                	-a joyful_desktop \
+                                	-i "${GLADIENT_ICON_DIR}/${CHK_THEME}.${CHK_MODE}.png" \
+                                	-u low
+	}
+	
+	for M in artistic interactive; do
+		[ "$CHK_MODE" != "$M" ] || continue
+		CHK_MODE="$M"
+		switch_mode
+		break
+	done
+}
+
+___wallpaper(){
+	case "${1}" in
+    	'') rofi-wall ;;
+    	g*) [ -x "$(command -v convert)" ] || exec dunstify 'Install `imagemagick`!' -h string:synchronous:install-deps \
+                                                                                	-a joyful_desktop \
+                                                                                	-u low
+	
+        	cd -- "$WALLPAPERS_DIR" || exit ${?}
+	
+        	for RAW in *.*; do
+	
+            	if [ -f "$RAW" ] && GET_WP_SIZE="$(identify -format %w "$RAW")" && [ -n "$GET_WP_SIZE" ]; then
+	
+                	dunstify '' "Generating X wallpaper ..\n<span size='small'><u>${RAW}</u></span>" \
+                         	-h string:synchronous:wallpaper-set \
+                         	-a joyful_desktop \
+                         	-i "$WALLPAPER_ICON" \
+                         	-t 1000
+	
+                	if [ "$GET_WP_SIZE" -lt 1920 ]; then
+                    	RES='_HD'
+                	elif [ "$GET_WP_SIZE" -lt 2048 ]; then
+                    	RES='_FHD'
+                	elif [ "$GET_WP_SIZE" -lt 2880 ]; then
+                    	RES='_2K'
+                	elif [ "$GET_WP_SIZE" -lt 3840 ]; then
+                    	RES='_3K'
+                	elif [ "$GET_WP_SIZE" -lt 5120 ]; then
+                    	RES='_4K'
+                	elif [ "$GET_WP_SIZE" -lt 6144 ]; then
+                    	RES='_5K'
+                	elif [ "$GET_WP_SIZE" -lt 7168 ]; then
+                    	RES='_6K'
+                	elif [ "$GET_WP_SIZE" -lt 7680 ]; then
+                    	RES='_7K'
+                	elif [ "$GET_WP_SIZE" -eq 7680 ]; then
+                    	RES='_8K'
+                	else
+                    	RES='_ULTRA'
+                	fi
+	
+                	case "$CHK_THEME" in
+                    	mech*) convert "$RAW" \
+                                  	-gravity center \
+                                  	-crop 16:9 \
+                              	'(' -clone 0 \
+                                  	-fill '#4c566a' \
+                                  	-colorize 50% \
+                              	')' -gravity center \
+                                  	-compose lighten \
+                                  	-composite \
+                              	'(' -clone 0 \
+                                  	-fill '#4c566a' \
+                                  	-colorize 20% \
+                              	')' -gravity center \
+                                  	-compose darken \
+                                  	-composite \
+                                  	-quality 100 \
+                           	"${CHK_WALLPAPER_DIR}/${RAW%.*}${RES}.jpg" \
+                           	|| continue
+                    	;;
+                    	eyec*) convert "$RAW" \
+                                  	-gravity center \
+                                  	-crop 16:9 \
+                              	'(' -clone 0 \
+                                  	-fill white \
+                                  	-colorize 20% \
+                                  	-modulate 100,127,97 \
+                              	')' -fill black \
+                                  	-colorize 2.2% \
+                                  	-gravity center \
+                                  	-compose lighten \
+                                  	-composite \
+                                  	-quality 100 \
+                           	"${CHK_WALLPAPER_DIR}/${RAW%.*}${RES}.jpg" \
+                           	|| continue
+                    	;;
+                	esac
+	
+                	dunstify '' "Successfully generated!\n<span size='small'>Now it's time to change X wallpaper</span>" \
+                         	-h string:synchronous:wallpaper-set \
+                         	-a joyful_desktop \
+                         	-i "$WALLPAPER_ICON" \
+                         	-u low
+	
+            	elif [ -d "$RAW" ]; then
+	
+                	continue
+	
+            	else
+	
+                	dunstify '' "Nothing to generate!\n<span size='small'>Puts in <u>~/${WALLPAPERS_DIR##*/}</u></span>" \
+                         	-h string:synchronous:wallpaper-set \
+                         	-a joyful_desktop \
+                         	-i "$WALLPAPER_ICON" \
+                         	-u low
+	
+            	fi
+	
+        	done
+    	;;
+	esac
+}
+
+___music(){
+	MUSIC_PLAYER="$(cat "${music_player_path}")"
+	
+	case "$MUSIC_PLAYER" in
+    	mpd  ) PREV="mpc -p \"$CHK_MPD_PORT\" prev -q"
+           	NEXT="mpc -p \"$CHK_MPD_PORT\" next -q"
+           	STOP="mpc -p \"$CHK_MPD_PORT\" stop -q"
+           	TOGG="mpc -p \"$CHK_MPD_PORT\" toggle -q"
+    	;;
+    	MPRIS) DBUS='org.freedesktop.DBus'
+           	MP2P='org.mpris.MediaPlayer2.Player'
+	
+           	PREF="$(dbus-send --print-reply --dest=${DBUS} /org/freedesktop/DBus ${DBUS}.ListNames)" \
+           	PREF="${PREF#*.MediaPlayer2.}"
+	
+           	SEND="dbus-send --print-reply --dest=${MP2P%.*}.${PREF%%\"*} /org/mpris/MediaPlayer2"
+	
+           	PREV="${SEND} ${MP2P}.Previous"
+           	NEXT="${SEND} ${MP2P}.Next"
+           	STOP="${SEND} ${MP2P}.Stop"
+           	TOGG="${SEND} ${MP2P}.PlayPause"
+    	;;
+	esac
+	
+	case "${1}" in
+    	prev) eval "exec ${PREV} >&2"
+    	;;
+    	next) eval "exec ${NEXT} >&2"
+    	;;
+    	stop) eval "exec ${STOP} >&2"
+    	;;
+    	tog*) eval "exec ${TOGG} >&2"
+    	;;
+	esac
+	
+	case "$MUSIC_PLAYER" in
+    	mpd  ) STAT="$(mpc -p "$CHK_MPD_PORT" status | grep -m1 -Fo '[playing]')"
+           	TITL="$(mpc -p "$CHK_MPD_PORT" -f '[%title%|%file%]' current)"
+    	;;
+    	MPRIS) PROP="${DBUS}.Properties.Get string:${MP2P}"
+           	STAT="$(${SEND} ${PROP} string:PlaybackStatus | grep -m1 -Fo '"Playing"')"
+           	TITL="$(${SEND} ${PROP} string:Metadata | grep -m1 -A1 -F '"xesam:title"')" \
+           	TITL="${TITL##*string\ \"}" \
+           	TITL="${TITL%%\"*}"
+    	;;
+    	*    ) TITL='Neither MPD nor MPRIS-enabled media player installed'
+    	;;
+	esac
+	
+	case "${1}" in
+    	sta*) echo "$STAT"
+    	;;
+    	tit*) echo "$TITL"
+    	;;
+    	icon) [ -n "$STAT" ] && echo '' || echo ''
+    	;;
+    	swi*) [ -z "$STAT" ] || eval "${TOGG} >&2 &"
+			if [ "$MUSIC_PLAYER" = "mpd" ];then
+				M="MPRIS"
+			elif [ "$MUSIC_PLAYER" = "MPRIS" ];then
+				M="mpd"
+			fi
+		  	echo "$M" > "$music_player_path"
+          	dunstify 'Music Player' "Switched <u>${M}</u>" -h string:synchronous:music-player \
+                                                             	-a joyful_desktop \
+                                                             	-i "$MUSIC_ICON" \
+                                                             	-u low
+    	;;
+	esac
+}
+
+___button(){
+	case "${1}" in
+    	'') rofi-button ;;
+    	s*) if [ "$CHK_OB_BUTTON_LOC" != 'left' ]; then
+            	sed_openbox_rc "titleLayout" "CIML"
+            	sed_Distro_config "CHK_OB_BUTTON_LOC_${CHK_THEME}_${CHK_MODE}" "left"
+        	elif [ "$CHK_OB_BUTTON_LOC" != 'right' ]; then
+            	sed_openbox_rc "titleLayout" "LIMC"
+            	sed_Distro_config "CHK_OB_BUTTON_LOC_${CHK_THEME}_${CHK_MODE}" "right"
+        	fi
+    	;;
+    	d*) CHK_OB_DECOR_LINE="$(grep -m1 -Fno '<application class="*" type="normal">' "$OB_CONFIG")" \
+        	CHK_OB_DECOR_LINE="$((${CHK_OB_DECOR_LINE%%:*}+1))"
+	
+        	CHK_OB_DECOR_STAT="$(sed -e "${CHK_OB_DECOR_LINE}s|^[ ]*<decor>\(.*\)</decor>$|\1|p" -n "$OB_CONFIG")"
+	
+        	if [ "$CHK_OB_DECOR_STAT" != 'yes' ]; then
+            	sed -e "${CHK_OB_DECOR_LINE}s|<decor>[a-z]*</decor>$|<decor>yes</decor>|" -i "$OB_CONFIG"
+        	elif [ "$CHK_OB_DECOR_STAT" != 'no' ]; then
+            	sed -e "${CHK_OB_DECOR_LINE}s|<decor>[a-z]*</decor>$|<decor>no</decor>|" -i "$OB_CONFIG"
+        	fi
+	
+        	ARGS='--restart'
+    	;;
+	esac
+	
+	openbox --reconfigure ${ARGS} &
+}
+
+___theme(){
+	mode_only=false
+	[ "${1-}" = "mode_only" ] && mode_only=true
+	
+	killall tint2 dunst -q &
+	
+	joyd_theme_set()
+	{
+		. "${Distro_config_file}"
+		
+		owl4ce_scripts orientation restore
+		
+		GTK_THEME_NAME="$(awk -F= '/^gtk-theme-name=/{print $2}' $HOME/.config/gtk-3.0/settings.ini)"
+    	OB_GTK_THEME="$HOME/.themes/$GTK_THEME_NAME/openbox-3"
+		
+		ln -fnrs "${OB_BUTTON_STYLE_DIR}/${CHK_OB_BUTTON_STYLE}"/*.'xbm' "${OB_GTK_THEME}/"
+		
+		case "$CHK_OB_BUTTON_LOC" in
+    		l*) sed_openbox_rc "titleLayout" "CIML"
+    		;;
+    		r*) sed_openbox_rc "titleLayout" "LIMC";;
+		esac
+		
+		CHK_OB_THEME_LINE="$(grep -m1 -Fno '<theme>' "$OB_CONFIG")" \
+		CHK_OB_THEME_LINE="$((${CHK_OB_THEME_LINE%%:*}+1))"
+		
+		sed -e "${CHK_OB_THEME_LINE}s|<name>.*</name>$|<name>${GTK_THEME_NAME}</name>|" -i "$OB_CONFIG"
+	
+		reload_gtk23
+	}
+	
+	setup_ui()
+	{
+		sed_Distro_config "CHK_THEME" "$CHK_THEME"
+		sed_Distro_config "CHK_MODE" "$CHK_MODE"
+		
+    	joyd_theme_set
+	
+    	LANG="$SYSTEM_LANG" joyd_user_interface_set
+	
+    	case "${CHK_THEME}" in
+        	mech*) BODY='Mechanical Theme'
+        	;;
+        	eyec*) BODY='EyeCandy Theme'
+        	;;
+    	esac
+	
+    	case "${CHK_MODE}" in
+        	art*) SUMMARY='Artistic Mode'
+        	;;
+        	int*) SUMMARY='Interactive Mode'
+        	;;
+    	esac
+	
+    	dunstify "$SUMMARY" "$BODY" -h string:synchronous:toggle-mode \
+                                	-a joyful_desktop \
+                                	-i "${GLADIENT_ICON_DIR}/${CHK_THEME}.${CHK_MODE}.png" \
+                                	-u low
+	}
+	
+	joyd_tray_programs kill
+	
+	if [ "${mode_only}" = false ];then
+		case "${CHK_THEME}" in
+			mechanical) CHK_THEME="eyecandy"
+				cp -r "$HOME/.config/blob/tint2/owl4ce-light/config"/* "$HOME/.config/"
+			;;
+			eyecandy) CHK_THEME="mechanical"
+				cp -r "$HOME/.config/blob/tint2/owl4ce/config"/* "$HOME/.config/"
+			;;
+		esac
+	fi
+	
+	setup_ui
+	
+	LANG="$SYSTEM_LANG" joyd_tray_programs exec
+}
+
+___orientation(){
+	[ -n "${1}" -a "$CHK_MODE" = 'artistic' ] || exit ${?}
+	
+	killall tint2 dunst -q &
+	
+	joyd_layout_set()
+	{
+		. "${Distro_config_file}"
+		opt2="${1}"	
+		case "$CHK_MODE" in
+    		art*) case "${opt2}" in
+              		vert*_l*) sed -e '/^origin[ ]*/s|[^[ ]*]*$|top-right|' \
+                            		-e '/^offset[ ]*/s|[^[ ]*]*$|25x50|' \
+                            		-s -i "$DUNST_DIR"/*.'artistic.dunstrc'
+                        		sed -e '/^[ ]*exts-window-height/s|:[ ]*.*;$|:               100%;|' \
+                            		-e '/^[ ]*exts-window-location/s|:[ ]*.*;$|:             east;|' \
+                            		-e '/^[ ]*exts-window-x-offset/s|:[ ]*.*;$|:             0px;|' \
+                            		-e '/^[ ]*exts-window-y-offset/s|:[ ]*.*;$|:             0px;|' \
+                            		-e '/^[ ]*exts-window-border-radius/s|:[ ]*.*;$|:        0px 0px 0px 0px;|' \
+                            		-e '/^[ ]*exts-message-border-radius/s|:[ ]*.*;$|:       8px 8px 8px 8px;|' \
+                            		-i "$ROFI_SHARED_CONFIG"
+                            	sed -e "/^[ ]*<top>/s|>[0-9]*<|>${OB_MARGIN}<|" \
+                            		-e "/^[ ]*<bottom>/s|>[0-9]*<|>${OB_MARGIN}<|" \
+                            		-e "/^[ ]*<left>/s|>[0-9]*<|>$((45+OB_MARGIN))<|" \
+                            		-e "/^[ ]*<right>/s|>[0-9]*<|>${OB_MARGIN}<|" \
+                            		-i "$OB_CONFIG"
+              		;;
+              		vert*_r*) sed -e '/^origin[ ]*/s|[^[ ]*]*$|top-left|' \
+                            		-e '/^offset[ ]*/s|[^[ ]*]*$|25x50|' \
+                            		-s -i "$DUNST_DIR"/*.'artistic.dunstrc'
+                        		sed -e '/^[ ]*exts-window-height/s|:[ ]*.*;$|:               100%;|' \
+                            		-e '/^[ ]*exts-window-location/s|:[ ]*.*;$|:             west;|' \
+                            		-e '/^[ ]*exts-window-x-offset/s|:[ ]*.*;$|:             0px;|' \
+                            		-e '/^[ ]*exts-window-y-offset/s|:[ ]*.*;$|:             0px;|' \
+                            		-e '/^[ ]*exts-window-border-radius/s|:[ ]*.*;$|:        0px 0px 0px 0px;|' \
+                            		-e '/^[ ]*exts-message-border-radius/s|:[ ]*.*;$|:       8px 8px 8px 8px;|' \
+                            		-i "$ROFI_SHARED_CONFIG"
+                            	sed -e "/^[ ]*<top>/s|>[0-9]*<|>${OB_MARGIN}<|" \
+                            		-e "/^[ ]*<bottom>/s|>[0-9]*<|>${OB_MARGIN}<|" \
+                            		-e "/^[ ]*<left>/s|>[0-9]*<|>${OB_MARGIN}<|" \
+                            		-e "/^[ ]*<right>/s|>[0-9]*<|>$((45+OB_MARGIN))<|" \
+                            		-i "$OB_CONFIG"
+              		;;
+              		hori*_t*) sed -e '/^origin[ ]*/s|[^[ ]*]*$|bottom-right|' \
+                            		-e '/^offset[ ]*/s|[^[ ]*]*$|25x25|' \
+                            		-s -i "$DUNST_DIR"/*.'artistic.dunstrc'
+                        		sed -e '/^[ ]*exts-window-height/s|:[ ]*.*;$|:               89.5%;|' \
+                            		-e '/^[ ]*exts-window-location/s|:[ ]*.*;$|:             south east;|' \
+                            		-e '/^[ ]*exts-window-x-offset/s|:[ ]*.*;$|:             0px;|' \
+                            		-e '/^[ ]*exts-window-y-offset/s|:[ ]*.*;$|:             0px;|' \
+                            		-e '/^[ ]*exts-window-border-radius/s|:[ ]*.*;$|:        60px 0px 0px 0px;|' \
+                            		-e '/^[ ]*exts-message-border-radius/s|:[ ]*.*;$|:       45px 8px 8px 8px;|' \
+                            		-i "$ROFI_SHARED_CONFIG"
+                            	sed -e "/^[ ]*<top>/s|>[0-9]*<|>$((45+OB_MARGIN))<|" \
+                            		-e "/^[ ]*<bottom>/s|>[0-9]*<|>${OB_MARGIN}<|" \
+                            		-e "/^[ ]*<left>/s|>[0-9]*<|>${OB_MARGIN}<|" \
+                            		-e "/^[ ]*<right>/s|>[0-9]*<|>${OB_MARGIN}<|" \
+                            		-i "$OB_CONFIG"
+              		;;
+              		hori*_b*) sed -e '/^origin[ ]*/s|[^[ ]*]*$|top-right|' \
+                            		-e '/^offset[ ]*/s|[^[ ]*]*$|25x50|' \
+                            		-s -i "$DUNST_DIR"/*.'artistic.dunstrc'
+                        		sed -e '/^[ ]*exts-window-height/s|:[ ]*.*;$|:               89.5%;|' \
+                            		-e '/^[ ]*exts-window-location/s|:[ ]*.*;$|:             south east;|' \
+                            		-e '/^[ ]*exts-window-x-offset/s|:[ ]*.*;$|:             0px;|' \
+                            		-e '/^[ ]*exts-window-y-offset/s|:[ ]*.*;$|:             -45px;|' \
+                            		-e '/^[ ]*exts-window-border-radius/s|:[ ]*.*;$|:        60px 0px 0px 0px;|' \
+                            		-e '/^[ ]*exts-message-border-radius/s|:[ ]*.*;$|:       45px 8px 8px 8px;|' \
+                            		-i "$ROFI_SHARED_CONFIG"
+                            	sed -e "/^[ ]*<top>/s|>[0-9]*<|>${OB_MARGIN}<|" \
+                            		-e "/^[ ]*<bottom>/s|>[0-9]*<|>$((45+OB_MARGIN))<|" \
+                            		-e "/^[ ]*<left>/s|>[0-9]*<|>${OB_MARGIN}<|" \
+                            		-e "/^[ ]*<right>/s|>[0-9]*<|>${OB_MARGIN}<|" \
+                            		-i "$OB_CONFIG"
+              		;;
+          		esac
+    		;;
+    		int*) sed -e '/^origin[ ]*/s|[^[ ]*]*$|bottom-center|' \
+              		-e '/^offset[ ]*/s|[^[ ]*]*$|0x60|' \
+              		-s -i "$DUNST_DIR"/*.'interactive.dunstrc'
+          		sed -e '/^[ ]*exts-window-height/s|:[ ]*.*;$|:               89.5%;|' \
+              		-e '/^[ ]*exts-window-location/s|:[ ]*.*;$|:             south east;|' \
+              		-e '/^[ ]*exts-window-x-offset/s|:[ ]*.*;$|:             0px;|' \
+              		-e '/^[ ]*exts-window-y-offset/s|:[ ]*.*;$|:             0px;|' \
+              		-e '/^[ ]*exts-window-border-radius/s|:[ ]*.*;$|:        60px 0px 0px 0px;|' \
+              		-e '/^[ ]*exts-message-border-radius/s|:[ ]*.*;$|:       45px 8px 8px 8px;|' \
+              		-i "$ROFI_SHARED_CONFIG"
+				sed -e "/^[ ]*<top>/s|>[0-9]*<|>$((30+OB_MARGIN))<|" \
+              		-e "/^[ ]*<bottom>/s|>[0-9]*<|>${OB_MARGIN}<|" \
+              		-e "/^[ ]*<left>/s|>[0-9]*<|>${OB_MARGIN}<|" \
+              		-e "/^[ ]*<right>/s|>[0-9]*<|>${OB_MARGIN}<|" \
+              		-i "$OB_CONFIG"
+    		;;
+		esac
+	}
+	
+	case "${1}" in
+    	l*) case "$CHK_PANEL_ORT" in
+            	vert*) if [ "$CHK_PANEL_ORT_V" != 'left' ]; then
+                       	CHK_PANEL_ORT_V="left"
+        			   	sed_Distro_config "CHK_PANEL_ORT_V" "$CHK_PANEL_ORT_V"
+                       	joyd_layout_set vertical_left
+                       	sed -e '/^panel_position[ ]*/s|= center [a-z]* vertical$|= center left vertical|' \
+                           	-s -i "$TINT2_DIR"/*-'vertical.artistic.tint2rc'
+                   	elif [ "$CHK_PANEL_ORT_V" != 'right' ]; then
+                       	CHK_PANEL_ORT_V="right"
+        			   	sed_Distro_config "CHK_PANEL_ORT_V" "$CHK_PANEL_ORT_V"
+                       	joyd_layout_set vertical_right
+                       	sed -e '/^panel_position[ ]*/s|= center [a-z]* vertical$|= center right vertical|' \
+                           	-s -i "$TINT2_DIR"/*-'vertical.artistic.tint2rc'
+                   	fi
+            	;;
+            	hori*) if [ "$CHK_PANEL_ORT_H" != 'bottom' ]; then
+                       	CHK_PANEL_ORT_H="bottom"
+        			   	sed_Distro_config "CHK_PANEL_ORT_H" "$CHK_PANEL_ORT_H"
+                       	joyd_layout_set horizontal_bottom
+                       	sed -e '/^panel_position[ ]*/s|= [a-z]* center horizontal$|= bottom center horizontal|' \
+                           	-s -i "$TINT2_DIR"/*-'horizontal.artistic.tint2rc'
+                   	elif [ "$CHK_PANEL_ORT_H" != 'top' ]; then
+                       	CHK_PANEL_ORT_H="top"
+        			   	sed_Distro_config "CHK_PANEL_ORT_H" "$CHK_PANEL_ORT_H"
+                       	joyd_layout_set horizontal_top
+                       	sed -e '/^panel_position[ ]*/s|= [a-z]* center horizontal$|= top center horizontal|' \
+                           	-s -i "$TINT2_DIR"/*-'horizontal.artistic.tint2rc'
+                   	fi
+            	;;
+        	esac
+    	;;
+    	v*) if [ "$CHK_PANEL_ORT" != 'vertical' ]; then
+            	CHK_PANEL_ORT="vertical"
+        		sed_Distro_config "CHK_PANEL_ORT" "$CHK_PANEL_ORT"
+            	joyd_layout_set "vertical_${CHK_PANEL_ORT_V}"
+            	sed -e "/^panel_position[ ]*/s|= center [a-z]* vertical$|= center ${CHK_PANEL_ORT_V} vertical|" \
+                	-s -i "$TINT2_DIR"/*-'vertical.artistic.tint2rc'
+        	elif [ "$CHK_PANEL_ORT" != 'horizontal' ]; then
+        		CHK_PANEL_ORT="horizontal"
+        		sed_Distro_config "CHK_PANEL_ORT" "$CHK_PANEL_ORT"
+            	joyd_layout_set "horizontal_${CHK_PANEL_ORT_H}"
+            	sed -e "/^panel_position[ ]*/s|= center [a-z]* horizontal$|= center ${CHK_PANEL_ORT_H} horizontal|" \
+                	-s -i "$TINT2_DIR"/*-'vertical.artistic.tint2rc'
+        	fi
+    	;;
+    	r*)
+    		case "$CHK_PANEL_ORT" in
+    			vert*) joyd_layout_set "vertical_${CHK_PANEL_ORT_V}"
+    			;;
+    			hori*) joyd_layout_set "horizontal_${CHK_PANEL_ORT_H}"
+    			;;
+			esac
+    		exit ${?}
+    	;;
+	esac
+	
+	LANG="$SYSTEM_LANG" joyd_user_interface_set without_wallpaper
+}
+
+case "$opt" in
+		music) ___music ${opt2} ;;
+		button) ___button ${opt2} ;;
+		mode) ___mode;;
+		theme) ___theme ${opt2} ;;
+		orientation) ___orientation ${opt2} ;;
+		wallpaper) ___wallpaper ${opt2} ;;
+		terminal) ___rever_terminal ;;
+esac

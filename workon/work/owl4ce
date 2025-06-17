@@ -1,0 +1,83 @@
+#!/usr/bin/env sh
+
+#ffmpegthumbnailer
+#w3m-img
+
+set -e
+
+script_dir="$(pwd)"
+
+cd "$script_dir"/owl4ce_dotfile
+cp -r .config/blob_extra/tint2/owl4ce_dark/config/* .config/blob/tint2/owl4ce_dark/config 
+cp -r $HOME/Desktop/my_stuff/skel/.config/kitty .config
+cp -r $HOME/Desktop/my_stuff/skel_extra/.config/geany .config
+cp -r $HOME/Desktop/my_stuff/skel_extra/.config/xfce4 .config
+cp -r .config/blob/tint2/owl4ce_dark/config/* .config/
+
+ln -sf $HOME/Desktop/Theme_Stuff/fonts .fonts
+ln -sf $HOME/Desktop/Theme_Stuff/themes .themes
+ln -sf $HOME/Desktop/my_stuff/icons/Joyful.OBB $HOME/Desktop/Theme_Stuff/themes
+mkdir -p .icons
+cd .icons
+ln -sf $HOME/Desktop/my_stuff/icons/owl4rc Gladient
+ln -sf $HOME/Desktop/Theme_Stuff/icons/Papirus-Custom .
+ln -sf $HOME/Desktop/Theme_Stuff/icons/Papirus-Dark-Custom .
+cd ..
+
+mkdir -p .wallpapers
+ln -sf $HOME/Desktop/my_stuff/my_wallpapers/owl4ce_dark_wall-01.jpg .wallpapers
+ln -sf $HOME/Desktop/my_stuff/my_wallpapers/owl4ce_dark_wall-02.jpg .wallpapers
+ln -sf $HOME/Desktop/my_stuff/my_wallpapers/owl4ce_light_wall-01.jpg .wallpapers
+ln -sf $HOME/Desktop/my_stuff/my_wallpapers/owl4ce_light_wall-02.jpg .wallpapers
+
+mkdir -p .config
+ln -sf $HOME/Desktop/my_stuff/skel/.config/htop .config
+ln -sf $HOME/Desktop/my_stuff/skel_extra/.config/parcellite .config
+ln -sf $HOME/Desktop/my_stuff/skel_extra/.config/Thunar .config
+
+mkdir -p .local/share/applications
+cd .local/share/applications
+ln -sf $HOME/Desktop/my_stuff/applications/ncmpcpp.desktop .
+ln -sf $HOME/Desktop/my_stuff/applications/ncmpcpp.album-art.desktop .
+ln -sf $HOME/Desktop/my_stuff/applications/ncmpcpp.single.album-art.desktop .
+
+cd $HOME
+for d in .config .fonts .icons .local/share/applications .scripts .themes .urxvt .wallpapers scripts .gtkrc-2.0 .joyfuld .Xresources;do
+	[ -d "$d" ] && rm -rdf "$d"
+done
+
+cd "$script_dir"/owl4ce_dotfile
+cp -r * $HOME
+cp -ra .??* $HOME
+
+fc-cache -rv
+sudo fc-cache -rv
+
+echo "done done done"
+
+systemctl --user exit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

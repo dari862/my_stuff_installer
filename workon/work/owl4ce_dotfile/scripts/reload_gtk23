@@ -1,0 +1,271 @@
+#!/bin/sh
+##########################################
+current_user="$(logname)"
+temp_user_path="/tmp/$USER"
+xsettingsd_error_log="$temp_user_path/reload_gtk23.error.log"
+
+xsettingsd_path="$HOME/.config/xsettingsd"
+xsettingsd_conf_file="$xsettingsd_path/xsettingsd.conf"
+
+GTK3_ini_FILES="$HOME/.config/gtk-3.0/settings.ini"
+
+if [ -f "$GTK3_ini_FILES" ];then
+	gtkrcfile="$GTK3_ini_FILES"
+elif [ -f "${GTK2_RC_FILES}" ];then
+	gtkrcfile="${GTK2_RC_FILES}"
+elif [ -f "$HOME/.gtk-2.0/gtkrc-2.0" ];then
+	gtkrcfile="$HOME/.gtk-2.0/gtkrc-2.0"
+elif [ "$USER" = "root" ];then
+	cp -r "/home/$current_user/.config/gtk-3.0/settings.ini" "/root"
+	gtkrcfile="/root/settings.ini"
+	xsettingsd_path="/root"
+	xsettingsd_conf_file="$xsettingsd_path/xsettingsd.conf"
+else
+	echo "no gtkrc file exist"
+	exit 1
+fi
+
+mkdir -p "${temp_user_path}"
+mkdir -p "${xsettingsd_path}"
+
+if [ -e "${xsettingsd_conf_file}" ];then
+	# clear the content of file
+	: > "${xsettingsd_conf_file}"
+else
+	# create empty file
+	touch "${xsettingsd_conf_file}"
+fi
+
+# Loop through each line in the original configuration
+grep -E '^gtk-|^Net/|^Xft/' "$gtkrcfile" | while IFS= read -r line; do
+  # Extract key (everything before the first equal sign)
+  key=$(echo "$line" | cut -d '=' -f 1)
+
+  # Extract value (everything after the first equal sign)
+  value=$(echo "$line" | cut -d '=' -f 2-)
+
+  # Remove quotes around the value (if any), using `sed`
+  value=$(echo "$value" | sed 's/^"\(.*\)"$/\1/')
+  # Convert the key to the desired format
+  case $key in
+    gtk-theme-name)
+      category="Net"
+      new_key="ThemeName"
+      ;;
+    gtk-icon-theme-name)
+      category="Net"
+      new_key="IconThemeName"
+      ;;
+    gtk-cursor-theme-name)
+      category="Gtk"
+      new_key="CursorThemeName"
+      ;;
+    gtk-font-name)
+      category="Gtk"
+      new_key="FontName"
+      ;;
+    gtk-cursor-theme-size)
+      category="Gtk"
+      new_key="CursorThemeSize"
+      ;;
+    gtk-toolbar-style)
+      category="Gtk"
+      new_key="ToolbarStyle"
+      value="$(echo $value | sed "s/GTK_TOOLBAR_//g" | tr '[:upper:]' '[:lower:]')"
+      ;;
+    gtk-toolbar-icon-size)
+      category="Gtk"
+      new_key="ToolbarIconSize"
+      if [ "$value" = "GTK_ICON_SIZE_LARGE_TOOLBAR" ];then
+      	value=3
+      else
+      	value=2
+      fi
+      ;;
+    gtk-button-images)
+      category="Gtk"
+      new_key="ButtonImages"
+      ;;
+    gtk-menu-images)
+      category="Gtk"
+      new_key="MenuImages"
+      ;;
+    gtk-enable-event-sounds)
+      category="Net"
+      new_key="EnableEventSounds"
+      ;;
+    gtk-enable-input-feedback-sounds)
+      category="Net"
+      new_key="EnableInputFeedbackSounds"
+      ;;
+    gtk-enable-animations)
+      category="Gtk"
+      new_key="EnableAnimations"
+      if [ "$value" = true ];then
+      	value=1
+      else
+      	value=0
+      fi
+      ;;
+    gtk-xft-antialias)
+      category="Xft"
+      new_key="Antialias"
+      ;;
+    gtk-xft-hinting)
+      category="Xft"
+      new_key="Hinting"
+      ;;
+    gtk-xft-hintstyle)
+      category="Xft"
+      new_key="HintStyle"
+      ;;
+    gtk-xft-rgba)
+      category="Xft"
+      new_key="RGBA"
+      ;;
+    ##########
+    gtk-color-palette)
+      category="Gtk"
+      new_key="ColorPalette"
+      ;;
+    gtk-cursor-blink)
+      category="Net"
+      new_key="CursorBlink"
+      ;;
+    gtk-cursor-blink-time)
+      category="Net"
+      new_key="CursorBlinkTime"
+      ;;
+    gtk-cursor-blink-timeout)
+      category="Gtk"
+      new_key="CursorBlinkTimeout"
+      ;;
+    gtk-decoration-layout)
+      category="Gtk"
+      new_key="DecorationLayout"
+      ;;
+    gtk-dialogs-use-header)
+      category="Gtk"
+      new_key="DialogsUseHeader"
+      ;;
+    gtk-dnd-drag-threshold)
+      category="Net"
+      new_key="DndDragThreshold"
+      ;;
+    gtk-double-click-distance)
+      category="Net"
+      new_key="DoubleClickDistance"
+      ;;
+    gtk-double-click-time)
+      category="Net"
+      new_key="DoubleClickTime"
+      ;;
+    gtk-enable-accels)
+      category="Gtk"
+      new_key="EnableAccels"
+      ;;
+    gtk-enable-primary-paste)
+      category="Gtk"
+      new_key="EnablePrimaryPaste"
+      ;;
+    gtk-fontconfig-timestamp)
+      category="Fontconfig"
+      new_key="Timestamp"
+      ;;
+    gtk-im-module)
+      category="Gtk"
+      new_key="IMModule"
+      ;;
+    gtk-key-theme-name)
+      category="Gtk"
+      new_key="KeyThemeName"
+      ;;
+    gtk-keynav-use-caret)
+      category="Gtk"
+      new_key="KeynavUseCaret"
+      ;;
+    gtk-modules)
+      category="Gtk"
+      new_key="Modules"
+      ;;
+    gtk-overlay-scrolling)
+      category="Gtk"
+      new_key="OverlayScrolling"
+      ;;
+    gtk-primary-button-warps-slider)
+      category="Gtk"
+      new_key="PrimaryButtonWarpsSlider"
+      ;;
+    gtk-recent-files-enabled)
+      category="Gtk"
+      new_key="RecentFilesEnabled"
+      ;;
+    gtk-recent-files-max-age)
+      category="Gtk"
+      new_key="RecentFilesMaxAge"
+      ;;
+    gtk-session-bus-id)
+      category="Gtk"
+      new_key="SessionBusId"
+      ;;
+    gtk-shell-shows-app-menu)
+      category="Gtk"
+      new_key="ShellShowsAppMenu"
+      ;;
+    gtk-shell-shows-desktop)
+      category="Gtk"
+      new_key="ShellShowsDesktop"
+      ;;
+    gtk-shell-shows-menubar)
+      category="Gtk"
+      new_key="ShellShowsMenubar"
+      ;;
+    gtk-sound-theme-name)
+      category="Net"
+      new_key="SoundThemeName"
+      ;;
+    gtk-titlebar-double-click)
+      category="Gtk"
+      new_key="TitlebarDoubleClick"
+      ;;
+    gtk-titlebar-middle-click)
+      category="Gtk"
+      new_key="TitlebarMiddleClick"
+      ;;
+    gtk-titlebar-right-click)
+      category="Gtk"
+      new_key="TitlebarRightClick"
+      ;;
+    gtk-xft-dpi)
+      category="Xft"
+      new_key="DPI"
+      ;;
+    *)
+      # Handle unknown keys (optional)
+      echo "Warning: Unknown key: $key" >&2
+      continue
+      ;;
+  esac
+
+  # Print the new line in the desired format with quotes around string values
+  case "$value" in
+  	[0-9])
+    	# Non-numeric value, add quotes around it
+    	value="$value"
+    ;;
+  	*)
+    	# Numeric value, no quotes
+    	value="\"$value\""
+    ;;
+	esac
+  echo "$category/$new_key $value" >> ${xsettingsd_conf_file}
+done
+
+[ -f "$HOME/.xsettingsd" ] && rm -f "$HOME/.xsettingsd"
+[ "$(pidof xsettingsd)" ] && killall -HUP xsettingsd
+xsettingsd >${xsettingsd_error_log} 2>&1 &
+
+file_manager_real="$(basename "$(realpath "$(which my-file-manager)")")"
+if [ "${file_manager_real}" = "pcmanfm" ];then
+	file-manager-session restart >/dev/null 2>&1
+fi

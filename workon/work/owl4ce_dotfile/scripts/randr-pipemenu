@@ -1,0 +1,178 @@
+#!/bin/bash
+
+# A small utility to make xrandr adjustments from an OpenBox menu.
+# To install, put this file somewhere and make sure it is executable.
+# Edit your $HOME/.config/openbox/menu.xml file. Add something like the following
+# near the top::
+#    <menu id="XrandrPipeMenu" label="Display/Monitor" execute="/path/to/randr-pipemenu" />
+#
+# Then add this in the place you actually want the menu to appear::
+#
+#   <menu id="randr-menu" />
+#
+# You can easily add custom commands to the menu by creating the file
+# $HOME/.ob-randrrc. The syntax looks like this::
+#
+#   [Notebook]
+#
+#   portrait: --output LVDS --primary --mode 1366x768 --output VGA-0 --mode 1440x900 --left-of LVDS --rotate left
+#
+#   [Netbook]
+#
+#   zoom out: --output LVDS --scale 1.3x1.3
+#   zoom in: --output LVDS --panning 1280x1024
+#
+# The idea is that you can create machine-specific shortcuts. For example, with
+# my laptop at home I frequently connect to an external widescreen display turned
+# sideways. On my netbook, I frequently 'zoom out' to a higher resolution in
+# scaled-out mode or 'zoom in' to a higher resolution in panning mode.
+#
+
+HOME="$HOME"
+RCFILE=".ob-randrrc"
+tmp_outputs_disconnected_file="/tmp/$USER/outputs_disconnected"
+tmp_outputs_connected_file="/tmp/$USER/outputs_connected"
+
+: > "${tmp_outputs_disconnected_file}"
+: > "${tmp_outputs_connected_file}"
+
+xrandr -q | grep "connected" | while read -r line; do
+    output="${line%% *}"
+
+    if [[ "$line" == *"disconnected"* ]];then
+    	echo "$output" >> "${tmp_outputs_disconnected_file}"
+    else
+    	echo "$output" >> "${tmp_outputs_connected_file}"
+    fi
+done
+
+outputs_disconnected="$(cat "${tmp_outputs_disconnected_file}")"
+outputs_connected="$(cat "${tmp_outputs_connected_file}")"
+words_in_outputs_connected="$(echo $outputs_connected | wc -w)"
+
+mk_position_controls() {
+	local output="$1"
+    # Create XML element for the menu
+    echo "<menu id=\"${output}-position\" type=\"position\" label=\"Position\">"
+	
+	# Iterate over outputs and create submenus
+	for position in left-of right-of above below same-as; do
+		echo "<menu id=\"--$position\" label=\"$position\">"
+			for other in ${outputs_connected}; do
+				if [[ "${output}" != "$other" ]];then
+					echo "<item label=\"$other\">"
+					echo "<action name=\"execute\">"
+					echo "<command>xrandr --output ${output} --$position $other</command>"
+					echo "</action>"
+					echo "</item>"
+				fi
+			done
+		echo "</menu>"
+	done
+	echo "</menu>"
+}
+
+# Function to create executable menu node
+mk_exe_node() {
+    local output="$1"
+    local name="$2"
+    local command="$3"
+    
+    echo "<item label=\"$name\">"
+    echo "<action name=\"execute\">"
+    echo "<command>xrandr --output $output $command</command>"
+    echo "</action>"
+    echo "<action name=\"execute\">"
+    echo "<command>setbg -r</command>"
+    echo "</action>"
+    echo "<action name=\"execute\">"
+    echo "<command>panel_launcher --reload</command>"
+    echo "</action>"
+    echo "</item>"
+}
+
+# Read user's rc file and return menu entries
+get_rc_menu() {
+    while IFS= read -r line; do
+        section="${line%%=*}"
+        command="${line#*=}"
+
+        echo "<menu id=\"shortcut-$section\" label=\"$section\">"
+        echo "$(mk_exe_node "$output" "$section" "$command")"
+        echo "</menu>"
+    done < "$HOME/$RCFILE"
+}
+
+# Retrieve connected outputs and their states
+get_xrandr_info() {
+    xrandr -q | while read -r line; do
+        if [[ "$line" == *"connected"* ]];then
+            echo "$line"
+        fi
+    done
+}
+
+# Main XML structure
+echo "<openbox_pipe_menu>"
+echo "<separator label=\"Current: $(xrandr -q | grep primary | grep -o -e [0-9]*x[0-9]*+[0-9]*+[0-9]*)\" />"
+# Output menu for each connected display
+while IFS= read -r output_info; do
+    output="${output_info%% *}"
+    mode="${output_info#* }"
+    if grep -q "disconnected" <<< "$mode";then
+		echo "<item label=\"$output\" />"
+    else
+		is_prim="$(echo $mode | grep -o "primary " || echo "")"
+		reso="$(echo $mode | grep -o -e [0-9]*x[0-9]*+[0-9]*+[0-9]*)"
+		echo "<menu id=\"$output\" type=\"output\" label=\"$output ${is_prim}$reso\">"
+		echo "<menu id=\"${output}-modes\" type=\"modes\" label=\"Modes\">"
+		
+		modes=$(xrandr | grep "^ *" | awk '{print $1}' | grep "[0-9].*x[0-9].*")
+		
+		for mode in $modes; do
+			echo "$(mk_exe_node "$output" "$mode" "--mode $mode")"
+		done
+		
+		echo "</menu>"
+		
+		if [ $words_in_outputs_connected -gt 1 ];then
+			echo "<separator />"
+			mk_position_controls "$output"
+		fi
+		
+		echo "<separator />"
+		
+		echo "$(mk_exe_node "$output" "Right" "--rotate right")"
+		echo "$(mk_exe_node "$output" "Left" "--rotate left")"
+		echo "$(mk_exe_node "$output" "Inverted" "--rotate inverted")"
+		echo "$(mk_exe_node "$output" "Normal" "--rotate normal")"
+		echo "<separator />"
+		echo "$(mk_exe_node "$output" "Auto" "--auto")"
+		echo "$(mk_exe_node "$output" "Off" "--off")"
+		echo "$(mk_exe_node "$output" "Reset" "--auto --rotate normal --scale 1x1 --panning 0x0")"
+		
+		echo "</menu>"
+	fi
+done < <(get_xrandr_info)
+
+# Shortcuts from rc file
+echo "<separator label=\"Shortcuts\" />"
+echo "<item label=\"Automatic\">"
+echo "<action name=\"execute\">"
+echo "<command>xrandr --auto</command>"
+echo "</action>"
+echo "</item>"
+
+echo "<separator label=\"GUI Select Display Resolution\" />"
+echo "<item label=\"displayselect manual_selection\">"
+echo "<action name=\"execute\">"
+echo "<command>displayselect manual_selection</command>"
+echo "</action>"
+echo "</item>"
+
+if [ -f "$HOME/$RCFILE" ];then
+	# Include user-defined shortcuts
+	get_rc_menu
+fi
+
+echo "</openbox_pipe_menu>"
