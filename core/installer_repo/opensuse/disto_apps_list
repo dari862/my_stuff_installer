@@ -1,0 +1,75 @@
+#!/bin/sh
+must_purge="system-config-printer light-locker zeitgeist zeitgeist-core"
+
+#######################
+## must have apps
+#######################
+install_ufw_apps="ufw"
+install_must_have_apps="jq yad git plocate htop unzip libnotify"
+install_must_have_apps2="psmisc gparted inxi s-tui dfc hwinfo acl lm_sensors ntfs-3g"
+install_audio_tray_app="pnmixer"
+install_image_viewer_apps="viewnior imagemagick"
+install_files_manager_support_app="gvfs gvfs-mtp gvfs-afc file-roller baobab avahi"
+install_terminal="kitty"
+install_if_laptop="tlp tlp-rdw powertop"
+install_cli_sound_app="mpd mpc ncmpcpp"
+install_MIDI_sound_app="wildmidi timidity"
+install_text_editer_app="geany geany-plugins zathura"
+install_mediaplayer_app="mpv cava"
+install_polkit_apps="polkit polkit-gnome gnome-keyring"
+install_fonts="noto-fonts google-droid-sans-mono-fonts cantarell-fonts liberation-fonts opensymbol-fonts noto-fonts noto-fonts-mono inconsolata-fonts"
+
+#firefox
+install_firefox_="mozilla-firefox"
+
+# ffmpeg for screen recoding and manymore , at for bl-beepmein
+install_for_scripts="ffmpeg at"
+
+#for x11
+install_X11_apps="x11-utils xorg-x11-server xorg-x11-driver-input dbus-x11 xorg-x11-xinit xdg-user-dirs xclip xwallpaper xdotool xprintidle"
+install_must_have_apps_for_X="cbatticon rofi picom dunst nitrogen nsxiv "
+install_res_apps="arandr autorandr"
+install_x_lock_extra="i3lock"
+install_if_laptop_x11="xf86-input-synaptics"
+install_conky_all_app="conky"
+install_openbox_="openbox obconf xcape tint2"
+install_themes_tools="xsettingsd lxappearance"
+# slop for ac-shots and screen recoding , wmctrl for style-manager and files-uploader
+install_for_x11_scripts="slop wmctrl"
+
+#for wayland
+
+
+#######################
+## extra apps
+#######################
+install_files_manager_thunar="thunar thunar-archive-plugin thunar-volman"
+install_files_manager_pcmanfm="pcmanfm"
+install_xfce4_panel="xfce4-panel xfce4-settings xfce4-whiskermenu-plugin NetworkManager-applet"
+install_qt5ct="qt5ct qt5-style-kvantum qt5-svg qt5-quickcontrols"
+install_zsh="zsh"
+
+#for x11
+#install_clipman_manager="parcellite"
+install_clipman_manager="diodon"
+install_polybar="polybar"
+install_bspwm="bspwm sxhkd"
+install_jgmenu="jgmenu"
+
+#for wayland
+
+
+#######################
+## better bash
+#######################
+install_better_bash="bash bash-completion"
+
+#######################
+## better shell
+#######################
+install_better_shell="tar bat fzf command-not-found thefuck highlight lf"
+
+#######################
+## extra
+#######################
+install_extra_apps="micro multitail ncdu tree dos2unix meld btop"

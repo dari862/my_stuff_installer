@@ -1,0 +1,733 @@
+#!/usr/bin/env bash
+#reqs: mkisofs and uuidgen & curl
+		
+		#say 'Downloading virtio-win (windows virtual drivers)...' 1
+		#my-superuser mkdir -p /usr/share/virtio-win
+		#getURL 'download2' "https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/latest-virtio/virtio-win.iso" "/tmp/$USER/virtio-win.iso"
+		#sudo chown root:root /tmp/$USER/virtio-win.iso
+		#sudo mv /tmp/$USER/virtio-win/virtio-win.iso /usr/share/virtio-win
+# Download a file from the web
+function web_get() {
+    local HEADERS=()
+    local URL="${1}"
+    local DIR="${2}"
+    local FILE=""
+    local USER_AGENT="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+
+    if [ -n "${3}" ]; then
+        FILE="${3}"
+    else
+        FILE="${URL##*/}"
+    fi
+
+    # Process any URL redirections after the file name has been extracted
+    URL=$(web_redirect "${URL}")
+
+    # Process any headers
+    while (( "$#" )); do
+        if [ "${1}" == "--header" ]; then
+            HEADERS+=("${1}" "${2}")
+            shift 2
+        else
+            shift
+        fi
+    done
+
+    if ! curl --disable --progress-bar --location --output "${DIR}/${FILE}" --continue-at - --user-agent "${USER_AGENT}" "${HEADERS[@]}" -- "${URL}"; then
+        echo "ERROR! Failed to download ${URL} with curl."
+        rm -f "${DIR}/${FILE}"
+    fi
+}
+
+# checks if a URL needs to be redirected and returns the final URL
+function web_redirect() {
+    local REDIRECT_URL=""
+    local URL="${1}"
+    # Check for URL redirections
+    # Output to nonexistent directory so the download fails fast
+    REDIRECT_URL=$(curl --disable --silent --location --fail --write-out '%{url_effective}' --output /var/cache/${RANDOM}/${RANDOM} "${URL}" )
+    if [ "${REDIRECT_URL}" != "${URL}" ]; then
+        echo "${REDIRECT_URL}"
+    else
+        echo "${URL}"
+    fi
+}
+
+function create_autounattend_xml() {
+    cat << 'EOF' > "${VM_PATH}/unattended/autounattend.xml"
+<?xml version="1.0" encoding="utf-8"?>
+<unattend xmlns="urn:schemas-microsoft-com:unattend"
+  xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <!--
+       For documentation on components:
+       https://docs.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/
+  -->
+  <settings pass="offlineServicing">
+    <component name="Microsoft-Windows-LUA-Settings" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <EnableLUA>false</EnableLUA>
+    </component>
+    <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <ComputerName>*</ComputerName>
+    </component>
+  </settings>
+
+  <settings pass="generalize">
+    <component name="Microsoft-Windows-PnPSysprep" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+      <PersistAllDeviceInstalls>true</PersistAllDeviceInstalls>
+    </component>
+    <component name="Microsoft-Windows-Security-SPP" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <SkipRearm>1</SkipRearm>
+    </component>
+  </settings>
+
+  <settings pass="specialize">
+    <component name="Microsoft-Windows-Security-SPP-UX" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <SkipAutoActivation>true</SkipAutoActivation>
+    </component>
+    <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <ComputerName>*</ComputerName>
+      <OEMInformation>
+        <Manufacturer>Quickemu Project</Manufacturer>
+        <Model>Quickemu</Model>
+        <SupportHours>24/7</SupportHours>
+        <SupportPhone></SupportPhone>
+        <SupportProvider>Quickemu Project</SupportProvider>
+        <SupportURL>https://github.com/quickemu-project/quickemu/issues</SupportURL>
+      </OEMInformation>
+      <OEMName>Quickemu Project</OEMName>
+      <ProductKey>W269N-WFGWX-YVC9B-4J6C9-T83GX</ProductKey>
+    </component>
+    <component name="Microsoft-Windows-SQMApi" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <CEIPEnabled>0</CEIPEnabled>
+    </component>
+  </settings>
+
+  <settings pass="windowsPE">
+    <component name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <Diagnostics>
+        <OptIn>false</OptIn>
+      </Diagnostics>
+      <DiskConfiguration>
+        <Disk wcm:action="add">
+          <DiskID>0</DiskID>
+          <WillWipeDisk>true</WillWipeDisk>
+          <CreatePartitions>
+            <!-- Windows RE Tools partition -->
+            <CreatePartition wcm:action="add">
+              <Order>1</Order>
+              <Type>Primary</Type>
+              <Size>256</Size>
+            </CreatePartition>
+            <!-- System partition (ESP) -->
+            <CreatePartition wcm:action="add">
+              <Order>2</Order>
+              <Type>EFI</Type>
+              <Size>128</Size>
+            </CreatePartition>
+            <!-- Microsoft reserved partition (MSR) -->
+            <CreatePartition wcm:action="add">
+              <Order>3</Order>
+              <Type>MSR</Type>
+              <Size>128</Size>
+            </CreatePartition>
+            <!-- Windows partition -->
+            <CreatePartition wcm:action="add">
+              <Order>4</Order>
+              <Type>Primary</Type>
+              <Extend>true</Extend>
+            </CreatePartition>
+          </CreatePartitions>
+          <ModifyPartitions>
+            <!-- Windows RE Tools partition -->
+            <ModifyPartition wcm:action="add">
+              <Order>1</Order>
+              <PartitionID>1</PartitionID>
+              <Label>WINRE</Label>
+              <Format>NTFS</Format>
+              <TypeID>DE94BBA4-06D1-4D40-A16A-BFD50179D6AC</TypeID>
+            </ModifyPartition>
+            <!-- System partition (ESP) -->
+            <ModifyPartition wcm:action="add">
+              <Order>2</Order>
+              <PartitionID>2</PartitionID>
+              <Label>System</Label>
+              <Format>FAT32</Format>
+            </ModifyPartition>
+            <!-- MSR partition does not need to be modified -->
+            <ModifyPartition wcm:action="add">
+              <Order>3</Order>
+              <PartitionID>3</PartitionID>
+            </ModifyPartition>
+            <!-- Windows partition -->
+              <ModifyPartition wcm:action="add">
+              <Order>4</Order>
+              <PartitionID>4</PartitionID>
+              <Label>Windows</Label>
+              <Letter>C</Letter>
+              <Format>NTFS</Format>
+            </ModifyPartition>
+          </ModifyPartitions>
+        </Disk>
+      </DiskConfiguration>
+      <DynamicUpdate>
+        <Enable>true</Enable>
+        <WillShowUI>Never</WillShowUI>
+      </DynamicUpdate>
+      <ImageInstall>
+        <OSImage>
+          <InstallTo>
+            <DiskID>0</DiskID>
+            <PartitionID>4</PartitionID>
+          </InstallTo>
+          <InstallToAvailablePartition>false</InstallToAvailablePartition>
+        </OSImage>
+      </ImageInstall>
+      <RunSynchronous>
+        <RunSynchronousCommand wcm:action="add">
+          <Order>1</Order>
+          <Path>reg add HKLM\System\Setup\LabConfig /v BypassCPUCheck /t REG_DWORD /d 0x00000001 /f</Path>
+        </RunSynchronousCommand>
+        <RunSynchronousCommand wcm:action="add">
+          <Order>2</Order>
+          <Path>reg add HKLM\System\Setup\LabConfig /v BypassRAMCheck /t REG_DWORD /d 0x00000001 /f</Path>
+        </RunSynchronousCommand>
+        <RunSynchronousCommand wcm:action="add">
+          <Order>3</Order>
+          <Path>reg add HKLM\System\Setup\LabConfig /v BypassSecureBootCheck /t REG_DWORD /d 0x00000001 /f</Path>
+        </RunSynchronousCommand>
+        <RunSynchronousCommand wcm:action="add">
+          <Order>4</Order>
+          <Path>reg add HKLM\System\Setup\LabConfig /v BypassTPMCheck /t REG_DWORD /d 0x00000001 /f</Path>
+        </RunSynchronousCommand>
+      </RunSynchronous>
+      <UpgradeData>
+        <Upgrade>false</Upgrade>
+        <WillShowUI>Never</WillShowUI>
+      </UpgradeData>
+      <UserData>
+        <AcceptEula>true</AcceptEula>
+        <FullName>Quickemu</FullName>
+        <Organization>Quickemu Project</Organization>
+        <!-- https://docs.microsoft.com/en-us/windows-server/get-started/kms-client-activation-keys -->
+        <ProductKey>
+          <Key>W269N-WFGWX-YVC9B-4J6C9-T83GX</Key>
+          <WillShowUI>Never</WillShowUI>
+        </ProductKey>
+      </UserData>
+    </component>
+
+    <component name="Microsoft-Windows-PnpCustomizationsWinPE" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" processorArchitecture="amd64" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <!--
+           This makes the VirtIO drivers available to Windows, assuming that
+           the VirtIO driver disk is available as drive E:
+           https://github.com/virtio-win/virtio-win-pkg-scripts/blob/master/README.md
+      -->
+      <DriverPaths>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="1">
+          <Path>E:\qemufwcfg\w10\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="2">
+          <Path>E:\vioinput\w10\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="3">
+          <Path>E:\vioscsi\w10\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="4">
+          <Path>E:\viostor\w10\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="5">
+          <Path>E:\vioserial\w10\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="6">
+          <Path>E:\qxldod\w10\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="7">
+          <Path>E:\amd64\w10</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="8">
+          <Path>E:\viogpudo\w10\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="9">
+          <Path>E:\viorng\w10\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="10">
+          <Path>E:\NetKVM\w10\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="11">
+          <Path>E:\viofs\w10\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="12">
+          <Path>E:\Balloon\w10\amd64</Path>
+        </PathAndCredentials>
+      </DriverPaths>
+    </component>
+  </settings>
+
+  <settings pass="oobeSystem">
+    <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <AutoLogon>
+        <Password>
+          <Value>quickemu</Value>
+          <PlainText>true</PlainText>
+        </Password>
+        <Enabled>true</Enabled>
+        <Username>Quickemu</Username>
+      </AutoLogon>
+      <DisableAutoDaylightTimeSet>false</DisableAutoDaylightTimeSet>
+      <OOBE>
+        <HideEULAPage>true</HideEULAPage>
+        <HideLocalAccountScreen>true</HideLocalAccountScreen>
+        <HideOEMRegistrationScreen>true</HideOEMRegistrationScreen>
+        <HideOnlineAccountScreens>true</HideOnlineAccountScreens>
+        <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
+        <NetworkLocation>Home</NetworkLocation>
+        <ProtectYourPC>3</ProtectYourPC>
+        <SkipUserOOBE>true</SkipUserOOBE>
+        <SkipMachineOOBE>true</SkipMachineOOBE>
+        <VMModeOptimizations>
+          <SkipWinREInitialization>true</SkipWinREInitialization>
+        </VMModeOptimizations>
+      </OOBE>
+      <UserAccounts>
+        <LocalAccounts>
+          <LocalAccount wcm:action="add">
+            <Password>
+              <Value>quickemu</Value>
+              <PlainText>true</PlainText>
+            </Password>
+            <Description>Quickemu</Description>
+            <DisplayName>Quickemu</DisplayName>
+            <Group>Administrators</Group>
+            <Name>Quickemu</Name>
+          </LocalAccount>
+        </LocalAccounts>
+      </UserAccounts>
+      <RegisteredOrganization>Quickemu Project</RegisteredOrganization>
+      <RegisteredOwner>Quickemu</RegisteredOwner>
+      <FirstLogonCommands>
+        <SynchronousCommand wcm:action="add">
+          <CommandLine>msiexec /i E:\guest-agent\qemu-ga-x86_64.msi /quiet /passive /qn</CommandLine>
+          <Description>Install Virtio Guest Agent</Description>
+          <Order>1</Order>
+        </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
+          <CommandLine>msiexec /i F:\spice-webdavd-x64.msi /quiet /passive /qn</CommandLine>
+          <Description>Install spice-webdavd file sharing agent</Description>
+          <Order>2</Order>
+        </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
+          <CommandLine>msiexec /i F:\UsbDk-x64.msi /quiet /passive /qn</CommandLine>
+          <Description>Install usbdk USB sharing agent</Description>
+          <Order>3</Order>
+        </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
+          <CommandLine>msiexec /i F:\spice-vdagent-x64.msi /quiet /passive /qn</CommandLine>
+          <Description>Install spice-vdagent SPICE agent</Description>
+          <Order>4</Order>
+        </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
+          <CommandLine>Cmd /c POWERCFG -H OFF</CommandLine>
+          <Description>Disable Hibernation</Description>
+          <Order>5</Order>
+        </SynchronousCommand>
+      </FirstLogonCommands>
+    </component>
+  </settings>
+</unattend>
+EOF
+}
+
+function Downloading_Spice_drivers() {
+	echo "Downloading Spice drivers..."
+	if [ ! -f "${VM_PATH}/unattended/spice-webdavd-x64.msi" ];then
+		web_get https://www.spice-space.org/download/windows/spice-webdavd/spice-webdavd-x64-latest.msi "${VM_PATH}/unattended"
+		mv "${VM_PATH}/unattended/spice-webdavd-x64-latest.msi" "${VM_PATH}/unattended/spice-webdavd-x64.msi"
+	fi
+	if [ ! -f "${VM_PATH}/unattended/spice-vdagent-x64.msi" ];then
+		web_get https://www.spice-space.org/download/windows/vdagent/vdagent-win-0.10.0/spice-vdagent-x64-0.10.0.msi "${VM_PATH}/unattended"
+		mv "${VM_PATH}/unattended/spice-vdagent-x64-0.10.0.msi" "${VM_PATH}/unattended/spice-vdagent-x64.msi"
+	fi
+	if [ ! -f "${VM_PATH}/unattended/UsbDk-x64.msi" ];then
+		web_get https://www.spice-space.org/download/windows/usbdk/UsbDk_1.0.22_x64.msi "${VM_PATH}/unattended"
+		mv "${VM_PATH}/unattended/UsbDk_1.0.22_x64.msi" "${VM_PATH}/unattended/UsbDk-x64.msi"
+	fi
+}
+
+function unattended_windows() {
+	echo "Making unattended.iso"
+	if mkisofs -quiet -l -o "${VM_PATH}/unattended.iso" "${VM_PATH}/unattended/";then
+		rm -rdf "${VM_PATH}/unattended/"
+	else
+		echo "failed to run mkisofs"
+	fi
+}
+
+function handle_curl_error() {
+    local error_code="$1"
+    local fatal_error_action=2
+    case "$error_code" in
+        6)
+            echo "Failed to resolve Microsoft servers! Is there an Internet connection? Exiting..."
+            return "$fatal_error_action"
+            ;;
+        7)
+            echo "Failed to contact Microsoft servers! Is there an Internet connection or is the server down?"
+            ;;
+        8)
+            echo "Microsoft servers returned a malformed HTTP response!"
+            ;;
+        22)
+            echo "Microsoft servers returned a failing HTTP status code!"
+            ;;
+        23)
+            echo "Failed at writing Windows media to disk! Out of disk space or permission error? Exiting..."
+            return "$fatal_error_action"
+            ;;
+        26)
+            echo "Ran out of memory during download! Exiting..."
+            return "$fatal_error_action"
+            ;;
+        36)
+            echo "Failed to continue earlier download!"
+            ;;
+        63)
+            echo "Microsoft servers returned an unexpectedly large response!"
+            ;;
+            # POSIX defines exit statuses 1-125 as usable by us
+            # https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#tag_18_08_02
+            $((error_code <= 125)))
+            # Must be some other server or network error (possibly with this specific request/file)
+            # This is when accounting for all possible errors in the curl manual assuming a correctly formed curl command and an HTTP(S) request, using only the curl features we're using, and a sane build
+            echo "Miscellaneous server or network error!"
+            ;;
+        126 | 127 )
+            echo "Curl command not found! Please install curl and try again. Exiting..."
+            return "$fatal_error_action"
+            ;;
+        # Exit statuses are undefined by POSIX beyond this point
+        *)
+            case "$(kill -l "$error_code")" in
+            # Signals defined to exist by POSIX:
+            # https://pubs.opengroup.org/onlinepubs/009695399/basedefs/signal.h.html
+            INT)
+                echo "Curl was interrupted!"
+                ;;
+            # There could be other signals but these are most common
+            SEGV | ABRT )
+                echo "Curl crashed! Failed exploitation attempt? Please report any core dumps to curl developers. Exiting..."
+                return "$fatal_error_action"
+                ;;
+            *)
+                echo "Curl terminated due to a fatal signal!"
+                ;;
+            esac
+    esac
+    return 1
+}
+
+function Download_ISO() {
+    local session_id=""
+    local iso_download_page_html=""
+    local product_edition_id=""
+    local language_skuid_table_json=""
+    local sku_id=""
+    local iso_download_link_json=""
+    local iso_download_link=""
+
+    echo "Downloading Windows ${RELEASE} (${I18N})"
+    # This function is adapted from the Mido project:
+    # https://github.com/ElliotKillick/Mido
+    # Download newer consumer Windows versions from behind gated Microsoft API
+
+    # Either 10, or 11
+    local windows_version="${RELEASE}"
+
+    local url="https://www.microsoft.com/en-us/software-download/windows$windows_version"
+    case "$windows_version" in
+        10) url="${url}ISO";;
+    esac
+
+    local user_agent="Mozilla/5.0 (X11; Linux x86_64; rv:100.0) Gecko/20100101 Firefox/100.0"
+    session_id="$(cat /proc/sys/kernel/random/uuid)"
+
+    # Get product edition ID for latest release of given Windows version
+    # Product edition ID: This specifies both the Windows release (e.g. 22H2) and edition ("multi-edition" is default, either Home/Pro/Edu/etc., we select "Pro" in the answer files) in one number
+    # This is the *only* request we make that Fido doesn't. Fido manually maintains a list of all the Windows release/edition product edition IDs in its script (see: $WindowsVersions array). This is helpful for downloading older releases (e.g. Windows 10 1909, 21H1, etc.) but we always want to get the newest release which is why we get this value dynamically
+    # Also, keeping a "$WindowsVersions" array like Fido does would be way too much of a maintenance burden
+    # Remove "Accept" header that curl sends by default
+    echo " - Parsing download page: ${url}"
+    iso_download_page_html="$(curl --disable --silent --user-agent "$user_agent" --header "Accept:" --max-filesize 1M --fail --proto =https --tlsv1.2 --http1.1 -- "$url")" || {
+        handle_curl_error $?
+        return $?
+    }
+
+    echo -n " - Getting Product edition ID: "
+    # tr: Filter for only numerics to prevent HTTP parameter injection
+    # head -c was recently added to POSIX: https://austingroupbugs.net/view.php?id=407
+    product_edition_id="$(echo "$iso_download_page_html" | grep -Eo '<option value="[0-9]+">Windows' | cut -d '"' -f 2 | head -n 1 | tr -cd '0-9' | head -c 16)"
+    echo "$product_edition_id"
+
+    echo " - Permit Session ID: $session_id"
+    # Permit Session ID
+    # "org_id" is always the same value
+    curl --disable --silent --output /dev/null --user-agent "$user_agent" --header "Accept:" --max-filesize 100K --fail --proto =https --tlsv1.2 --http1.1 -- "https://vlscppe.microsoft.com/tags?org_id=y6jn8c31&session_id=$session_id" || {
+        # This should only happen if there's been some change to how this API works
+        handle_curl_error $?
+        return $?
+    }
+
+    local profile="606624d44113"
+
+    echo -n " - Getting language SKU ID: "
+    # Get language -> skuID association table
+    language_skuid_table_json="$(curl --disable -s --fail --max-filesize 100K --proto =https --tlsv1.2 --http1.1 "https://www.microsoft.com/software-download-connector/api/getskuinformationbyproductedition?profile=${profile}&ProductEditionId=${product_edition_id}&SKU=undefined&friendlyFileName=undefined&Locale=en-US&sessionID=${session_id}")" || {
+        handle_curl_error $?
+        return $?
+    }
+
+    sku_id="$(echo "${language_skuid_table_json}" | jq -r '.Skus[] | select(.LocalizedLanguage=="'"${I18N}"'" or .Language=="'"${I18N}"'").Id')"
+    echo "$sku_id"
+
+    echo " - Getting ISO download link..."
+    # Get ISO download link
+    # If any request is going to be blocked by Microsoft it's always this last one (the previous requests always seem to succeed)
+    # --referer: Required by Microsoft servers to allow request
+    iso_download_link_json="$(curl --disable -s --fail --referer "$url" "https://www.microsoft.com/software-download-connector/api/GetProductDownloadLinksBySku?profile=${profile}&productEditionId=undefined&SKU=${sku_id}&friendlyFileName=undefined&Locale=en-US&sessionID=${session_id}")"
+
+    local failed=0
+
+    if ! [ "$iso_download_link_json" ]; then
+        # This should only happen if there's been some change to how this API works
+        echo " - Microsoft servers gave us an empty response to our request for an automated download."
+        failed=1
+    fi
+
+    if echo "$iso_download_link_json" | grep -q "Sentinel marked this request as rejected."; then
+        echo " - WARNING! Microsoft blocked the automated download request based on your IP address."
+        failed=1
+    fi
+
+    if [ ${failed} -eq 1 ]; then
+        echo "   Manually download the Windows ${windows_version} ISO using a web browser from: ${url}"
+        echo "   Save the downloaded ISO to: $(realpath "${VM_PATH}")"
+        echo "   Update the config file to reference the downloaded ISO: ./${VM_PATH}.conf"
+        echo "   Continuing with the VM creation process..."
+        return 1
+    fi
+
+    # Filter for 64-bit ISO download URL
+    iso_download_link="$(echo "${iso_download_link_json}" | jq -r '.ProductDownloadOptions[].Uri' | grep x64)"
+
+    if ! [ "$iso_download_link" ]; then
+        # This should only happen if there's been some change to the download endpoint web address
+        echo " - Microsoft servers gave us no download link to our request for an automated download. Please manually download this ISO in a web browser: $url"
+        return 1
+    fi
+
+    echo " - URL: ${iso_download_link%%\?*}"
+
+    # Download ISO
+    web_get "${iso_download_link}" "${VM_PATH}" "${FILE_NAME}"
+}
+
+function get_windows() {
+	if [ ! -f "${VM_PATH}/${FILE_NAME}" ];then
+		Download_ISO
+	fi
+	
+	if [ ! -f "${VM_PATH}/${VIRTIO_FILE}" ];then
+    	echo "Downloading VirtIO drivers..."
+    	web_get "https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/stable-virtio/${VIRTIO_FILE}" "${VM_PATH}"
+	fi
+
+    if [ ! -f "${VM_PATH}/unattended.iso" ];then
+    	create_autounattend_xml
+    	Downloading_Spice_drivers
+    	unattended_windows
+    fi
+}
+
+req_4_vm(){
+	sudo apt-get update -q 
+	sudo apt-get install -y git qemu rsync qemu-kvm libvirt-daemon libvirt-clients bridge-utils ovmf virt-manager
+	kvm_validate=$(/usr/bin/virt-host-validate | grep '/dev/kvm exists')
+	cpu_kvm_flags=$(egrep -c '(vmx|svm)' /proc/cpuinfo)
+	cpu_vt=$(lscpu | grep Virtualization)
+	
+  	if [[ $cpu_vt =~ "AMD" ]]; then
+      	cpubrand="AMD"
+  	elif [[ $cpu_vt =~ "VT" ]]; then
+      	cpubrand="INTEL"
+  	fi 
+  	
+  	if [[ $cpu_kvm_flags > 0 ]]; then
+    	if [[ $cpu_vt =~ "AMD" ]] || [[ $cpu_vt =~ "VT" ]]; then
+      	echo " ✔ Virtualization is Supported!"
+    	else
+      	echo " [X] Virtualization is not Supported!"
+      	exit
+    	fi
+    	if [[ $kvm_validate =~ ": PASS" ]]; then
+      	echo " ✔ KVM is enabled!"
+      	kvm_enabled=true
+    	elif [[ $kvm_validate =~ ": FAIL" ]]; then
+      	echo " [X] KVM not detected. Please ensure Virtualization is enabled in UEFI/CoreBoot."
+      	kvm_enabled=false
+      	exit
+    	else
+      	echo " [!] ERROR CHECKING virt-host-validate."
+      	exit
+    	fi
+  	elif [[ $cpu_kvm_flags < 1 ]]; then 
+    	echo " [X] VIRTUALIZATION NOT ENABLED. Please ensure Virtualization is enabled in UEFI/CoreBoot."
+    	exit
+  	fi
+	
+  	sudo systemctl enable --now libvirtd 
+	
+  	sudo systemctl enable libvirtd.socket
+  	sudo systemctl start libvirtd.socket
+  	sudo systemctl enable libvirtd.service 
+  	sudo systemctl start libvirtd.service
+  	sudo systemctl enable --now virtlogd
+  	sudo virsh net-autostart default
+  	sudo virsh net-start default
+	
+  	if [[ $cpubrand == "AMD" ]]; then
+    	sudo modprobe -r kvm_amd kvm
+    	sudo modprobe kvm
+    	sudo modprobe kvm_amd nested=1
+  	else
+    	sudo modprobe -r kvm_intel kvm
+    	sudo modprobe kvm
+    	sudo modprobe kvm_intel nested=1
+  	
+  	fi
+}
+
+create_vm(){
+	# copy correct bios
+	ovmfs=("${SHARE_PATH}/OVMF/OVMF_CODE_4M.fd","${SHARE_PATH}/OVMF/OVMF_VARS_4M.fd" \
+                        "${SHARE_PATH}/edk2/ovmf/OVMF_CODE.fd","${SHARE_PATH}/edk2/ovmf/OVMF_VARS.fd" \
+                        "${SHARE_PATH}/OVMF/OVMF_CODE.fd","${SHARE_PATH}/OVMF/OVMF_VARS.fd" \
+                        "${SHARE_PATH}/OVMF/x64/OVMF_CODE.fd","${SHARE_PATH}/OVMF/x64/OVMF_VARS.fd" \
+                        "${SHARE_PATH}/edk2-ovmf/OVMF_CODE.fd","${SHARE_PATH}/edk2-ovmf/OVMF_VARS.fd" \
+                        "${SHARE_PATH}/qemu/ovmf-x86_64-4m-code.bin","${SHARE_PATH}/qemu/ovmf-x86_64-4m-vars.bin" \
+                        "${SHARE_PATH}/qemu/edk2-x86_64-code.fd","${SHARE_PATH}/qemu/edk2-x86_64-code.fd" \
+                        "${SHARE_PATH}/edk2-ovmf/x64/OVMF_CODE.fd","${SHARE_PATH}/edk2-ovmf/x64/OVMF_VARS.fd" \
+                        "${SHARE_PATH}/edk2/x64/OVMF_CODE.4m.fd","${SHARE_PATH}/edk2/x64/OVMF_VARS.4m.fd")
+            # Attempt each EFI_CODE file one by one, selecting the corresponding code and vars
+            # when an existing file is found.
+            _IFS=$IFS
+            IFS=","
+            for f in "${ovmfs[@]}"; do
+                # shellcheck disable=SC2086
+                set -- ${f};
+                if [ -e "${1}" ]; then
+                    EFI_CODE="${1}"
+                    EFI_EXTRA_VARS="${2}"
+                fi
+            done
+            IFS=$_IFS
+            
+     EFI_VARS="${VM_PATH}/$(basename "$EFI_EXTRA_VARS")"
+     
+     if [ ! -f "${EFI_VARS}" ];then
+     	cp -r "${EFI_EXTRA_VARS}" "${VM_PATH}"
+     fi
+     
+     # create correct disk
+	if [ ! -f "${VM_PATH}/disk.qcow2" ];then
+		qemu-img create \
+    		-q \
+    		-f qcow2 \
+    		-o lazy_refcounts=on,preallocation=off,nocow=on ${VM_PATH}/disk.qcow2 $disk_size
+	fi
+	
+	# enable tpm2
+	swtpm socket \
+    	--ctrl type=unixio,path=${VM_PATH}/${os_name}.swtpm-sock \
+    	--terminate \
+    	--tpmstate dir=${VM_PATH} \
+    	--tpm2 &
+    
+    # create vm
+	if [ -z "${VM_PID}" ]; then
+		qemu-system-x86_64 \
+    		-name ${os_name},process=${os_name} \
+    		-machine q35,hpet=off,smm=on,vmport=off,accel=kvm \
+    		-global kvm-pit.lost_tick_policy=discard \
+    		-global ICH9-LPC.disable_s3=1 \
+    		-cpu host,+hypervisor,+invtsc,l3-cache=on,migratable=no,hv_passthrough \
+    		-smp cores=2,threads=1,sockets=1 \
+    		-m $ram_size \
+    		-device virtio-balloon \
+    		-pidfile ${VM_PATH}/${os_name}.pid \
+    		-rtc base=localtime,clock=host,driftfix=slew \
+    		-vga none \
+    		-device virtio-vga-gl,xres=1280,yres=800 \
+    		-display sdl,gl=on \
+    		-device virtio-rng-pci,rng=rng0 \
+    		-object rng-random,id=rng0,filename=/dev/urandom \
+    		-device qemu-xhci,id=spicepass \
+    		-chardev spicevmc,id=usbredirchardev1,name=usbredir \
+    		-device usb-redir,chardev=usbredirchardev1,id=usbredirdev1 \
+    		-chardev spicevmc,id=usbredirchardev2,name=usbredir \
+    		-device usb-redir,chardev=usbredirchardev2,id=usbredirdev2 \
+    		-chardev spicevmc,id=usbredirchardev3,name=usbredir \
+    		-device usb-redir,chardev=usbredirchardev3,id=usbredirdev3 \
+    		-device pci-ohci,id=smartpass \
+    		-device usb-ccid \
+    		-device usb-ehci,id=input \
+    		-device usb-kbd,bus=input.0 \
+    		-k en-us \
+    		-device usb-tablet,bus=input.0 \
+    		-audiodev pa,id=audio0 \
+    		-device intel-hda \
+    		-device hda-micro,audiodev=audio0 \
+    		-device virtio-net,netdev=nic \
+    		-netdev user,hostname=${os_name},hostfwd=tcp::22220-:22,id=nic \
+    		-global driver=cfi.pflash01,property=secure,value=on \
+    		-drive if=pflash,format=raw,unit=0,file=,readonly=on \
+    		-drive if=pflash,format=raw,unit=1,file=${VM_PATH}/OVMF_VARS.fd \
+    		-drive media=cdrom,index=2,file=${VM_PATH}/unattended.iso \
+    		-drive media=cdrom,index=0,file=${VM_PATH}/${FILE_NAME} \
+    		-drive media=cdrom,index=1,file=${VM_PATH}/${VIRTIO_FILE} \
+    		-device virtio-blk-pci,drive=SystemDisk \
+    		-drive id=SystemDisk,if=none,format=qcow2,file=${VM_PATH}/disk.qcow2 \
+    		-monitor unix:${VM_PATH}/${os_name}-monitor.socket,server,nowait \
+    		-serial unix:${VM_PATH}/${os_name}-serial.socket,server,nowait 2>/dev/null
+    	VM_PID=$!
+    	sleep 0.25
+    	if kill -0 "${VM_PID}" 2>/dev/null; then
+        	echo " - Process:  Started ${OS} as ${VM_PATH} (${VM_PID})"
+    	else
+        	echo " - Process:  ERROR! Failed to start ${OS} as ${VM_PATH}"
+        	exit 1
+    	fi
+	fi
+		
+	for LOOP in {1..5}; do
+		sleep 1
+		echo -e "sendkey ret" | socat -,shut-down unix-connect:"${VM_PATH}/${os_name}-monitor.socket"
+	done
+}
+
+disk_size="64G"
+ram_size="4G"
+
+OS="windows"
+RELEASE="10"
+I18N="English International"
+VIRTIO_FILE="virtio-win.iso"
+
+os_name="${OS}-${RELEASE}"
+VM_PATH="${os_name}"
+FILE_NAME="${os_name}.iso"
+
+mkdir -p "${VM_PATH}/unattended" 2>/dev/null
+
+#req_4_vm
+get_windows
+create_vm

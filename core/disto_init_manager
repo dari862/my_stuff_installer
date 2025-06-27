@@ -1,0 +1,36 @@
+#!/bin/sh
+if [ "$init_system_are" = "systemd" ];then
+	init_manager(){
+		_command="${1-}"
+		_file="${2-}"
+		if [ "${_command}" = "stop" ];then
+			$_SUPERUSER systemctl stop ${_file}
+		elif [ "${_command}" = "enable" ];then
+			$_SUPERUSER systemctl enable --now ${_file}
+		elif [ "${_command}" = "disable" ];then
+			$_SUPERUSER systemctl disable ${_file}
+		elif [ "${_command}" = "status" ];then
+			$_SUPERUSER systemctl status ${_file}
+		elif [ "${_command}" = "mask" ];then
+			$_SUPERUSER systemctl mask ${_file}
+		fi
+	}
+elif [ "$init_system_are" = "openrc" ];then
+	init_manager(){
+		_command="${1-}"
+		_file="${2-}"
+		if [ "${_command}" = "stop" ];then
+			$_SUPERUSER rc-service ${_file} stop
+		elif [ "${_command}" = "enable" ];then
+			$_SUPERUSER rc-update add ${_file}
+		elif [ "${_command}" = "disable" ];then
+			$_SUPERUSER rc-update del ${_file}
+		elif [ "${_command}" = "status" ];then
+			$_SUPERUSER rc-service ${_file} status --quiet
+		elif [ "${_command}" = "mask" ];then
+			$_SUPERUSER rc-update del ${_file}
+		fi
+	}
+else
+	show_em "init_system_are = $init_system_are . $init_system_are does not exist."
+fi

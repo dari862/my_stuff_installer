@@ -1,0 +1,219 @@
+#!/bin/sh
+must_purge_first(){
+	show_im "purging apps"
+	for package in ${must_purge};do
+		if package_installed "$package";then
+			must_purge_first="$must_purge $package"
+		else
+			show_wm "$package does not exist"
+		fi
+	done
+	remove_packages "${must_purge_first}"
+	run_autoclean
+}
+
+pre_disto_apps_installer(){
+	. "${prompt_to_install_value_file}"
+	show_im "Adding needed packages to install list."
+	##################################################################################
+	# main
+	##################################################################################
+	if [ "$install_wayland" = "true" ];then
+		:
+	fi
+	
+	if [ "$install_X11" = "true" ];then
+		add_packages_2_install_list "${install_X11_apps}"
+		add_packages_2_install_list "${install_res_apps}"
+		add_packages_2_install_list "${install_must_have_apps_for_X}"
+		add_packages_2_install_list "${install_x_lock_extra}"
+		add_packages_2_install_list "${install_conky_all_app}"
+		add_packages_2_install_list "${install_openbox_}"
+		add_packages_2_install_list "${install_themes_tools}"
+		add_packages_2_install_list "${install_for_x11_scripts}"
+		if [ "$machine_type_are" = "laptop" ];then
+			add_packages_2_install_list "${install_if_laptop_x11}"
+		fi
+		if [ "$install_polybar" = "polybar" ];then
+			add_packages_2_install_list "${install_polybar}"
+		fi
+		if [ "$install_bspwm" = "bspwm" ];then
+			add_packages_2_install_list "${install_bspwm}"
+		fi
+		if [ "$install_files_manager" = "true" ];then
+			if ! command_exist xfce4-clipman;then
+				add_packages_2_install_list "${install_clipman_manager}"
+			fi
+		fi	
+		if [ "$install_jgmenu" = "jgmenu" ];then
+			add_packages_2_install_list "${install_jgmenu}"
+		fi
+	fi
+	
+	if lsmod | grep -q ip_tables;then
+		add_packages_2_install_list "${install_ufw_apps}"
+	else
+		failed_2_install_ufw=true
+	fi
+	
+	if [ "$machine_type_are" = "laptop" ];then
+		add_packages_2_install_list "${install_if_laptop}"
+	fi
+	add_packages_2_install_list "${install_X11_apps}"
+	add_packages_2_install_list "${install_res_apps}"
+	add_packages_2_install_list "${install_must_have_apps}"
+	add_packages_2_install_list "${install_must_have_apps2}"
+	add_packages_2_install_list "${install_terminal}"
+	add_packages_2_install_list "${install_files_manager_app}"
+	add_packages_2_install_list "${install_files_manager_support_app}"
+	add_packages_2_install_list "${install_firefox_}"
+	add_packages_2_install_list "${install_cli_sound_app}"
+	add_packages_2_install_list "${install_MIDI_sound_app}"
+	add_packages_2_install_list "${install_text_editer_app}"
+	add_packages_2_install_list "${install_mediaplayer_app}"
+	add_packages_2_install_list "${install_audio_tray_app}"
+	add_packages_2_install_list "${install_for_scripts}"
+	add_packages_2_install_list "${install_image_viewer_apps}"
+	add_packages_2_install_list "${install_polkit_apps}"
+	add_packages_2_install_list "${install_fonts}"
+	add_packages_2_install_list "${install_better_bash}"
+	add_packages_2_install_list "${install_better_shell}"
+	
+	if [ "$install_xfce4_panel" = "xfce4_panel" ];then
+		add_packages_2_install_list "${install_xfce4_panel}"
+	fi
+	
+	if [ "$thunar_files_manager" = true ];then
+		add_packages_2_install_list "${install_files_manager_thunar}"
+	elif [ "$pcmanfm_files_manager" = true ];then
+		add_packages_2_install_list "${install_files_manager_pcmanfm}"
+	fi
+
+	if [ "$install_qt5ct" = "qt5ct" ];then
+		add_packages_2_install_list "${install_qt5ct}"
+	fi
+
+	if [ "$install_zsh_now" = "zsh_default" ] || [ "$install_zsh_now" = "zsh" ];then
+		add_packages_2_install_list "${install_zsh}"
+	fi
+
+	if [ "$install_extra_now" = "extra" ];then
+		add_packages_2_install_list "${install_extra_apps}"
+	fi
+}
+
+post_disto_apps_installer(){
+	[ -f "${installer_phases}/disto_apps_installer" ] && return
+	. "${prompt_to_install_value_file}"
+	show_im "Configer packages."
+	
+	if [ "$install_bspwm" = "bspwm" ];then
+		show_im "adding my_stuff_bspwm to xsessions."
+		$_SUPERUSER mkdir -p "${__distro_path}/lib/xsessions"
+		$_SUPERUSER touch "${__distro_path}/lib/xsessions/my_stuff_bspwm.desktop"
+		$_SUPERUSER ln -sf "${__distro_path}/lib/xsessions/my_stuff_bspwm.desktop" /usr/share/xsessions
+		$_SUPERUSER rm -rdf "${__distro_path}"
+	fi
+
+	if [ "$install_zsh_now" = "zsh_default" ];then
+		show_im "make zsh default shell "
+		$_SUPERUSER chsh -s $(command_exist zsh) $__USER
+	fi
+	
+	if command_exist mpd;then
+		if [ -n "$(pidof mpd)" ];then
+			kill_package_ mpd
+		fi
+		
+		init_manager stop mpd.socket
+		init_manager stop mpd.service 
+		init_manager disable mpd.socket 
+		init_manager disable mpd.service
+	fi
+	
+	if [ "$machine_type_are" = "laptop" ];then
+		show_im "some config"
+		if $_SUPERUSER dmesg | grep -qi bluetooth || $_SUPERUSER lsusb 2>/dev/null | grep -qi bluetooth || [ -d "/sys/class/bluetooth" ];then
+			[ -f "/etc/tlp.conf" ] && $_SUPERUSER sed -i "s/#DEVICES_TO_DISABLE_ON_STARTUP=.*/DEVICES_TO_DISABLE_ON_STARTUP=\"bluetooth\"/g" /etc/tlp.conf
+		fi
+		
+		init_manager enable tlp
+		
+		$_SUPERUSER tlp start || tlp_error="true"
+		if [ "$tlp_error" = "true" ];then
+			$_SUPERUSER  tlp start | grep '>>> Invoke' >> "${temp_path}"/tlp_error_Invoke
+			if [ -f "${temp_path}/tlp_error_Invoke" ];then
+				sed -i "s/' to correct this.//g" "${temp_path}"/tlp_error_Invoke
+				sed -i "s/>>> Invoke '/$_SUPERUSER /g" "${temp_path}"/tlp_error_Invoke
+				. "${temp_path}"/tlp_error_Invoke
+				$_SUPERUSER  tlp start
+			fi
+			if $_SUPERUSER tlp-stat |  grep '* Install' >/dev/null 2>&1 ;then
+				$_SUPERUSER tlp-stat |  grep '* Install' | awk -F' '  '{print "add_packages_2_install_list " $3}' >> "${temp_path}"/tlp_install_exta_apps
+				if [ -f "${temp_path}/tlp_install_exta_apps" ];then
+					. "${temp_path}"/tlp_install_exta_apps
+					install_packages
+				fi
+			fi
+		fi
+	fi
+	
+	if command_exist ufw;then
+		$_SUPERUSER ufw disable >/dev/null 2>&1
+		show_im "Disableing (UFW)"
+		
+    	$_SUPERUSER ufw limit 22/tcp
+    	show_im "Limiting port 22/tcp (UFW)"
+	
+    	$_SUPERUSER ufw allow 80/tcp
+    	show_im "Allowing port 80/tcp (UFW)"
+	
+    	$_SUPERUSER ufw allow 443/tcp
+    	show_im "Allowing port 443/tcp (UFW)"
+	
+    	$_SUPERUSER ufw default deny incoming
+    	show_im "Denying Incoming Packets by Default(UFW)"
+	
+    	$_SUPERUSER ufw default allow outgoing
+    	show_im "Allowing Outcoming Packets by Default(UFW)"
+	
+    	$_SUPERUSER ufw enable
+    	show_im "Enabled Firewall with Baselines!"
+	fi
+	touch "${installer_phases}/disto_apps_installer"
+}
+
+install_ads_block_for_firefox(){
+	show_im "Downloading uBlock to firefox."
+	ads_block_api_contant="$(get_url_content "https://api.github.com/repos/gorhill/uBlock/releases/latest")"
+	ads_block_url="$(echo "$ads_block_api_contant" | grep -oP '(?<=browser_download_url": ")[^"]*' | grep firefox)"
+	ads_block_name="$(echo "$ads_block_api_contant" | grep -oP '(?<=name": ")[^"]*' | grep firefox)"
+	ads_block_tmp_path="/tmp/ads_block"
+	ads_block_downloaded_tmp_path="${ads_block_tmp_path}/${ads_block_name}"
+	ads_block_contant_tmp_path="${ads_block_tmp_path}/ads_block_contant"
+			
+	$_SUPERUSER mkdir -p "${ads_block_contant_tmp_path}"
+	
+	download_file "$_SUPERUSER" "${ads_block_url}" "${ads_block_tmp_path}/${ads_block_name}"
+	$_SUPERUSER unzip "${ads_block_downloaded_tmp_path}" -d "${ads_block_contant_tmp_path}" >/dev/null 2>&1
+	
+	ads_block_tmp_path="${ads_block_tmp_path}/$(grep -oP '(?<=id": ")[^"]*' "${ads_block_contant_tmp_path}/manifest.json").xpi"
+	
+	$_SUPERUSER mv "${ads_block_downloaded_tmp_path}" "${ads_block_tmp_path}"
+	
+	for d in /home/*; do
+		if [ -d "$d/.mozilla/firefox" ];then
+			show_im "Installing uBlock to ($d) firefox."
+			user_and_group=$(stat "$(dirname "$d/.config")" -c %u:%g)
+			profiles="$(cat "$d/.mozilla/firefox/profiles.ini" | grep "Path=" | awk -F= '{print $2}')"
+			for p in $profiles;do
+				$_SUPERUSER mkdir -p "$d/.mozilla/firefox/$p/extensions"
+				$_SUPERUSER cp -r "${ads_block_tmp_path}" "$d/.mozilla/firefox/$p/extensions"
+			done
+			$_SUPERUSER chown -R "$user_and_group" "$d"
+		else
+			show_im "Skipping install of uBlock to ($d) firefox."
+		fi
+	done
+	touch "${installer_phases}/disto_apps_installer"
+}

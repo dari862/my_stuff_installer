@@ -1,0 +1,156 @@
+#!/bin/sh
+__distro_path="/usr/share/my_stuff"
+lightdm_background="${__distro_path}/my_wallpapers/default_wall-01.jpg"
+
+pre_post_install(){
+	[ -f "${installer_phases}/pre_post_install" ] && return
+	
+	show_im "update fonts cache."
+	$_SUPERUSER fc-cache -vf
+	
+	show_im "update icons cache."
+	$_SUPERUSER gtk-update-icon-cache
+
+	$_SUPERUSER touch "${installer_phases}/pre_post_install"
+}
+
+end_of_post_install(){
+	[ -f "${installer_phases}/end_of_post_install" ] && return	
+	
+	show_im "Create lightdm.conf."
+	
+	$_SUPERUSER mkdir -p "/usr/share/lightdm/lightdm.conf.d"
+	$_SUPERUSER mkdir -p "/usr/share/lightdm/lightdm-gtk-greeter.conf.d"
+
+	$_SUPERUSER tee /usr/share/lightdm/lightdm.conf.d/50_my_stuff.conf <<- 'EOF' >/dev/null 2>&1
+	# My Stuff specific defaults for lightdm
+	#
+	
+	[Seat:*]
+	# show users
+	greeter-hide-users=false
+	user-session=my_stuff_openbox
+	EOF
+	$_SUPERUSER tee /usr/share/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf <<- 'EOF' >/dev/null 2>&1
+	# My Stuff specific defaults for lightdm-gtk-greeter
+	#
+	# LightDM GTK+ Configuration
+	# Available configuration options listed below.
+	#
+	# Appearance:
+	#  theme-name = GTK+ theme to use
+	#  icon-theme-name = Icon theme to use
+	#  cursor-theme-name = Cursor theme to use
+	#  cursor-theme-size = Cursor size to use
+	#  background = Background file to use, either an image path or a color (e.g. #772953)
+	#  user-background = false|true ("true" by default)  Display user background (if available)
+	#  transition-duration = Length of time (in milliseconds) to transition between background images ("500" by default)
+	#  transition-type = ease-in-out|linear|none  ("ease-in-out" by default)
+	#
+	# Fonts:
+	#  font-name = Font to use
+	#  xft-antialias = false|true  Whether to antialias Xft fonts
+	#  xft-dpi = Resolution for Xft in dots per inch (e.g. 96)
+	#  xft-hintstyle = none|slight|medium|hintfull  What degree of hinting to use
+	#  xft-rgba = none|rgb|bgr|vrgb|vbgr  Type of subpixel antialiasing
+	#
+	# Login window:
+	#  active-monitor = Monitor to display greeter window (name or number). Use #cursor value to display greeter at monitor with cursor. Can be a semicolon separated list
+	#  position = x y ("50% 50%" by default)  Login window position
+	#  default-user-image = Image used as default user icon, path or #icon-name
+	#  hide-user-image = false|true ("false" by default)
+	#
+	# Panel:
+	#  panel-position = top|bottom ("top" by default)
+	#  clock-format = strftime-format string, e.g. %H:%M
+	#  indicators = semi-colon ";" separated list of allowed indicator modules. Built-in indicators include "~a11y", "~language", "~session", "~power", "~clock", "~host", "~spacer". Unity indicators can be represented by short name (e.g. "sound", "power"), service file name, or absolute path
+	#
+	# Accessibility:
+	#  a11y-states = states of accessibility features: "name" - save state on exit, "-name" - disabled at start (default value for unlisted), "+name" - enabled at start. Allowed names: contrast, font, keyboard, reader.
+	#  keyboard = command to launch on-screen keyboard (e.g. "onboard")
+	#  keyboard-position = x y[;width height] ("50%,center -0;50% 25%" by default)  Works only for "onboard"
+	#  reader = command to launch screen reader (e.g. "orca")
+	#  at-spi-enabled = false|true ("true" by default) Enables accessibility at-spi-command if the greeter is built with it enabled
+	#
+	# Security:
+	#  allow-debugging = false|true ("false" by default)
+	#  screensaver-timeout = Timeout (in seconds) until the screen blanks when the greeter is called as lockscreen
+	#
+	# Template for per-monitor configuration:
+	#  [monitor: name]
+	#  background = overrides default value
+	#  user-background = overrides default value
+	#  laptop = false|true ("false" by default) Marks monitor as laptop display
+	#  transition-duration = overrides default value
+	#
+	
+	[greeter]
+	background = will be changed with sed
+	#user-background=
+	theme-name = Arc-Dark
+	icon-theme-name = Bunsen-lightdm
+	font-name = Noto Sans 9
+	xft-antialias=true
+	#xft-dpi=
+	xft-hintstyle=hintfull
+	xft-rgba=rgb
+	reader=orca
+	indicators = ~clock;~language;~session;~a11y;~power
+	clock-format = %H:%M          %a, %b %d
+	position = 57%,start 22%,start
+	EOF
+	
+	$_SUPERUSER sed -i "s|background = will be changed with sed|background = ${lightdm_background}|g" /usr/share/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf
+	
+	show_im "copy manpages."
+	$_SUPERUSER ln -sf ${__distro_path}/lib/manpage/* /usr/share/man/man1
+	
+	show_im "installing update-notification"
+	$_SUPERUSER "${__distro_path}/system_files/bin/update-notification" -I
+	
+	show_im "pick correct apps_as_root."
+	if command_exist doas;then
+		$_SUPERUSER ln -sf ${__distro_path}/bin/doas/doasedit ${__distro_path}/system_files/bin
+		$_SUPERUSER cp -rp ${__distro_path}/system_files/doas.conf /etc
+		if ! $_SUPERUSER doas -C /etc/doas.conf;then
+			show_em "config error"
+		fi
+	fi	
+	
+	weather_script_config_path="${__distro_path}/system_files/skel/.config/scriptconfig/weather"
+	#. "$weather_script_config_path"
+	
+	if [ -z "$place" ];then
+		show_im "set place var in $weather_script_config_path"
+		. "${__distro_path}/bin/not_add_2_path/weather/country_list"
+   		# Geolocate IP:
+   		place=$(echo "$__timezone" | awk -F/ '{print $2}')
+   		chosen="$(printf "%s" "$country_list" | grep "$place" )"
+		
+		# Set continent code and radar code.
+		continentcode=$(printf "%s" "$chosen" | cut -d':' -f1 | tr "[:lower:]" "[:upper:]")
+		radarcode=$(printf "%s" "$chosen" | cut -d' ' -f2 | cut -d':' -f1 | tr '[:lower:]' '[:upper:]')
+		place=$(printf "%s" "$chosen" | cut -d':' -f3 | cut -f1 -d',' | sed 's/^ //')
+		place="${place:-$radarcode}" # Default place to radarcode if not set
+	
+		$_SUPERUSER sed -i "s|continentcode=.*|continentcode=\"$continentcode\"|" "${weather_script_config_path}" || show_em "end_of_post_install failed at continentcode"
+		$_SUPERUSER sed -i "s|radarcode=.*|radarcode=\"$radarcode\"|" "${weather_script_config_path}" || show_em "end_of_post_install failed at radarcode"
+		$_SUPERUSER sed -i "s|place=.*|place=\"$place\"|" "${weather_script_config_path}" || show_em "end_of_post_install failed at place"
+	fi
+	
+	. "${__distro_path}/lib/common/DB"
+	. "${__distro_path}/lib/common/my_installer_and_DB_dir"
+	
+	cd "${_APPS_LIBDIR}"
+	
+	for app in podman distrobox;do
+		if command_exist ${app};then
+			dir_name="$(basename $(dirname $(find . -type f -name ${app} )))"
+			[ ! -f "${apps_db_path}/$dir_name" ] && $_SUPERUSER touch "${apps_db_path}/$dir_name"
+			echo "${app}" | $_SUPERUSER tee -a "${apps_db_path}/$dir_name" >/dev/null 2>&1
+		fi
+	done
+	
+	show_im "prepare completed"
+	$_SUPERUSER touch "${installer_phases}/end_of_post_install"
+}

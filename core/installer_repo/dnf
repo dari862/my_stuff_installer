@@ -1,0 +1,144 @@
+#!/bin/sh
+set -e
+
+##################################
+# for rest
+##################################
+__remove_package="$_SUPERUSER ${PACKAGER} remove -y"
+
+create_package_list(){
+	# create list_of_apps file
+	if [ ! -f "${list_of_apps_file_path}" ];then
+		show_im "Creating package list..."
+		${PACKAGER} list 2>/dev/null > "${list_of_apps_file_path}"
+	fi
+	
+	if [ ! -f "${list_of_installed_apps_file_path}" ];then
+		show_im "Creating installed package list..."
+		rpm -qa 2>/dev/null > "${list_of_installed_apps_file_path}" 
+	fi
+}
+
+install_packages(){
+	packages_to_install="${1:-${List_of_apt_2_install_}}"
+	if [ -n "${packages_to_install}" ];then
+    	($_SUPERUSER ${PACKAGER} install -y ${packages_to_install} && kill_package_ ${PACKAGER}) || \
+		($_SUPERUSER ${PACKAGER} install -y ${packages_to_install} && kill_package_ ${PACKAGER}) || \
+		$_SUPERUSER ${PACKAGER} install -y ${packages_to_install}
+    else
+    	show_wm "packages_to_install are empty"
+    	sleep 1
+    fi
+}
+
+add_packages_2_install_list(){
+	localarray="$@"
+	for INDEX in ${localarray};do
+		if ! package_installed "${INDEX}";then
+			if grep -q "^$INDEX" "${list_of_apps_file_path}";then
+				packages_to_install="$packages_to_install $INDEX"
+				show_im "${INDEX} added to install apps" 
+			else
+				show_filed_2_add_pakage_m "${INDEX} does not exist." 
+			fi
+		fi
+	done
+}
+
+upgrade_now()
+{
+	$_SUPERUSER ${PACKAGER} upgrade -y
+	$_SUPERUSER ${PACKAGER} update -y
+}
+
+remove_packages()
+{
+	packages="$@"
+	if [ -n "$packages" ];then
+		show_im "Removing ${packages}."
+		$_SUPERUSER ${__remove_package} "$package"
+	else
+		show_wm "no packages to remove."
+	fi
+}
+
+run_autoclean(){
+	show_im "run autoremove autoclean."
+	$_SUPERUSER dnf clean all
+	$_SUPERUSER dnf autoremove -y
+}
+
+run_package_manager_autoclean(){
+	show_im "autoremove unwanted pakages"
+	run_autoclean       
+    if [ -d /var/tmp ]; then
+        $_SUPERUSER find /var/tmp -type f -atime +5 -delete
+    fi
+    
+    if [ -d /var/log ]; then
+        $_SUPERUSER find /var/log -type f -name "*.log" -exec truncate -s 0 {} \;
+    fi
+	if [ "$init_system_are" = "systemd" ]; then
+        $_SUPERUSER journalctl --vacuum-time=3d
+    fi
+}
+
+_unattended_upgrades_()
+{
+	:
+}
+
+install_network_manager(){
+	network_manager_name="NetworkManager-1"
+	add_packages_2_install_list "${network_manager_name}"
+}
+
+install_lightdm_now(){
+	install_lightdm_="lightdm lightdm-gtk-greeter-settings"
+	add_packages_2_install_list "${install_lightdm_}"
+}
+
+switch_to_network_manager(){
+	[ -f "${installer_phases}/switch_to_network_manager" ] && return
+	init_manager enable NetworkManager
+	touch "${installer_phases}/switch_to_network_manager"
+}
+
+switch_lightdm_now(){
+	[ -f "${installer_phases}/switch_lightdm_now" ] && return
+
+	show_im "Switching to ( lightdm )."
+	d_d_m="$(basename "$(readlink /etc/systemd/system/display-manager.service)")"
+	if ! echo "$d_d_m" | grep -q "lightdm" ;then
+		lightdm_does_not_exist=true
+	fi
+	
+	if [ "$lightdm_does_not_exist" = true  ];then
+		$_SUPERUSER systemctl disable $d_d_m
+		$_SUPERUSER systemctl enable lightdm
+	else
+		show_im "lightdm already exist."
+	fi
+	touch "${installer_phases}/switch_lightdm_now"
+}
+
+enable_rpmfusion_repo(){
+	$_SUPERUSER ${PACKAGER} install -y https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
+}
+
+package_installed(){
+	package="${1:-}"
+	if grep -q "^$package" "$list_of_installed_apps_file_path";then
+		return 0
+	else
+		return 1
+	fi
+}
+
+pre_package_manager_(){
+	[ -f "${installer_phases}/pre_package_manager_" ] && return
+	kill_package_ ${PACKAGER}
+	upgrade_now
+	#enable_rpmfusion_repo
+	touch "${installer_phases}/pre_package_manager_"
+}

@@ -1,0 +1,112 @@
+#!/bin/sh
+set -e
+
+dont_install="wireless|fingerprint|bluetooth|laptop|gpu|firefox"
+
+__superuser=""
+if command -v doas >/dev/null;then
+	__superuser="doas"
+elif command -v sudo >/dev/null;then
+	__superuser="sudo"
+fi
+
+getURL(){
+	mode="${1-}"
+	url="${2-}"
+	if command -v curl >/dev/null;then
+		if [ "${mode}" = "head" ];then
+			curl -S --head -fsS --max-redirs 0 "${url}"
+		elif [ "${mode}" = "2term" ];then
+			curl -fsSL "${url}"
+		fi
+	elif command -v wget >/dev/null;then
+		if [ "${mode}" = "head" ]; then
+    		wget --spider --max-redirect=0 "${url}"
+		elif [ "${mode}" = "2term" ]; then
+    		wget -qO- "${url}"
+		fi
+	fi
+}
+
+set_time_zone(){
+	__timezone="$(getURL '2term' https://ipinfo.io/ 2>/dev/null | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/ //g')"
+	echo "Using ${__timezone} as time zone."
+	if command -v timedatectl >/dev/null 2>&1;then
+		$__superuser timedatectl set-timezone $__timezone
+	else
+		$__superuser ln -sf /usr/share/zoneinfo/$__timezone /etc/localtime
+		$__superuser hwclock --systohc
+	fi
+}
+
+set_date_and_time(){
+	get_date_from_here=""
+	list_to_test="debian.com ipinfo.io 104.16.132.229"
+	
+	for test in ${list_to_test};do
+		ping -c 1 $test >/dev/null 2>&1 && get_date_from_here="$test" && break
+	done
+			
+	if [ -z "$get_date_from_here" ];then 
+		echo "failed to ping all of this: ${list_to_test}" && exit 1
+	else
+		current_date="$(getURL 'head' "$get_date_from_here" 2>&1 | sed -n 's/^ *Date: *//p')"
+		$__superuser date -s "$current_date" >/dev/null 2>&1
+	fi
+}
+
+remove_cdrom_from_apt(){
+	if grep -q 'deb cdrom' /etc/apt/sources.list;then
+		$__superuser sed -i '/deb cdrom/d' /etc/apt/sources.list
+	fi
+}
+
+upgrade_system(){
+	$__superuser apt-get update
+	$__superuser apt-get -y upgrade
+}
+
+install_essential_packages(){
+	$__superuser apt-get -y install featherpad git openssh-server shellcheck meld
+	$__superuser systemctl start ssh
+	$__superuser systemctl enable ssh
+}
+
+git_clone_repos(){
+	cd $HOME/Desktop
+	
+	for repo in my_stuff_installer my_stuff Theme_Stuff YadAppsStore Distro_Specific;do
+		if [ ! -d "$repo" ];then
+			git clone https://github.com/dari862/$repo.git
+		fi
+	done
+	
+	ln -sf my_stuff_installer/For_dev/push_to_git .
+	ln -sf my_stuff_installer/For_dev/dev_scripts .
+	ln -sf my_stuff_installer/workon .
+}
+
+install_all_packages_in_repo(){
+	. /etc/os-release
+	all_packages_are="$(cat my_stuff_installer/core/installer_repo/$ID/disto_apps_list my_stuff_installer/core/installer_repo/$ID/disto_Drivers_list | grep "install_" | grep "=" | grep -vE "${dont_install}" | grep -oP '(?<=\")[^\"]*(?=\")')"
+	
+	printf ""
+	printf "Do you want to install all software in disto_Installapps_list disto_Drivers? [y|n]"
+	stty -icanon -echo time 0 min 1
+	yn="$(head -c1)"
+	stty icanon echo
+	yn="$(printf "%s" "$yn" | tr '[:lower:]' '[:upper:]' )"
+	[ "$yn" = "YES" ] && yn="Y"
+	[ "$yn" = "" ] && yn="Y"
+	[ "$yn" != "Y" ] && exit
+	
+	$__superuser apt-get install -y ${all_packages_are} firefox-esr
+}
+
+set_time_zone
+set_date_and_time
+remove_cdrom_from_apt
+upgrade_system
+install_essential_packages
+git_clone_repos
+install_all_packages_in_repo

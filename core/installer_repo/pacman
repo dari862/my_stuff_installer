@@ -1,0 +1,227 @@
+#!/bin/sh
+set -e
+
+##################################
+# only for ${PACKAGER}
+##################################
+if [ -z "$PACKAGER" ];then
+	PACKAGER="pacman"
+else
+	if command_exist yay; then
+        PACKAGER="yay"
+    fi
+fi
+
+__remove_package="${PACKAGER} -Rns --noconfirm"
+packages_to_install_pacman=""
+packages_to_install_AUR=""
+yay_package_name=""
+
+install_AUR_helper(){
+	[ -f "${installer_phases}/install_AUR_helper" ] && return
+	        
+	$_SUPERUSER true
+	
+	show_im "Updating your system..."
+	$_SUPERUSER pacman -Syu --noconfirm
+	
+	show_im "Installing git base-devel archlinux-keyring..."
+	$_SUPERUSER pacman -Syu --needed git base-devel archlinux-keyring
+
+    if ! command_exist yay && ! command_exist paru; then
+    	$_SUPERUSER ${PACKAGER} --noconfirm -Syu
+    	for package in yay yay-bin yay-git;do
+    		pacman -Si $package 2>/dev/null | grep -q "/$package " && yay_package_name="$package"
+    		break
+    	done
+        if [ -n "$yay_package_name" ];then
+        	show_im "Installing yay as AUR helper..."
+        	$_SUPERUSER pacman --noconfirm -Syu $yay_package_name
+        else
+        	show_im "installing yay..."
+        	temp_yay_bin="/tmp/temp_yay"
+        	if [ ! -f "$temp_yay_bin" ];then
+        		temp_yay_dir="/tmp/yay-bin"
+        		[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir"
+        		mkdir -p "$temp_yay_dir"
+        		if command -v curl >/dev/null;then
+					url2downloadyay="$(curl -fsSL "https://api.github.com/repos/Jguer/yay/releases/latest" | grep -oP '(?<=browser_download_url": ")[^"]*' | grep "x86_64.tar.gz")"
+					curl -fSLo "${temp_yay_dir}/yay_bin.tar.gz" "${url2downloadyay}" --progress-bar
+				elif command -v wget >/dev/null;then
+					url2downloadyay="$(wget -qO- "https://api.github.com/repos/Jguer/yay/releases/latest" | grep -oP '(?<=browser_download_url": ")[^"]*' | grep "x86_64.tar.gz")"
+					wget -q --show-progress -O "${temp_yay_dir}/yay_bin.tar.gz" "${url2downloadyay}"
+				fi
+				( cd "$temp_yay_dir" && tar -xzf yay_bin.tar.gz && rm -rf yay_bin.tar.gz && mv yay_*/yay "${temp_yay_bin}")
+				[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir"
+			fi
+			"${temp_yay_bin}" --noconfirm -Syu yay
+        fi
+    else
+    	${PACKAGER} --noconfirm -Syu
+    fi
+    
+    if command_exist yay; then
+    	show_sm "swtiching to yay..."
+        PACKAGER="yay"
+    elif command_exist paru; then
+    	show_sm "swtiching to paru..."
+        PACKAGER="paru"
+    fi
+	touch "${installer_phases}/install_AUR_helper"
+}
+
+create_package_list(){
+    if [ ! -f "${list_of_apps_file_path}" ]; then
+        show_im "Creating package list..."
+        pacman -Ss > "${list_of_apps_file_path}_pacman"
+    fi
+    
+    if [ ! -f "${list_of_installed_apps_file_path}" ];then
+		show_im "Creating installed package list..."
+		${PACKAGER} -Q 2>/dev/null > "${list_of_installed_apps_file_path}" 
+	fi
+}
+
+install_packages(){
+	single_package_to_install="${1:-}"
+	if [ -n "${single_package_to_install}" ];then
+		$_SUPERUSER pacman --noconfirm -Syu ${single_package_to_install}
+		return
+	fi
+	
+	if [ -n "${packages_to_install_AUR}" ];then
+    	${PACKAGER} --noconfirm -Syu ${packages_to_install_AUR}
+    else
+    	show_wm "packages_to_install_AUR are empty"
+    fi
+    
+    if [ -n "${packages_to_install_pacman}" ];then
+    	$_SUPERUSER pacman --noconfirm -Syu ${packages_to_install_pacman}
+    else
+    	show_wm "packages_to_install_pacman are empty"
+    fi
+    
+    sleep 1
+}
+
+add_packages_2_install_list(){
+	localarray="$@"
+	for INDEX in ${localarray};do
+    	if ! package_installed "${INDEX}";then
+        	if grep -q "/${INDEX} " "${list_of_apps_file_path}_pacman";then
+            	packages_to_install_pacman="$packages_to_install_pacman $INDEX"
+            	List_of_apt_2_install_="$List_of_apt_2_install_ $INDEX"
+            	echo "$INDEX added to install list."
+        	elif ${PACKAGER} -Si "${INDEX}" >/dev/null 2>&1;then
+            	packages_to_install_AUR="$packages_to_install_AUR $INDEX"
+            	List_of_apt_2_install_="$List_of_apt_2_install_ $INDEX"
+            	echo "$INDEX added to install list."
+            else
+				show_filed_2_add_pakage_m "${INDEX} does not exist." 
+        	fi
+        fi
+    done
+}
+
+upgrade_now(){
+	${PACKAGER} --noconfirm -Sy archlinux-keyring
+    ${PACKAGER} -Syu --noconfirm
+}
+
+remove_packages()
+{
+	packages="$@"
+	if [ -n "$packages" ];then
+		show_im "Removing ${packages}."
+		${__remove_package} "$package"
+	else
+		show_wm "no packages to remove."
+	fi
+}
+
+run_autoclean(){
+	show_im "run autoremove autoclean."
+	${PACKAGER} -Sc --noconfirm
+	remove_packages "$(pacman -Qtdq)" > /dev/null || true
+}
+
+run_package_manager_autoclean(){
+	show_im "autoremove unwanted pakages"
+	run_autoclean            
+    if [ -d /var/tmp ]; then
+        $_SUPERUSER find /var/tmp -type f -atime +5 -delete
+    fi
+    
+    if [ -d /var/log ]; then
+        $_SUPERUSER find /var/log -type f -name "*.log" -exec truncate -s 0 {} \;
+    fi
+	if [ "$init_system_are" = "systemd" ]; then
+        $_SUPERUSER journalctl --vacuum-time=3d
+    fi
+}
+
+_unattended_upgrades_()
+{
+	:
+}
+
+install_network_manager(){
+	network_manager_name="networkmanager"
+	add_packages_2_install_list "${network_manager_name}"
+}
+
+install_lightdm_now(){
+	install_lightdm_="lightdm lightdm-gtk-greeter-settings"
+	add_packages_2_install_list "${install_lightdm_}"
+}
+
+switch_to_network_manager(){
+	[ -f "${installer_phases}/switch_to_network_manager" ] && return
+	init_manager enable NetworkManager
+	touch "${installer_phases}/switch_to_network_manager"
+}
+
+switch_lightdm_now(){
+	[ -f "${installer_phases}/switch_lightdm_now" ] && return
+    show_im "Switching to lightdm..."
+    
+    if [ -f "/etc/X11/default-display-manager" ]; then
+        d_d_m="$(basename "$(cat /etc/X11/default-display-manager)")"
+        [ "$d_d_m" != "lightdm" ] && lightdm_does_not_exist=true
+    else
+        lightdm_does_not_exist=true
+    fi
+    
+    if [ "$lightdm_does_not_exist" = true ]; then
+        echo "/usr/sbin/lightdm" | $_SUPERUSER tee /etc/X11/default-display-manager > /dev/null 2>&1
+        $_SUPERUSER systemctl enable lightdm
+    else
+        show_sm "LightDM already exists."
+    fi
+    touch "${installer_phases}/switch_lightdm_now"
+}
+
+updating_rate_mirrors(){
+	[ -f "${installer_phases}/updating_rate_mirrors" ] && return
+	show_sm "updating rate-mirrors..."
+    ${PACKAGER} --noconfirm -S rate-mirrors-bin
+    $_SUPERUSER cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
+    $_SUPERUSER rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch
+    touch "${installer_phases}/updating_rate_mirrors"
+}
+
+package_installed(){
+	package="${1:-}"
+	if grep -q "^$package" "$list_of_installed_apps_file_path";then
+		return 0
+	else
+		return 1
+	fi
+}
+
+pre_package_manager_(){
+	[ -f "${installer_phases}/pre_package_manager_" ] && return
+    install_AUR_helper
+    updating_rate_mirrors
+    touch "${installer_phases}/pre_package_manager_"
+}

@@ -1,0 +1,243 @@
+#!/bin/sh
+set -e
+
+remove_aria2=false
+__remove_package="apt-get purge -y"
+
+##################################
+# only for apt
+##################################
+aptupdate(){
+	show_sm "updating your system"
+	[ "$(find /var/cache/apt/pkgcache.bin -mtime 0 2>/dev/null)" ] || $_SUPERUSER apt-get update
+}
+
+aptfixer(){
+	show_sm "running aptfixer"
+	if grep -q 'deb cdrom' /etc/apt/sources.list;then
+		$_SUPERUSER sed -i '/deb cdrom/d' /etc/apt/sources.list
+	fi
+	aptupdate
+	$_SUPERUSER apt-get install -yq -f 2>/dev/null || show_em "failed to $_SUPERUSER apt-get install -yq -f"
+}	
+
+install_apt_fast(){
+	if ! type aria2c >/dev/null 2>&1;then
+		show_sm "install aria2c."
+  		$_SUPERUSER apt-get install -y aria2
+	fi
+	remove_aria2=true
+	show_sm "download apt-fast"
+	apt_fast_url='https://raw.githubusercontent.com/ilikenwf/apt-fast/master'
+	download_file "$_SUPERUSER" "${apt_fast_url}/apt-fast" "/usr/local/bin/apt-fast"
+	
+	show_sm "install apt-fast"
+	$_SUPERUSER chmod +x /usr/local/bin/apt-fast
+  	[ ! -f /etc/apt-fast.conf ] && download_file "$_SUPERUSER" "${apt_fast_url}/apt-fast.conf" "/etc/apt-fast.conf"
+}
+
+##################################
+# for rest
+##################################
+
+create_package_list(){
+	# create list_of_apps file
+	if [ ! -f "${list_of_apps_file_path}" ];then
+		show_im "Creating package list..."
+		apt list 2>/dev/null > "${list_of_apps_file_path}" 
+	fi
+	
+	if [ ! -f "${list_of_installed_apps_file_path}" ];then
+		show_im "Creating installed package list..."
+		apt list --installed 2>/dev/null > "${list_of_installed_apps_file_path}" 
+	fi
+}
+
+install_packages(){
+	packages_to_install="${1:-${List_of_apt_2_install_}}"
+	if [ -n "${packages_to_install}" ];then
+    	($_SUPERUSER ${PACKAGER} install -yq ${packages_to_install} && kill_package_ ${PACKAGER}) || \
+		($_SUPERUSER ${PACKAGER} install -yq ${packages_to_install} && kill_package_ ${PACKAGER}) || \
+		$_SUPERUSER ${PACKAGER} install -yq ${packages_to_install}
+    else
+    	show_wm "List_of_apt_2_install_ are empty"
+    	sleep 1
+    fi
+}
+
+add_packages_2_install_list(){
+	localarray="$@"
+	for INDEX in ${localarray};do
+		if ! package_installed "${INDEX}";then
+			if grep -q "^$INDEX/" "${list_of_apps_file_path}";then
+				List_of_apt_2_install_="$List_of_apt_2_install_ $INDEX"
+				show_im "${INDEX} added to install apps" 
+			else
+				show_filed_2_add_pakage_m "${INDEX} does not exist."
+			fi
+		fi
+	done
+}
+
+upgrade_now()
+{
+	show_im "Run upgrade_now function"
+	show_sm "Run upgrade" 
+	$_SUPERUSER apt-get -y upgrade
+	show_sm "Run dist-upgrade" 
+	$_SUPERUSER apt-get -y dist-upgrade
+	show_sm "Run full-upgrade" 
+	$_SUPERUSER apt-get -y full-upgrade
+	show_im "end upgrade_now" 
+}
+
+remove_packages()
+{
+	packages="$@"
+	if [ -n "$packages" ];then
+		show_im "Removing ${packages}."
+		$_SUPERUSER ${__remove_package} $packages
+	else
+		show_wm "no packages to remove."
+	fi
+}
+
+run_autoclean(){
+	show_im "run autoremove autoclean."
+	$_SUPERUSER apt-get autoremove -y
+	$_SUPERUSER apt-get autoclean -y
+}
+
+run_package_manager_autoclean(){
+	show_im "autoremove unwanted pakages"
+	run_autoclean
+	$_SUPERUSER du -h /var/cache/apt
+      
+    if [ -d /var/tmp ]; then
+        $_SUPERUSER find /var/tmp -type f -atime +5 -delete
+    fi
+    
+    if [ -d /var/log ]; then
+        $_SUPERUSER find /var/log -type f -name "*.log" -exec truncate -s 0 {} \;
+    fi
+
+	if [ "$init_system_are" = "systemd" ]; then
+        $_SUPERUSER journalctl --vacuum-time=3d
+    fi
+}
+
+_unattended_upgrades_()
+{
+	auto_upgrades_file="/etc/apt/apt.conf.d/20auto-upgrades"
+	if [ -f "${auto_upgrades_file}" ];then
+		auto_upgrades_file_bak="/etc/apt/apt.conf.d/20auto-upgrades.bak"
+		case "$1" in
+			start)
+				[ -f "${installer_phases}/_unattended_upgrades_start" ] && return
+				show_im "start unattended upgrades."
+				init_manager stop unattended-upgrades || :
+				if [ ! -f "${auto_upgrades_file_bak}" ];then
+					$_SUPERUSER mv "${auto_upgrades_file}" "${auto_upgrades_file_bak}"
+				fi
+				touch "${installer_phases}/_unattended_upgrades_start"
+			;;
+			stop)
+				[ -f "${installer_phases}/_unattended_upgrades_stop" ] && return
+				show_im "stop unattended upgrades."
+				if [ -f "${auto_upgrades_file}" ] && [ -f "${auto_upgrades_file_bak}" ];then
+					$_SUPERUSER rm "${auto_upgrades_file}"
+				fi
+					
+				if [ -f "${auto_upgrades_file_bak}" ];then
+					$_SUPERUSER mv "${auto_upgrades_file_bak}" "${auto_upgrades_file}"
+				fi
+				touch "${installer_phases}/_unattended_upgrades_stop"
+			;;
+		esac
+	fi
+}
+
+install_network_manager(){
+	network_manager_name="network-manager rfkill"
+	add_packages_2_install_list "${network_manager_name}"
+}
+
+install_lightdm_now(){
+	install_lightdm_="lightdm lightdm-gtk-greeter-settings"
+	add_packages_2_install_list "${install_lightdm_}"
+}
+
+switch_to_network_manager(){
+	[ -f "${installer_phases}/switch_to_network_manager" ] && return
+	[ -f "/etc/network/interfaces.old" ] && return
+	show_m "runing switch_to_network_manager."
+	show_im "create to interfaces file"
+	$_SUPERUSER tee "${temp_path}"/interfaces <<- 'EOF' >/dev/null
+	# This file describes the network interfaces available on your system
+	# and how to activate them. For more information, see interfaces(5).
+		
+	source /etc/network/interfaces.d/*
+		
+	# The loopback network interface
+	auto lo
+	iface lo inet loopback
+	EOF
+	$_SUPERUSER chmod 644 "${temp_path}"/interfaces
+	show_im "create backup of interfaces file"
+	[ -f "/etc/network/interfaces" ] && $_SUPERUSER mv /etc/network/interfaces /etc/network/interfaces.old
+	$_SUPERUSER mkdir -p "/etc/network"
+	$_SUPERUSER mv "${temp_path}"/interfaces /etc/network/interfaces
+	show_im "Disable NetworkManager"
+	$_SUPERUSER sed -i 's/managed=.*/managed=false/g' /etc/NetworkManager/NetworkManager.conf
+	init_manager enable NetworkManager
+	touch "${installer_phases}/switch_to_network_manager"
+}
+
+switch_lightdm_now(){
+	[ -f "${installer_phases}/switch_lightdm_now" ] && return
+	show_im "Switching to ( lightdm )."
+	
+	if [ -f "/etc/X11/default-display-manager" ];then
+		d_d_m="$(basename "$(cat /etc/X11/default-display-manager)")"
+		[ "$d_d_m" != "lightdm"  ] && lightdm_does_not_exist=true
+	else
+		lightdm_does_not_exist=true
+	fi
+	
+	if [ "$lightdm_does_not_exist" = true  ];then
+		echo "/usr/sbin/lightdm" | $_SUPERUSER tee /etc/X11/default-display-manager > /dev/null 2>&1 || (show_em "failed to change default-display-manager")
+		$_SUPERUSER dpkg-reconfigure lightdm || (show_em "failed to dpkg-reconfigure lightdm")
+	else
+		show_im "lightdm already exist."
+	fi
+	touch "${installer_phases}/switch_lightdm_now"
+}
+
+package_installed(){
+	package="${1:-}"
+	if grep -q "^$package" "$list_of_installed_apps_file_path";then
+		return 0
+	else
+		return 1
+	fi
+}
+
+pre_package_manager_(){
+	[ -f "${installer_phases}/pre_package_manager_" ] && return
+	export DEBIAN_FRONTEND=noninteractive
+	export DEBCONF_NONINTERACTIVE_SEEN=true
+	
+	kill_package_ apt-get
+	kill_package_ apt
+	init_manager stop apt-daily.timer
+	init_manager stop apt-daily-upgrade.timer
+	aptfixer
+	install_apt_fast || :
+	if command_exist apt-get;then
+		PACKAGER="apt-get"
+	elif command_exist apt-fast;then
+		PACKAGER="apt-fast"
+	fi
+	upgrade_now
+	touch "${installer_phases}/pre_package_manager_"
+}
