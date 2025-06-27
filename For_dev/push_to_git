@@ -1,26 +1,37 @@
 #!/bin/sh
 set -e
 
+repos="
+my_stuff
+Theme_Stuff
+my_stuff_installer
+YadAppsStore
+"
+
 # Color output
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # No color
 
-# Function to push the current repository
+start_ssh_agent() {
+	eval "$(ssh-agent -s)" >/dev/null 2>&1
+	ssh-add ~/.ssh/id_rsa >/dev/null 2>&1
+}
+
 push_now() {
     repo_name="$1"
-    echo -e "\n🔍 Checking repo: $repo_name"
+    echo "🔍 Checking repo: $repo_name"
     git remote set-url origin "git@github.com:dari862/${repo_name}.git"
     git add -A
 
     if git diff-index --quiet HEAD --; then
-        echo "No changes to commit for ${repo_name}."
+        echo -e "${GREEN}✅ No changes to commit for $repo_name${NC}"
         return
     else
         if git commit -m "Update README.md"; then
-            echo "Committed changes in ${repo_name}."
+            echo -e "${GREEN}✅ Successfully Committed changes in $repo_name ${NC}"
         else
-            echo "Failed to commit changes in ${repo_name}."
+            echo -e "${RED}❌ Failed to commit changes in $repo_name${NC}"
             return 1
         fi
 
@@ -35,30 +46,27 @@ push_now() {
     fi
 }
 
-# List of repositories
-repos="
-my_stuff
-Theme_Stuff
-my_stuff_installer
-YadAppsStore
-"
+start_ssh_agent >/dev/null 2>&1
 
-# Start SSH agent and add key
-eval "$(ssh-agent -s)"
-ssh-add ~/.ssh/id_rsa
+repos_name=$(printf "%s" "$repos" | tr '\n' ' ')
 
-echo "Starting push for all Git repositories: $repos"
+printf "Starting push for all Git repositories: $repos_name"
 echo "-------------------------------------------------------"
 
-# Loop through each repo
 for repo in ${repos}; do
     repo_path="$HOME/Desktop/$repo"
     if [ -d "$repo_path" ]; then
         cd "$repo_path" || { echo "Failed to cd into $repo_path"; continue; }
         echo "-------------------------------------------------------"
+        echo "-------------------------------------------------------"
         echo "  Pushing repository: $repo"
         echo "-------------------------------------------------------"
+        echo "-------------------------------------------------------"
         push_now "$repo"
+        echo "-------------------------------------------------------"
+        echo "-------------------------------------------------------"
+        echo " "
+        echo " "
     else
         echo "Directory not found: $repo_path"
     fi
