@@ -25,22 +25,22 @@ push_now() {
     git add -A
 
     if git diff-index --quiet HEAD --; then
-        echo -e "${GREEN}✅ No changes to commit for $repo_name${NC}"
+        echo "${GREEN}✅ No changes to commit for $repo_name${NC}"
         return
     else
         if git commit -m "Update README.md"; then
-            echo -e "${GREEN}✅ Successfully Committed changes in $repo_name ${NC}"
+            echo "${GREEN}✅ Successfully Committed changes in $repo_name ${NC}"
         else
-            echo -e "${RED}❌ Failed to commit changes in $repo_name${NC}"
+            echo "${RED}❌ Failed to commit changes in $repo_name${NC}"
             return 1
         fi
 
         CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
     	if git push origin "$CURRENT_BRANCH"; then
-            echo -e "${GREEN}✅ Successfully pushed $repo_name ($CURRENT_BRANCH)${NC}"
+            echo "${GREEN}✅ Successfully pushed $repo_name ($CURRENT_BRANCH)${NC}"
         else
-            echo -e "${RED}❌ Failed to push $repo_name ($CURRENT_BRANCH)${NC}"
+            echo "${RED}❌ Failed to push $repo_name ($CURRENT_BRANCH)${NC}"
             git push --force
         fi
     fi
@@ -57,14 +57,9 @@ for repo in ${repos}; do
     repo_path="$HOME/Desktop/$repo"
     if [ -d "$repo_path" ]; then
         cd "$repo_path" || { echo "Failed to cd into $repo_path"; continue; }
-        echo "-------------------------------------------------------"
-        echo "-------------------------------------------------------"
         echo "  Pushing repository: $repo"
         echo "-------------------------------------------------------"
-        echo "-------------------------------------------------------"
         push_now "$repo"
-        echo "-------------------------------------------------------"
-        echo "-------------------------------------------------------"
         echo " "
         echo " "
     else
