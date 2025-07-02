@@ -180,14 +180,24 @@ show_filed_2_add_pakage_m(){
 
 do_you_want_2_run_this_yes_or_no()
 {
-	massage_is_="${1}"
+	massage_is_="${1:-}"
+	default_value="${2:-}"
+	default_value_massage=""
+	
+	case "$default_value" in
+		[Yy]) default_value_massage="(default: yes) ";;
+		[Nn]) default_value_massage="(default: no) " ;;
+	esac
+	
 	while true; do
-		printf "${massage_is_} (yes/no) (default: yes) "
+		printf "${massage_is_} (yes/no) $default_value_massage"
 		stty -icanon -echo time 0 min 1
 		answer="$(head -c1)"
 		stty icanon echo
 		echo
-        	
+        
+        [ -z "$answer" ] && answer="$default_value"
+        
 		case "$answer" in
 			[Yy]) return 0;;
 			[Nn]) return 1 ;;
@@ -201,7 +211,7 @@ pre_script(){
 	
 	if [ -f "${installer_phases}/Done" ];then
 		show_m "my_stuff installed successfully ....."
-		if do_you_want_2_run_this_yes_or_no 'reboot?';then
+		if do_you_want_2_run_this_yes_or_no 'reboot?' 'Y';then
 			reboot_now="Y"
 		else
 			reboot_now=""
@@ -227,7 +237,7 @@ create_dir_and_source_stuff(){
 	
 	if [ -f "${prompt_to_install_value_file}" ];then
 		show_im "file exist : ${prompt_to_install_value_file} form previce run."
-		if do_you_want_2_run_this_yes_or_no 'Do you want source it?';then
+		if do_you_want_2_run_this_yes_or_no 'Do you want source it?' 'Y';then
 			. "${prompt_to_install_value_file}"
 			source_prompt_to_install_file=true
 		fi
@@ -363,13 +373,13 @@ prompt_to_ask_to_what_to_install(){
 	show_m "prompt for what do you want to install."
 	
 	if [ "$auto_run_script" != "true" ];then
-		if do_you_want_2_run_this_yes_or_no 'Autorun installation?';then
+		if do_you_want_2_run_this_yes_or_no 'Autorun installation?' 'Y';then
 			return
 		fi
 		
-		if do_you_want_2_run_this_yes_or_no 'Do you want to install wayland packages?';then
+		if do_you_want_2_run_this_yes_or_no 'Do you want to install wayland packages?' 'Y';then
 			install_wayland=true
-			if do_you_want_2_run_this_yes_or_no 'Do you want to install X11 packages?';then
+			if do_you_want_2_run_this_yes_or_no 'Do you want to install X11 packages?' 'Y';then
 				install_X11=true
 			else
 				install_X11=false
@@ -379,34 +389,34 @@ prompt_to_ask_to_what_to_install(){
 		fi
 
 		if [ "$switch_to_doas" = false ] && [ "$only_doas_installed" = "false" ];then
-			if do_you_want_2_run_this_yes_or_no 'Switch to doas?';then
+			if do_you_want_2_run_this_yes_or_no 'Switch to doas?' 'Y';then
 				switch_to_doas=true
 			fi
 		fi
 
 		if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
-			if do_you_want_2_run_this_yes_or_no 'do you want to purge some unnecessary pakages?';then
+			if do_you_want_2_run_this_yes_or_no 'do you want to purge some unnecessary pakages?' 'Y';then
 				run_purge_some_unnecessary_pakages="Y"
 			else
 				run_purge_some_unnecessary_pakages=""
 			fi
 			
-			if do_you_want_2_run_this_yes_or_no 'Do you want to disable some unnecessary services?';then
+			if do_you_want_2_run_this_yes_or_no 'Do you want to disable some unnecessary services?' 'Y';then
 				run_disable_some_unnecessary_services="Y"
 			else
 				run_disable_some_unnecessary_services=""
 			fi
 			
-			if do_you_want_2_run_this_yes_or_no 'update grub image?';then
+			if do_you_want_2_run_this_yes_or_no 'update grub image?' 'Y';then
 				run_update_grub_image="Y"
 			else
 				run_update_grub_image=""
 			fi
 			
-			if do_you_want_2_run_this_yes_or_no 'disable ipv6 stack?';then
+			if do_you_want_2_run_this_yes_or_no 'disable ipv6 stack?' 'Y';then
 				disable_ipv6_stack="Y"
 			else
-				if do_you_want_2_run_this_yes_or_no 'disable ipv6 only?';then
+				if do_you_want_2_run_this_yes_or_no 'disable ipv6 only?' 'Y';then
 					disable_ipv6="Y"
 				else
 					disable_ipv6=""
@@ -414,7 +424,7 @@ prompt_to_ask_to_what_to_install(){
 				disable_ipv6_stack=""
 			fi
 			
-			if do_you_want_2_run_this_yes_or_no 'run autoclean and autoremove?';then
+			if do_you_want_2_run_this_yes_or_no 'run autoclean and autoremove?' 'Y';then
 				autoclean_and_autoremove="Y"
 			else
 				autoclean_and_autoremove=""
@@ -423,8 +433,8 @@ prompt_to_ask_to_what_to_install(){
 		
 		if [ "$install_apps" = "true" ];then
 			if ! command_exist zsh;then
-				if do_you_want_2_run_this_yes_or_no 'Do you want to install zsh?';then
-					if do_you_want_2_run_this_yes_or_no 'Do you want to set zsh as default shell?';then
+				if do_you_want_2_run_this_yes_or_no 'Do you want to install zsh?' 'Y';then
+					if do_you_want_2_run_this_yes_or_no 'Do you want to set zsh as default shell?' 'Y';then
 						install_zsh_now=zsh_default
 					else
 						install_zsh_now=zsh
@@ -433,7 +443,7 @@ prompt_to_ask_to_what_to_install(){
 					install_zsh_now=""
 				fi
 			else
-				if do_you_want_2_run_this_yes_or_no 'Do you want to set zsh as default shell?';then
+				if do_you_want_2_run_this_yes_or_no 'Do you want to set zsh as default shell?' 'Y';then
 					install_zsh_now=zsh_default
 				else
 					install_zsh_now=zsh
@@ -441,7 +451,7 @@ prompt_to_ask_to_what_to_install(){
 			fi
 			
 			if ! command_exist xfce4-panel ;then
-				if do_you_want_2_run_this_yes_or_no 'Do you want to install xfce4-panel?';then
+				if do_you_want_2_run_this_yes_or_no 'Do you want to install xfce4-panel?' 'Y';then
 					install_xfce4_panel=xfce4_panel
 				else
 					install_xfce4_panel=""
@@ -449,13 +459,13 @@ prompt_to_ask_to_what_to_install(){
 			fi
 			
 			if [ "$install_files_manager" = false ];then
-				if do_you_want_2_run_this_yes_or_no 'Do you want to File Manager?';then
+				if do_you_want_2_run_this_yes_or_no 'Do you want to File Manager?' 'Y';then
 					install_files_manager=true
 				fi
 				
 				if [ "$thunar_files_manager" = false ] && [ "$install_files_manager" = true ] ;then
 					if ! command_exist thunar;then
-						if do_you_want_2_run_this_yes_or_no 'Do you want to switch from pcmanfm to thunar?';then
+						if do_you_want_2_run_this_yes_or_no 'Do you want to switch from pcmanfm to thunar?' 'Y';then
 							thunar_files_manager=true
 						else
 							pcmanfm_files_manager=true
@@ -467,7 +477,7 @@ prompt_to_ask_to_what_to_install(){
 			fi
 		
 			if ! command_exist qt5ct;then
-				if do_you_want_2_run_this_yes_or_no 'Do you want to install qt5ct?';then
+				if do_you_want_2_run_this_yes_or_no 'Do you want to install qt5ct?' 'Y';then
 					install_qt5ct=qt5ct
 				else
 					install_qt5ct=""
@@ -476,7 +486,7 @@ prompt_to_ask_to_what_to_install(){
 			
 			if [ "$install_X11" = "true" ];then
 				if ! command_exist jgmenu;then
-					if do_you_want_2_run_this_yes_or_no 'Do you want to install jgmenu?';then
+					if do_you_want_2_run_this_yes_or_no 'Do you want to install jgmenu?' 'Y';then
 						install_jgmenu=jgmenu
 					else
 						install_jgmenu=""
@@ -484,7 +494,7 @@ prompt_to_ask_to_what_to_install(){
 				fi
 				
 				if ! command_exist polybar;then
-					if do_you_want_2_run_this_yes_or_no 'Do you want to install polybar?';then
+					if do_you_want_2_run_this_yes_or_no 'Do you want to install polybar?' 'Y';then
 						install_polybar=polybar
 					else
 						install_polybar=""
@@ -492,9 +502,9 @@ prompt_to_ask_to_what_to_install(){
 				fi
 							
 				if ! command_exist bspwm;then
-					if do_you_want_2_run_this_yes_or_no 'Do you want to install bspwm?';then
+					if do_you_want_2_run_this_yes_or_no 'Do you want to install bspwm?' 'Y';then
 						install_bspwm=bspwm
-						if do_you_want_2_run_this_yes_or_no 'Do you want to switch to bspwm session?';then
+						if do_you_want_2_run_this_yes_or_no 'Do you want to switch to bspwm session?' 'Y';then
 							switch_default_xsession_to="bspwm"
 						fi
 					else
@@ -503,7 +513,7 @@ prompt_to_ask_to_what_to_install(){
 				fi
 			fi
 			
-			if do_you_want_2_run_this_yes_or_no 'Do you want to install extra apps?';then
+			if do_you_want_2_run_this_yes_or_no 'Do you want to install extra apps?' 'Y';then
 				install_extra_now=extra
 			else
 				install_extra_now=""
@@ -511,7 +521,7 @@ prompt_to_ask_to_what_to_install(){
 		fi
 		
 		if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
-			if do_you_want_2_run_this_yes_or_no 'reboot?';then
+			if do_you_want_2_run_this_yes_or_no 'reboot?' 'Y';then
 				reboot_now="Y"
 			else
 				reboot_now=""

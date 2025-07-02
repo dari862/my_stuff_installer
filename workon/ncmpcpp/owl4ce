@@ -9,9 +9,10 @@ owl4ce_dotfile_temp_path="/tmp/owl4ce_dotfile"
 
 sudo mkdir -p /usr/share/my_stuff/icons
 sudo cp -rf $HOME/Desktop/my_stuff/icons/eyecandy /usr/share/my_stuff/icons
+sudo ln -sf $HOME/Desktop/my_stuff/my_wallpapers /usr/share/my_stuff
 
 sudo mkdir -p /usr/share/my_stuff/lib/common
-sudo cp -rf $HOME/Desktop/my_stuff/lib/common/WM /usr/share/my_stuff/lib/common
+sudo cp -rf $HOME/Desktop/my_stuff/lib/common/* /usr/share/my_stuff/lib/common
 
 sudo mkdir -p /usr/share/my_stuff/bin/not_add_2_path
 sudo cp -rf "$HOME/Desktop/my_stuff/bin/not_add_2_path/owl4ce" /usr/share/my_stuff/bin/not_add_2_path
@@ -20,18 +21,21 @@ sudo cp -rf "$HOME/Desktop/my_stuff/bin/not_add_2_path/dunst" /usr/share/my_stuf
 
 sudo mkdir -p /usr/share/my_stuff/system_files/bin
 cd /usr/share/my_stuff/system_files/bin
+sudo cp -rf "$HOME/Desktop/my_stuff/bin/session_managers"/* .
+sudo cp -rf "$HOME/Desktop/my_stuff/bin/bin/theme_geany" .
 sudo cp -rf "$HOME/Desktop/my_stuff/bin/bin/cal-popup" .
-sudo cp -rf "$HOME/Desktop/my_stuff/bin/openbox/obamenu.py" .
-sudo cp -rf "$HOME/Desktop/my_stuff/bin/session_managers/dunst-session" .
-sudo cp -rf "$HOME/Desktop/my_stuff/bin/session_managers/tint2-session" .
+sudo cp -rf "$HOME/Desktop/my_stuff/bin/bin/my-shots" .
 sudo cp -rf "$HOME/Desktop/my_stuff/bin/WM/kill_process.sh" .
 sudo cp -rf "$HOME/Desktop/my_stuff/bin/WM/my_session_manager" .
-sudo cp -rf "$HOME/Desktop/my_stuff/bin/bin/my-shots" .
-sudo cp -rf "$HOME/Desktop/my_stuff/bin/pipemenu/randr-pipemenu" .
+sudo cp -rf "$HOME/Desktop/my_stuff/bin/WM/setbg" .
 sudo cp -rf "$HOME/Desktop/my_stuff/bin/WM/reload_gtk23" .
+sudo cp -rf "$HOME/Desktop/my_stuff/bin/WM/style_setter" .
+sudo cp -rf "$HOME/Desktop/my_stuff/bin/WM/style_changer" .
+sudo cp -rf "$HOME/Desktop/my_stuff/bin/WM/panel_launcher" .
 sudo cp -rf "$HOME/Desktop/my_stuff/bin/tint2/tint2_scripts" .
 sudo cp -rf "$HOME/Desktop/my_stuff/bin/must_create_script/popup_terminal/kitty" popup_terminal
-
+sudo cp -rf "$HOME/Desktop/my_stuff/bin/openbox/obamenu.py" .
+sudo cp -rf "$HOME/Desktop/my_stuff/bin/pipemenu/randr-pipemenu" .
 sudo cp -rf "$HOME/Desktop/my_stuff/bin/apps/ncmpcpp_launcher" .
 
 sudo ln -sf /usr/bin/thunar /usr/share/my_stuff/system_files/bin/my-file-manager
@@ -72,8 +76,11 @@ cp -rf $HOME/Desktop/my_stuff/skel/.config/dunst .config
 cp -rf .config/blob/tint2/owl4ce_dark/config/* .config/
 cat .config/dunst/global .config/dunst/theme.dunstrc > ".config/dunst/dunstrc" 
 
+mkdir -p .config/WM_common_config
 mkdir -p .config/openbox/Menu
-cp -rf /etc/xdg/openbox/rc.xml .config/openbox
+cp -rf $HOME/Desktop/my_stuff/lib/rc.xml .config/openbox
+cp -rf $HOME/Desktop/my_stuff/lib/rc.xml .config/WM_common_config
+
 sed -i 's|</applications>|<application class="*" type="normal">\n  <decor>yes</decor>\n</application>\n</applications>|' .config/openbox/rc.xml
 sed -i 's|<name>desktop||g' .config/openbox/rc.xml
 cp -rf $HOME/Desktop/my_stuff/skel/.config/openbox/Menu/owl4ce.xml .config/openbox/Menu
@@ -87,6 +94,8 @@ trays_apps="mpd nm-applet xfce4-power-manager diodon"
 
 exec >/dev/null 2>&1
 
+echo "openbox" > "$WM_name_file_path"
+
 #{ pidof -s pulseaudio -q || pulseaudio --start --log-target=syslog; } &
 killall -9 tint2 dunst -q
 
@@ -98,7 +107,7 @@ mkdir -p "/tmp/$USER"
 
 dunst -config "$HOME/.config/dunst/dunstrc" &	
 
-nitrogen --force-setter=xwindows --set-zoom-fill --save "${WALLPAPERS_DIR}/${CHK_WALLPAPER}"  &
+setbg -R "${CHK_WALLPAPER}"
 
 tint2 -c "${HOME}${tint2_sessionfile}" &
 
@@ -109,6 +118,7 @@ for TRAY in ${trays_apps};do
 done
 
 /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1
+
 EOF
 chmod +x .config/openbox/autostart.sh
 
@@ -125,12 +135,6 @@ ln -sf $HOME/Desktop/my_stuff/icons/Joyful.OBB $HOME/Desktop/Theme_Stuff/themes
 mkdir -p .icons
 ln -sf $HOME/Desktop/Theme_Stuff/icons/Papirus-Custom .icons
 ln -sf $HOME/Desktop/Theme_Stuff/icons/Papirus-Dark-Custom .icons
-
-mkdir -p .wallpapers
-ln -sf $HOME/Desktop/my_stuff/my_wallpapers/owl4ce_dark_wall-01.jpg .wallpapers
-ln -sf $HOME/Desktop/my_stuff/my_wallpapers/owl4ce_dark_wall-02.jpg .wallpapers
-ln -sf $HOME/Desktop/my_stuff/my_wallpapers/owl4ce_light_wall-01.jpg .wallpapers
-ln -sf $HOME/Desktop/my_stuff/my_wallpapers/owl4ce_light_wall-02.jpg .wallpapers
 
 mkdir -p .local/share/applications
 ln -sf $HOME/Desktop/my_stuff/applications/ncmpcpp.desktop .local/share/applications
