@@ -75,7 +75,7 @@ install_essential_packages(){
 git_clone_repos(){
 	cd $HOME/Desktop
 	
-	for repo in my_stuff_installer my_stuff Theme_Stuff YadAppsStore Distro_Specific;do
+	for repo in my_stuff_installer my_stuff Theme_Stuff YadAppsStore;do
 		if [ ! -d "$repo" ];then
 			git clone https://github.com/dari862/$repo.git
 		fi
@@ -110,3 +110,6 @@ upgrade_system
 install_essential_packages
 git_clone_repos
 install_all_packages_in_repo
+echo "Done!!"
+echo "Done!!"
+echo "Done!!"

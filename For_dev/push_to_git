@@ -46,7 +46,7 @@ push_now() {
     fi
 }
 
-start_ssh_agent >/dev/null 2>&1
+#start_ssh_agent >/dev/null 2>&1
 
 repos_name=$(printf "%s" "$repos" | tr '\n' ' ')
 
