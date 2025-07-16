@@ -76,11 +76,7 @@ pre_disto_apps_installer(){
 	add_packages_2_install_list "${install_fonts}"
 	add_packages_2_install_list "${install_better_bash}"
 	add_packages_2_install_list "${install_better_shell}"
-	
-	if [ "$install_xfce4_panel" = "xfce4_panel" ];then
-		add_packages_2_install_list "${install_xfce4_panel}"
-	fi
-	
+
 	if [ "$thunar_files_manager" = true ];then
 		add_packages_2_install_list "${install_files_manager_thunar}"
 	elif [ "$pcmanfm_files_manager" = true ];then

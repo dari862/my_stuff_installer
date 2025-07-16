@@ -41,7 +41,6 @@ autoclean_and_autoremove="Y"
 install_zsh_now=""
 install_extra_now=""
 install_qt5ct=""
-install_xfce4_panel=""
 install_files_manager=true
 thunar_files_manager=false
 pcmanfm_files_manager=false
@@ -450,14 +449,6 @@ prompt_to_ask_to_what_to_install(){
 				fi
 			fi
 			
-			if ! command_exist xfce4-panel ;then
-				if do_you_want_2_run_this_yes_or_no 'Do you want to install xfce4-panel?' 'Y';then
-					install_xfce4_panel=xfce4_panel
-				else
-					install_xfce4_panel=""
-				fi
-			fi
-			
 			if [ "$install_files_manager" = false ];then
 				if do_you_want_2_run_this_yes_or_no 'Do you want to File Manager?' 'Y';then
 					install_files_manager=true
@@ -547,7 +538,6 @@ create_prompt_to_install_value_file(){
 		autoclean_and_autoremove="${autoclean_and_autoremove}"
 		install_zsh_now="${install_zsh_now}"
 		install_extra_now="${install_extra_now}"
-		install_xfce4_panel="${install_xfce4_panel}"
 		install_polybar="${install_polybar}"
 		install_qt5ct="${install_qt5ct}"
 		install_jgmenu="${install_jgmenu}"

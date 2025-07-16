@@ -45,7 +45,6 @@ install_for_x11_scripts="slop wmctrl"
 #######################
 install_files_manager_thunar="thunar thunar-archive-plugin thunar-volman tumbler"
 install_files_manager_pcmanfm="pcmanfm"
-install_xfce4_panel="xfce4-panel xfce4-settings xfce4-whiskermenu-plugin network-manager-applet"
 install_qt5ct="qt5ct kvantum qt5-svg qt5-quickcontrols"
 install_zsh="zsh"
 

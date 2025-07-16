@@ -15,7 +15,8 @@ NC='\033[0m' # No color
 
 start_ssh_agent() {
 	eval "$(ssh-agent -s)" >/dev/null 2>&1
-	ssh-add ~/.ssh/id_rsa >/dev/null 2>&1
+	ssh_key="$(find ~/.ssh/* -name id_* | grep -v ".pub" | head -n1)"
+	ssh-add "${ssh_key}" >/dev/null 2>&1
 }
 
 push_now() {
@@ -46,7 +47,7 @@ push_now() {
     fi
 }
 
-#start_ssh_agent >/dev/null 2>&1
+start_ssh_agent
 
 repos_name=$(printf "%s" "$repos" | tr '\n' ' ')
 
