@@ -1,0 +1,15 @@
+#!/bin/sh
+_X11_packages="diodon polybar libnm-dev bspwm sxhkd jgmenu xinput xinit xclip xwallpaper xdotool xprintidle yad cbatticon rofi picom dunst nsxiv arandr autorandr i3lock conky openbox obconf xcape tint2 xsettingsd lxappearance slop wmctrl xdpyinfo xev xfd xkill xprop xwininfo xhost xmodmap xrandr xrdb xset xsetroot"
+to_skip="^All_Distro_Specific/|^skel_extra|^distro_manager|^lib/|^applications_extra/|^blob/|^blob_extra/|^bin/my_installer|^bin/X11|^bin/must_create_script/pfetch"
+
+cd "$HOME/Desktop/my_stuff/"
+
+for package in ${_X11_packages};do
+	grep_output="$(grep -rI "${package}" | grep -vE "$to_skip")"
+	if [ -n "$grep_output" ];then
+		echo "#-------------------------------------#"
+		echo "#- ${package} -#"
+		echo "#-------------------------------------#"
+		printf "%s\n" "${grep_output}"
+	fi
+done > "$HOME/Desktop/X11_output"

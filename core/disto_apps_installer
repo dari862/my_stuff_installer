@@ -31,6 +31,8 @@ pre_disto_apps_installer(){
 		add_packages_2_install_list "${install_openbox_}"
 		add_packages_2_install_list "${install_themes_tools_for_X11}"
 		add_packages_2_install_list "${install_for_x11_scripts}"
+		add_packages_2_install_list "${install_clipman_manager_for_X11}"
+		add_packages_2_install_list "${install_passman}"
 		if [ "$machine_type_are" = "laptop" ];then
 			add_packages_2_install_list "${install_if_laptop_apps_x11}"
 		fi
@@ -40,11 +42,7 @@ pre_disto_apps_installer(){
 		if [ "$install_bspwm" = "bspwm" ];then
 			add_packages_2_install_list "${install_bspwm}"
 		fi
-		if [ "$install_files_manager" = "true" ];then
-			if ! command_exist xfce4-clipman;then
-				add_packages_2_install_list "${install_clipman_manager_for_X11}"
-			fi
-		fi	
+		
 		if [ "$install_jgmenu" = "jgmenu" ];then
 			add_packages_2_install_list "${install_jgmenu}"
 		fi
@@ -69,7 +67,7 @@ pre_disto_apps_installer(){
 	add_packages_2_install_list "${install_MIDI_sound_app}"
 	add_packages_2_install_list "${install_text_editer_app}"
 	add_packages_2_install_list "${install_mediaplayer_app}"
-	add_packages_2_install_list "${install_audio_tray_app}"
+	#add_packages_2_install_list "${install_audio_tray_app}"
 	add_packages_2_install_list "${install_for_scripts}"
 	add_packages_2_install_list "${install_image_viewer_apps}"
 	add_packages_2_install_list "${install_polkit_apps}"

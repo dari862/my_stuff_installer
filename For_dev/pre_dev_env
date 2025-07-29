@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-dont_install="wireless|fingerprint|bluetooth|laptop|gpu|firefox"
+dont_install="wireless|fingerprint|bluetooth|laptop|gpu|firefox|must_purge|#install_"
 
 __superuser=""
 if command -v doas >/dev/null;then
@@ -88,7 +88,9 @@ git_clone_repos(){
 
 install_all_packages_in_repo(){
 	. /etc/os-release
-	all_packages_are="$(cat my_stuff_installer/core/installer_repo/$ID/disto_apps_list my_stuff_installer/core/installer_repo/$ID/disto_Drivers_list | grep "install_" | grep "=" | grep -vE "${dont_install}" | grep -oP '(?<=\")[^\"]*(?=\")')"
+	all_packages_are="$(grep -E 'install_|=' \
+	my_stuff_installer/core/installer_repo/$ID/disto_apps_list my_stuff_installer/core/installer_repo/$ID/disto_Drivers_list \
+	| grep -vE "${dont_install}" | grep -oP '"\K[^"]+(?=")')"
 	
 	printf ""
 	printf "Do you want to install all software in disto_Installapps_list disto_Drivers? [y|n]"

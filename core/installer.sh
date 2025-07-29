@@ -1060,7 +1060,7 @@ __Done(){
 	fi
 	
 	if [ "$reboot_now" = "Y" ];then
-		${__distro_path}/system_files/bin/my_session_manager --no-confirm reboot
+		${__distro_path}/system_files/bin/my_session_manager_cli reboot
 	fi
 	
 	touch "${installer_phases}/Done"

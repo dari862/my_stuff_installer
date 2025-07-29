@@ -1,5 +1,5 @@
 #!/bin/sh
-must_purge="system-config-printer light-locker zeitgeist zeitgeist-core"
+must_purge="system-config-printer zeitgeist zeitgeist-core"
 
 #######################
 ## must have apps
@@ -18,6 +18,7 @@ install_text_editer_app="geany geany-plugins zathura"
 install_mediaplayer_app="mpv cava"
 install_polkit_apps="polkit polkit-gnome gnome-keyring"
 install_fonts="noto-fonts google-droid-sans-mono-fonts cantarell-fonts liberation-fonts opensymbol-fonts noto-fonts noto-fonts-mono inconsolata-fonts"
+install_passman="keepassxc"
 
 #firefox
 install_firefox_="mozilla-firefox"
@@ -27,7 +28,7 @@ install_for_scripts="ffmpeg at"
 
 #for x11
 install_X11_apps="x11-utils xorg-x11-server xorg-x11-driver-input dbus-x11 xorg-x11-xinit xdg-user-dirs xclip xwallpaper xdotool xprintidle"
-install_must_have_apps_for_X11="yad cbatticon rofi picom dunst nsxiv "
+install_must_have_apps_for_X11="yad rofi picom dunst nsxiv "
 install_res_apps_for_X11="arandr autorandr"
 install_locker_app_for_X11="i3lock"
 install_if_laptop_apps_x11="xf86-input-synaptics"
@@ -50,7 +51,8 @@ install_zsh="zsh"
 
 #for x11
 #install_clipman_manager_for_X11="parcellite"
-install_clipman_manager_for_X11="diodon"
+#install_clipman_manager_for_X11="diodon"
+#install_clipman_manager_for_X11="xfce4-clipman"
 install_polybar="polybar"
 install_bspwm="bspwm sxhkd"
 install_jgmenu="jgmenu"
