@@ -1,3 +1,0 @@
-sed -i '/userChrome\.css/!s/^$/user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);/' ~/.mozilla/firefox/xxxxxxxx.default-release/prefs.js
-mkdir -p ~/.mozilla/firefox/xxxxxxxx.default-release/chrome
-cp userChrome.css ~/.mozilla/firefox/xxxxxxxx.default-release/chrome

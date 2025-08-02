@@ -54,7 +54,8 @@ install_zsh="zsh"
 #install_clipman_manager_for_X11="diodon"
 #install_clipman_manager_for_X11="xfce4-clipman"
 install_polybar="polybar libnm-dev"
-install_bspwm="bspwm sxhkd"
+install_apps_for_bspwm="bspwm sxhkd"
+install_apps_for_dwm="build-essential libx11-dev libxft-dev libxinerama-dev"
 install_jgmenu="jgmenu"
 
 #for wayland

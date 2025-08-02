@@ -45,14 +45,18 @@ install_files_manager=true
 thunar_files_manager=false
 pcmanfm_files_manager=false
 
-if [ "$install_X11" = "true" ];then
+ask_2_install_dwm=false
+
+if [ "$install_X11" = true ];then
 	install_jgmenu=""
 	install_polybar=polybar
-	install_bspwm=bspwm
+	install_bspwm=true
+	install_dwm=false
 else
 	install_jgmenu=""
 	install_polybar=""
-	install_bspwm=""
+	install_bspwm=false
+	install_dwm=false
 fi
 
 reboot_now="Y"
@@ -494,12 +498,22 @@ prompt_to_ask_to_what_to_install(){
 							
 				if ! command_exist bspwm;then
 					if do_you_want_2_run_this_yes_or_no 'Do you want to install bspwm?' 'Y';then
-						install_bspwm=bspwm
+						install_bspwm=true
 						if do_you_want_2_run_this_yes_or_no 'Do you want to switch to bspwm session?' 'Y';then
 							switch_default_xsession_to="bspwm"
 						fi
 					else
-						install_bspwm=""
+						install_bspwm=false
+					fi
+				fi
+				if ! command_exist dwm && [ "$ask_2_install_dwm" = true ];then
+					if do_you_want_2_run_this_yes_or_no 'Do you want to install dwm?' 'Y';then
+						install_dwm=true
+						if do_you_want_2_run_this_yes_or_no 'Do you want to switch to dwm session?' 'Y';then
+							switch_default_xsession_to="dwm"
+						fi
+					else
+						install_dwm=false
 					fi
 				fi
 			fi
@@ -541,7 +555,8 @@ create_prompt_to_install_value_file(){
 		install_polybar="${install_polybar}"
 		install_qt5ct="${install_qt5ct}"
 		install_jgmenu="${install_jgmenu}"
-		install_bspwm="${install_bspwm}"
+		install_bspwm=${install_bspwm}
+		install_dwm=${install_dwm}
 		switch_default_xsession_to="${switch_default_xsession_to}"
 		reboot_now="${reboot_now}"		
 	EOF
@@ -914,15 +929,19 @@ pick_clone_rep_commnad(){
 	touch "${installer_phases}/pick_clone_rep_commnad"
 }
 
+print_getthis_location(){
+	check_this_location="${1-}"
+	if [ -d "$HOME/Desktop/${check_this_location}" ];then
+		printf '%s' "$HOME/Desktop"
+	else
+		printf '%s' "${temp_path}"
+	fi
+}
+
 clone_rep_(){
 	getthis="${1-}"
-	
-	if [ -d "$HOME/Desktop/${getthis}" ];then
-		getthis_location="$HOME/Desktop"
-	else
-		getthis_location="${temp_path}"
-	fi
-	
+	getthis_location="$(print_getthis_location "${getthis}")"
+
 	if [ ! -f "${installer_phases}/${getthis}" ];then
 		show_im "clone distro files repo ( ${getthis} )."
 		if [ ! -d "${getthis_location}/${getthis}" ];then 
@@ -1150,6 +1169,13 @@ if [ ! -f "${installer_phases}/create_List_of_apt_2_install_" ];then
 		must_purge_first || show_em "failed to run must_purge_first"
 		pre_disto_apps_installer || show_em "failed to run pre_disto_apps_installer"
 	fi
+	
+	if [ "$install_dwm" = true ];then
+		show_m "Download dwm..."
+		dwm_script_location="$(print_getthis_location "my_stuff")"
+		$_SUPERUSER "${dwm_script_location}"/my_stuff/bin/my_installer/apps_center/Windows_Manager/dwm_Extra/build.sh download-only "$__USER" || show_em "failed to download dwm."
+	fi
+	
 	install_lightdm_now
 	
 	install_network_manager
@@ -1185,11 +1211,9 @@ if [ "$install_drivers" = "true" ];then
 fi
 
 if [ "$install_apps" = "true" ];then
-	if [ -f "${installer_phases}/disto_apps_installer" ];then
-		post_disto_apps_installer || show_em "failed to run post_disto_apps_installer"
-		disto_specific_apps_installer || show_em "failed to run disto_specific_apps_installer"
-		install_ads_block_for_firefox || show_em "failed to run install_ads_block_for_firefox"
-	fi
+	post_disto_apps_installer || show_em "failed to run post_disto_apps_installer"
+	disto_specific_apps_installer || show_em "failed to run disto_specific_apps_installer"
+	install_ads_block_for_firefox || show_em "failed to run install_ads_block_for_firefox"
 fi
 
 switch_lightdm_now
@@ -1208,6 +1232,11 @@ fi
 
 show_m "Sourceing disto_configer."
 source_this_script "disto_configer" "Configering My Stuff."
+
+if [ "$install_dwm" = true ];then
+	show_m "Building dwm."
+	$_SUPERUSER /usr/share/my_stuff/bin/my_installer/apps_center/Windows_Manager/dwm_Extra/build.sh build "$__USER"
+fi
 
 source_this_script "disto_specific_extra" "Source purge_some_unnecessary_pakages and  disable_some_unnecessary_services from (disto_specific_extra)"
 

@@ -1,1 +1,0 @@
-../../../my_stuff/bin/my_installer/apps_center/Super_User/doas

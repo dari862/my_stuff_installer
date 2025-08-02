@@ -1,8 +1,15 @@
 #!/bin/sh
 #
 # https://www.youtube.com/watch?v=6pUDzv49M68
-sudo pacman -Sy
-sudo pacman -Sy base linux linux-firmware base-devel xf86-video-fbdev xorg xorg-xinit git feh picom firefox polybar python-pywal ttf-jetbrains-mono thunar
+set -e
+sudo apt-get update
+# for dwm
+sudo apt-get install -y build-essential libx11-dev libxft-dev libxinerama-dev
+# extra
+sudo apt-get install -y feh fonts-jetbrains-mono python3-pip
+#for st
+sudo apt-get install libharfbuzz-dev
+sudo pip3 install pywal --break-system-packages
 mkdir -p /tmp/suckless
 cd /tmp/suckless
 for repo in dwm dmenu st;do
@@ -19,12 +26,12 @@ sudo chown root:root start_dwm
 sudo chmod +x start_dwm
 sudo mv start_dwm /usr/bin
 mv wallpapers ~/
-feh --bg-fill wallpapers/pepper-carrot.jpg > /dev/null 2>&1
+feh --bg-fill ~/wallpapers/pepper-carrot.jpg > /dev/null 2>&1
 mkdir -p ~/.config/polybar
 mkdir -p ~/.config/picom
 mv config.ini ~/.config/polybar
 mv picom.conf ~/.config/picom
-tee /usr/share/xsessions/my_stuff_dwm.desktop << EOF > /dev/null 2>&1
+sudo tee /usr/share/xsessions/my_stuff_dwm.desktop << EOF > /dev/null 2>&1
 [Desktop Entry]
 Name=My Stuff dwm
 Comment=Log in to a My Stuff dwm session

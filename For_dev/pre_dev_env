@@ -105,8 +105,8 @@ install_all_packages_in_repo(){
 	$__superuser apt-get install -y ${all_packages_are} firefox-esr
 }
 
-set_time_zone
-set_date_and_time
+#set_time_zone
+#set_date_and_time
 remove_cdrom_from_apt
 upgrade_system
 install_essential_packages
