@@ -8,7 +8,7 @@ install_ufw_apps="ufw"
 install_must_have_apps="jq git plocate htop unzip libnotify"
 install_must_have_apps2="psmisc gparted inxi s-tui dfc hwinfo pamac xdotool acl lm_sensors ntfs-3g"
 install_audio_tray_app="pasystray"
-install_image_viewer_apps="viewnior imagemagick"
+install_image_viewer_apps="viewnior imagemagick gtk-engine-murrine"
 install_files_manager_support_app="gvfs gvfs-mtp gvfs-afc file-roller baobab avahi"
 install_terminal="kitty xdg-desktop-portal xdg-desktop-portal-gtk"
 install_if_laptop_apps="tlp tlp-rdw powertop"
@@ -44,7 +44,7 @@ install_for_x11_scripts="slop wmctrl"
 #######################
 ## extra apps
 #######################
-install_files_manager_thunar="thunar thunar-archive-plugin thunar-volman tumbler"
+install_files_manager_thunar="thunar thunar-archive-plugin tumbler"
 install_files_manager_pcmanfm="pcmanfm"
 install_qt5ct="qt5ct kvantum qt5-svg qt5-quickcontrols"
 install_zsh="zsh"
@@ -75,4 +75,4 @@ install_better_shell="tar bat fzf pkgfile thefuck highlight lf"
 #######################
 ## extra
 #######################
-install_extra_apps="micro multitail ncdu tree dos2unix meld btop"
+install_extra_apps="micro multitail ncdu tree meld btop"

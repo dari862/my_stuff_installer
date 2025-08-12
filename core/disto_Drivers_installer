@@ -20,7 +20,7 @@ pre_disto_Drivers_installer(){
 		add_packages_2_install_list "${install_wireless}"
 	fi
 	
-	if $_SUPERUSER dmesg | grep -qi bluetooth || $_SUPERUSER lsusb 2>/dev/null | grep -qi bluetooth || [ -d /sys/class/bluetooth ];then
+	if [ "$has_bluetooth" = true ];then
 		add_packages_2_install_list "${install_bluetooth}"
 	fi
 	

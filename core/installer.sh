@@ -813,8 +813,9 @@ update_grub_image(){
 source_this_script(){
 	file_to_source_and_check="${1-}"
 	message_to_show="${2-}"
+	run_check="${3-}"
 	[ ! -f "${temp_path}"/"${file_to_source_and_check}" ] && show_em "can not source this file ( ${temp_path}/${file_to_source_and_check} ). does not exist."
-	[ -f "${installer_phases}/${file_to_source_and_check}" ] && return
+	[ "$run_check" = "run_check" ] && [ -f "${installer_phases}/${file_to_source_and_check}" ] && return
 	show_im "${message_to_show}"
 	. "${temp_path}"/"${file_to_source_and_check}"
 }
@@ -1007,8 +1008,15 @@ source_and_set_machine_type(){
 	else
 		show_em "failed to set machine_type var"
 	fi
+	has_bluetooth=false
+	
+	if $_SUPERUSER dmesg | grep -qi bluetooth || $_SUPERUSER lsusb 2>/dev/null | grep -qi bluetooth || [ -d "/sys/class/bluetooth" ];then
+		show_im "has bluetooth"
+		has_bluetooth=true
+	fi
 	
 	echo "machine_type_are=$machine_type_are" >> "${save_value_file}"
+	echo "has_bluetooth=$has_bluetooth" >> "${save_value_file}"
 	touch "${installer_phases}/check_machine_type"
 }
 
@@ -1231,7 +1239,7 @@ fi
 ##################################################################################
 
 show_m "Sourceing disto_configer."
-source_this_script "disto_configer" "Configering My Stuff."
+source_this_script "disto_configer" "Configering My Stuff." "run_check"
 
 if [ "$install_dwm" = true ];then
 	show_m "Building dwm."
