@@ -1,0 +1,71 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Colors for output
+GREEN="\e[32m"
+RED="\e[31m"
+YELLOW="\e[33m"
+RESET="\e[0m"
+
+function log_info() {
+    echo -e "${GREEN}[INFO]${RESET} $1"
+}
+
+function log_warn() {
+    echo -e "${YELLOW}[WARN]${RESET} $1"
+}
+
+function log_error() {
+    echo -e "${RED}[ERROR]${RESET} $1"
+}
+
+# Check if running as root
+if [[ "$EUID" -ne 0 ]]; then
+    log_error "Please run this script as root."
+    exit 1
+fi
+
+log_info "Checking current Debian version..."
+current_version=$(lsb_release -cs)
+
+if [[ "$current_version" != "bookworm" ]]; then
+    log_warn "You're not running Debian 12 (bookworm). Detected: $current_version"
+    read -p "Continue anyway? [y/N]: " confirm
+    [[ "$confirm" =~ ^[Yy]$ ]] || exit 1
+fi
+
+log_info "Updating current system..."
+apt-get update && apt-get upgrade -y && apt-get full-upgrade -y
+apt-get autoremove --purge -y
+
+log_info "Updating APT sources from $current_version to trixie..."
+
+# Backup sources.list
+cp /etc/apt/sources.list /etc/apt/sources.list.bak
+
+# Replace sources
+sed -i "s/$current_version/trixie/g" /etc/apt/sources.list
+
+# Replace in sources.list.d
+for file in /etc/apt/sources.list.d/*.list; do
+    [[ -f "$file" ]] && sed -i "s/$current_version/trixie/g" "$file"
+done
+
+log_info "Running apt-get update for Debian 13 (trixie)..."
+apt-get update
+
+log_info "Performing safe upgrade..."
+apt-get upgrade --without-new-pkgs -y
+
+log_info "Performing full upgrade..."
+apt-get full-upgrade -y
+
+log_info "Removing obsolete packages..."
+apt-get autoremove --purge -y
+
+log_info "Upgrade complete. Reboot is recommended."
+read -p "Reboot now? [y/N]: " reboot_now
+[[ "$reboot_now" =~ ^[Yy]$ ]] && reboot
+
+exit 0
