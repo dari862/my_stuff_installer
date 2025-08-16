@@ -206,7 +206,7 @@ updating_rate_mirrors(){
 	show_sm "updating rate-mirrors..."
     ${PACKAGER} --noconfirm -S rate-mirrors-bin
     $_SUPERUSER cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
-    $_SUPERUSER rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch
+    $_SUPERUSER rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch || show_wm "failed to update rate-mirrors..."
     touch "${installer_phases}/updating_rate_mirrors"
 }
 

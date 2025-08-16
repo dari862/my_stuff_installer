@@ -139,6 +139,7 @@ post_disto_apps_installer(){
 			[ -f "/etc/tlp.conf" ] && $_SUPERUSER sed -i "s/#DEVICES_TO_DISABLE_ON_STARTUP=.*/DEVICES_TO_DISABLE_ON_STARTUP=\"bluetooth\"/g" /etc/tlp.conf
 		fi
 		
+		init_manager disable rfkill
 		init_manager enable tlp
 		
 		$_SUPERUSER tlp start || tlp_error="true"

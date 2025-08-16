@@ -157,6 +157,7 @@ show_m(){
 show_wm(){
 	message="${1-}"
 	printf '%b' "\\033[1;33m[!] \\033[0m${message}\n"
+	printf '%s\n' "${message}" >> $HOME/warnings_from_installer
 }
 
 show_em(){

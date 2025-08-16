@@ -29,7 +29,7 @@ install_for_scripts="ffmpeg at"
 #for x11
 install_X11_apps="x11-utils xorg-x11-server-Xorg xorg-x11-drv-input-all xorg-x11-drv-input dbus-x11 xorg-x11-drv-xinit xdg-user-dirs xclip xwallpaper xdotool xprintidle"
 install_must_have_apps_for_X11="yad rofi picom dunst nsxiv "
-install_res_apps_for_X11="arandr autorandr xrandr"
+install_res_apps_for_X11="arandr xrandr"
 install_locker_app_for_X11="i3lock"
 install_if_laptop_apps_x11="xorg-x11-drv-synaptics"
 install_conky_all_app="conky"
