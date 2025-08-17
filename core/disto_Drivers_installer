@@ -2,7 +2,9 @@
 pre_disto_Drivers_installer(){
 	. "${prompt_to_install_value_file}"
 	show_im "Adding needed Drivers to install list."
-
+	
+	add_packages_2_install_list "${install_exfat}"
+	
 	if ls /sys/class/backlight | head -n 1 | grep -q "intel_";then
 		install_drivers_if_laptop="${install_drivers_if_laptop} ${install_drivers_if_laptop_xbacklight}"
 	else
