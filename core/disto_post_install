@@ -151,9 +151,6 @@ end_of_post_install(){
 		fi
 	done
 	
-	show_im "installing myautorandr.sh"
-	$_SUPERUSER "${__distro_path}"/bin/X11/not_add_2_path/myautorandr.sh install || show_wm "failed to run myautorandr.sh"
-	
 	show_im "prepare completed"
 	$_SUPERUSER touch "${installer_phases}/end_of_post_install"
 }
