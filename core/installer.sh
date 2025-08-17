@@ -1095,6 +1095,30 @@ __Done(){
 	exit
 }
 
+post_switch_to_network_manager(){
+	show_m "runing post_switch_to_network_manager."
+ 	show_im "disable not needed network service."
+    init_manager stop networking
+	init_manager disable networking
+ 	init_manager stop systemd-networkd.service
+  	init_manager disable systemd-networkd.service
+	
+ 	show_im "disable wifi powersaving (application level)."
+ 	$_SUPERUSER tee /etc/NetworkManager/conf.d/wifi-powersave.conf <<- 'EOF' >/dev/null
+	[connection]
+	wifi.powersave = 2
+	EOF
+ 	
+  	show_im "disable wifi powersaving (kernel)."
+	$_SUPERUSER tee /etc/modprobe.d/iwlwifi.conf <<- 'EOF' >/dev/null
+	options iwlwifi power_save=0
+ 	EOF
+ 	if command -v update-initramfs >/dev/null 2>&1;then
+		sudo update-initramfs -u
+ 	elif command -v mkinitcpio >/dev/null 2>&1;then
+		sudo mkinitcpio -P
+ 	fi
+}
 ################################################################################################################################
 ################################################################################################################################
 ################################################################################################################################
@@ -1228,6 +1252,8 @@ fi
 switch_lightdm_now
 
 switch_to_network_manager
+
+post_switch_to_network_manager
 
 _unattended_upgrades_ start
 
