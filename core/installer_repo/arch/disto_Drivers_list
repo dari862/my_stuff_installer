@@ -7,3 +7,4 @@ install_drivers_if_laptop_light="light"
 install_wireless="wireless_tools"
 install_bluetooth="bluez bluez-utils blueman"
 install_autoinstall_firmware="" # No direct equivalent in Arch, use 'linux-firmware' if needed
+install_exfat="exfatprogs linux linux-headers"
