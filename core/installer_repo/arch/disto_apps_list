@@ -33,7 +33,7 @@ install_res_apps_for_X11="arandr"
 install_locker_app_for_X11="i3lock"
 install_if_laptop_apps_x11="xf86-input-synaptics"
 install_conky_all_app="conky"
-install_openbox_="openbox obconf-qt-git xcape tint2 xorg-xset xdg-autostart"
+install_openbox_="openbox obconf-qt-git xcape tint2 xorg-xset"
 install_themes_tools_for_X11="xsettingsd lxappearance"
 # slop for ac-shots and screen recoding , wmctrl for style-manager and files-uploader
 install_for_x11_scripts="slop wmctrl"
