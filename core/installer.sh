@@ -1173,12 +1173,12 @@ fix_time_
 
 set_package_manager
 
+install_network_manager
+switch_to_network_manager
+
 install_doas_tools
 
 must_install_apps
-
-install_network_manager
-switch_to_network_manager
  
 pick_clone_rep_commnad
 
