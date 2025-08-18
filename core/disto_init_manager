@@ -9,6 +9,9 @@ if [ "$init_system_are" = "systemd" ];then
 			$_SUPERUSER systemctl enable --now ${_file}
 		elif [ "${_command}" = "disable" ];then
 			$_SUPERUSER systemctl disable ${_file}
+		elif [ "${_command}" = "disable-stop" ];then
+			$_SUPERUSER systemctl disable ${_file}
+			$_SUPERUSER systemctl stop ${_file}
 		elif [ "${_command}" = "status" ];then
 			$_SUPERUSER systemctl status ${_file}
 		elif [ "${_command}" = "mask" ];then
@@ -25,6 +28,9 @@ elif [ "$init_system_are" = "openrc" ];then
 			$_SUPERUSER rc-update add ${_file}
 		elif [ "${_command}" = "disable" ];then
 			$_SUPERUSER rc-update del ${_file}
+		elif [ "${_command}" = "disable-stop" ];then
+			$_SUPERUSER rc-update del ${_file}
+			$_SUPERUSER rc-service ${_file} stop
 		elif [ "${_command}" = "status" ];then
 			$_SUPERUSER rc-service ${_file} status --quiet
 		elif [ "${_command}" = "mask" ];then
