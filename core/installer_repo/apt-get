@@ -167,32 +167,6 @@ install_lightdm_now(){
 	add_packages_2_install_list "${install_lightdm_}"
 }
 
-switch_to_network_manager(){
-	[ -f "${installer_phases}/switch_to_network_manager" ] && return
-	[ -f "/etc/network/interfaces.old" ] && return
-	show_m "runing switch_to_network_manager."
-	show_im "create to interfaces file"
-	$_SUPERUSER tee "${temp_path}"/interfaces <<- 'EOF' >/dev/null
-	# This file describes the network interfaces available on your system
-	# and how to activate them. For more information, see interfaces(5).
-		
-	source /etc/network/interfaces.d/*
-		
-	# The loopback network interface
-	auto lo
-	iface lo inet loopback
-	EOF
-	$_SUPERUSER chmod 644 "${temp_path}"/interfaces
-	show_im "create backup of interfaces file"
-	[ -f "/etc/network/interfaces" ] && $_SUPERUSER mv /etc/network/interfaces /etc/network/interfaces.old
-	$_SUPERUSER mkdir -p "/etc/network"
-	$_SUPERUSER mv "${temp_path}"/interfaces /etc/network/interfaces
-	show_im "Disable NetworkManager"
-	$_SUPERUSER sed -i 's/managed=.*/managed=false/g' /etc/NetworkManager/NetworkManager.conf
-	init_manager enable NetworkManager
-	touch "${installer_phases}/switch_to_network_manager"
-}
-
 switch_lightdm_now(){
 	[ -f "${installer_phases}/switch_lightdm_now" ] && return
 	show_im "Switching to ( lightdm )."
