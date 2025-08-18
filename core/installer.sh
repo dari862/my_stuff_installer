@@ -1116,7 +1116,7 @@ switch_to_network_manager(){
 		$_SUPERUSER mv "${temp_path}"/interfaces /etc/network/interfaces
  	fi
 	
-	if wifi exist ;then
+	if lspci | grep -iq wireless || lsusb | grep -iq wireless;then
 	 	show_im "disable wifi powersaving (application level)."
 	 	$_SUPERUSER tee /etc/NetworkManager/conf.d/wifi-powersave.conf <<- 'EOF' >/dev/null
 		[connection]
@@ -1133,7 +1133,6 @@ switch_to_network_manager(){
 			sudo mkinitcpio -P
 	 	fi
 	fi
- 	show_im "Disable NetworkManager"
 	$_SUPERUSER sed -i 's/managed=.*/managed=false/g' /etc/NetworkManager/NetworkManager.conf
 	init_manager enable NetworkManager
  	show_im "disable not needed network service."
