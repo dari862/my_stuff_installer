@@ -175,12 +175,6 @@ install_lightdm_now(){
 	add_packages_2_install_list "${install_lightdm_}"
 }
 
-switch_to_network_manager(){
-	[ -f "${installer_phases}/switch_to_network_manager" ] && return
-	init_manager enable NetworkManager
-	touch "${installer_phases}/switch_to_network_manager"
-}
-
 switch_lightdm_now(){
 	[ -f "${installer_phases}/switch_lightdm_now" ] && return
     show_im "Switching to lightdm..."
