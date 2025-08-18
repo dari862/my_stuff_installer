@@ -1097,49 +1097,49 @@ __Done(){
 
 switch_to_network_manager(){
 	[ -f "${installer_phases}/switch_to_network_manager" ] && return
-	[ -f "/etc/network/interfaces.old" ] && return
-	show_m "runing switch_to_network_manager."
-	show_im "create to interfaces file"
-	$_SUPERUSER tee "${temp_path}"/interfaces <<- 'EOF' >/dev/null
-	# This file describes the network interfaces available on your system
-	# and how to activate them. For more information, see interfaces(5).
-		
-	source /etc/network/interfaces.d/*
-		
-	# The loopback network interface
-	auto lo
-	iface lo inet loopback
-	EOF
-	$_SUPERUSER chmod 644 "${temp_path}"/interfaces
-	show_im "create backup of interfaces file"
-	[ -f "/etc/network/interfaces" ] && $_SUPERUSER mv /etc/network/interfaces /etc/network/interfaces.old
-	$_SUPERUSER mkdir -p "/etc/network"
-	$_SUPERUSER mv "${temp_path}"/interfaces /etc/network/interfaces
-	show_im "Disable NetworkManager"
+	if [ ! -f "/etc/network/interfaces.old" ] && [ -d "/etc/network" ];then
+		show_m "running switch_to_network_manager."
+		show_im "create to interfaces file"
+		$_SUPERUSER tee "${temp_path}"/interfaces <<- 'EOF' >/dev/null
+		# This file describes the network interfaces available on your system
+		# and how to activate them. For more information, see interfaces(5).
+			
+		source /etc/network/interfaces.d/*
+			
+		# The loopback network interface
+		auto lo
+		iface lo inet loopback
+		EOF
+		$_SUPERUSER chmod 644 "${temp_path}"/interfaces
+		show_im "create backup of interfaces file"
+		$_SUPERUSER mv /etc/network/interfaces /etc/network/interfaces.old
+		$_SUPERUSER mv "${temp_path}"/interfaces /etc/network/interfaces
+ 	fi
+	
+	if wifi exist ;then
+	 	show_im "disable wifi powersaving (application level)."
+	 	$_SUPERUSER tee /etc/NetworkManager/conf.d/wifi-powersave.conf <<- 'EOF' >/dev/null
+		[connection]
+		wifi.powersave = 2
+		EOF
+	 	
+	  	show_im "disable wifi powersaving (kernel)."
+		$_SUPERUSER tee /etc/modprobe.d/iwlwifi.conf <<- 'EOF' >/dev/null
+		options iwlwifi power_save=0
+	 	EOF
+	 	if command -v update-initramfs >/dev/null 2>&1;then
+			sudo update-initramfs -u
+	 	elif command -v mkinitcpio >/dev/null 2>&1;then
+			sudo mkinitcpio -P
+	 	fi
+	fi
+ 	show_im "Disable NetworkManager"
 	$_SUPERUSER sed -i 's/managed=.*/managed=false/g' /etc/NetworkManager/NetworkManager.conf
 	init_manager enable NetworkManager
- 	show_m "runing post_switch_to_network_manager."
  	show_im "disable not needed network service."
-    init_manager stop networking
-	init_manager disable networking
- 	init_manager stop systemd-networkd.service
-  	init_manager disable systemd-networkd.service
-	
- 	show_im "disable wifi powersaving (application level)."
- 	$_SUPERUSER tee /etc/NetworkManager/conf.d/wifi-powersave.conf <<- 'EOF' >/dev/null
-	[connection]
-	wifi.powersave = 2
-	EOF
- 	
-  	show_im "disable wifi powersaving (kernel)."
-	$_SUPERUSER tee /etc/modprobe.d/iwlwifi.conf <<- 'EOF' >/dev/null
-	options iwlwifi power_save=0
- 	EOF
- 	if command -v update-initramfs >/dev/null 2>&1;then
-		sudo update-initramfs -u
- 	elif command -v mkinitcpio >/dev/null 2>&1;then
-		sudo mkinitcpio -P
- 	fi
+	init_manager disable-stop networking || :
+  	init_manager disable-stop systemd-networkd.service || :
+   	init_manager disable-stop netctl || :
 	touch "${installer_phases}/switch_to_network_manager"
 }
 
