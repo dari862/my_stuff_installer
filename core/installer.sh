@@ -1095,8 +1095,30 @@ __Done(){
 	exit
 }
 
-post_switch_to_network_manager(){
-	show_m "runing post_switch_to_network_manager."
+switch_to_network_manager(){
+	[ -f "${installer_phases}/switch_to_network_manager" ] && return
+	[ -f "/etc/network/interfaces.old" ] && return
+	show_m "runing switch_to_network_manager."
+	show_im "create to interfaces file"
+	$_SUPERUSER tee "${temp_path}"/interfaces <<- 'EOF' >/dev/null
+	# This file describes the network interfaces available on your system
+	# and how to activate them. For more information, see interfaces(5).
+		
+	source /etc/network/interfaces.d/*
+		
+	# The loopback network interface
+	auto lo
+	iface lo inet loopback
+	EOF
+	$_SUPERUSER chmod 644 "${temp_path}"/interfaces
+	show_im "create backup of interfaces file"
+	[ -f "/etc/network/interfaces" ] && $_SUPERUSER mv /etc/network/interfaces /etc/network/interfaces.old
+	$_SUPERUSER mkdir -p "/etc/network"
+	$_SUPERUSER mv "${temp_path}"/interfaces /etc/network/interfaces
+	show_im "Disable NetworkManager"
+	$_SUPERUSER sed -i 's/managed=.*/managed=false/g' /etc/NetworkManager/NetworkManager.conf
+	init_manager enable NetworkManager
+ 	show_m "runing post_switch_to_network_manager."
  	show_im "disable not needed network service."
     init_manager stop networking
 	init_manager disable networking
@@ -1118,7 +1140,9 @@ post_switch_to_network_manager(){
  	elif command -v mkinitcpio >/dev/null 2>&1;then
 		sudo mkinitcpio -P
  	fi
+	touch "${installer_phases}/switch_to_network_manager"
 }
+
 ################################################################################################################################
 ################################################################################################################################
 ################################################################################################################################
@@ -1153,6 +1177,9 @@ install_doas_tools
 
 must_install_apps
 
+install_network_manager
+switch_to_network_manager
+ 
 pick_clone_rep_commnad
 
 check_and_download_core_script
@@ -1211,8 +1238,6 @@ if [ ! -f "${installer_phases}/create_List_of_apt_2_install_" ];then
 	
 	install_lightdm_now
 	
-	install_network_manager
-	
 	if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
 		echo "List_of_apt_2_install_=\"$List_of_apt_2_install_\"" >> "${save_value_file}"
 		echo "packages_to_install_pacman=\"$packages_to_install_pacman\"" >> "${save_value_file}"
@@ -1250,10 +1275,6 @@ if [ "$install_apps" = "true" ];then
 fi
 
 switch_lightdm_now
-
-switch_to_network_manager
-
-post_switch_to_network_manager
 
 _unattended_upgrades_ start
 
