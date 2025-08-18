@@ -1115,8 +1115,13 @@ switch_to_network_manager(){
 		$_SUPERUSER mv /etc/network/interfaces /etc/network/interfaces.old
 		$_SUPERUSER mv "${temp_path}"/interfaces /etc/network/interfaces
  	fi
-	
-	if lspci | grep -iq wireless || lsusb | grep -iq wireless;then
+
+ 	if lspci | grep -iq wireless || lsusb | grep -iq wireless;then
+  		if ip route | awk '/default/ { print $5 }' | grep -q "^w";then
+	 		__SSID4switch=$(awk '/wpa-ssid/ {gsub(/"/, "", $2); print $2}' /etc/network/interfaces.old)
+	   		__PASS4switch=$(awk '/wpa-psk/ {gsub(/"/, "", $2); print $2}' /etc/network/interfaces.old)
+		fi
+		
 	 	show_im "disable wifi powersaving (application level)."
 	 	$_SUPERUSER tee /etc/NetworkManager/conf.d/wifi-powersave.conf <<- 'EOF' >/dev/null
 		[connection]
@@ -1139,6 +1144,9 @@ switch_to_network_manager(){
 	init_manager disable networking || :
   	init_manager disable systemd-networkd.service || :
    	init_manager disable netctl || :
+	if [ -n "$__SSID4switch" ];then
+		nmcli device wifi connect "$SSID" password "$PASS"
+ 	fi
 	touch "${installer_phases}/switch_to_network_manager"
 }
 
