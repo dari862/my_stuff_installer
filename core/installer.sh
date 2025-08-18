@@ -1134,11 +1134,11 @@ switch_to_network_manager(){
 	 	fi
 	fi
 	$_SUPERUSER sed -i 's/managed=.*/managed=false/g' /etc/NetworkManager/NetworkManager.conf
-	init_manager enable NetworkManager
+	init_manager enable-only NetworkManager
  	show_im "disable not needed network service."
-	init_manager disable-stop networking || :
-  	init_manager disable-stop systemd-networkd.service || :
-   	init_manager disable-stop netctl || :
+	init_manager disable networking || :
+  	init_manager disable systemd-networkd.service || :
+   	init_manager disable netctl || :
 	touch "${installer_phases}/switch_to_network_manager"
 }
 
@@ -1173,6 +1173,7 @@ fix_time_
 set_package_manager
 
 install_network_manager
+switch_to_network_manager
 
 install_doas_tools
 
@@ -1251,8 +1252,6 @@ if [ ! -f "${installer_phases}/install_List_of_apt_2_install_" ];then
 		touch "${installer_phases}/install_List_of_apt_2_install_"
 	fi
 fi
-
-switch_to_network_manager
 
 touch "${installer_phases}/no_internet_needed" 
 ##################################################################################
