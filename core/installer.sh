@@ -1174,7 +1174,6 @@ fix_time_
 set_package_manager
 
 install_network_manager
-switch_to_network_manager
 
 install_doas_tools
 
@@ -1253,6 +1252,8 @@ if [ ! -f "${installer_phases}/install_List_of_apt_2_install_" ];then
 		touch "${installer_phases}/install_List_of_apt_2_install_"
 	fi
 fi
+
+switch_to_network_manager
 
 touch "${installer_phases}/no_internet_needed" 
 ##################################################################################
