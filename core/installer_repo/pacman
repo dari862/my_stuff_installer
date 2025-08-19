@@ -92,13 +92,13 @@ install_packages(){
 	if [ -n "${packages_to_install_AUR}" ];then
     	${PACKAGER} --noconfirm -Syu ${packages_to_install_AUR}
     else
-    	show_wm "packages_to_install_AUR are empty"
+    	show_wm_only "packages_to_install_AUR are empty"
     fi
     
     if [ -n "${packages_to_install_pacman}" ];then
     	$_SUPERUSER pacman --noconfirm -Syu ${packages_to_install_pacman}
     else
-    	show_wm "packages_to_install_pacman are empty"
+    	show_wm_only "packages_to_install_pacman are empty"
     fi
     
     sleep 1
@@ -135,7 +135,7 @@ remove_packages()
 		show_im "Removing ${packages}."
 		${__remove_package} "$package"
 	else
-		show_wm "no packages to remove."
+		show_wm_only "no packages to remove."
 	fi
 }
 
