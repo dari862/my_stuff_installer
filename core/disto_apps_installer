@@ -5,7 +5,7 @@ must_purge_first(){
 		if package_installed "$package";then
 			must_purge_first="$must_purge $package"
 		else
-			show_wm "$package does not exist"
+			show_wm_only "$package does not exist"
 		fi
 	done
 	remove_packages "${must_purge_first}"
