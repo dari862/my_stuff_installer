@@ -22,8 +22,8 @@ install_passman="keepassxc"
 #firefox
 install_firefox_="firefox"
 
-# ffmpeg for screen recoding and manymore , at for bl-beepmein
-install_for_scripts="ffmpeg at"
+# ffmpeg for screen recoding and manymore , at for bl-beepmein , bind (dig) for get_public_ip
+install_for_scripts="ffmpeg at bind"
 
 #for x11
 install_X11_apps="xorg-xprop xorg-server xorg-xinput dbus xorg-xinit xdg-user-dirs xorg-xdpyinfo xclip xwallpaper xdotool xprintidle"
