@@ -15,7 +15,7 @@ if [ "$init_system_are" = "systemd" ];then
 			$_SUPERUSER systemctl disable ${_file}
 			$_SUPERUSER systemctl stop ${_file}
 		elif [ "${_command}" = "status" ];then
-			$_SUPERUSER systemctl status ${_file}
+			$_SUPERUSER systemctl is-enabled --quiet ${_file}
 		elif [ "${_command}" = "mask" ];then
 			$_SUPERUSER systemctl mask ${_file}
 		fi
