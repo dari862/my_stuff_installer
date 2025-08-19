@@ -1348,7 +1348,7 @@ switch_to_doas_now
 
 if [ "$failed_2_install_ufw" = true ];then
 	show_wm "failed to install ${install_ufw_apps}."
-	show_wm "sleep 10."
+	show_im "sleep 10."
 	sleep 10
 fi
 
