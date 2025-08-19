@@ -1078,6 +1078,8 @@ switch_to_doas_now(){
 }
 
 __Done(){
+	show_m "Removing ${temp_path}"
+	$_SUPERUSER rm -rdf "${temp_path}"
 	show_m "Done"
 	if [ "$failed_2_install_ufw" = true ];then
 		echo "Press any key to reboot."
