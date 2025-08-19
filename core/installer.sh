@@ -160,6 +160,11 @@ show_wm(){
 	printf '%s\n' "${message}" >> $HOME/warnings_from_installer
 }
 
+show_wm_only(){
+	message="${1-}"
+	printf '%b' "\\033[1;33m[!] \\033[0m${message}\n"
+}
+
 show_em(){
 	message="${1-}"
 	printf '%b' "\\033[1;31m[-] ${message}\\033[0m\n"
