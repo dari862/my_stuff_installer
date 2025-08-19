@@ -1115,26 +1115,26 @@ switch_to_network_manager(){
 		show_im "create backup of interfaces file"
 		$_SUPERUSER mv /etc/network/interfaces /etc/network/interfaces.old
 		$_SUPERUSER mv "${temp_path}"/interfaces /etc/network/interfaces
+ 		if ip route | awk '/default/ { print $5 }' | grep -q "^w";then
+			__SSID4switch=$(awk '/wpa-ssid/ {gsub(/"/, "", $2); print $2}' /etc/network/interfaces.old)
+			__PASS4switch=$(awk '/wpa-psk/ {gsub(/"/, "", $2); print $2}' /etc/network/interfaces.old)
+		fi
+  		$_SUPERUSER sed -i 's/managed=.*/managed=false/g' /etc/NetworkManager/NetworkManager.conf
  	fi
-
- 	if ip route | awk '/default/ { print $5 }' | grep -q "^w";then
-		__SSID4switch=$(awk '/wpa-ssid/ {gsub(/"/, "", $2); print $2}' /etc/network/interfaces.old)
-		__PASS4switch=$(awk '/wpa-psk/ {gsub(/"/, "", $2); print $2}' /etc/network/interfaces.old)
+	if init_manager status NetworkManager;then
+		init_manager enable-only NetworkManager
+	 	show_im "disable not needed network service."
+		init_manager disable networking || :
+	  	init_manager disable systemd-networkd.service || :
+	   	init_manager disable netctl || :
+		if [ -n "$__SSID4switch" ];then
+			nmcli device wifi connect "$SSID" password "$PASS"
+	 	fi
 	fi
- 
-	$_SUPERUSER sed -i 's/managed=.*/managed=false/g' /etc/NetworkManager/NetworkManager.conf
-	init_manager enable-only NetworkManager
- 	show_im "disable not needed network service."
-	init_manager disable networking || :
-  	init_manager disable systemd-networkd.service || :
-   	init_manager disable netctl || :
-	if [ -n "$__SSID4switch" ];then
-		nmcli device wifi connect "$SSID" password "$PASS"
- 	fi
 	touch "${installer_phases}/switch_to_network_manager"
 }
 
-switch_to_network_manager(){
+disable_network_manager_powersaving(){
  	if ls /sys/class/net | grep -q "^w";then
   		grep -q "wifi.powersave = 2" "/etc/NetworkManager/conf.d/wifi-powersave.conf" && grep -q "options iwlwifi power_save=0" "/etc/modprobe.d/iwlwifi.conf" && return
 	 	show_im "disable wifi powersaving (application level)."
