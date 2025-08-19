@@ -26,7 +26,7 @@ install_packages(){
 		($_SUPERUSER ${PACKAGER} install -y ${packages_to_install} && kill_package_ ${PACKAGER}) || \
 		$_SUPERUSER ${PACKAGER} install -y ${packages_to_install}
     else
-    	show_wm "packages_to_install are empty"
+    	show_wm_only "packages_to_install are empty"
     	sleep 1
     fi
 }
@@ -58,7 +58,7 @@ remove_packages()
 		show_im "Removing ${packages}."
 		$_SUPERUSER ${__remove_package} "$package"
 	else
-		show_wm "no packages to remove."
+		show_wm_only "no packages to remove."
 	fi
 }
 
