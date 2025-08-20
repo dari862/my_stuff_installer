@@ -238,10 +238,12 @@ create_dir_and_source_stuff(){
 	$_SUPERUSER mkdir -p "${temp_path}"
 	$_SUPERUSER chmod 700 "${temp_path}"
  	$_SUPERUSER chown $__USER:$__USER "${temp_path}"
-	done_check_if_user_has_root_access
 	mkdir -p "${installer_phases}"
-		
+				
 	if [ -f "${save_value_file}" ];then
+		. "${save_value_file}"
+	else
+		done_check_if_user_has_root_access
 		. "${save_value_file}"
 	fi
 	
@@ -860,7 +862,7 @@ set_package_manager(){
 	show_im "Using ${PACKAGER}"
 	if [ ! -f "${installer_phases}/set_package_manager" ];then
 		if [ ! -f "${temp_path}/PACKAGE_MANAGER" ];then
-			check_and_download_ "installer_repo/${PACKAGER}"
+			check_and_download_ "Files_4_Distros/${PACKAGER}"
 			mv "${temp_path}/${PACKAGER}" "${temp_path}/PACKAGE_MANAGER"
 		fi
 		if ! . "${temp_path}/PACKAGE_MANAGER";then
@@ -963,15 +965,15 @@ check_and_download_core_script(){
 	show_m "check if exsit and download core script."
 	
 	if [ "$install_drivers" = "true" ];then
-		check_and_download_ "installer_repo/${distro_name}/disto_Drivers_list" 
+		check_and_download_ "Files_4_Distros/${distro_name}/disto_Drivers_list" 
 		check_and_download_ "disto_Drivers_installer"
-		check_and_download_ "installer_repo/${distro_name}/disto_specific_Drivers_installer"
+		check_and_download_ "Files_4_Distros/${distro_name}/disto_specific_Drivers_installer"
 	fi
 	
 	if [ "$install_apps" = "true" ];then
-		check_and_download_ "installer_repo/${distro_name}/disto_apps_list"
+		check_and_download_ "Files_4_Distros/${distro_name}/disto_apps_list"
 		check_and_download_ "disto_apps_installer"
-		check_and_download_ "installer_repo/${distro_name}/disto_specific_apps_installer"
+		check_and_download_ "Files_4_Distros/${distro_name}/disto_specific_apps_installer"
 	fi
 	
 	if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
@@ -988,7 +990,7 @@ check_and_download_core_script(){
 		theme_temp_path="${getthis_location}"
 		################################
 	fi
-	check_and_download_ "installer_repo/${distro_name}/disto_specific_extra"
+	check_and_download_ "Files_4_Distros/${distro_name}/disto_specific_extra"
 }
 
 source_and_set_machine_type(){
@@ -1129,9 +1131,12 @@ switch_to_network_manager(){
 	if init_manager status NetworkManager;then
 		init_manager enable-only NetworkManager
 	 	show_im "disable not needed network service."
-		init_manager disable networking || :
-	  	init_manager disable systemd-networkd.service || :
-	   	init_manager disable netctl || :
+		init_manager disable networking
+	  	init_manager disable systemd-networkd.service
+	  	init_manager disable systemd-networkd.socket
+	  	init_manager disable systemd-resolved.service
+	  	init_manager disable iwd
+	   	init_manager disable netctl
 		if [ -n "$__SSID4switch" ];then
 			nmcli device wifi connect "$SSID" password "$PASS"
 	 	fi
