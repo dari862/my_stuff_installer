@@ -6,7 +6,7 @@ must_purge="system-config-printer zeitgeist"
 #######################
 install_ufw_apps="ufw"
 install_must_have_apps="jq git plocate htop unzip libnotify"
-install_must_have_apps2="psmisc gparted inxi s-tui dfc hwinfo pamac xdotool acl lm_sensors ntfs-3g"
+install_must_have_apps2="psmisc gparted inxi s-tui dfc hwinfo pamac-aur xdotool acl lm_sensors ntfs-3g"
 install_image_viewer_apps="viewnior imagemagick gtk-engine-murrine"
 install_files_manager_support_app="gvfs gvfs-mtp gvfs-afc file-roller baobab avahi"
 install_terminal="kitty xdg-desktop-portal xdg-desktop-portal-gtk"
@@ -16,7 +16,7 @@ install_MIDI_sound_app="wildmidi timidity++"
 install_text_editer_app="geany geany-plugins zathura"
 install_mediaplayer_app="mpv cava"
 install_polkit_apps="polkit polkit-gnome gnome-keyring"
-install_fonts="noto-fonts ttf-droid cantarell-fonts ttf-liberation ttf-opensans noto-fonts noto-fonts-mono ttf-inconsolata"
+install_fonts="noto-fonts ttf-droid cantarell-fonts ttf-liberation ttf-opensans ttf-inconsolata"
 install_passman="keepassxc"
 
 #firefox
