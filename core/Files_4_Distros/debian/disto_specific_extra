@@ -14,7 +14,7 @@ create_to_be_purged_list(){
 			if package_installed "$package";then
 				_purge_it="$_purge_it $package"
 			else
-				show_wm "$package does not exist"
+				show_wm_only "$package does not exist"
 			fi
 		done
 		echo "_purge_it=\"$_purge_it\"" >> "${save_value_file}"
@@ -53,9 +53,9 @@ disable_some_unnecessary_services(){
 			for service in tracker-store.service tracker-miner-fs.service tracker-miner-rss.service tracker-extract.service tracker-miner-apps.service tracker-writeback.service;do
 				init_manager mask $service
 			done
-			#init_manager mask gvfs-udisks2-volume-monitor.service || show_im "fail to disable gvfs.service"
-			#init_manager mask gvfs-daemon.service || show_wm "fail to disable gvfs.service"
-			#init_manager mask gvfs-metadata.service || show_wm "fail to disable gvfs.service"
+			#init_manager mask gvfs-udisks2-volume-monitor.service
+			#init_manager mask gvfs-daemon.service
+			#init_manager mask gvfs-metadata.service
 		fi
 	fi
 	touch "${installer_phases}/disable_some_unnecessary_services"

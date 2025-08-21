@@ -1103,6 +1103,14 @@ __Done(){
 	exit
 }
 
+install_network_manager()
+{
+	[ -f "${installer_phases}/install_network_manager" ] && return
+	show_m "installing networkmanager"
+	install_packages "$network_manager_app_from_Files_4_Distros"
+	touch "${installer_phases}/install_network_manager"
+}
+
 switch_to_network_manager(){
 	[ -f "${installer_phases}/switch_to_network_manager" ] && return
 	if [ ! -f "/etc/network/interfaces.old" ] && [ -d "/etc/network" ];then

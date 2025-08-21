@@ -1,5 +1,5 @@
-#!/bin/sh
-set -e
+#!/bin/sh -e
+network_manager_app_from_Files_4_Distros="NetworkManager-1"
 
 ##################################
 # for rest
@@ -100,11 +100,6 @@ _unattended_upgrades_()
 			touch "${installer_phases}/_unattended_upgrades_stop"
 		;;
 	esac
-}
-
-install_network_manager(){
-	network_manager_name="NetworkManager-1"
-	add_packages_2_install_list "${network_manager_name}"
 }
 
 install_lightdm_now(){

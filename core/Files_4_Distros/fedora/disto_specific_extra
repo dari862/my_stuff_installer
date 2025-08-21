@@ -9,7 +9,7 @@ create_to_be_purged_list(){
 			if package_installed "$package";then
 				_purge_it="$_purge_it $package"
 			else
-				show_wm "$package does not exist"
+				show_wm_only "$package does not exist"
 			fi
 		done
 		echo "_purge_it=\"$_purge_it\"" >> "${save_value_file}"
