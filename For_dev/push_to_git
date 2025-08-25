@@ -1,11 +1,11 @@
 #!/bin/sh
 set -e
 
+#YadAppsStore
 repos="
 my_stuff
 Theme_Stuff
 my_stuff_installer
-YadAppsStore
 secureMyLinux
 "
 

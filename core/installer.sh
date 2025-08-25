@@ -726,7 +726,7 @@ must_install_apps()
 {
 	[ -f "${installer_phases}/must_install_apps" ] && return
 	show_m "installing req apps"
-	install_packages "git"
+	install_single_package "git"
 	touch "${installer_phases}/must_install_apps"
 }
 
@@ -1107,7 +1107,7 @@ install_network_manager()
 {
 	[ -f "${installer_phases}/install_network_manager" ] && return
 	show_m "installing networkmanager"
-	install_packages "$network_manager_app_from_Files_4_Distros"
+	install_single_package "$network_manager_app_from_Files_4_Distros"
 	touch "${installer_phases}/install_network_manager"
 }
 

@@ -161,28 +161,40 @@ post_disto_apps_installer(){
 			fi
 		fi
 	fi
-	
+
 	if command_exist ufw;then
 		$_SUPERUSER ufw disable >/dev/null 2>&1
 		show_im "Disableing (UFW)"
 		
-    	$_SUPERUSER ufw limit 22/tcp
-    	show_im "Limiting port 22/tcp (UFW)"
-	
-    	$_SUPERUSER ufw allow 80/tcp
+		if package_installed openssh;then
+    		$_SUPERUSER ufw limit 22/tcp
+    		show_im "Limiting port 22/tcp (UFW)"
+		fi
+		
+		$_SUPERUSER ufw out 53
+    	show_im "Limiting port DNS 53 (UFW)"
+    	
+    	$_SUPERUSER ufw out 80/tcp
     	show_im "Allowing port 80/tcp (UFW)"
 	
-    	$_SUPERUSER ufw allow 443/tcp
+    	$_SUPERUSER ufw out 443/tcp
     	show_im "Allowing port 443/tcp (UFW)"
-	
+		
+		$_SUPERUSER ufw out 123
+    	show_im "Allowing port NTP 123 (UFW)"
+    	
     	$_SUPERUSER ufw default deny incoming
     	show_im "Denying Incoming Packets by Default(UFW)"
 	
     	$_SUPERUSER ufw default allow outgoing
     	show_im "Allowing Outcoming Packets by Default(UFW)"
 	
-    	$_SUPERUSER ufw enable
-    	show_im "Enabled Firewall with Baselines!"
+    	$_SUPERUSER ufw --force enable
+    	
+    	show_im "Enable Firewall logging"
+		$_SUPERUSER ufw logging on
+		
+		show_im "Enabled Firewall with Baselines!"
 	fi
 	touch "${installer_phases}/post_disto_apps_installer"
 }

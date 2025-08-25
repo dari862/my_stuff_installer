@@ -31,6 +31,18 @@ install_packages(){
     fi
 }
 
+install_single_package(){
+	single_package="${1:-}"
+	if [ -n "${single_package}" ];then
+    	($_SUPERUSER ${PACKAGER} install -y ${single_package} && kill_package_ ${PACKAGER}) || \
+		($_SUPERUSER ${PACKAGER} install -y ${single_package} && kill_package_ ${PACKAGER}) || \
+		$_SUPERUSER ${PACKAGER} install -y ${single_package}
+    else
+    	show_wm "faile to install $single_package"
+    	sleep 1
+    fi
+}
+
 add_packages_2_install_list(){
 	localarray="$@"
 	for INDEX in ${localarray};do

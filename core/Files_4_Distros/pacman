@@ -73,7 +73,7 @@ install_AUR_helper(){
 create_package_list(){
     if [ ! -f "${list_of_apps_file_path}" ]; then
         show_im "Creating package list..."
-        pacman -Ss > "${list_of_apps_file_path}_pacman"
+        pacman -Ss > "${list_of_apps_file_path}"
     fi
     
     if [ ! -f "${list_of_installed_apps_file_path}" ];then
@@ -104,11 +104,21 @@ install_packages(){
     sleep 1
 }
 
+install_single_package(){
+	single_package="${1:-}"
+	if [ -n "${single_package}" ];then
+    	$_SUPERUSER pacman --noconfirm -Syu ${single_package_to_install}
+    else
+    	show_wm "faile to install $single_package"
+    	sleep 1
+    fi
+}
+
 add_packages_2_install_list(){
 	localarray="$@"
 	for INDEX in ${localarray};do
     	if ! package_installed "${INDEX}";then
-        	if grep -q "/${INDEX} " "${list_of_apps_file_path}_pacman";then
+        	if grep -q "^${INDEX} " "${list_of_apps_file_path}";then
             	packages_to_install_pacman="$packages_to_install_pacman $INDEX"
             	List_of_apt_2_install_="$List_of_apt_2_install_ $INDEX"
             	echo "$INDEX added to install list."
