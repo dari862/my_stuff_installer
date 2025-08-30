@@ -1,7 +1,8 @@
+improve pipemenu arandr and scale
+
+fix wifi random disconnect
+
 update-notification
 polybar workspace
 
-auto-complete
 picom vm
-
-speedup_bash_and_zsh

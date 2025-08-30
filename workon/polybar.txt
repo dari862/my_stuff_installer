@@ -1,0 +1,19 @@
+warn: The config parameter `module/AC_only.content` is deprecated, use `module/AC_only.format` instead.
+warn: The config parameter `module/bna.content` is deprecated, use `module/bna.format` instead.
+warn: The config parameter `module/dot-alt.content` is deprecated, use `module/dot-alt.format` instead.
+warn: The config parameter `module/dot.content` is deprecated, use `module/dot.format` instead.
+warn: The config parameter `module/LD.content` is deprecated, use `module/LD.format` instead.
+warn: The config parameter `module/menu.content` is deprecated, use `module/menu.format` instead.
+warn: The config parameter `module/RD.content` is deprecated, use `module/RD.format` instead.
+warn: The config parameter `module/sep.content` is deprecated, use `module/sep.format` instead.
+warn: The config parameter `module/sysmenu.content` is deprecated, use `module/sysmenu.format` instead.
+warn: The config parameter 'settings.throttle-output-for' is deprecated, it will be removed in the future. Please remove it from your config
+warn: The config parameter 'settings.throttle-output' is deprecated, it will be removed in the future. Please remove it from your config
+warn: tray: bar/main.tray-background is deprecated, use the dedicated tray module to display the system tray
+warn: tray: bar/main.tray-detached is deprecated, use the dedicated tray module to display the system tray
+warn: tray: bar/main.tray-maxsize is deprecated, use the dedicated tray module to display the system tray
+warn: tray: bar/main.tray-offset-x is deprecated, use the dedicated tray module to display the system tray
+warn: tray: bar/main.tray-offset-y is deprecated, use the dedicated tray module to display the system tray
+warn: tray: bar/main.tray-padding is deprecated, use the dedicated tray module to display the system tray
+warn: tray: bar/main.tray-position is deprecated, use the dedicated tray module to display the system tray
+warn: tray: bar/main.tray-scale is deprecated, use the dedicated tray module to display the system tray

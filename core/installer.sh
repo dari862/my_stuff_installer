@@ -5,7 +5,7 @@ set -e
 ################################################################################################################################
 install_wayland=false
 install_X11=true
-__distro_path="/usr/share/my_stuff"
+__distro_path_root="/usr/share/my_stuff"
 auto_run_script="false" # true to enable
 temp_path="/temp_distro_installer_dir"
 installer_phases="${temp_path}/installer_phases"
@@ -69,74 +69,30 @@ __USER="$USER"
 source_prompt_to_install_file=""
 
 getthis_location=""
-my_stuff_temp_path=""
+distro_temp_path=""
 theme_temp_path=""
 
 doas_installed=false
 sudo_installed=false
 
-PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:$PATH
-never_remove_dir_path="${__distro_path}/never_remove"
+never_remove_dir_path="${__distro_path_root}/never_remove"
 var_for_distro_uninstaller="${never_remove_dir_path}/var_for_distro_uninstaller"
 
 list_of_apps_file_path="${temp_path}/list_of_apps"
 list_of_installed_apps_file_path="${temp_path}/list_of_installed_apps"
 
-# distro
-if [ -f /etc/os-release ];then
-	# freedesktop.org and systemd
-	. /etc/os-release
-	version_="$(echo "${VERSION_ID}" | tr -d '.')"
-	distro_name="$ID"
-	distro_desc="$PRETTY_NAME"
-	distro_name_and_ver_="$ID$version_"
-	distro_name_and_ver_2="${ID}_${version_}"
-	version_codename="${VERSION_CODENAME}"
-	VERSION_ID="$VERSION_ID"
-fi
+version_=""
+distro_name=""
+distro_desc=""
+distro_name_and_ver_=""
+distro_name_and_ver_2=""
+version_codename=""
+VERSION_ID=""
 
-case ${distro_name} in
-	*arch*)
-		distro_name="arch"
-	;;
-
-	*debian*)
-		distro_name="debian"
-	;;
-
-	*fedora*)
-		distro_name="fedora"
-	;;
-	
-	*opensuse*)
-		distro_name="opensuse"
-	;;
-	
-	*ubuntu*)
-		distro_name="ubuntu"
-	;;
-esac
-
-
-
-PACKAGEMANAGER='apt-get dnf pacman zypper'
-for pgm in ${PACKAGEMANAGER}; do
-	if command -v ${pgm} >/dev/null 2>&1;then
-		PACKAGER=${pgm}
-		break
-	fi
-done		
-if [ -z "${PACKAGER}" ];then
-	echo "Error: Can't find a supported package manager"
-fi
-		
+PACKAGEMANAGER=""
+PACKAGER=""
 only_doas_installed=false
-
-if [ -d "$HOME/Desktop" ];then
-	dir_2_find_files_in="$HOME/Desktop ${temp_path}"
-else
-	dir_2_find_files_in="${temp_path}"
-fi
+dir_2_find_files_in=""
 
 failed_2_install_ufw=false
 
@@ -217,8 +173,7 @@ do_you_want_2_run_this_yes_or_no()
 
 pre_script(){
 	show_m "Loading Script ....."
-	
-	if [ -f "${installer_phases}/Done" ];then
+	if [ -f "${installer_phases}/Done" ] || [ -f "/tmp/distro_done_installing" ];then
 		show_m "my_stuff installed successfully ....."
 		if do_you_want_2_run_this_yes_or_no 'reboot?' 'Y';then
 			reboot_now="Y"
@@ -226,6 +181,60 @@ pre_script(){
 			reboot_now=""
 		fi
 		__Done
+	fi
+	
+	if [ -f /etc/os-release ];then
+		. /etc/os-release
+		version_="$(echo "${VERSION_ID}" | tr -d '.')"
+		distro_name="$ID"
+		distro_desc="$PRETTY_NAME"
+		distro_name_and_ver_="$ID$version_"
+		distro_name_and_ver_2="${ID}_${version_}"
+		version_codename="${VERSION_CODENAME}"
+		VERSION_ID="$VERSION_ID"
+	fi
+	
+	case ${distro_name} in
+		*arch*)
+			distro_name="arch"
+		;;
+	
+		*debian*)
+			distro_name="debian"
+		;;
+	
+		*fedora*)
+			distro_name="fedora"
+		;;
+		
+		*opensuse*)
+			distro_name="opensuse"
+		;;
+		
+		*ubuntu*)
+			distro_name="ubuntu"
+		;;
+	esac
+	
+	
+	
+	PACKAGEMANAGER='apt-get dnf pacman zypper'
+	for pgm in ${PACKAGEMANAGER}; do
+		if command -v ${pgm} >/dev/null 2>&1;then
+			PACKAGER=${pgm}
+			break
+		fi
+	done
+	
+	if [ -z "${PACKAGER}" ];then
+		echo "Error: Can't find a supported package manager"
+		exit 1
+	fi
+	
+	if [ -d "$HOME/Desktop" ];then
+		dir_2_find_files_in="$HOME/Desktop ${temp_path}"
+	else
+		dir_2_find_files_in="${temp_path}"
 	fi
 	check_if_user_has_root_access
  	create_dir_and_source_stuff
@@ -812,7 +821,7 @@ update_grub_image(){
 	[ -f "${installer_phases}/update_grub_image" ] && return
 	if [ "$run_update_grub_image" = "Y" ];then
 		show_im "update image."
-		$_SUPERUSER "${__distro_path}/bin/not_add_2_path/grub2_themes/install.sh"
+		$_SUPERUSER "${__distro_path_root}/bin/not_add_2_path/grub2_themes/install.sh"
 	fi
 	touch "${installer_phases}/update_grub_image"
 }
@@ -903,10 +912,10 @@ switch_default_xsession(){
 	[ -f "${installer_phases}/switch_default_xsession" ] && return
 	show_m "switching default xsession to my stuff $switch_default_xsession_to."
 	if command_exist update-alternatives;then
-		$_SUPERUSER update-alternatives --install /usr/bin/x-session-manager x-session-manager ${__distro_path}/system_files/bin/xsessions/${switch_default_xsession_to} 60
+		$_SUPERUSER update-alternatives --install /usr/bin/x-session-manager x-session-manager "${__distro_path_root}/system_files/bin/xsessions/${switch_default_xsession_to}" 60
 		switch_default_xsession="$(realpath /etc/alternatives/x-session-manager)"
 	else
-		$_SUPERUSER ln -sf ${__distro_path}/system_files/bin/xsessions/${switch_default_xsession_to} /usr/bin/x-session-manager
+		$_SUPERUSER ln -sf "${__distro_path_root}/system_files/bin/xsessions/${switch_default_xsession_to}" /usr/bin/x-session-manager
 	fi
 	touch "${installer_phases}/switch_default_xsession"
 }
@@ -915,7 +924,6 @@ create_uninstaller_file(){
 	[ -f "${var_for_distro_uninstaller}" ] && return
 	show_m "Creating uninstaller file."
 	List_of_installed_packages_="${List_of_apt_2_install_}"
-	$_SUPERUSER mkdir -p "${never_remove_dir_path}"
 	$_SUPERUSER tee "${var_for_distro_uninstaller}" <<- EOF >/dev/null
 	grub_image_name=\"${grub_image_name}\"
 	List_of_pakages_installed_=\"${List_of_installed_packages_}\"
@@ -985,7 +993,7 @@ check_and_download_core_script(){
 		# repo clone
 		show_m "clone distro files repo."
 		clone_rep_ "my_stuff"
-		my_stuff_temp_path="${getthis_location}"
+		distro_temp_path="${getthis_location}/my_stuff"
 		clone_rep_ "Theme_Stuff"
 		theme_temp_path="${getthis_location}"
 		################################
@@ -996,10 +1004,10 @@ check_and_download_core_script(){
 source_and_set_machine_type(){
 	[ -f "${installer_phases}/check_machine_type" ] && return
 	
-	if [ -f "${__distro_path}/lib/common/machine_type" ];then
-		. "${__distro_path}/lib/common/machine_type"
-	elif [ -f "${my_stuff_temp_path}/my_stuff/lib/common/machine_type" ];then
-		. "${my_stuff_temp_path}/my_stuff/lib/common/machine_type"
+	if [ -f "${__distro_path_root}/lib/common/machine_type" ];then
+		. "${__distro_path_root}/lib/common/machine_type"
+	elif [ -f "${distro_temp_path}/lib/common/machine_type" ];then
+		. "${distro_temp_path}/lib/common/machine_type"
 	else
 		show_em "failed to source machine_type"
 	fi
@@ -1007,7 +1015,7 @@ source_and_set_machine_type(){
 	show_m "check machine type"
 	
 	machine_type_are="$(check_machine_type)"
-	
+		
 	if [ "${machine_type_are}" = "laptop" ];then
 		show_im "this is laptop"
 	elif [ -n "${machine_type_are}" ];then
@@ -1028,8 +1036,9 @@ source_and_set_machine_type(){
 }
 
 create_new_os_release_file(){
-	[ -f "${__distro_path}/os-release" ] && return
-	$_SUPERUSER tee "${__distro_path}/os-release" <<- EOF > /dev/null 2>&1
+	[ -f "${__distro_path_root}/os-release" ] && return
+	show_m "Running create_new_os_release_file function."
+	$_SUPERUSER tee "${__distro_path_root}/os-release" <<- EOF > /dev/null 2>&1
 	version_="$version_"
 	distro_name="$distro_name"
 	distro_desc="$distro_desc"
@@ -1043,7 +1052,7 @@ create_new_os_release_file(){
 run_my_alternatives(){
 	[ -f "${installer_phases}/my_alternatives" ] && return
 	show_m "update alternatives apps"
-	${__distro_path}/bin/bin/my-alternatives --install
+	${__distro_path_root}/bin/bin/my-alternatives --install
 	touch "${installer_phases}/my_alternatives"
 }
 
@@ -1062,7 +1071,7 @@ switch_to_doas_now(){
 				show_im "Purging sudo."
 				remove_packages "sudo" || show_em "failed to purge sudo"
 				show_im "install fake sudo package and disable root user."
-				dpkg -i "${__distro_path}/lib/fake_empty_apps/sudo.deb" || show_em "failed to install fake sudo."
+				dpkg -i "${__distro_path_root}/lib/fake_empty_apps/sudo.deb" || show_em "failed to install fake sudo."
 				passwd -l root || show_em "failed to disable root user."
 			else
 				show_im "Purging sudo and install fake sudo package and disable root user."
@@ -1073,7 +1082,7 @@ switch_to_doas_now(){
 						printf '%b' \"\\033[1;31m[-] ${massage}\\033[0m\n\"
 					}
 					$__remove_package sudo || show_em 'failed to purge sudo'
-					dpkg -i ${__distro_path}/lib/fake_empty_apps/sudo.deb || show_em 'failed to install fake sudo.'
+					dpkg -i ${__distro_path_root}/lib/fake_empty_apps/sudo.deb || show_em 'failed to install fake sudo.'
 					passwd -l root || show_em 'failed to disable root user.'
 				"
 			fi
@@ -1085,8 +1094,10 @@ switch_to_doas_now(){
 }
 
 __Done(){
-	show_m "Removing ${temp_path}"
-	$_SUPERUSER rm -rdf "${temp_path}"
+	if [ -f "/tmp/distro_done_installing" ];then
+		show_m "Removing ${temp_path}"
+		$_SUPERUSER rm -rdf "${temp_path}"
+	fi
 	show_m "Done"
 	if [ "$failed_2_install_ufw" = true ];then
 		echo "Press any key to reboot."
@@ -1094,12 +1105,10 @@ __Done(){
 		head -c1 >/dev/null
 		stty icanon echo
 	fi
-	
+	touch "/tmp/distro_done_installing"
 	if [ "$reboot_now" = "Y" ];then
-		${__distro_path}/system_files/bin/my_session_manager_cli reboot
+		${__distro_path_root}/system_files/bin/my_session_manager_cli reboot
 	fi
-	
-	touch "${installer_phases}/Done"
 	exit
 }
 
@@ -1179,6 +1188,8 @@ disable_network_manager_powersaving(){
 ################################################################################################################################
 ################################################################################################################################
 ################################################################################################################################
+
+PATH="/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:$PATH"
 
 pre_script
 
@@ -1319,11 +1330,24 @@ fi
 show_m "Sourceing disto_configer."
 source_this_script "disto_configer" "Configering My Stuff." "run_check"
 
+$_SUPERUSER sed -i "s|__distro_path_root=.*|__distro_path_root=\"${__distro_path_root}\"|g" "${__distro_path_root}/lib/common/Distro_path"
+
+. "${__distro_path_root}/lib/common/Distro_path"
+. "${__distro_path_root}/lib/common/common"
+
+create_applicationsdotdesktop_4_xsessions "openbox" "openbox"
+
 if [ "$install_dwm" = true ];then
 	show_m "Building dwm."
-	$_SUPERUSER /usr/share/my_stuff/bin/my_installer/apps_center/Windows_Manager/dwm_Extra/build.sh build "$__USER"
+	$_SUPERUSER "${__distro_path_root}"/bin/my_installer/apps_center/Windows_Manager/dwm_Extra/build.sh build "$__USER"
+	show_im "create ${pre_distro_xsessions_desktop_file_name}_dwm to xsessions."
+	create_applicationsdotdesktop_4_xsessions "dwm" "dwm"
 fi
 
+if [ "$install_bspwm" = true ];then
+	show_im "create ${pre_distro_xsessions_desktop_file_name}_bspwm to xsessions."
+	create_applicationsdotdesktop_4_xsessions "bspwm" "bspwm"
+fi
 source_this_script "disto_specific_extra" "Source purge_some_unnecessary_pakages and  disable_some_unnecessary_services from (disto_specific_extra)"
 
 purge_some_unnecessary_pakages
@@ -1340,13 +1364,16 @@ update_grub_image
 show_m "Sourceing disto_post_install."
 source_this_script "disto_post_install" "prepare some script"
 
+show_m "Running pre_post_install function."
 pre_post_install
 
 if [ ! -f "${installer_phases}/create_blob_system_files" ];then
-	$_SUPERUSER ${__distro_path}/distro_manager/system_files_creater "${machine_type_are}"
+	show_m "Running system_files_creater."
+	$_SUPERUSER "${__distro_path_root}"/distro_manager/system_files_creater
 	$_SUPERUSER touch "${installer_phases}/create_blob_system_files"
 fi
 
+show_m "Running end_of_post_install function."
 end_of_post_install
 
 create_uninstaller_file

@@ -1,0 +1,1 @@
+/home/dari/Desktop/my_stuff/bin/must_create_script/xsessions/dwm.sh

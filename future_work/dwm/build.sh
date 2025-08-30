@@ -1,1 +1,0 @@
-/home/dari/Desktop/my_stuff/bin/my_installer/apps_center/Windows_Manager/dwm_Extra/build.sh

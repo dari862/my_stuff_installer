@@ -100,22 +100,6 @@ post_disto_apps_installer(){
 	. "${prompt_to_install_value_file}"
 	show_im "Configer packages."
 	
-	if [ "$install_bspwm" = true ];then
-		show_im "adding my_stuff_bspwm to xsessions."
-		$_SUPERUSER mkdir -p "${__distro_path}/lib/xsessions"
-		$_SUPERUSER touch "${__distro_path}/lib/xsessions/my_stuff_bspwm.desktop"
-		$_SUPERUSER ln -sf "${__distro_path}/lib/xsessions/my_stuff_bspwm.desktop" /usr/share/xsessions
-		$_SUPERUSER rm -rdf "${__distro_path}"
-	fi
-	
-	if [ "$install_dwm" = true ];then
-		show_im "adding my_stuff_dwm to xsessions."
-		$_SUPERUSER mkdir -p "${__distro_path}/lib/xsessions"
-		$_SUPERUSER touch "${__distro_path}/lib/xsessions/my_stuff_dwm.desktop"
-		$_SUPERUSER ln -sf "${__distro_path}/lib/xsessions/my_stuff_dwm.desktop" /usr/share/xsessions
-		$_SUPERUSER rm -rdf "${__distro_path}"
-	fi
-	
 	if [ "$install_zsh_now" = "zsh_default" ];then
 		show_im "make zsh default shell "
 		$_SUPERUSER chsh -s $(command_exist zsh) $__USER
@@ -163,38 +147,38 @@ post_disto_apps_installer(){
 	fi
 
 	if command_exist ufw;then
-		$_SUPERUSER ufw disable >/dev/null 2>&1
 		show_im "Disableing (UFW)"
-		
+		$_SUPERUSER ufw disable >/dev/null 2>&1
+				
 		if package_installed openssh;then
-    		$_SUPERUSER ufw limit 22/tcp
-    		show_im "Limiting port 22/tcp (UFW)"
+			show_im "Limiting port 22/tcp (UFW)"
+    		$_SUPERUSER ufw limit 22/tcp || show_wm "Failed to limiting port 22/tcp (UFW)"
+    		
 		fi
 		
-		$_SUPERUSER ufw out 53
-    	show_im "Limiting port DNS 53 (UFW)"
+		show_im "Allow out port DNS 53 (UFW)"
+		$_SUPERUSER ufw allow out 53 || show_wm "Failed to allow out port DNS 53 (UFW)"
     	
-    	$_SUPERUSER ufw out 80/tcp
-    	show_im "Allowing port 80/tcp (UFW)"
-	
-    	$_SUPERUSER ufw out 443/tcp
-    	show_im "Allowing port 443/tcp (UFW)"
-		
-		$_SUPERUSER ufw out 123
-    	show_im "Allowing port NTP 123 (UFW)"
+    	show_im "Allow out port 80/tcp (UFW)"
+    	$_SUPERUSER ufw allow out 80/tcp || show_wm "Failed to allow out port 80/tcp (UFW)"
     	
-    	$_SUPERUSER ufw default deny incoming
+		show_im "Allow out port 443/tcp (UFW)"
+    	$_SUPERUSER ufw allow out 443/tcp || show_wm "Failed to allow out port 443/tcp (UFW)"
+    	
+		show_im "Allow out port NTP 123 (UFW)"
+		$_SUPERUSER ufw allow out 123 || show_wm "Failed to allow out port NTP 123 (UFW)"
+    	
     	show_im "Denying Incoming Packets by Default(UFW)"
-	
-    	$_SUPERUSER ufw default allow outgoing
-    	show_im "Allowing Outcoming Packets by Default(UFW)"
-	
-    	$_SUPERUSER ufw --force enable
+    	$_SUPERUSER ufw default deny incoming || show_wm "Failed to denying Incoming Packets by Default(UFW)"
+    	
+		show_im "Allowing Outcoming Packets by Default(UFW)"
+    	$_SUPERUSER ufw default allow outgoing || show_wm "Failed to allowing Outcoming Packets by Default(UFW)"
+    	
+		show_im "Enabled Firewall with Baselines!"
+    	$_SUPERUSER ufw --force enable || show_wm "Failed to enabled Firewall with Baselines!"
     	
     	show_im "Enable Firewall logging"
-		$_SUPERUSER ufw logging on
-		
-		show_im "Enabled Firewall with Baselines!"
+		$_SUPERUSER ufw logging on || show_wm "Failed to enable Firewall logging"
 	fi
 	touch "${installer_phases}/post_disto_apps_installer"
 }

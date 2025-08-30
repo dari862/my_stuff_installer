@@ -1,10 +1,14 @@
 #!/bin/sh
-__distro_path="/usr/share/my_stuff"
-lightdm_background="${__distro_path}/my_wallpapers/default_wall-01.jpg"
+lightdm_background="${__distro_path_root}/my_wallpapers/default_wall-01.jpg"
 
 pre_post_install(){
 	[ -f "${installer_phases}/pre_post_install" ] && return
+	show_im "Create ${never_remove_dir_path}."
+	$_SUPERUSER mkdir -p "${never_remove_dir_path}"
 	
+	show_im "Create machine_type file."
+	printf '%s' "$machine_type_are" | $_SUPERUSER tee "${__distro_path_root}/never_remove/machine_type" >/dev/null 2>&1
+
 	show_im "update fonts cache."
 	$_SUPERUSER fc-cache -vf
 	
@@ -22,14 +26,14 @@ end_of_post_install(){
 	$_SUPERUSER mkdir -p "/usr/share/lightdm/lightdm.conf.d"
 	$_SUPERUSER mkdir -p "/usr/share/lightdm/lightdm-gtk-greeter.conf.d"
 
-	$_SUPERUSER tee /usr/share/lightdm/lightdm.conf.d/50_my_stuff.conf <<- 'EOF' >/dev/null 2>&1
+	$_SUPERUSER tee /usr/share/lightdm/lightdm.conf.d/50_my_stuff.conf <<- EOF >/dev/null 2>&1
 	# My Stuff specific defaults for lightdm
 	#
 	
 	[Seat:*]
 	# show users
 	greeter-hide-users=false
-	user-session=my_stuff_openbox
+	user-session=${pre_distro_xsessions_desktop_file_name}${switch_default_xsession_to}
 	EOF
 	$_SUPERUSER tee /usr/share/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf <<- 'EOF' >/dev/null 2>&1
 	# My Stuff specific defaults for lightdm-gtk-greeter
@@ -103,26 +107,26 @@ end_of_post_install(){
 	$_SUPERUSER sed -i "s|background = will be changed with sed|background = ${lightdm_background}|g" /usr/share/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf
 	
 	show_im "copy manpages."
-	$_SUPERUSER ln -sf ${__distro_path}/lib/manpage/* /usr/share/man/man1
+	$_SUPERUSER ln -sf ${__distro_path_root}/lib/manpage/* /usr/share/man/man1
 	
 	show_im "installing update-notification"
-	$_SUPERUSER "${__distro_path}/system_files/bin/update-notification" -I
+	$_SUPERUSER "${__distro_path_root}/system_files/bin/update-notification" -I
 	
 	show_im "pick correct apps_as_root."
 	if command_exist doas;then
-		$_SUPERUSER ln -sf ${__distro_path}/bin/doas/doasedit ${__distro_path}/system_files/bin
-		$_SUPERUSER cp -rp ${__distro_path}/system_files/doas.conf /etc
+		$_SUPERUSER ln -sf ${__distro_path_root}/bin/doas/doasedit ${__distro_path_root}/system_files/bin
+		$_SUPERUSER cp -rp ${__distro_path_root}/system_files/doas.conf /etc
 		if ! $_SUPERUSER doas -C /etc/doas.conf;then
 			show_em "config error"
 		fi
 	fi	
 	
-	weather_script_config_path="${__distro_path}/system_files/skel/.config/scriptconfig/weather"
+	weather_script_config_path="${__distro_path_root}/system_files/skel/.config/scriptconfig/weather"
 	#. "$weather_script_config_path"
 	
 	if [ -z "$place" ];then
 		show_im "set place var in $weather_script_config_path"
-		. "${__distro_path}/bin/not_add_2_path/weather/country_list"
+		. "${__distro_path_root}/bin/not_add_2_path/weather/country_list"
    		# Geolocate IP:
    		place=$(echo "$__timezone" | awk -F/ '{print $2}')
    		chosen="$(printf "%s" "$country_list" | grep "$place" )"
@@ -138,8 +142,8 @@ end_of_post_install(){
 		$_SUPERUSER sed -i "s|place=.*|place=\"$place\"|" "${weather_script_config_path}" || show_em "end_of_post_install failed at place"
 	fi
 	
-	. "${__distro_path}/lib/common/DB"
-	. "${__distro_path}/lib/common/my_installer_and_DB_dir"
+	. "${__distro_path_root}/lib/common/DB"
+	. "${__distro_path_root}/lib/common/my_installer_and_DB_dir"
 	
 	cd "${_APPS_LIBDIR}"
 	
