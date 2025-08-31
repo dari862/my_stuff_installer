@@ -1,0 +1,23 @@
+./repobin --root --mode full install zellij-org/zellij 
+./repobin --root --mode full --file odian install odin-lang/Odin
+./repobin --root install jesseduffield/lazydocker 
+./repobin --root install jesseduffield/lazygit 
+./repobin --root install aandrew-me/tgpt 
+./repobin --root install neovim/neovim 
+./repobin --root install noisetorch/NoiseTorch 
+./repobin --root install HikariKnight/quickpassthrough 
+./repobin --root --ext sfx.py install 9001/copyparty
+./repobin --root --mode appimage install 0xzer0x/quran-companion 
+
+./repobin --mode full install zellij-org/zellij 
+./repobin --mode full --file odian install odin-lang/Odin 
+./repobin --mode deb install bayasdev/envycontrol v3.5.1
+./repobin --mode deb install localsend/localsend 
+./repobin install jesseduffield/lazydocker 
+./repobin install jesseduffield/lazygit 
+./repobin install aandrew-me/tgpt 
+./repobin install neovim/neovim 
+./repobin install noisetorch/NoiseTorch 
+./repobin install HikariKnight/quickpassthrough 
+./repobin --ext sfx.py install 9001/copyparty
+./repobin --mode appimage install 0xzer0x/quran-companion 
