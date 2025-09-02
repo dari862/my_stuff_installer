@@ -7,8 +7,10 @@ warn: The config parameter `module/menu.content` is deprecated, use `module/menu
 warn: The config parameter `module/RD.content` is deprecated, use `module/RD.format` instead.
 warn: The config parameter `module/sep.content` is deprecated, use `module/sep.format` instead.
 warn: The config parameter `module/sysmenu.content` is deprecated, use `module/sysmenu.format` instead.
+
 warn: The config parameter 'settings.throttle-output-for' is deprecated, it will be removed in the future. Please remove it from your config
 warn: The config parameter 'settings.throttle-output' is deprecated, it will be removed in the future. Please remove it from your config
+
 warn: tray: bar/main.tray-background is deprecated, use the dedicated tray module to display the system tray
 warn: tray: bar/main.tray-detached is deprecated, use the dedicated tray module to display the system tray
 warn: tray: bar/main.tray-maxsize is deprecated, use the dedicated tray module to display the system tray

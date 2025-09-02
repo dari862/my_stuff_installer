@@ -88,8 +88,9 @@ git_clone_repos(){
 
 install_all_packages_in_repo(){
 	. /etc/os-release
+	cd "$HOME/Desktop"
 	all_packages_are="$(grep -E 'install_|=' \
-	my_stuff_installer/core/installer_repo/$ID/disto_apps_list my_stuff_installer/core/installer_repo/$ID/disto_Drivers_list \
+	my_stuff_installer/core/Files_4_Distros/$ID/disto_apps_list my_stuff_installer/core/Files_4_Distros/$ID/disto_Drivers_list \
 	| grep -vE "${dont_install}" | grep -oP '"\K[^"]+(?=")')"
 	
 	printf ""
