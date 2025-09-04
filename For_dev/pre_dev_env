@@ -73,6 +73,7 @@ install_essential_packages(){
 }
 
 git_clone_repos(){
+	[ ! -d "$HOME/Desktop" ] && mkdir -p $HOME/Desktop
 	cd $HOME/Desktop
 	
 	for repo in my_stuff_installer my_stuff Theme_Stuff YadAppsStore secureMyLinux;do

@@ -104,7 +104,9 @@ post_disto_apps_installer(){
 		show_im "make zsh default shell "
 		$_SUPERUSER chsh -s $(command_exist zsh) $__USER
 	fi
-	
+	if command_exist batcat && ! command_exist bat;then
+		$_SUPERUSER ln -sf $(which batcat) /usr/bin/bat
+	fi
 	if command_exist mpd;then
 		if [ -n "$(pidof mpd)" ];then
 			kill_package_ mpd

@@ -3,11 +3,11 @@ lightdm_background="${__distro_path_root}/my_wallpapers/default_wall-01.jpg"
 
 pre_post_install(){
 	[ -f "${installer_phases}/pre_post_install" ] && return
-	show_im "Create ${never_remove_dir_path}."
-	$_SUPERUSER mkdir -p "${never_remove_dir_path}"
+	show_im "Create ${__distro_path_neverremove}."
+	$_SUPERUSER mkdir -p "${__distro_path_neverremove}"
 	
 	show_im "Create machine_type file."
-	printf '%s' "$machine_type_are" | $_SUPERUSER tee "${__distro_path_root}/never_remove/machine_type" >/dev/null 2>&1
+	printf '%s' "$machine_type_are" | $_SUPERUSER tee "${__distro_path_neverremove}/machine_type" >/dev/null 2>&1
 
 	show_im "update fonts cache."
 	$_SUPERUSER fc-cache -vf
@@ -26,17 +26,17 @@ end_of_post_install(){
 	$_SUPERUSER mkdir -p "/usr/share/lightdm/lightdm.conf.d"
 	$_SUPERUSER mkdir -p "/usr/share/lightdm/lightdm-gtk-greeter.conf.d"
 
-	$_SUPERUSER tee /usr/share/lightdm/lightdm.conf.d/50_my_stuff.conf <<- EOF >/dev/null 2>&1
-	# My Stuff specific defaults for lightdm
+	$_SUPERUSER tee /usr/share/lightdm/lightdm.conf.d/"50_${__distro_name}".conf <<- EOF >/dev/null 2>&1
+	# Distro specific defaults for lightdm
 	#
 	
 	[Seat:*]
 	# show users
 	greeter-hide-users=false
-	user-session=${pre_distro_xsessions_desktop_file_name}${switch_default_xsession_to}
+	user-session=${__distro_name}${switch_default_xsession_to}
 	EOF
-	$_SUPERUSER tee /usr/share/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf <<- 'EOF' >/dev/null 2>&1
-	# My Stuff specific defaults for lightdm-gtk-greeter
+	$_SUPERUSER tee /usr/share/lightdm/lightdm-gtk-greeter.conf.d/"50_${__distro_name}".conf <<- 'EOF' >/dev/null 2>&1
+	# Distro specific defaults for lightdm-gtk-greeter
 	#
 	# LightDM GTK+ Configuration
 	# Available configuration options listed below.
@@ -104,13 +104,13 @@ end_of_post_install(){
 	position = 57%,start 22%,start
 	EOF
 	
-	$_SUPERUSER sed -i "s|background = will be changed with sed|background = ${lightdm_background}|g" /usr/share/lightdm/lightdm-gtk-greeter.conf.d/50_my_stuff.conf
+	$_SUPERUSER sed -i "s|background = will be changed with sed|background = ${lightdm_background}|g" /usr/share/lightdm/lightdm-gtk-greeter.conf.d/"50_${__distro_name}".conf
 	
 	show_im "copy manpages."
 	$_SUPERUSER ln -sf ${__distro_path_root}/lib/manpage/* /usr/share/man/man1
 	
 	show_im "installing update-notification"
-	$_SUPERUSER "${__distro_path_root}/system_files/bin/update-notification" -I
+	$_SUPERUSER sh -c "export __distro_path_lib=\"${__distro_path_lib}\"; \"${__distro_path_root}\"/system_files/bin/update-notification -I"
 	
 	show_im "pick correct apps_as_root."
 	if command_exist doas;then

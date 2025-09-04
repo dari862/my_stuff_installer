@@ -3,11 +3,16 @@ set -e
 ################################################################################################################################
 # Var
 ################################################################################################################################
+__distro_path_root="/usr/share/my_stuff"
+__distro_name="my_stuff"
+__distro_title="My Stuff"
+export __distro_path_lib="${__distro_path_root}/lib/common/Distro_path"
+
 install_wayland=false
 install_X11=true
-__distro_path_root="/usr/share/my_stuff"
 auto_run_script="false" # true to enable
-temp_path="/temp_distro_installer_dir"
+
+export temp_path="/temp_distro_installer_dir"
 installer_phases="${temp_path}/installer_phases"
 switch_default_xsession=""
 switch_default_xsession_to="openbox"
@@ -16,7 +21,6 @@ NETWORK_TEST="http://network-test.debian.org/nm"
 url_to_test=debian.org
 test_dns="1.1.1.1"
 
-export temp_path="${temp_path}"
 prompt_to_install_value_file="${temp_path}/value_of_picked_option_from_prompt_to_install"
 save_value_file="${temp_path}/save_value_file"
 install_drivers=true
@@ -74,9 +78,6 @@ theme_temp_path=""
 
 doas_installed=false
 sudo_installed=false
-
-never_remove_dir_path="${__distro_path_root}/never_remove"
-var_for_distro_uninstaller="${never_remove_dir_path}/var_for_distro_uninstaller"
 
 list_of_apps_file_path="${temp_path}/list_of_apps"
 list_of_installed_apps_file_path="${temp_path}/list_of_installed_apps"
@@ -174,7 +175,7 @@ do_you_want_2_run_this_yes_or_no()
 pre_script(){
 	show_m "Loading Script ....."
 	if [ -f "${installer_phases}/Done" ] || [ -f "/tmp/distro_done_installing" ];then
-		show_m "my_stuff installed successfully ....."
+		show_m "${__distro_name} installed successfully ....."
 		if do_you_want_2_run_this_yes_or_no 'reboot?' 'Y';then
 			reboot_now="Y"
 		else
@@ -584,7 +585,7 @@ check_and_download_()
 	filename="$(basename "${check_this_file_}")"
 	show_im "running check_and_download_ function on ($check_this_file_)"
 	
-	path_2_file="my_stuff_installer/core/${check_this_file_}"
+	path_2_file="${__distro_name}_installer/core/${check_this_file_}"
 	
 	if [ -f "$HOME/Desktop/${path_2_file}" ];then
 		mv "$HOME/Desktop/${path_2_file}" "${temp_path}" || show_em "failed to move ($HOME/Desktop/${path_2_file}) to (${temp_path})"
@@ -592,11 +593,11 @@ check_and_download_()
 	elif [ -f "${temp_path}/${filename}" ];then
 		show_im "${filename} already exist."
 	else
-		show_im "Download $check_this_file_ file from www.github.com/dari862/my_stuff_installer ."
-		if download_file "" "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${check_this_file_}" "${temp_path}/${filename}" ;then
+		show_im "Download $check_this_file_ file from www.github.com/dari862/${__distro_name}_installer ."
+		if download_file "" "https://raw.githubusercontent.com/dari862/${__distro_name}_installer/main/core/${check_this_file_}" "${temp_path}/${filename}" ;then
 			chmod +x "${temp_path}/${filename}"
 		else
-			show_em "Error: Failed to download ${filename} from https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/${check_this_file_}"
+			show_em "Error: Failed to download ${filename} from https://raw.githubusercontent.com/dari862/${__distro_name}_installer/main/core/${check_this_file_}"
 		fi
 	fi
 }
@@ -821,7 +822,7 @@ update_grub_image(){
 	[ -f "${installer_phases}/update_grub_image" ] && return
 	if [ "$run_update_grub_image" = "Y" ];then
 		show_im "update image."
-		$_SUPERUSER "${__distro_path_root}/bin/not_add_2_path/grub2_themes/install.sh"
+		$_SUPERUSER sh -c "export __distro_path_lib=\"${__distro_path_lib}\"; \"${__distro_path_root}\"/bin/not_add_2_path/grub2_themes/install.sh"
 	fi
 	touch "${installer_phases}/update_grub_image"
 }
@@ -910,7 +911,7 @@ set_package_manager(){
 
 switch_default_xsession(){
 	[ -f "${installer_phases}/switch_default_xsession" ] && return
-	show_m "switching default xsession to my stuff $switch_default_xsession_to."
+	show_m "switching default xsession to $__distro_title $switch_default_xsession_to."
 	if command_exist update-alternatives;then
 		$_SUPERUSER update-alternatives --install /usr/bin/x-session-manager x-session-manager "${__distro_path_root}/system_files/bin/xsessions/${switch_default_xsession_to}" 60
 		switch_default_xsession="$(realpath /etc/alternatives/x-session-manager)"
@@ -921,10 +922,10 @@ switch_default_xsession(){
 }
 
 create_uninstaller_file(){
-	[ -f "${var_for_distro_uninstaller}" ] && return
+	[ -f "${__distro_path_uninstaller_var}" ] && return
 	show_m "Creating uninstaller file."
 	List_of_installed_packages_="${List_of_apt_2_install_}"
-	$_SUPERUSER tee "${var_for_distro_uninstaller}" <<- EOF >/dev/null
+	$_SUPERUSER tee "${__distro_path_uninstaller_var}" <<- EOF >/dev/null
 	grub_image_name=\"${grub_image_name}\"
 	List_of_pakages_installed_=\"${List_of_installed_packages_}\"
 	switch_default_xsession=\"$switch_default_xsession\"
@@ -992,8 +993,8 @@ check_and_download_core_script(){
 		################################
 		# repo clone
 		show_m "clone distro files repo."
-		clone_rep_ "my_stuff"
-		distro_temp_path="${getthis_location}/my_stuff"
+		clone_rep_ "${__distro_name}"
+		distro_temp_path="${getthis_location}/${__distro_name}"
 		clone_rep_ "Theme_Stuff"
 		theme_temp_path="${getthis_location}"
 		################################
@@ -1273,8 +1274,8 @@ if [ ! -f "${installer_phases}/create_List_of_apt_2_install_" ];then
 	
 	if [ "$install_dwm" = true ];then
 		show_m "Download dwm..."
-		dwm_script_location="$(print_getthis_location "my_stuff")"
-		$_SUPERUSER "${dwm_script_location}"/my_stuff/bin/my_installer/apps_center/Windows_Manager/dwm_Extra/build.sh download-only "$__USER" || show_em "failed to download dwm."
+		dwm_script_location="$(print_getthis_location "${__distro_name}")"
+		$_SUPERUSER "${dwm_script_location}/${__distro_name}"/bin/my_installer/apps_center/Windows_Manager/dwm_Extra/build.sh download-only "$__USER" || show_em "failed to download dwm."
 	fi
 	
 	install_lightdm_now
@@ -1328,11 +1329,9 @@ fi
 ##################################################################################
 
 show_m "Sourceing disto_configer."
-source_this_script "disto_configer" "Configering My Stuff." "run_check"
+source_this_script "disto_configer" "Configering $__distro_title." "run_check"
 
-$_SUPERUSER sed -i "s|__distro_path_root=.*|__distro_path_root=\"${__distro_path_root}\"|g" "${__distro_path_root}/lib/common/Distro_path"
-
-. "${__distro_path_root}/lib/common/Distro_path"
+. "${__distro_path_lib}"
 . "${__distro_path_root}/lib/common/common"
 
 create_applicationsdotdesktop_4_xsessions "openbox" "openbox"
@@ -1340,12 +1339,12 @@ create_applicationsdotdesktop_4_xsessions "openbox" "openbox"
 if [ "$install_dwm" = true ];then
 	show_m "Building dwm."
 	$_SUPERUSER "${__distro_path_root}"/bin/my_installer/apps_center/Windows_Manager/dwm_Extra/build.sh build "$__USER"
-	show_im "create ${pre_distro_xsessions_desktop_file_name}_dwm to xsessions."
+	show_im "create ${__distro_name}_dwm to xsessions."
 	create_applicationsdotdesktop_4_xsessions "dwm" "dwm"
 fi
 
 if [ "$install_bspwm" = true ];then
-	show_im "create ${pre_distro_xsessions_desktop_file_name}_bspwm to xsessions."
+	show_im "create ${__distro_name}_bspwm to xsessions."
 	create_applicationsdotdesktop_4_xsessions "bspwm" "bspwm"
 fi
 source_this_script "disto_specific_extra" "Source purge_some_unnecessary_pakages and  disable_some_unnecessary_services from (disto_specific_extra)"
@@ -1369,7 +1368,7 @@ pre_post_install
 
 if [ ! -f "${installer_phases}/create_blob_system_files" ];then
 	show_m "Running system_files_creater."
-	$_SUPERUSER "${__distro_path_root}"/distro_manager/system_files_creater
+	$_SUPERUSER sh -c "export __distro_path_lib=\"${__distro_path_lib}\";\"${__distro_path_root}\"/distro_manager/system_files_creater"
 	$_SUPERUSER touch "${installer_phases}/create_blob_system_files"
 fi
 

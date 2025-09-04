@@ -1,7 +1,7 @@
 #!/bin/sh
 ################################################################################################################################
 [ -f "${installer_phases}/disto_configer" ] && return
-show_im "moving Theme_Stuff to my_stuff"
+show_im "moving Theme_Stuff to ${__distro_name}"
 $_SUPERUSER mv "${theme_temp_path}"/Theme_Stuff "${distro_temp_path}"
 
 show_im "change ownership to root"
