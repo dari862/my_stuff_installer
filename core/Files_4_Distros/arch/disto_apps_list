@@ -6,7 +6,7 @@ must_purge="system-config-printer zeitgeist"
 #######################
 install_ufw_apps="ufw"
 install_must_have_apps="jq git plocate htop unzip libnotify"
-install_must_have_apps2="psmisc gparted inxi s-tui dfc hwinfo pamac-aur xdotool acl lm_sensors ntfs-3g"
+install_must_have_apps2="psmisc gparted inxi s-tui dfc hwinfo pamac-aur xdotool acl lm_sensors ntfs-3g xz"
 install_image_viewer_apps="viewnior imagemagick gtk-engine-murrine"
 install_files_manager_support_app="gvfs gvfs-mtp gvfs-afc file-roller baobab avahi"
 install_terminal="kitty xdg-desktop-portal xdg-desktop-portal-gtk"

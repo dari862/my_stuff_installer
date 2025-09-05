@@ -98,6 +98,8 @@ dir_2_find_files_in=""
 failed_2_install_ufw=false
 
 machine_type_are=""
+
+install_hwclock=false
 ################################################################################################################################
 # Function
 ################################################################################################################################
@@ -679,7 +681,9 @@ fix_time_(){
 	if ! $_SUPERUSER timedatectl set-timezone $__timezone >/dev/null 2>&1;then
 		$_SUPERUSER ln -sf /usr/share/zoneinfo/$__timezone /etc/localtime
 		if ! $_SUPERUSER hwclock --systohc >/dev/null 2>&1;then
-			show_em "failed to set time zone !"
+			show_wm "failed hwclock to set time zone !"
+			show_im "installing hwclock later !"
+			install_hwclock=true
 		fi
 	fi
 	echo "__timezone=\"$__timezone\"" >> "${save_value_file}"
@@ -730,14 +734,6 @@ wifi_mode_installation(){
 		[ -f "$tmpfile" ] && rm "$tmpfile"
 		test_internet_
 	fi
-}
-
-must_install_apps()
-{
-	[ -f "${installer_phases}/must_install_apps" ] && return
-	show_m "installing req apps"
-	install_single_package "git"
-	touch "${installer_phases}/must_install_apps"
 }
 
 clean_up_now(){

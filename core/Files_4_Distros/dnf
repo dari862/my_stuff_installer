@@ -136,6 +136,14 @@ package_installed(){
 	fi
 }
 
+must_install_apps()
+{
+	[ -f "${installer_phases}/must_install_apps" ] && return
+	show_m "installing req apps"
+	install_single_package "git"
+	touch "${installer_phases}/must_install_apps"
+}
+
 pre_package_manager_(){
 	[ -f "${installer_phases}/pre_package_manager_" ] && return
 	kill_package_ ${PACKAGER}

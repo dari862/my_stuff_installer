@@ -203,6 +203,16 @@ package_installed(){
 	fi
 }
 
+must_install_apps()
+{
+	[ -f "${installer_phases}/must_install_apps" ] && return
+	show_m "installing req apps"
+	add_packages_2_install_list git
+	[ "$install_hwclock" = true ] && add_packages_2_install_list util-linux-extra util-linux
+	install_packages
+	touch "${installer_phases}/must_install_apps"
+}
+
 pre_package_manager_(){
 	[ -f "${installer_phases}/pre_package_manager_" ] && return
 	export DEBIAN_FRONTEND=noninteractive
