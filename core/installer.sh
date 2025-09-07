@@ -1137,8 +1137,8 @@ switch_to_network_manager(){
 		$_SUPERUSER mv /etc/network/interfaces /etc/network/interfaces.old
 		$_SUPERUSER mv "${temp_path}"/interfaces /etc/network/interfaces
  		if ip route | awk '/default/ { print $5 }' | grep -q "^w";then
-			__SSID4switch=$(awk '/wpa-ssid/ {gsub(/"/, "", $2); print $2}' /etc/network/interfaces.old)
-			__PASS4switch=$(awk '/wpa-psk/ {gsub(/"/, "", $2); print $2}' /etc/network/interfaces.old)
+			__SSID4switch=$($_SUPERUSER awk '/wpa-ssid/ {gsub(/"/, "", $2); print $2}' /etc/network/interfaces.old)
+			__PASS4switch=$($_SUPERUSER awk '/wpa-psk/ {gsub(/"/, "", $2); print $2}' /etc/network/interfaces.old)
 		fi
   		$_SUPERUSER sed -i 's/managed=.*/managed=false/g' /etc/NetworkManager/NetworkManager.conf
  	fi
