@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-
+url_2_check_time="https://ipinfo.io/"
 dont_install="wireless|fingerprint|bluetooth|laptop|gpu|firefox|must_purge|#install_"
 
 __superuser=""
@@ -8,6 +8,17 @@ if command -v doas >/dev/null;then
 	__superuser="doas"
 elif command -v sudo >/dev/null;then
 	__superuser="sudo"
+fi
+
+printf ""
+printf "Do you want to install all software in disto_Installapps_list disto_Drivers? [y|n]"
+stty -icanon -echo time 0 min 1
+yn="$(head -c1)"
+stty icanon echo
+if printf "%s" "$yn" | tr '[:lower:]' '[:upper:]' | grep -q "Y";then
+	install_packages=true
+else
+	install_packages=false
 fi
 
 getURL(){
@@ -28,30 +39,21 @@ getURL(){
 	fi
 }
 
-set_time_zone(){
-	__timezone="$(getURL '2term' https://ipinfo.io/ 2>/dev/null | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/ //g')"
+set_time_and_time_zone(){
+	if command -v curl >/dev/null 2>&1;then
+		url_full_head="$(curl -fSi "${url_2_check_time}" 2>&1)"
+	elif command -v curl >/dev/null 2>&1;then
+		url_full_head="$(wget -S -O- -q --no-check-certificate "${url_2_check_time}" 2>&1)"
+	fi
+	current_date="$(echo "$url_full_head" | sed -n 's/^ *date: *//p')"
+	$_SUPERUSER date -s "$current_date" >/dev/null 2>&1
+	__timezone="$(echo "$url_full_head" | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/^[ \t]*//;s/[ \t]*$//')"
 	echo "Using ${__timezone} as time zone."
 	if command -v timedatectl >/dev/null 2>&1;then
 		$__superuser timedatectl set-timezone $__timezone
 	else
 		$__superuser ln -sf /usr/share/zoneinfo/$__timezone /etc/localtime
 		$__superuser hwclock --systohc
-	fi
-}
-
-set_date_and_time(){
-	get_date_from_here=""
-	list_to_test="debian.com ipinfo.io 104.16.132.229"
-	
-	for test in ${list_to_test};do
-		ping -c 1 $test >/dev/null 2>&1 && get_date_from_here="$test" && break
-	done
-			
-	if [ -z "$get_date_from_here" ];then 
-		echo "failed to ping all of this: ${list_to_test}" && exit 1
-	else
-		current_date="$(getURL 'head' "$get_date_from_here" 2>&1 | sed -n 's/^ *Date: *//p')"
-		$__superuser date -s "$current_date" >/dev/null 2>&1
 	fi
 }
 
@@ -88,27 +90,16 @@ git_clone_repos(){
 }
 
 install_all_packages_in_repo(){
+	[ "${install_packages}" = false ] && return
 	. /etc/os-release
 	cd "$HOME/Desktop"
 	all_packages_are="$(grep -E 'install_|=' \
 	my_stuff_installer/core/Files_4_Distros/$ID/disto_apps_list my_stuff_installer/core/Files_4_Distros/$ID/disto_Drivers_list \
 	| grep -vE "${dont_install}" | grep -oP '"\K[^"]+(?=")')"
-	
-	printf ""
-	printf "Do you want to install all software in disto_Installapps_list disto_Drivers? [y|n]"
-	stty -icanon -echo time 0 min 1
-	yn="$(head -c1)"
-	stty icanon echo
-	yn="$(printf "%s" "$yn" | tr '[:lower:]' '[:upper:]' )"
-	[ "$yn" = "YES" ] && yn="Y"
-	[ "$yn" = "" ] && yn="Y"
-	[ "$yn" != "Y" ] && exit
-	
 	$__superuser apt-get install -y ${all_packages_are} firefox-esr
 }
 
-#set_time_zone
-#set_date_and_time
+set_time_and_time_zone
 remove_cdrom_from_apt
 upgrade_system
 install_essential_packages

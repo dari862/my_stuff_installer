@@ -1,0 +1,7 @@
+printf "%()T"
+
+date
+
+grep -rw "date "
+
+grep -rw "date " | awk -F: '{print $1}' | sort -u
