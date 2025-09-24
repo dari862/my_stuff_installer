@@ -1,6 +1,6 @@
 #!/bin/sh
 if [ "$init_system_are" = "systemd" ];then
-	init_manager(){
+	service_manager(){
 		_command="${1-}"
 		_file="${2-}"
 		if [ "${_command}" = "stop" ];then
@@ -21,7 +21,7 @@ if [ "$init_system_are" = "systemd" ];then
 		fi
 	}
 elif [ "$init_system_are" = "openrc" ];then
-	init_manager(){
+	service_manager(){
 		_command="${1-}"
 		_file="${2-}"
 		if [ "${_command}" = "stop" ];then

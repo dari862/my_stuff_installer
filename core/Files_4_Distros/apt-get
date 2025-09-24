@@ -54,13 +54,13 @@ create_package_list(){
 }
 
 install_packages(){
-	packages_to_install="${1:-${List_of_apt_2_install_}}"
+	packages_to_install="${1:-${Packages_2_install}}"
 	if [ -n "${packages_to_install}" ];then
     	($_SUPERUSER ${PACKAGER} install -yq ${packages_to_install} && kill_package_ ${PACKAGER}) || \
 		($_SUPERUSER ${PACKAGER} install -yq ${packages_to_install} && kill_package_ ${PACKAGER}) || \
 		$_SUPERUSER ${PACKAGER} install -yq ${packages_to_install}
     else
-    	show_wm_only "List_of_apt_2_install_ are empty"
+    	show_wm_only "Packages_2_install are empty"
     	sleep 1
     fi
 }
@@ -82,7 +82,7 @@ add_packages_2_install_list(){
 	for INDEX in ${localarray};do
 		if ! package_installed "${INDEX}";then
 			if grep -q "^$INDEX/" "${list_of_apps_file_path}";then
-				List_of_apt_2_install_="$List_of_apt_2_install_ $INDEX"
+				Packages_2_install="$Packages_2_install $INDEX"
 				show_im "${INDEX} added to install apps" 
 			else
 				show_filed_2_add_pakage_m "${INDEX} does not exist."
@@ -147,7 +147,7 @@ _unattended_upgrades_()
 			start)
 				[ -f "${installer_phases}/_unattended_upgrades_start" ] && return
 				show_im "start unattended upgrades."
-				init_manager stop unattended-upgrades
+				service_manager stop unattended-upgrades
 				if [ ! -f "${auto_upgrades_file_bak}" ];then
 					$_SUPERUSER mv "${auto_upgrades_file}" "${auto_upgrades_file_bak}"
 				fi
@@ -220,8 +220,8 @@ pre_package_manager_(){
 	
 	kill_package_ apt-get
 	kill_package_ apt
-	init_manager stop apt-daily.timer
-	init_manager stop apt-daily-upgrade.timer
+	service_manager stop apt-daily.timer
+	service_manager stop apt-daily-upgrade.timer
 	aptfixer
 	install_apt_fast || :
 	if command_exist apt-get;then
@@ -232,3 +232,5 @@ pre_package_manager_(){
 	upgrade_now
 	touch "${installer_phases}/pre_package_manager_"
 }
+
+enable_repo(){   :; }

@@ -19,7 +19,7 @@ done
 show_im "Moving themes from /usr/share/themes that exist in Theme_Stuff ${__distro_path_root}/backup"
 $_SUPERUSER mkdir -p /usr/share/themes
 $_SUPERUSER mkdir -p "${__distro_path_root}"/backup/themes
-for d in ${__distro_path_root}/Theme_Stuff/themes/* ; do
+for d in ${__distro_path_root}/Theme_Stuff/themes/* ${__distro_path_root}/Theme_Stuff/openbox_themes/*; do
 	Directory_name="$(basename "${d}")"
 	[ -d "/usr/share/themes/${Directory_name}" ] && $_SUPERUSER mv "/usr/share/themes/${Directory_name}" "${__distro_path_root}"/backup/themes
 	$_SUPERUSER ln -sf "$d" /usr/share/themes
@@ -28,7 +28,7 @@ done
 show_im "Moving icons from /usr/share/icons that exist in Theme_Stuff ${__distro_path_root}/backup"
 $_SUPERUSER mkdir -p /usr/share/icons
 $_SUPERUSER mkdir -p "${__distro_path_root}/backup/icons"
-for d in ${__distro_path_root}/Theme_Stuff/icons/* ; do
+for d in ${__distro_path_root}/Theme_Stuff/icons/* ${__distro_path_root}/Theme_Stuff/cursors/* ${__distro_path_root}/Theme_Stuff/lightdm-icons; do
 	Directory_name="$(basename "${d}")"
 	[ -d "/usr/share/icons/${Directory_name}" ] && $_SUPERUSER mv "/usr/share/icons/${Directory_name}" "${__distro_path_root}/backup/icons"
 	$_SUPERUSER ln -sf "$d" /usr/share/icons

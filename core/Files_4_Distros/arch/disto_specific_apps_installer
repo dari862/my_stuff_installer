@@ -2,8 +2,8 @@
 disto_specific_apps_installer(){
 	[ -f "${installer_phases}/disto_specific_apps_installer" ] && return
 		
-	init_manager enable dbus.service
-	init_manager enable avahi-daemon
+	service_manager enable dbus.service
+	service_manager enable avahi-daemon
 	
 	sudo pkgfile --update
 	touch "${installer_phases}/disto_specific_apps_installer"

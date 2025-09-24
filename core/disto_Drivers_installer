@@ -3,35 +3,35 @@ pre_disto_Drivers_installer(){
 	. "${prompt_to_install_value_file}"
 	show_im "Adding needed Drivers to install list."
 	
-	add_packages_2_install_list "${install_exfat}"
+	add_packages_2_install_list "${install_exfat} ${install_common_exfat}"
 	
 	if ls /sys/class/backlight | head -n 1 | grep -q "intel_";then
-		install_drivers_if_laptop="${install_drivers_if_laptop} ${install_drivers_if_laptop_xbacklight}"
+		new_install_drivers_if_laptop="${install_drivers_if_laptop} ${install_drivers_if_laptop_xbacklight} ${install_common_drivers_if_laptop} ${install_common_drivers_if_laptop_xbacklight}"
 	else
-		install_drivers_if_laptop="${install_drivers_if_laptop} ${install_drivers_if_laptop_light}"
+		new_install_drivers_if_laptop="${install_drivers_if_laptop} ${install_drivers_if_laptop_light} ${install_common_drivers_if_laptop} ${install_common_drivers_if_laptop_light}"
 	fi
 
 	##################################################################################
 	# main
 	##################################################################################
 	if [ "$machine_type_are" = "laptop" ];then
-		add_packages_2_install_list "${install_drivers_if_laptop}"
+		add_packages_2_install_list "${new_install_drivers_if_laptop}"
 	fi
 
 	if lspci | grep -qEi 'wifi|wireless' ;then
-		add_packages_2_install_list "${install_wireless}"
+		add_packages_2_install_list "${install_wireless} ${install_common_wireless}"
 	fi
 	
 	if [ "$has_bluetooth" = true ];then
-		add_packages_2_install_list "${install_bluetooth}"
+		add_packages_2_install_list "${install_bluetooth} ${install_common_bluetooth}"
 	fi
 	
 	if ! package_installed "pipewire" ;then
-		add_packages_2_install_list "${install_audio}"
+		add_packages_2_install_list "${install_audio} ${install_common_audio}"
 	fi
 	
-	add_packages_2_install_list "${install_Network}"
-	add_packages_2_install_list "${install_autoinstall_firmware}"
+	add_packages_2_install_list "${install_Network} ${install_common_Network}"
+	add_packages_2_install_list "${install_autoinstall_firmware} ${install_common_autoinstall_firmware}"
 }
 
 post_disto_Drivers_installer(){

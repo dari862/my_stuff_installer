@@ -20,7 +20,7 @@ create_package_list(){
 }
 
 install_packages(){
-	packages_to_install="${1:-${List_of_apt_2_install_}}"
+	packages_to_install="${1:-${Packages_2_install}}"
 	if [ -n "${packages_to_install}" ];then
     	($_SUPERUSER ${PACKAGER} install -y ${packages_to_install} && kill_package_ ${PACKAGER}) || \
 		($_SUPERUSER ${PACKAGER} install -y ${packages_to_install} && kill_package_ ${PACKAGER}) || \
@@ -150,4 +150,10 @@ pre_package_manager_(){
 	upgrade_now
 	#enable_rpmfusion_repo
 	touch "${installer_phases}/pre_package_manager_"
+}
+
+enable_repo() {
+  REPO_ID="${1:-}"
+  $_SUPERUSER dnf install -y --non-interactive addrepo -f ${REPO_ID}
+  $_SUPERUSER dnf install -y --non-interactive --gpg-auto-import-keys refresh
 }

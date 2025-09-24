@@ -1,9 +1,9 @@
 #!/bin/sh
 #must have apps
-install_audio="pulseaudio pavucontrol"
-install_drivers_if_laptop="acpi upower"
+install_audio=""
+install_drivers_if_laptop=""
 install_drivers_if_laptop_xbacklight="xbacklight"
-install_drivers_if_laptop_light="light"
+install_drivers_if_laptop_light=""
 install_wireless="wireless-tools"
 install_bluetooth="bluez blueman"
 install_autoinstall_firmware="isenkram"

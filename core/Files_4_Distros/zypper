@@ -20,7 +20,7 @@ create_package_list(){
 }
 
 install_packages(){
-	packages_to_install="${1:-${List_of_apt_2_install_}}"
+	packages_to_install="${1:-${Packages_2_install}}"
 	if [ -n "${packages_to_install}" ];then
     	($_SUPERUSER ${PACKAGER} install -y ${packages_to_install} && kill_package_ ${PACKAGER}) || \
 		($_SUPERUSER ${PACKAGER} install -y ${packages_to_install} && kill_package_ ${PACKAGER}) || \
@@ -146,4 +146,16 @@ pre_package_manager_(){
 	kill_package_ ${PACKAGER}
 	upgrade_now
 	touch "${installer_phases}/pre_package_manager_"
+}
+
+enable_repo() {
+  REPO_ID="${1:-}"
+  if [ "$(zypper repolist enabled 2>/dev/null | grep -c "$REPO_ID")" -le 0 ]; then
+    show_im "$REPO_ID repository is not enabled. Enabling now..."
+    $_SUPERUSER zypper config-manager --set-enabled "$REPO_ID"
+    $_SUPERUSER zypper makecache
+    if [ "$(zypper repolist enabled 2>/dev/null | grep -c "$REPO_ID")" -le 0 ]; then
+      show_wm "Failed to enable $REPO_ID repository..."
+    fi
+  fi
 }

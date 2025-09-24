@@ -1,0 +1,18 @@
+clear
+cd /home/dari/Desktop/my_stuff/blob/
+for gt in *;do
+	cd $gt
+	for t in *;do
+		if [ -d "$t" ];then
+			theme_name="$(grep "gtk-theme-name" "$t"/config/gtk-3.0/settings.ini | awk -F= '{print $2}')"
+			icon_name="$(grep "gtk-icon-theme" "$t"/config/gtk-3.0/settings.ini | awk -F= '{print $2}')"
+			cursor_name="$(grep "gtk-cursor-theme-name" "$t"/config/gtk-3.0/settings.ini | awk -F= '{print $2}')"
+			#font_name="$(grep "gtk-font-name" "$t"/config/gtk-3.0/settings.ini | awk -F= '{print $2}')"
+			grep -r "^Name=" /home/dari/Desktop/Theme_Stuff/themes/*/index.theme | awk -F: '{print $2}' | grep -qw "$theme_name" || echo "$theme_name theme_name failed : $t"
+			grep -r "^Name=" /home/dari/Desktop/Theme_Stuff/icons/*/index.theme | awk -F: '{print $2}' | grep -qw "$icon_name" || echo "$icon_name icon_name failed : $t"
+			grep -r "^Name=" /home/dari/Desktop/Theme_Stuff/icons/*/index.theme | awk -F: '{print $2}' | grep -qw "$cursor_name" || echo "$cursor_name cursor_name failed : $t"
+			#grep -qw "$font_name" 	/home/dari/Desktop/Theme_Stuff/fonts/*/index.theme || echo "$font_name font_name failed : $t"
+		fi
+	done
+	cd ..
+done > /home/dari/Desktop/123123123123123

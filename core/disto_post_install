@@ -92,7 +92,7 @@ end_of_post_install(){
 	background = will be changed with sed
 	#user-background=
 	theme-name = Arc-Dark
-	icon-theme-name = Bunsen-lightdm
+	icon-theme-name = lightdm-icons
 	font-name = Noto Sans 9
 	xft-antialias=true
 	#xft-dpi=

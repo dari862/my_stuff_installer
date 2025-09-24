@@ -23,75 +23,75 @@ pre_disto_apps_installer(){
 	fi
 	
 	if [ "$install_X11" = "true" ];then
-		add_packages_2_install_list "${install_X11_apps}"
-		add_packages_2_install_list "${install_res_apps_for_X11}"
-		add_packages_2_install_list "${install_must_have_apps_for_X11}"
-		add_packages_2_install_list "${install_locker_app_for_X11}"
-		add_packages_2_install_list "${install_conky_all_app}"
-		add_packages_2_install_list "${install_openbox_}"
-		add_packages_2_install_list "${install_themes_tools_for_X11}"
-		add_packages_2_install_list "${install_for_x11_scripts}"
-		add_packages_2_install_list "${install_clipman_manager_for_X11}"
-		add_packages_2_install_list "${install_passman}"
+		add_packages_2_install_list "${install_X11_apps} ${install_common_X11_apps}"
+		add_packages_2_install_list "${install_res_apps_for_X11} ${install_common_res_apps_for_X11}"
+		add_packages_2_install_list "${install_must_have_apps_for_X11} ${install_common_must_have_apps_for_X11}"
+		add_packages_2_install_list "${install_locker_app_for_X11} ${install_common_locker_app_for_X11}"
+		add_packages_2_install_list "${install_conky_all_app} ${install_common_conky_all_app}"
+		add_packages_2_install_list "${install_openbox_} ${install_common_openbox_}"
+		add_packages_2_install_list "${install_themes_tools_for_X11} ${install_common_themes_tools_for_X11}"
+		add_packages_2_install_list "${install_for_x11_scripts} ${install_common_for_x11_scripts}"
+		add_packages_2_install_list "${install_clipman_manager_for_X11} ${install_common_clipman_manager_for_X11}"
+		add_packages_2_install_list "${install_passman} ${install_common_passman}"
 		if [ "$machine_type_are" = "laptop" ];then
-			add_packages_2_install_list "${install_if_laptop_apps_x11}"
+			add_packages_2_install_list "${install_if_laptop_apps_x11} ${install_common_if_laptop_apps_x11}"
 		fi
 		if [ "$install_polybar" = "polybar" ];then
-			add_packages_2_install_list "${install_polybar}"
+			add_packages_2_install_list "${install_polybar} ${install_common_polybar}"
 		fi
 		if [ "$install_bspwm" = true ];then
-			add_packages_2_install_list "${install_apps_for_bspwm}"
+			add_packages_2_install_list "${install_apps_for_bspwm} ${install_common_apps_for_bspwm}"
 		fi
 		if [ "$install_dwm" = true ];then
-			add_packages_2_install_list "${install_apps_for_dwm}"
+			add_packages_2_install_list "${install_apps_for_dwm} ${install_common_apps_for_dwm}"
 		fi
 		if [ "$install_jgmenu" = "jgmenu" ];then
-			add_packages_2_install_list "${install_jgmenu}"
+			add_packages_2_install_list "${install_jgmenu} ${install_common_jgmenu}"
 		fi
 	fi
 	
 	if lsmod | grep -q ip_tables;then
-		add_packages_2_install_list "${install_ufw_apps}"
+		add_packages_2_install_list "${install_ufw_apps} ${install_common_ufw_apps}"
 	else
 		failed_2_install_ufw=true
 	fi
 	
 	if [ "$machine_type_are" = "laptop" ];then
-		add_packages_2_install_list "${install_if_laptop_apps}"
+		add_packages_2_install_list "${install_if_laptop_apps} ${install_common_if_laptop_apps}"
 	fi
-	add_packages_2_install_list "${install_must_have_apps}"
-	add_packages_2_install_list "${install_must_have_apps2}"
-	add_packages_2_install_list "${install_terminal}"
-	add_packages_2_install_list "${install_files_manager_app}"
-	add_packages_2_install_list "${install_files_manager_support_app}"
-	add_packages_2_install_list "${install_firefox_}"
-	add_packages_2_install_list "${install_cli_sound_app}"
-	add_packages_2_install_list "${install_MIDI_sound_app}"
-	add_packages_2_install_list "${install_text_editer_app}"
-	add_packages_2_install_list "${install_mediaplayer_app}"
-	add_packages_2_install_list "${install_for_scripts}"
-	add_packages_2_install_list "${install_image_viewer_apps}"
-	add_packages_2_install_list "${install_polkit_apps}"
+	add_packages_2_install_list "${install_must_have_apps} ${install_common_must_have_apps}"
+	add_packages_2_install_list "${install_must_have_apps2} ${install_common_must_have_apps2}"
+	add_packages_2_install_list "${install_terminal} ${install_common_terminal}"
+	add_packages_2_install_list "${install_files_manager_support_app} ${install_common_files_manager_support_app}"
+	add_packages_2_install_list "${install_firefox_} ${install_common_firefox_}"
+	add_packages_2_install_list "${install_cli_sound_app} ${install_common_cli_sound_app}"
+	add_packages_2_install_list "${install_MIDI_sound_app} ${install_common_MIDI_sound_app}"
+	add_packages_2_install_list "${install_text_editer_app} ${install_common_text_editer_app}"
+	add_packages_2_install_list "${install_mediaplayer_app} ${install_common_mediaplayer_app}"
+	add_packages_2_install_list "${install_for_scripts} ${install_common_for_scripts}"
+	add_packages_2_install_list "${install_for_scripts2} ${install_common_for_scripts2}"
+	add_packages_2_install_list "${install_image_viewer_apps} ${install_common_image_viewer_apps}"
+	add_packages_2_install_list "${install_polkit_apps} ${install_common_polkit_apps}"
 	add_packages_2_install_list "${install_fonts}"
-	add_packages_2_install_list "${install_better_bash}"
-	add_packages_2_install_list "${install_better_shell}"
+	add_packages_2_install_list "${install_better_bash} ${install_common_better_bash}"
+	add_packages_2_install_list "${install_better_shell} ${install_common_better_shell}"
 
 	if [ "$thunar_files_manager" = true ];then
-		add_packages_2_install_list "${install_files_manager_thunar}"
+		add_packages_2_install_list "${install_files_manager_thunar} ${install_common_files_manager_thunar}"
 	elif [ "$pcmanfm_files_manager" = true ];then
-		add_packages_2_install_list "${install_files_manager_pcmanfm}"
+		add_packages_2_install_list "${install_files_manager_pcmanfm} ${install_common_files_manager_pcmanfm}"
 	fi
 
 	if [ "$install_qt5ct" = "qt5ct" ];then
-		add_packages_2_install_list "${install_qt5ct}"
+		add_packages_2_install_list "${install_qt5ct} ${install_common_qt5ct}"
 	fi
 
 	if [ "$install_zsh_now" = "zsh_default" ] || [ "$install_zsh_now" = "zsh" ];then
-		add_packages_2_install_list "${install_zsh}"
+		add_packages_2_install_list "${install_zsh} ${install_common_zsh}"
 	fi
 
 	if [ "$install_extra_now" = "extra" ];then
-		add_packages_2_install_list "${install_extra_apps}"
+		add_packages_2_install_list "${install_extra_apps} ${install_common_extra_apps}"
 	fi
 }
 
@@ -112,10 +112,10 @@ post_disto_apps_installer(){
 			kill_package_ mpd
 		fi
 		
-		init_manager stop mpd.socket
-		init_manager stop mpd.service 
-		init_manager disable mpd.socket 
-		init_manager disable mpd.service
+		service_manager stop mpd.socket
+		service_manager stop mpd.service 
+		service_manager disable mpd.socket 
+		service_manager disable mpd.service
 	fi
 	
 	if [ "$machine_type_are" = "laptop" ];then
@@ -124,10 +124,10 @@ post_disto_apps_installer(){
 			[ -f "/etc/tlp.conf" ] && $_SUPERUSER sed -i "s/#DEVICES_TO_DISABLE_ON_STARTUP=.*/DEVICES_TO_DISABLE_ON_STARTUP=\"bluetooth\"/g" /etc/tlp.conf
 		fi
 		
-		init_manager mask rfkill
-		init_manager mask systemd-rfkill.service
-		init_manager mask systemd-rfkill.socket 
-		init_manager enable tlp
+		service_manager mask rfkill
+		service_manager mask systemd-rfkill.service
+		service_manager mask systemd-rfkill.socket 
+		service_manager enable tlp
 		
 		$_SUPERUSER tlp start || tlp_error="true"
 		if [ "$tlp_error" = "true" ];then
@@ -190,33 +190,37 @@ install_ads_block_for_firefox(){
 	show_im "Downloading uBlock to firefox."
 	ads_block_api_contant="$(get_url_content "https://api.github.com/repos/gorhill/uBlock/releases/latest")"
 	ads_block_url="$(echo "$ads_block_api_contant" | grep -oP '(?<=browser_download_url": ")[^"]*' | grep firefox)"
-	ads_block_name="$(echo "$ads_block_api_contant" | grep -oP '(?<=name": ")[^"]*' | grep firefox)"
-	ads_block_tmp_path="/tmp/ads_block"
-	ads_block_downloaded_tmp_path="${ads_block_tmp_path}/${ads_block_name}"
-	ads_block_contant_tmp_path="${ads_block_tmp_path}/ads_block_contant"
-			
-	$_SUPERUSER mkdir -p "${ads_block_contant_tmp_path}"
-	
-	download_file "$_SUPERUSER" "${ads_block_url}" "${ads_block_tmp_path}/${ads_block_name}"
-	$_SUPERUSER unzip "${ads_block_downloaded_tmp_path}" -d "${ads_block_contant_tmp_path}" >/dev/null 2>&1
-	
-	ads_block_tmp_path="${ads_block_tmp_path}/$(grep -oP '(?<=id": ")[^"]*' "${ads_block_contant_tmp_path}/manifest.json").xpi"
-	
-	$_SUPERUSER mv "${ads_block_downloaded_tmp_path}" "${ads_block_tmp_path}"
-	
-	for d in /home/*; do
-		if [ -d "$d/.mozilla/firefox" ];then
-			show_im "Installing uBlock to ($d) firefox."
-			user_and_group=$(stat "$(dirname "$d/.config")" -c %u:%g)
-			profiles="$(cat "$d/.mozilla/firefox/profiles.ini" | grep "Path=" | awk -F= '{print $2}')"
-			for p in $profiles;do
-				$_SUPERUSER mkdir -p "$d/.mozilla/firefox/$p/extensions"
-				$_SUPERUSER cp -r "${ads_block_tmp_path}" "$d/.mozilla/firefox/$p/extensions"
-			done
-			$_SUPERUSER chown -R "$user_and_group" "$d"
-		else
-			show_im "Skipping install of uBlock to ($d) firefox."
-		fi
-	done
+	if [ -z "$ads_block_url" ];then
+		show_wm "Skipping install of uBlock to firefox failed to get browser_download_url."
+	else
+		ads_block_name="$(echo "$ads_block_api_contant" | grep -oP '(?<=name": ")[^"]*' | grep firefox)"
+		ads_block_tmp_path="/tmp/ads_block"
+		ads_block_downloaded_tmp_path="${ads_block_tmp_path}/${ads_block_name}"
+		ads_block_contant_tmp_path="${ads_block_tmp_path}/ads_block_contant"
+				
+		$_SUPERUSER mkdir -p "${ads_block_contant_tmp_path}"
+		
+		download_file "$_SUPERUSER" "${ads_block_url}" "${ads_block_tmp_path}/${ads_block_name}"
+		$_SUPERUSER unzip "${ads_block_downloaded_tmp_path}" -d "${ads_block_contant_tmp_path}" >/dev/null 2>&1
+		
+		ads_block_tmp_path="${ads_block_tmp_path}/$(grep -oP '(?<=id": ")[^"]*' "${ads_block_contant_tmp_path}/manifest.json").xpi"
+		
+		$_SUPERUSER mv "${ads_block_downloaded_tmp_path}" "${ads_block_tmp_path}"
+		
+		for d in /home/*; do
+			if [ -d "$d/.mozilla/firefox" ];then
+				show_im "Installing uBlock to ($d) firefox."
+				user_and_group=$(stat "$(dirname "$d/.config")" -c %u:%g)
+				profiles="$(cat "$d/.mozilla/firefox/profiles.ini" | grep "Path=" | awk -F= '{print $2}')"
+				for p in $profiles;do
+					$_SUPERUSER mkdir -p "$d/.mozilla/firefox/$p/extensions"
+					$_SUPERUSER cp -r "${ads_block_tmp_path}" "$d/.mozilla/firefox/$p/extensions"
+				done
+				$_SUPERUSER chown -R "$user_and_group" "$d"
+			else
+				show_im "Skipping install of uBlock to ($d) firefox."
+			fi
+		done
+	fi
 	touch "${installer_phases}/install_ads_block_for_firefox"
 }

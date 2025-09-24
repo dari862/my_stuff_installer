@@ -1,0 +1,77 @@
+#!/bin/sh
+#######################
+## must have apps
+#######################
+install_common_ufw_apps="ufw"
+install_common_must_have_apps="jq git plocate htop unzip "
+install_common_must_have_apps2="psmisc gparted inxi s-tui dfc hwinfo acl ntfs-3g"
+install_common_image_viewer_apps="viewnior imagemagick "
+install_common_files_manager_support_app="gvfs file-roller baobab"
+install_common_terminal="kitty"
+install_common_if_laptop_apps="tlp tlp-rdw powertop"
+install_common_cli_sound_app="mpd mpc ncmpcpp"
+install_common_MIDI_sound_app="wildmidi"
+install_common_text_editer_app="geany geany-plugins zathura"
+install_common_mediaplayer_app="mpv cava"
+install_common_polkit_apps="gnome-keyring"
+install_common_fonts=""
+install_common_passman="keepassxc"
+
+#firefox
+install_common_firefox_=""
+
+# ffmpeg for screen recoding and manymore , at for bl-beepmein
+install_common_for_scripts="ffmpeg at"
+# python3-pyte for theoops , python3-pyte for pickbg
+install_common_for_scripts2=""
+
+#for x11
+install_common_X11_apps=""
+install_common_must_have_apps_for_X11="yad rofi picom dunst nsxiv "
+install_common_res_apps_for_X11="arandr"
+install_common_locker_app_for_X11="i3lock"
+install_common_if_laptop_apps_x11=""
+install_common_conky_all_app=""
+install_common_openbox_="openbox xcape tint2"
+install_common_themes_tools_for_X11="xsettingsd lxappearance"
+# slop for ac-shots and screen recoding , wmctrl for style-manager and files-uploader
+install_common_for_x11_scripts="slop wmctrl"
+
+#for wayland
+
+
+#######################
+## extra apps
+#######################
+#install_common_clipman_manager_for_X11="parcellite"
+#install_common_clipman_manager_for_X11="diodon"
+#install_common_clipman_manager_for_X11="xfce4-clipman"
+install_common_files_manager_thunar="thunar thunar-archive-plugin"
+install_common_files_manager_pcmanfm="pcmanfm"
+install_common_qt5ct="qt5ct"
+install_common_zsh="zsh"
+
+#for x11
+install_common_clipman_manager_for_X11=""
+install_common_polybar="polybar"
+install_common_apps_for_bspwm="bspwm sxhkd"
+install_common_apps_for_dwm=""
+install_common_jgmenu="jgmenu"
+
+#for wayland
+
+
+#######################
+## better bash
+#######################
+install_common_better_bash="bash bash-completion"
+
+#######################
+## better shell
+#######################
+install_common_better_shell="tar bat fzf highlight lf"
+
+#######################
+## extra
+#######################
+install_common_extra_apps="micro multitail ncdu tree meld btop"

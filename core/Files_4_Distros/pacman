@@ -120,11 +120,11 @@ add_packages_2_install_list(){
     	if ! package_installed "${INDEX}";then
         	if grep -q "^${INDEX} " "${list_of_apps_file_path}";then
             	packages_to_install_pacman="$packages_to_install_pacman $INDEX"
-            	List_of_apt_2_install_="$List_of_apt_2_install_ $INDEX"
+            	Packages_2_install="$Packages_2_install $INDEX"
             	echo "$INDEX added to install list."
         	elif ${PACKAGER} -Si "${INDEX}" >/dev/null 2>&1;then
             	packages_to_install_AUR="$packages_to_install_AUR $INDEX"
-            	List_of_apt_2_install_="$List_of_apt_2_install_ $INDEX"
+            	Packages_2_install="$Packages_2_install $INDEX"
             	echo "$INDEX added to install list."
             else
 				show_filed_2_add_pakage_m "${INDEX} does not exist." 
@@ -232,3 +232,5 @@ pre_package_manager_(){
     updating_rate_mirrors
     touch "${installer_phases}/pre_package_manager_"
 }
+
+enable_repo(){   :; }

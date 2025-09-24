@@ -1,0 +1,10 @@
+#!/bin/sh
+#must have apps
+install_common_audio="pulseaudio pavucontrol"
+install_common_drivers_if_laptop="acpi upower"
+install_common_drivers_if_laptop_xbacklight=""
+install_common_drivers_if_laptop_light="light"
+install_common_wireless=""
+install_common_bluetooth=""
+install_common_autoinstall_firmware=""
+install_common_exfat=""

@@ -65,9 +65,6 @@ fi
 
 reboot_now="Y"
 
-enable_contrib=false
-enable_nonfree_firmware=false
-enable_nonfree=false
 _SUPERUSER=""
 __USER="$USER"
 source_prompt_to_install_file=""
@@ -78,6 +75,7 @@ theme_temp_path=""
 
 doas_installed=false
 sudo_installed=false
+enable_GPU_installer=true
 
 list_of_apps_file_path="${temp_path}/list_of_apps"
 list_of_installed_apps_file_path="${temp_path}/list_of_installed_apps"
@@ -100,6 +98,10 @@ failed_2_install_ufw=false
 machine_type_are=""
 
 install_hwclock=false
+Distro_installer_mode=true
+
+usr_local_bin_path="/usr/local/bin"
+
 ################################################################################################################################
 # Function
 ################################################################################################################################
@@ -399,8 +401,25 @@ prompt_to_ask_to_what_to_install(){
 			return
 		fi
 		
+		if do_you_want_2_run_this_yes_or_no 'install GPU Drivers?' 'Y';then
+			enable_GPU_installer=true
+			install_cuda_=false
+			install_kernel_open_dkms_=false
+			install_akmod_nvidia=false
+			if do_you_want_2_run_this_yes_or_no 'do you want to add Cuda Support?' 'Y';then
+				install_cuda_=true
+			elif do_you_want_2_run_this_yes_or_no 'do you want to install opensource nvidia-kernel?' 'Y';then
+				install_kernel_open_dkms_=true
+			elif do_you_want_2_run_this_yes_or_no 'do you want to add akmod Support?' 'Y';then
+				install_akmod_nvidia=true
+			fi
+		else
+			enable_GPU_installer=false
+		fi
+		
 		if do_you_want_2_run_this_yes_or_no 'Do you want to install wayland packages?' 'Y';then
 			install_wayland=true
+			enable_GPU_installer=true
 			if do_you_want_2_run_this_yes_or_no 'Do you want to install X11 packages?' 'Y';then
 				install_X11=true
 			else
@@ -557,12 +576,13 @@ prompt_to_ask_to_what_to_install(){
 create_prompt_to_install_value_file(){
 	show_im "creating: ${prompt_to_install_value_file}"
 	tee "${prompt_to_install_value_file}" <<- EOF >/dev/null
+		enable_GPU_installer=${enable_GPU_installer}
+		install_cuda_=${install_cuda_}
+		install_kernel_open_dkms_=${install_kernel_open_dkms_}
+		install_akmod_nvidia=${install_akmod_nvidia}
 		install_wayland="${install_wayland}"
 		install_X11="${install_X11}"
 		switch_to_doas="${switch_to_doas}"
-		enable_contrib="${enable_contrib}"
-		enable_nonfree_firmware="${enable_nonfree_firmware}"
-		enable_nonfree="${enable_nonfree}"
 		run_purge_some_unnecessary_pakages="${run_purge_some_unnecessary_pakages}"
 		run_disable_some_unnecessary_services="${run_disable_some_unnecessary_services}"
 		disable_ipv6="${disable_ipv6}"
@@ -756,38 +776,11 @@ clean_up_now(){
 disable_ipv6_now(){
 	[ -f "${installer_phases}/disable_ipv6_now" ] && return
 	if [ "$disable_ipv6_stack" = "Y" ];then
-		show_im "disabling IPv6 stack (kernal level)."
-		if ! grep 'GRUB_CMDLINE_LINUX=' /etc/default/grub | grep -q 'ipv6.disable=1';then
-			if grep -q 'GRUB_CMDLINE_LINUX=""' /etc/default/grub;then
-				$_SUPERUSER sed -i 's/GRUB_CMDLINE_LINUX=""/GRUB_CMDLINE_LINUX="ipv6.disable=1"/' /etc/default/grub
-				need_to_update_grub=true
-			else
-				$_SUPERUSER sed -i 's/GRUB_CMDLINE_LINUX=\"\(.*\)\"/GRUB_CMDLINE_LINUX=\"\1 ipv6.disable=1\"/' /etc/default/grub
-				need_to_update_grub=true
-			fi
-		fi
-		if ! grep 'GRUB_CMDLINE_LINUX_DEFAULT=' /etc/default/grub | grep -q 'ipv6.disable=1';then
-			if grep -q 'GRUB_CMDLINE_LINUX_DEFAULT=""' /etc/default/grub;then
-				$_SUPERUSER sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=""/GRUB_CMDLINE_LINUX_DEFAULT="ipv6.disable=1"/' /etc/default/grub
-				need_to_update_grub=true
-			else
-				$_SUPERUSER sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=\"\(.*\)\"/GRUB_CMDLINE_LINUX_DEFAULT=\"\1 ipv6.disable=1\"/' /etc/default/grub
-				need_to_update_grub=true
-			fi
-		fi
+		tweek_as_dependency disable_ipv6_stack_kernal_level
 	fi
 	
 	if [ "$disable_ipv6" = "Y" ];then
-		disable_ipv6_conf="/etc/sysctl.d/90-disable_ipv6.conf"
-		if [ ! -f "${disable_ipv6_conf}" ];then
-			show_im "Disabling IPv6."
-			$_SUPERUSER tee "${disable_ipv6_conf}" <<- EOF >/dev/null
-			net.ipv6.conf.all.disable_ipv6 = 1
-			net.ipv6.conf.default.disable_ipv6 = 1
-			net.ipv6.conf.lo.disable_ipv6 = 1
-			EOF
-			$_SUPERUSER sysctl -p "${disable_ipv6_conf}"
-		fi
+		tweek_as_dependency disable_ipv6
 	fi
 	touch "${installer_phases}/disable_ipv6_now"
 }
@@ -920,7 +913,7 @@ switch_default_xsession(){
 create_uninstaller_file(){
 	[ -f "${__distro_path_uninstaller_var}" ] && return
 	show_m "Creating uninstaller file."
-	List_of_installed_packages_="${List_of_apt_2_install_}"
+	List_of_installed_packages_="${Packages_2_install}"
 	$_SUPERUSER tee "${__distro_path_uninstaller_var}" <<- EOF >/dev/null
 	grub_image_name=\"${grub_image_name}\"
 	List_of_pakages_installed_=\"${List_of_installed_packages_}\"
@@ -970,12 +963,14 @@ check_and_download_core_script(){
 	show_m "check if exsit and download core script."
 	
 	if [ "$install_drivers" = "true" ];then
+		check_and_download_ "Files_4_Distros/disto_Drivers_list_common" 
 		check_and_download_ "Files_4_Distros/${distro_name}/disto_Drivers_list" 
 		check_and_download_ "disto_Drivers_installer"
 		check_and_download_ "Files_4_Distros/${distro_name}/disto_specific_Drivers_installer"
 	fi
 	
 	if [ "$install_apps" = "true" ];then
+		check_and_download_ "Files_4_Distros/disto_apps_list_common"
 		check_and_download_ "Files_4_Distros/${distro_name}/disto_apps_list"
 		check_and_download_ "disto_apps_installer"
 		check_and_download_ "Files_4_Distros/${distro_name}/disto_specific_apps_installer"
@@ -1090,6 +1085,49 @@ switch_to_doas_now(){
 	touch "${installer_phases}/switch_to_doas_now"
 }
 
+tweek_as_dependency(){
+	grub_updater_function(){   need_to_update_grub=true; }
+	if [ -d "$distro_temp_path" ];then
+		tweek_location="$(find "${distro_temp_path}/bin/my_installer/tweeks_center/" "${distro_temp_path}/All_Distro_Specific/${distro_name}/tweeks_center/" -type f -name "${1:-}" )"
+	elif [ -d "$__distro_path_root" ];then
+		tweek_location="$(find "${__distro_path_root}/bin/my_installer/tweeks_center/" "${__distro_path_root}/All_Distro_Specific/${distro_name}/tweeks_center/" -type f -name "${1:-}" )"
+	fi
+	. "${tweek_location}" "${2:-}"
+}
+
+grub_updater_function(){   need_to_update_grub=true; }
+
+install_GPU_Drivers_now(){
+	create_GPU_Drivers_ready=false
+	need_2_run_upgrade_now=false
+	[ "${enable_GPU_installer}" != true ] && return
+	[ -f "${installer_phases}/install_GPU_Drivers_now" ] && return
+	failed_to_run(){   show_wm "$@"; }
+	failed_but_continue(){   show_em "$@"; }
+	alias continue="show_wm"
+	say(){   show_im "$@"; }
+	create_system_ready_file(){   :; }
+	update_pipemenu(){   :; }
+	Package_installer_(){   install_packages $@; }
+	Package_update_(){   upgrade_now; }
+	
+	show_im "Installing GPU Drivers"
+	. "${distro_temp_path}/All_Distro_Specific/${distro_name}/apps_center/Drivers_Pakages/GPU"
+	
+	create_GPU_Drivers_ready=true
+	echo "create_GPU_Drivers_ready=$create_GPU_Drivers_ready" >> "${save_value_file}"
+	
+	unset failed_to_run
+	unset failed_but_continue
+	unalias continue
+	unset say
+	unset create_system_ready_file
+	unset update_pipemenu
+	unset Package_installer_
+	unset need_2_run_upgrade_now
+	touch "${installer_phases}/install_GPU_Drivers_now"
+}
+
 __Done(){
 	if [ -f "/tmp/distro_done_installing" ];then
 		show_m "Removing ${temp_path}"
@@ -1142,15 +1180,15 @@ switch_to_network_manager(){
 		fi
   		$_SUPERUSER sed -i 's/managed=.*/managed=false/g' /etc/NetworkManager/NetworkManager.conf
  	fi
-	if init_manager status NetworkManager;then
-		init_manager enable-only NetworkManager
+	if service_manager status NetworkManager;then
+		service_manager enable-only NetworkManager
 	 	show_im "disable not needed network service."
-		init_manager disable networking
-	  	init_manager disable systemd-networkd.service
-	  	init_manager disable systemd-networkd.socket
-	  	init_manager disable systemd-resolved.service
-	  	init_manager disable iwd
-	   	init_manager disable netctl
+		service_manager disable networking
+	  	service_manager disable systemd-networkd.service
+	  	service_manager disable systemd-networkd.socket
+	  	service_manager disable systemd-resolved.service
+	  	service_manager disable iwd
+	   	service_manager disable netctl
 		if [ -n "$__SSID4switch" ];then
 			nmcli device wifi connect "$SSID" password "$PASS"
 	 	fi
@@ -1172,12 +1210,27 @@ disable_network_manager_powersaving(){
 		options iwlwifi power_save=0
 		EOF
 	 	if command -v update-initramfs >/dev/null 2>&1;then
-			sudo update-initramfs -u
+			$_SUPERUSER update-initramfs -u
 	 	elif command -v mkinitcpio >/dev/null 2>&1;then
-			sudo mkinitcpio -P
+			$_SUPERUSER mkinitcpio -P
 	 	fi
 	fi
 }
+
+install_yt_dlb(){
+	[ -f "${installer_phases}/install_yt_dlb" ] && return
+	if command -v yt-dlp >/dev/null 2>&1;then
+		if ! remove_packages "yt-dlp";then
+			yt_dlp_path="$(which yt-dlp)"
+			$_SUPERUSER rm -rdf $yt_dlp_path
+		fi
+	fi
+	$_SUPERUSER mkdir -p "$usr_local_bin_path"
+	download_file "$_SUPERUSER" "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" "${usr_local_bin_path}/yt-dlp"
+	$_SUPERUSER chmod +x "${usr_local_bin_path}/yt-dlp"
+	touch "${installer_phases}/install_yt_dlb"
+}
+
 ################################################################################################################################
 ################################################################################################################################
 ################################################################################################################################
@@ -1245,13 +1298,15 @@ if [ "$install_apps" = "true" ];then
 fi
 	
 if [ ! -f "${installer_phases}/create_List_of_apt_2_install_" ];then
-	List_of_apt_2_install_=""
+	Packages_2_install=""
 	if [ "$install_drivers" = "true" ];then
+		source_this_script "disto_Drivers_list_common" "Add drivers list from (disto_Drivers_list_common)"
 		source_this_script "disto_Drivers_list" "Add drivers list from (disto_Drivers_list)"
 	fi
 		
 	if [ "$install_apps" = "true" ];then
 		source_this_script "disto_apps_list" "Add apps list from (disto_apps_list)"
+		source_this_script "disto_apps_list_common" "Add apps list from (disto_apps_list_common)"
 	fi
 	if [ "$install_drivers" = "true" ] && [ "$install_apps" = "true" ];then
 		show_m "Sourcing drivers and apps files."
@@ -1277,7 +1332,7 @@ if [ ! -f "${installer_phases}/create_List_of_apt_2_install_" ];then
 	install_lightdm_now
 	
 	if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
-		echo "List_of_apt_2_install_=\"$List_of_apt_2_install_\"" >> "${save_value_file}"
+		echo "Packages_2_install=\"$Packages_2_install\"" >> "${save_value_file}"
 		echo "packages_to_install_pacman=\"$packages_to_install_pacman\"" >> "${save_value_file}"
 		echo "packages_to_install_AUR=\"$packages_to_install_AUR\"" >> "${save_value_file}"
 	fi
@@ -1291,6 +1346,10 @@ if [ ! -f "${installer_phases}/install_List_of_apt_2_install_" ];then
 		touch "${installer_phases}/install_List_of_apt_2_install_"
 	fi
 fi
+
+install_GPU_Drivers_now
+
+install_yt_dlb
 
 touch "${installer_phases}/no_internet_needed" 
 ##################################################################################
@@ -1380,6 +1439,8 @@ create_new_os_release_file
 run_my_alternatives
 
 switch_to_doas_now
+
+[ "${create_GPU_Drivers_ready}" = true ] && $_SUPERUSER touch "${__distro_path_system_ready}/GPU_Drivers_ready"
 
 if [ "$failed_2_install_ufw" = true ];then
 	show_wm "failed to install ${install_ufw_apps}."

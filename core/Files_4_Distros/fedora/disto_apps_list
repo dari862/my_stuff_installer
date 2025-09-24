@@ -4,38 +4,36 @@ must_purge="system-config-printer zeitgeist zeitgeist-core"
 #######################
 ## must have apps
 #######################
-install_ufw_apps="ufw"
-install_must_have_apps="jq git plocate htop unzip libnotify"
-install_must_have_apps2="psmisc gparted inxi s-tui dfc hwinfo acl lm-sensors ntfs-3g xz"
-install_image_viewer_apps="viewnior imagemagick gtk-murrine-engine"
-install_files_manager_support_app="gvfs gvfs-mtp gvfs-afc file-roller baobab avahi"
-install_terminal="kitty"
-install_if_laptop_apps="tlp tlp-rdw powertop"
-install_cli_sound_app="mpd mpc ncmpcpp"
-install_MIDI_sound_app="wildmidi timidity"
-install_text_editer_app="geany geany-plugins zathura"
-install_mediaplayer_app="mpv cava"
-install_polkit_apps="gnome-keyring"
-install_fonts="google-noto-sans-fonts google-droid-sans-mono-fonts google-cantarell-fonts liberation-fonts opensymbol-fonts noto-fonts noto-fonts-mono inconsolata-fonts"
-install_passman="keepassxc"
+install_ufw_apps=""
+install_must_have_apps="libnotify"
+install_must_have_apps2="lm-sensors xz"
+install_image_viewer_apps="gtk-murrine-engine"
+install_files_manager_support_app="gvfs-mtp gvfs-afc avahi"
+install_terminal=""
+install_if_laptop_apps=""
+install_cli_sound_app=""
+install_MIDI_sound_app="timidity"
+install_text_editer_app=""
+install_mediaplayer_app=""
+install_polkit_apps=""
+install_fonts=""
+install_passman=""
 
 #firefox
 install_firefox_="firefox"
 
-# ffmpeg for screen recoding and manymore , at for bl-beepmein
-install_for_scripts="ffmpeg at"
+install_for_scripts=""
+# python3-pyte for theoops , python3-pyte for pickbg
+install_for_scripts2="python3-pyte python3-tk"
 
 #for x11
 install_X11_apps="x11-utils xorg-x11-server-Xorg xorg-x11-drv-input-all xorg-x11-drv-input dbus-x11 xorg-x11-drv-xinit xdg-user-dirs xclip xwallpaper xdotool xprintidle"
-install_must_have_apps_for_X11="yad rofi picom dunst nsxiv "
-install_res_apps_for_X11="arandr xrandr"
-install_locker_app_for_X11="i3lock"
+install_must_have_apps_for_X11=""
+install_res_apps_for_X11="xrandr"
+install_locker_app_for_X11=""
 install_if_laptop_apps_x11="xorg-x11-drv-synaptics"
 install_conky_all_app="conky"
-install_openbox_="openbox obconf xcape tint2"
-install_themes_tools_for_X11="xsettingsd lxappearance"
-# slop for ac-shots and screen recoding , wmctrl for style-manager and files-uploader
-install_for_x11_scripts="slop wmctrl"
+install_openbox_="obconf"
 
 #for wayland
 
@@ -43,19 +41,16 @@ install_for_x11_scripts="slop wmctrl"
 #######################
 ## extra apps
 #######################
-install_files_manager_thunar="thunar thunar-archive-plugin"
-install_files_manager_pcmanfm="pcmanfm"
-install_qt5ct="qt5ct qt5-style-kvantum qt5-svg qt5-quickcontrols"
-install_zsh="zsh"
+install_files_manager_thunar=""
+install_files_manager_pcmanfm=""
+install_qt5ct="qt5-style-kvantum qt5-svg qt5-quickcontrols"
+install_zsh=""
 
 #for x11
-#install_clipman_manager_for_X11="parcellite"
-#install_clipman_manager_for_X11="diodon"
-#install_clipman_manager_for_X11="xfce4-clipman"
-install_polybar="polybar"
-install_apps_for_bspwm="bspwm sxhkd"
+install_polybar=""
+install_apps_for_bspwm=""
 install_apps_for_dwm="libX11-devel libXft-devel libXinerama-devel devel_basis"
-install_jgmenu="jgmenu"
+install_jgmenu=""
 
 #for wayland
 
@@ -63,14 +58,14 @@ install_jgmenu="jgmenu"
 #######################
 ## better bash
 #######################
-install_better_bash="bash bash-completion"
+install_better_bash=""
 
 #######################
 ## better shell
 #######################
-install_better_shell="tar bat fzf command-not-found thefuck highlight lf"
+install_better_shell="command-not-found"
 
 #######################
 ## extra
 #######################
-install_extra_apps="micro multitail ncdu tree meld btop"
+install_extra_apps=""

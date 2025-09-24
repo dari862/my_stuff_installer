@@ -1,0 +1,18 @@
+convert change to magick
+bin/bin/albumart_creater
+bin/extra/strip-metadata
+bin/not_add_2_path/grub2_themes/create_custom_bg
+bin/WM/dynamic_theme_scripts/palette_creator
+bin/X11/bin/my-shots
+bin/X11/not_add_2_path/owl4ce/owl4ce_scripts
+bin/X11/rofi/colorpick.sh
+bin/X11/rofi/WallSelect
+bin/X11/WM/my-locker
+bin/X11/yad/uploader/upload-imgbb
+skel_extra/.config/conky/syclo/images/blue/convert-with-imagemagick
+skel_extra/.config/conky/syclo/images/crimson/convert-with-imagemagick
+skel_extra/.config/conky/syclo/images/cyan/convert-with-imagemagick
+skel_extra/.config/conky/syclo/images/froly/convert-with-imagemagick
+skel_extra/.config/conky/syclo/images/lime/convert-with-imagemagick
+skel_extra/.config/conky/syclo/images/orange/convert-with-imagemagick.sh
+skel_extra/.config/lf/previewer
