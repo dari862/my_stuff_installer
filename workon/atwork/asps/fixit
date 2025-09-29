@@ -1,3 +1,0 @@
-cd /home/dari/Desktop/Theme_Stuff/icons/
-find . -xtype l -exec ls -al {} +
-find . -xtype l
