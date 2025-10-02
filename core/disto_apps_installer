@@ -102,10 +102,10 @@ post_disto_apps_installer(){
 	
 	if [ "$install_zsh_now" = "zsh_default" ];then
 		show_im "make zsh default shell "
-		$_SUPERUSER chsh -s $(command_exist zsh) $__USER
+		chsh -s $(command_exist zsh) $__USER
 	fi
 	if command_exist batcat && ! command_exist bat;then
-		$_SUPERUSER ln -sf $(which batcat) /usr/bin/bat
+		ln -sf $(which batcat) /usr/bin/bat
 	fi
 	if command_exist mpd;then
 		if [ -n "$(pidof mpd)" ];then
@@ -121,7 +121,7 @@ post_disto_apps_installer(){
 	if [ "$machine_type_are" = "laptop" ];then
 		show_im "some config"
 		if [ "$has_bluetooth" = true ];then
-			[ -f "/etc/tlp.conf" ] && $_SUPERUSER sed -i "s/#DEVICES_TO_DISABLE_ON_STARTUP=.*/DEVICES_TO_DISABLE_ON_STARTUP=\"bluetooth\"/g" /etc/tlp.conf
+			[ -f "/etc/tlp.conf" ] && sed -i "s/#DEVICES_TO_DISABLE_ON_STARTUP=.*/DEVICES_TO_DISABLE_ON_STARTUP=\"bluetooth\"/g" /etc/tlp.conf
 		fi
 		
 		service_manager mask rfkill
@@ -129,17 +129,17 @@ post_disto_apps_installer(){
 		service_manager mask systemd-rfkill.socket 
 		service_manager enable tlp
 		
-		$_SUPERUSER tlp start || tlp_error="true"
+		tlp start || tlp_error="true"
 		if [ "$tlp_error" = "true" ];then
-			$_SUPERUSER  tlp start | grep '>>> Invoke' >> "${temp_path}"/tlp_error_Invoke
+			 tlp start | grep '>>> Invoke' >> "${temp_path}"/tlp_error_Invoke
 			if [ -f "${temp_path}/tlp_error_Invoke" ];then
 				sed -i "s/' to correct this.//g" "${temp_path}"/tlp_error_Invoke
-				sed -i "s/>>> Invoke '/$_SUPERUSER /g" "${temp_path}"/tlp_error_Invoke
+				sed -i "s/>>> Invoke '//g" "${temp_path}"/tlp_error_Invoke
 				. "${temp_path}"/tlp_error_Invoke
-				$_SUPERUSER  tlp start
+				 tlp start
 			fi
-			if $_SUPERUSER tlp-stat |  grep '* Install' >/dev/null 2>&1 ;then
-				$_SUPERUSER tlp-stat |  grep '* Install' | awk -F' '  '{print "add_packages_2_install_list " $3}' >> "${temp_path}"/tlp_install_exta_apps
+			if tlp-stat |  grep '* Install' >/dev/null 2>&1 ;then
+				tlp-stat |  grep '* Install' | awk -F' '  '{print "add_packages_2_install_list " $3}' >> "${temp_path}"/tlp_install_exta_apps
 				if [ -f "${temp_path}/tlp_install_exta_apps" ];then
 					. "${temp_path}"/tlp_install_exta_apps
 					install_packages
@@ -150,37 +150,37 @@ post_disto_apps_installer(){
 
 	if command_exist ufw;then
 		show_im "Disableing (UFW)"
-		$_SUPERUSER ufw disable >/dev/null 2>&1
+		ufw disable >/dev/null 2>&1
 				
 		if package_installed openssh;then
 			show_im "Limiting port 22/tcp (UFW)"
-    		$_SUPERUSER ufw limit 22/tcp || show_wm "Failed to limiting port 22/tcp (UFW)"
+    		ufw limit 22/tcp || show_wm "Failed to limiting port 22/tcp (UFW)"
     		
 		fi
 		
 		show_im "Allow out port DNS 53 (UFW)"
-		$_SUPERUSER ufw allow out 53 || show_wm "Failed to allow out port DNS 53 (UFW)"
+		ufw allow out 53 || show_wm "Failed to allow out port DNS 53 (UFW)"
     	
     	show_im "Allow out port 80/tcp (UFW)"
-    	$_SUPERUSER ufw allow out 80/tcp || show_wm "Failed to allow out port 80/tcp (UFW)"
+    	ufw allow out 80/tcp || show_wm "Failed to allow out port 80/tcp (UFW)"
     	
 		show_im "Allow out port 443/tcp (UFW)"
-    	$_SUPERUSER ufw allow out 443/tcp || show_wm "Failed to allow out port 443/tcp (UFW)"
+    	ufw allow out 443/tcp || show_wm "Failed to allow out port 443/tcp (UFW)"
     	
 		show_im "Allow out port NTP 123 (UFW)"
-		$_SUPERUSER ufw allow out 123 || show_wm "Failed to allow out port NTP 123 (UFW)"
+		ufw allow out 123 || show_wm "Failed to allow out port NTP 123 (UFW)"
     	
     	show_im "Denying Incoming Packets by Default(UFW)"
-    	$_SUPERUSER ufw default deny incoming || show_wm "Failed to denying Incoming Packets by Default(UFW)"
+    	ufw default deny incoming || show_wm "Failed to denying Incoming Packets by Default(UFW)"
     	
 		show_im "Allowing Outcoming Packets by Default(UFW)"
-    	$_SUPERUSER ufw default allow outgoing || show_wm "Failed to allowing Outcoming Packets by Default(UFW)"
+    	ufw default allow outgoing || show_wm "Failed to allowing Outcoming Packets by Default(UFW)"
     	
 		show_im "Enabled Firewall with Baselines!"
-    	$_SUPERUSER ufw --force enable || show_wm "Failed to enabled Firewall with Baselines!"
+    	ufw --force enable || show_wm "Failed to enabled Firewall with Baselines!"
     	
     	show_im "Enable Firewall logging"
-		$_SUPERUSER ufw logging on || show_wm "Failed to enable Firewall logging"
+		ufw logging on || show_wm "Failed to enable Firewall logging"
 	fi
 	touch "${installer_phases}/post_disto_apps_installer"
 }
@@ -198,14 +198,14 @@ install_ads_block_for_firefox(){
 		ads_block_downloaded_tmp_path="${ads_block_tmp_path}/${ads_block_name}"
 		ads_block_contant_tmp_path="${ads_block_tmp_path}/ads_block_contant"
 				
-		$_SUPERUSER mkdir -p "${ads_block_contant_tmp_path}"
+		mkdir -p "${ads_block_contant_tmp_path}"
 		
-		download_file "$_SUPERUSER" "${ads_block_url}" "${ads_block_tmp_path}/${ads_block_name}"
-		$_SUPERUSER unzip "${ads_block_downloaded_tmp_path}" -d "${ads_block_contant_tmp_path}" >/dev/null 2>&1
+		download_file "${ads_block_url}" "${ads_block_tmp_path}/${ads_block_name}"
+		unzip "${ads_block_downloaded_tmp_path}" -d "${ads_block_contant_tmp_path}" >/dev/null 2>&1
 		
 		ads_block_tmp_path="${ads_block_tmp_path}/$(grep -oP '(?<=id": ")[^"]*' "${ads_block_contant_tmp_path}/manifest.json").xpi"
 		
-		$_SUPERUSER mv "${ads_block_downloaded_tmp_path}" "${ads_block_tmp_path}"
+		mv "${ads_block_downloaded_tmp_path}" "${ads_block_tmp_path}"
 		
 		for d in /home/*; do
 			if [ -d "$d/.mozilla/firefox" ];then
@@ -213,10 +213,10 @@ install_ads_block_for_firefox(){
 				user_and_group=$(stat "$(dirname "$d/.config")" -c %u:%g)
 				profiles="$(cat "$d/.mozilla/firefox/profiles.ini" | grep "Path=" | awk -F= '{print $2}')"
 				for p in $profiles;do
-					$_SUPERUSER mkdir -p "$d/.mozilla/firefox/$p/extensions"
-					$_SUPERUSER cp -r "${ads_block_tmp_path}" "$d/.mozilla/firefox/$p/extensions"
+					mkdir -p "$d/.mozilla/firefox/$p/extensions"
+					cp -r "${ads_block_tmp_path}" "$d/.mozilla/firefox/$p/extensions"
 				done
-				$_SUPERUSER chown -R "$user_and_group" "$d"
+				chown -R "$user_and_group" "$d"
 			else
 				show_im "Skipping install of uBlock to ($d) firefox."
 			fi

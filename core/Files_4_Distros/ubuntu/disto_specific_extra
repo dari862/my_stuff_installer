@@ -30,10 +30,10 @@ purge_some_unnecessary_pakages(){
 		remove_packages "${_purge_it}"
 	fi
 	run_autoclean
-	$_SUPERUSER apt-mark hold snapd
+	apt-mark hold snapd
 	show_im "removing apt-fast and conf"
-	[ -f /usr/local/bin/apt-fast ] && show_sm "removing apt-fast" && $_SUPERUSER rm -f /usr/local/bin/apt-fast
-	[ -f /etc/apt-fast.conf ] && show_sm "removing apt-fast.conf" && $_SUPERUSER rm -f /etc/apt-fast.conf
+	[ -f /usr/local/bin/apt-fast ] && show_sm "removing apt-fast" && rm -f /usr/local/bin/apt-fast
+	[ -f /etc/apt-fast.conf ] && show_sm "removing apt-fast.conf" && rm -f /etc/apt-fast.conf
 	touch "${installer_phases}/purge_some_unnecessary_pakages"
 }
 

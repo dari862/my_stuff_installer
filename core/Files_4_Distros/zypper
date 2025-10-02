@@ -4,13 +4,13 @@ network_manager_app_from_Files_4_Distros="NetworkManager-1"
 ##################################
 # for rest
 ##################################
-__remove_package="$_SUPERUSER ${PACKAGER} remove -y"
+__remove_package="zypper remove -y"
 
 create_package_list(){
 	# create list_of_apps file
 	if [ ! -f "${list_of_apps_file_path}" ];then
 		show_im "Creating package list..."
-		$_SUPERUSER ${PACKAGER} se 2>/dev/null | awk -F'|' '{print $2}' | sed 's/^ //g' > "${list_of_apps_file_path}" 
+		zypper se 2>/dev/null | awk -F'|' '{print $2}' | sed 's/^ //g' > "${list_of_apps_file_path}" 
 	fi
 	
 	if [ ! -f "${list_of_installed_apps_file_path}" ];then
@@ -22,9 +22,9 @@ create_package_list(){
 install_packages(){
 	packages_to_install="${1:-${Packages_2_install}}"
 	if [ -n "${packages_to_install}" ];then
-    	($_SUPERUSER ${PACKAGER} install -y ${packages_to_install} && kill_package_ ${PACKAGER}) || \
-		($_SUPERUSER ${PACKAGER} install -y ${packages_to_install} && kill_package_ ${PACKAGER}) || \
-		$_SUPERUSER ${PACKAGER} install -y ${packages_to_install}
+    	(zypper install -y ${packages_to_install} && kill_package_ zypper) || \
+		(zypper install -y ${packages_to_install} && kill_package_ zypper) || \
+		zypper install -y ${packages_to_install}
     else
     	show_wm_only "packages_to_install are empty"
     	sleep 1
@@ -34,9 +34,9 @@ install_packages(){
 install_single_package(){
 	single_package="${1:-}"
 	if [ -n "${single_package}" ];then
-    	($_SUPERUSER ${PACKAGER} install -y ${single_package} && kill_package_ ${PACKAGER}) || \
-		($_SUPERUSER ${PACKAGER} install -y ${single_package} && kill_package_ ${PACKAGER}) || \
-		$_SUPERUSER ${PACKAGER} install -y ${single_package}
+    	(zypper install -y ${single_package} && kill_package_ zypper) || \
+		(zypper install -y ${single_package} && kill_package_ zypper) || \
+		zypper install -y ${single_package}
     else
     	show_wm "faile to install $single_package"
     	sleep 1
@@ -59,8 +59,8 @@ add_packages_2_install_list(){
 	
 upgrade_now()
 {
-	$_SUPERUSER ${PACKAGER} refresh
-	$_SUPERUSER ${PACKAGER} update -y
+	zypper refresh
+	zypper update -y
 }
 
 remove_packages()
@@ -68,7 +68,7 @@ remove_packages()
 	packages="$@"
 	if [ -n "$packages" ];then
 		show_im "Removing ${packages}."
-		$_SUPERUSER ${__remove_package} $packages
+		${__remove_package} $packages
 	else
 		show_wm_only "no packages to remove."
 	fi
@@ -76,23 +76,23 @@ remove_packages()
 
 run_autoclean(){
 	show_im "run autoremove autoclean."
-	$_SUPERUSER zypper clean -a
-	$_SUPERUSER zypper tidy
-	$_SUPERUSER zypper cc -a
+	zypper clean -a
+	zypper tidy
+	zypper cc -a
 }
 
 run_package_manager_autoclean(){
 	show_im "autoremove unwanted pakages"
 	run_autoclean
     if [ -d /var/tmp ]; then
-        $_SUPERUSER find /var/tmp -type f -atime +5 -delete
+        find /var/tmp -type f -atime +5 -delete
     fi
     
     if [ -d /var/log ]; then
-        $_SUPERUSER find /var/log -type f -name "*.log" -exec truncate -s 0 {} \;
+        find /var/log -type f -name "*.log" -exec truncate -s 0 {} \;
     fi
 	if [ "$init_system_are" = "systemd" ]; then
-        $_SUPERUSER journalctl --vacuum-time=3d
+        journalctl --vacuum-time=3d
     fi
 }
 
@@ -102,13 +102,13 @@ _unattended_upgrades_()
 		start)
 			[ -f "${installer_phases}/_unattended_upgrades_start" ] && return
 			show_im "Starting unattended upgrades (zypper cron setup needed)."
-			$_SUPERUSER systemctl enable --now packagekit-background.timer
+			systemctl enable --now packagekit-background.timer
 			touch "${installer_phases}/_unattended_upgrades_start"
 		;;
 		stop)
 			[ -f "${installer_phases}/_unattended_upgrades_stop" ] && return
 			show_im "Stopping unattended upgrades."
-			$_SUPERUSER systemctl disable --now packagekit-background.timer
+			systemctl disable --now packagekit-background.timer
 			touch "${installer_phases}/_unattended_upgrades_stop"
 		;;
 	esac
@@ -143,7 +143,7 @@ must_install_apps()
 
 pre_package_manager_(){
 	[ -f "${installer_phases}/pre_package_manager_" ] && return
-	kill_package_ ${PACKAGER}
+	kill_package_ zypper
 	upgrade_now
 	touch "${installer_phases}/pre_package_manager_"
 }
@@ -152,8 +152,8 @@ enable_repo() {
   REPO_ID="${1:-}"
   if [ "$(zypper repolist enabled 2>/dev/null | grep -c "$REPO_ID")" -le 0 ]; then
     show_im "$REPO_ID repository is not enabled. Enabling now..."
-    $_SUPERUSER zypper config-manager --set-enabled "$REPO_ID"
-    $_SUPERUSER zypper makecache
+    zypper config-manager --set-enabled "$REPO_ID"
+    zypper makecache
     if [ "$(zypper repolist enabled 2>/dev/null | grep -c "$REPO_ID")" -le 0 ]; then
       show_wm "Failed to enable $REPO_ID repository..."
     fi

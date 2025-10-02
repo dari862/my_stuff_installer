@@ -9,31 +9,31 @@ __remove_package="apt-get purge -y"
 ##################################
 aptupdate(){
 	show_sm "updating your system"
-	[ "$(find /var/cache/apt/pkgcache.bin -mtime 0 2>/dev/null)" ] || $_SUPERUSER apt-get update
+	[ "$(find /var/cache/apt/pkgcache.bin -mtime 0 2>/dev/null)" ] || apt-get update
 }
 
 aptfixer(){
 	show_sm "running aptfixer"
 	if grep -q 'deb cdrom' /etc/apt/sources.list;then
-		$_SUPERUSER sed -i '/deb cdrom/d' /etc/apt/sources.list
+		sed -i '/deb cdrom/d' /etc/apt/sources.list
 	fi
 	aptupdate
-	$_SUPERUSER apt-get install -yq -f 2>/dev/null || show_em "failed to $_SUPERUSER apt-get install -yq -f"
+	apt-get install -yq -f 2>/dev/null || show_em "failed to apt-get install -yq -f"
 }	
 
 install_apt_fast(){
 	if ! type aria2c >/dev/null 2>&1;then
 		show_sm "install aria2c."
-  		$_SUPERUSER apt-get install -y aria2
+  		apt-get install -y aria2
 	fi
 	remove_aria2=true
 	show_sm "download apt-fast"
 	apt_fast_url='https://raw.githubusercontent.com/ilikenwf/apt-fast/master'
-	download_file "$_SUPERUSER" "${apt_fast_url}/apt-fast" "/usr/local/bin/apt-fast"
+	download_file "${apt_fast_url}/apt-fast" "/usr/local/bin/apt-fast"
 	
 	show_sm "install apt-fast"
-	$_SUPERUSER chmod +x /usr/local/bin/apt-fast
-  	[ ! -f /etc/apt-fast.conf ] && download_file "$_SUPERUSER" "${apt_fast_url}/apt-fast.conf" "/etc/apt-fast.conf"
+	chmod +x /usr/local/bin/apt-fast
+  	[ ! -f /etc/apt-fast.conf ] && download_file "${apt_fast_url}/apt-fast.conf" "/etc/apt-fast.conf"
 }
 
 ##################################
@@ -56,9 +56,9 @@ create_package_list(){
 install_packages(){
 	packages_to_install="${1:-${Packages_2_install}}"
 	if [ -n "${packages_to_install}" ];then
-    	($_SUPERUSER ${PACKAGER} install -yq ${packages_to_install} && kill_package_ ${PACKAGER}) || \
-		($_SUPERUSER ${PACKAGER} install -yq ${packages_to_install} && kill_package_ ${PACKAGER}) || \
-		$_SUPERUSER ${PACKAGER} install -yq ${packages_to_install}
+    	(apt install -yq ${packages_to_install} && kill_package_ apt) || \
+		(apt install -yq ${packages_to_install} && kill_package_ apt) || \
+		apt install -yq ${packages_to_install}
     else
     	show_wm_only "Packages_2_install are empty"
     	sleep 1
@@ -68,9 +68,9 @@ install_packages(){
 install_single_package(){
 	single_package="${1:-}"
 	if [ -n "${single_package}" ];then
-    	($_SUPERUSER ${PACKAGER} install -y ${single_package} && kill_package_ ${PACKAGER}) || \
-		($_SUPERUSER ${PACKAGER} install -y ${single_package} && kill_package_ ${PACKAGER}) || \
-		$_SUPERUSER ${PACKAGER} install -y ${single_package}
+    	(apt install -y ${single_package} && kill_package_ apt) || \
+		(apt install -y ${single_package} && kill_package_ apt) || \
+		apt install -y ${single_package}
     else
     	show_wm "faile to install $single_package"
     	sleep 1
@@ -95,11 +95,11 @@ upgrade_now()
 {
 	show_im "Run upgrade_now function"
 	show_sm "Run upgrade" 
-	$_SUPERUSER apt-get -y upgrade
+	apt-get -y upgrade
 	show_sm "Run dist-upgrade" 
-	$_SUPERUSER apt-get -y dist-upgrade
+	apt-get -y dist-upgrade
 	show_sm "Run full-upgrade" 
-	$_SUPERUSER apt-get -y full-upgrade
+	apt-get -y full-upgrade
 	show_im "end upgrade_now" 
 }
 
@@ -108,7 +108,7 @@ remove_packages()
 	packages="$@"
 	if [ -n "$packages" ];then
 		show_im "Removing ${packages}."
-		$_SUPERUSER ${__remove_package} $packages
+		${__remove_package} $packages
 	else
 		show_wm_only "no packages to remove."
 	fi
@@ -116,25 +116,25 @@ remove_packages()
 
 run_autoclean(){
 	show_im "run autoremove autoclean."
-	$_SUPERUSER apt-get autoremove -y
-	$_SUPERUSER apt-get autoclean -y
+	apt-get autoremove -y
+	apt-get autoclean -y
 }
 
 run_package_manager_autoclean(){
 	show_im "autoremove unwanted pakages"
 	run_autoclean
-	$_SUPERUSER du -h /var/cache/apt
+	du -h /var/cache/apt
       
     if [ -d /var/tmp ]; then
-        $_SUPERUSER find /var/tmp -type f -atime +5 -delete
+        find /var/tmp -type f -atime +5 -delete
     fi
     
     if [ -d /var/log ]; then
-        $_SUPERUSER find /var/log -type f -name "*.log" -exec truncate -s 0 {} \;
+        find /var/log -type f -name "*.log" -exec truncate -s 0 {} \;
     fi
 
 	if [ "$init_system_are" = "systemd" ]; then
-        $_SUPERUSER journalctl --vacuum-time=3d
+        journalctl --vacuum-time=3d
     fi
 }
 
@@ -149,7 +149,7 @@ _unattended_upgrades_()
 				show_im "start unattended upgrades."
 				service_manager stop unattended-upgrades
 				if [ ! -f "${auto_upgrades_file_bak}" ];then
-					$_SUPERUSER mv "${auto_upgrades_file}" "${auto_upgrades_file_bak}"
+					mv "${auto_upgrades_file}" "${auto_upgrades_file_bak}"
 				fi
 				touch "${installer_phases}/_unattended_upgrades_start"
 			;;
@@ -157,11 +157,11 @@ _unattended_upgrades_()
 				[ -f "${installer_phases}/_unattended_upgrades_stop" ] && return
 				show_im "stop unattended upgrades."
 				if [ -f "${auto_upgrades_file}" ] && [ -f "${auto_upgrades_file_bak}" ];then
-					$_SUPERUSER rm "${auto_upgrades_file}"
+					rm "${auto_upgrades_file}"
 				fi
 					
 				if [ -f "${auto_upgrades_file_bak}" ];then
-					$_SUPERUSER mv "${auto_upgrades_file_bak}" "${auto_upgrades_file}"
+					mv "${auto_upgrades_file_bak}" "${auto_upgrades_file}"
 				fi
 				touch "${installer_phases}/_unattended_upgrades_stop"
 			;;
@@ -186,8 +186,8 @@ switch_lightdm_now(){
 	fi
 	
 	if [ "$lightdm_does_not_exist" = true  ];then
-		echo "/usr/sbin/lightdm" | $_SUPERUSER tee /etc/X11/default-display-manager > /dev/null 2>&1 || (show_em "failed to change default-display-manager")
-		$_SUPERUSER dpkg-reconfigure lightdm || (show_em "failed to dpkg-reconfigure lightdm")
+		echo "/usr/sbin/lightdm" | tee /etc/X11/default-display-manager > /dev/null 2>&1 || (show_em "failed to change default-display-manager")
+		dpkg-reconfigure lightdm || (show_em "failed to dpkg-reconfigure lightdm")
 	else
 		show_im "lightdm already exist."
 	fi

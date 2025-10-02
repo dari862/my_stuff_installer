@@ -20,23 +20,23 @@ yay_package_name=""
 install_AUR_helper(){
 	[ -f "${installer_phases}/install_AUR_helper" ] && return
 	        
-	$_SUPERUSER true
+	true
 	
 	show_im "Updating your system..."
-	$_SUPERUSER pacman -Syu --noconfirm
+	pacman -Syu --noconfirm
 	
 	show_im "Installing git base-devel archlinux-keyring..."
-	$_SUPERUSER pacman -Syu --needed git base-devel archlinux-keyring
+	pacman -Syu --needed git base-devel archlinux-keyring
 
     if ! command_exist yay && ! command_exist paru; then
-    	$_SUPERUSER ${PACKAGER} --noconfirm -Syu
+    	${PACKAGER} --noconfirm -Syu
     	for package in yay yay-bin yay-git;do
     		pacman -Si $package 2>/dev/null | grep -q "/$package " && yay_package_name="$package"
     		break
     	done
         if [ -n "$yay_package_name" ];then
         	show_im "Installing yay as AUR helper..."
-        	$_SUPERUSER pacman --noconfirm -Syu $yay_package_name
+        	pacman --noconfirm -Syu $yay_package_name
         else
         	show_im "installing yay..."
         	temp_yay_bin="/tmp/temp_yay"
@@ -85,7 +85,7 @@ create_package_list(){
 install_packages(){
 	single_package_to_install="${1:-}"
 	if [ -n "${single_package_to_install}" ];then
-		$_SUPERUSER pacman --noconfirm -Syu ${single_package_to_install}
+		pacman --noconfirm -Syu ${single_package_to_install}
 		return
 	fi
 	
@@ -96,7 +96,7 @@ install_packages(){
     fi
     
     if [ -n "${packages_to_install_pacman}" ];then
-    	$_SUPERUSER pacman --noconfirm -Syu ${packages_to_install_pacman}
+    	pacman --noconfirm -Syu ${packages_to_install_pacman}
     else
     	show_wm_only "packages_to_install_pacman are empty"
     fi
@@ -107,7 +107,7 @@ install_packages(){
 install_single_package(){
 	single_package="${1:-}"
 	if [ -n "${single_package}" ];then
-    	$_SUPERUSER pacman --noconfirm -Syu ${single_package_to_install}
+    	pacman --noconfirm -Syu ${single_package_to_install}
     else
     	show_wm "faile to install $single_package"
     	sleep 1
@@ -159,14 +159,14 @@ run_package_manager_autoclean(){
 	show_im "autoremove unwanted pakages"
 	run_autoclean            
     if [ -d /var/tmp ]; then
-        $_SUPERUSER find /var/tmp -type f -atime +5 -delete
+        find /var/tmp -type f -atime +5 -delete
     fi
     
     if [ -d /var/log ]; then
-        $_SUPERUSER find /var/log -type f -name "*.log" -exec truncate -s 0 {} \;
+        find /var/log -type f -name "*.log" -exec truncate -s 0 {} \;
     fi
 	if [ "$init_system_are" = "systemd" ]; then
-        $_SUPERUSER journalctl --vacuum-time=3d
+        journalctl --vacuum-time=3d
     fi
 }
 
@@ -192,8 +192,8 @@ switch_lightdm_now(){
     fi
     
     if [ "$lightdm_does_not_exist" = true ]; then
-        echo "/usr/sbin/lightdm" | $_SUPERUSER tee /etc/X11/default-display-manager > /dev/null 2>&1
-        $_SUPERUSER systemctl enable lightdm
+        echo "/usr/sbin/lightdm" | tee /etc/X11/default-display-manager > /dev/null 2>&1
+        systemctl enable lightdm
     else
         show_sm "LightDM already exists."
     fi
@@ -204,8 +204,8 @@ updating_rate_mirrors(){
 	[ -f "${installer_phases}/updating_rate_mirrors" ] && return
 	show_sm "updating rate-mirrors..."
     ${PACKAGER} --noconfirm -S rate-mirrors-bin
-    $_SUPERUSER cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
-    $_SUPERUSER rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch || show_wm "failed to update rate-mirrors..."
+    cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
+    rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch || show_wm "failed to update rate-mirrors..."
     touch "${installer_phases}/updating_rate_mirrors"
 }
 

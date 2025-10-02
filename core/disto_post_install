@@ -4,18 +4,18 @@ lightdm_background="${__distro_path_root}/my_wallpapers/default_wall-01.jpg"
 pre_post_install(){
 	[ -f "${installer_phases}/pre_post_install" ] && return
 	show_im "Create ${__distro_path_neverremove}."
-	$_SUPERUSER mkdir -p "${__distro_path_neverremove}"
+	mkdir -p "${__distro_path_neverremove}"
 	
 	show_im "Create machine_type file."
-	printf '%s' "$machine_type_are" | $_SUPERUSER tee "${__distro_path_neverremove}/machine_type" >/dev/null 2>&1
+	printf '%s' "$machine_type_are" | tee "${__distro_path_neverremove}/machine_type" >/dev/null 2>&1
 
 	show_im "update fonts cache."
-	$_SUPERUSER fc-cache -vf
+	fc-cache -vf
 	
 	show_im "update icons cache."
-	$_SUPERUSER gtk-update-icon-cache
+	gtk-update-icon-cache
 
-	$_SUPERUSER touch "${installer_phases}/pre_post_install"
+	touch "${installer_phases}/pre_post_install"
 }
 
 end_of_post_install(){
@@ -23,10 +23,10 @@ end_of_post_install(){
 	
 	show_im "Create lightdm.conf."
 	
-	$_SUPERUSER mkdir -p "/usr/share/lightdm/lightdm.conf.d"
-	$_SUPERUSER mkdir -p "/usr/share/lightdm/lightdm-gtk-greeter.conf.d"
+	mkdir -p "/usr/share/lightdm/lightdm.conf.d"
+	mkdir -p "/usr/share/lightdm/lightdm-gtk-greeter.conf.d"
 
-	$_SUPERUSER tee /usr/share/lightdm/lightdm.conf.d/"50_${__distro_name}".conf <<- EOF >/dev/null 2>&1
+	tee /usr/share/lightdm/lightdm.conf.d/"50_${__distro_name}".conf <<- EOF >/dev/null 2>&1
 	# Distro specific defaults for lightdm
 	#
 	
@@ -35,7 +35,8 @@ end_of_post_install(){
 	greeter-hide-users=false
 	user-session=${__distro_name}${switch_default_xsession_to}
 	EOF
-	$_SUPERUSER tee /usr/share/lightdm/lightdm-gtk-greeter.conf.d/"50_${__distro_name}".conf <<- 'EOF' >/dev/null 2>&1
+	
+	tee /usr/share/lightdm/lightdm-gtk-greeter.conf.d/"50_${__distro_name}".conf <<- 'EOF' >/dev/null 2>&1
 	# Distro specific defaults for lightdm-gtk-greeter
 	#
 	# LightDM GTK+ Configuration
@@ -104,19 +105,19 @@ end_of_post_install(){
 	position = 57%,start 22%,start
 	EOF
 	
-	$_SUPERUSER sed -i "s|background = will be changed with sed|background = ${lightdm_background}|g" /usr/share/lightdm/lightdm-gtk-greeter.conf.d/"50_${__distro_name}".conf
+	sed -i "s|background = will be changed with sed|background = ${lightdm_background}|g" /usr/share/lightdm/lightdm-gtk-greeter.conf.d/"50_${__distro_name}".conf
 	
 	show_im "copy manpages."
-	$_SUPERUSER ln -sf ${__distro_path_root}/lib/manpage/* /usr/share/man/man1
+	ln -sf ${__distro_path_root}/lib/manpage/* /usr/share/man/man1
 	
 	show_im "installing update-notification"
-	$_SUPERUSER sh -c "export __distro_path_lib=\"${__distro_path_lib}\"; \"${__distro_path_root}\"/system_files/bin/update-notification -I"
+	sh -c "export __distro_path_lib=\"${__distro_path_lib}\"; \"${__distro_path_root}\"/system_files/bin/update-notification -I"
 	
 	show_im "pick correct apps_as_root."
 	if command_exist doas;then
-		$_SUPERUSER ln -sf ${__distro_path_root}/bin/doas/doasedit ${__distro_path_root}/system_files/bin
-		$_SUPERUSER cp -rp ${__distro_path_root}/system_files/doas.conf /etc
-		if ! $_SUPERUSER doas -C /etc/doas.conf;then
+		ln -sf ${__distro_path_root}/bin/doas/doasedit ${__distro_path_root}/system_files/bin
+		cp -rp ${__distro_path_root}/system_files/doas.conf /etc
+		if ! doas -C /etc/doas.conf;then
 			show_em "config error"
 		fi
 	fi	
@@ -137,9 +138,9 @@ end_of_post_install(){
 		place=$(printf "%s" "$chosen" | cut -d':' -f3 | cut -f1 -d',' | sed 's/^ //')
 		place="${place:-$radarcode}" # Default place to radarcode if not set
 	
-		$_SUPERUSER sed -i "s|continentcode=.*|continentcode=\"$continentcode\"|" "${weather_script_config_path}" || show_em "end_of_post_install failed at continentcode"
-		$_SUPERUSER sed -i "s|radarcode=.*|radarcode=\"$radarcode\"|" "${weather_script_config_path}" || show_em "end_of_post_install failed at radarcode"
-		$_SUPERUSER sed -i "s|place=.*|place=\"$place\"|" "${weather_script_config_path}" || show_em "end_of_post_install failed at place"
+		sed -i "s|continentcode=.*|continentcode=\"$continentcode\"|" "${weather_script_config_path}" || show_em "end_of_post_install failed at continentcode"
+		sed -i "s|radarcode=.*|radarcode=\"$radarcode\"|" "${weather_script_config_path}" || show_em "end_of_post_install failed at radarcode"
+		sed -i "s|place=.*|place=\"$place\"|" "${weather_script_config_path}" || show_em "end_of_post_install failed at place"
 	fi
 	
 	. "${__distro_path_root}/lib/common/DB"
@@ -150,11 +151,11 @@ end_of_post_install(){
 	for app in podman distrobox;do
 		if command_exist ${app};then
 			dir_name="$(basename $(dirname $(find . -type f -name ${app} )))"
-			[ ! -f "${apps_db_path}/$dir_name" ] && $_SUPERUSER touch "${apps_db_path}/$dir_name"
-			echo "${app}" | $_SUPERUSER tee -a "${apps_db_path}/$dir_name" >/dev/null 2>&1
+			[ ! -f "${apps_db_path}/$dir_name" ] && touch "${apps_db_path}/$dir_name"
+			echo "${app}" | tee -a "${apps_db_path}/$dir_name" >/dev/null 2>&1
 		fi
 	done
 	
 	show_im "prepare completed"
-	$_SUPERUSER touch "${installer_phases}/end_of_post_install"
+	touch "${installer_phases}/end_of_post_install"
 }

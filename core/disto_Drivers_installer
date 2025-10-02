@@ -39,7 +39,7 @@ post_disto_Drivers_installer(){
 	show_im "Configer Drivers."
 	if [ -f "/usr/sbin/isenkram-autoinstall-firmware" ];then
 		show_im "run isenkram-autoinstall-firmware."
-		$_SUPERUSER isenkram-autoinstall-firmware || : # to prevent script from exiting "isenkram-autoinstall-firmware contain exit command"
+		isenkram-autoinstall-firmware || : # to prevent script from exiting "isenkram-autoinstall-firmware contain exit command"
 	fi
 	show_im "Configer packages."
 
@@ -48,7 +48,7 @@ post_disto_Drivers_installer(){
 	fi
 
 	if command_exist fprintd-verify && command_exist pam-auth-update;then
-		$_SUPERUSER pam-auth-update --enable fprintd
+		pam-auth-update --enable fprintd
 	fi
 	
 	touch "${installer_phases}/disto_Drivers_installer"
