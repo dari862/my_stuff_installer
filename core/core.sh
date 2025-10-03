@@ -8,28 +8,9 @@ fi
 ################################################################################################################################
 # Var
 ################################################################################################################################
-__distro_name="${1:-}"
-export all_temp_path="${2:-}"
-distro_temp_path="${3:-}"
-theme_temp_path="${4:-}"
-###################################
-if [ -z "$__distro_name" ];then
-	printf "__distro_name var are empty."
-	exit 1
-fi
-if [ -z "$all_temp_path" ];then
-	printf "all_temp_path var are empty."
-	exit 1
-fi
-if [ -z "$distro_temp_path" ];then
-	printf "distro_temp_path var are empty."
-	exit 1
-fi
-if [ -z "$theme_temp_path" ];then
-	printf "theme_temp_path var are empty."
-	exit 1
-fi
-###################################
+prompt_to_install_value_file="${1:-}"
+. "${prompt_to_install_value_file}"
+
 __distro_title="$(echo "$__distro_name" | tr '._-' ' ' | awk '{ for (i=1; i<=NF; i++) { $i = tolower($i); $i = toupper(substr($i,1,1)) substr($i,2) } print }')"
 __distro_path_root="/usr/share/${__distro_name}"
 
@@ -42,22 +23,16 @@ fi
 _SUPERUSER=""
 export __distro_path_lib="${__distro_path_root}/lib/common/Distro_path"
 
-install_wayland=false
-install_X11=true
-auto_run_script="false" # true to enable
-
 installer_phases="${all_temp_path}/installer_phases"
 if [ -f "${installer_phases}/__distro_path_root_removed" ];then
 	__reinstall_distro=true
 fi
 switch_default_xsession=""
-switch_default_xsession_to="openbox"
-switch_to_doas=false
+
 NETWORK_TEST="http://network-test.debian.org/nm"
 url_to_test=debian.org
 test_dns="1.1.1.1"
 
-prompt_to_install_value_file="${all_temp_path}/value_of_picked_option_from_prompt_to_install"
 save_value_file="${all_temp_path}/save_value_file"
 install_drivers=true
 install_apps=true
@@ -69,45 +44,11 @@ elif [ "$arg_" = "apps" ];then
 	install_drivers=false
 	install_apps=true
 fi
-SUGROUP=""
+
 internet_status=""
-
-run_purge_some_unnecessary_pakages="Y"
-run_disable_some_unnecessary_services="Y"
-disable_ipv6_stack="Y"
-disable_ipv6="Y"
-run_update_grub_image="Y"
-autoclean_and_autoremove="Y"
-install_zsh_now=""
-install_extra_now=""
-install_qt5ct=""
-install_files_manager=true
-thunar_files_manager=false
-pcmanfm_files_manager=false
-
-ask_2_install_dwm=false
-
-if [ "$install_X11" = true ];then
-	install_jgmenu=""
-	install_polybar=polybar
-	install_bspwm=true
-	install_dwm=false
-else
-	install_jgmenu=""
-	install_polybar=""
-	install_bspwm=false
-	install_dwm=false
-fi
-
-reboot_now="Y"
 
 __USER="$(logname)"
 current_user_home="/home/$__USER"
-source_prompt_to_install_file=""
-
-doas_installed=false
-sudo_installed=false
-enable_GPU_installer=true
 
 list_of_apps_file_path="${all_temp_path}/list_of_apps"
 list_of_installed_apps_file_path="${all_temp_path}/list_of_installed_apps"
@@ -122,7 +63,6 @@ VERSION_ID=""
 
 PACKAGEMANAGER=""
 PACKAGER=""
-only_doas_installed=false
 dir_2_find_files_in=""
 
 failed_2_install_ufw=false
@@ -133,14 +73,17 @@ install_hwclock=false
 Distro_installer_mode=true
 
 usr_local_bin_path="/usr/local/bin"
-Distro_installer_mode=true
 
 ################################################################################################################################
 # Function
 ################################################################################################################################
 
 command_exist() {
-  command -v $1 > /dev/null 2>&1
+	if command -v $1 > /dev/null 2>&1;then
+		return
+	else
+		return 1
+	fi
 }
 
 show_m(){
@@ -181,19 +124,11 @@ show_filed_2_add_pakage_m(){
 	printf '%s\n' "${message}" >> "$current_user_home/filed_2_add_pakages"
 }
 
-do_you_want_2_run_this_yes_or_no()
-{
-	massage_is_="${1:-}"
-	default_value="${2:-}"
-	default_value_massage=""
-	
-	case "$default_value" in
-		[Yy]) default_value_massage="(default: yes) ";;
-		[Nn]) default_value_massage="(default: no) " ;;
-	esac
-	
-	while true; do
-		printf "${massage_is_} (yes/no) $default_value_massage"
+pre_script(){
+	show_m "Loading Script ....."
+	if [ -f "${installer_phases}/Done" ] || [ -f "/tmp/distro_done_installing" ];then
+		show_m "${__distro_name} installed successfully ....."
+		printf "reboot? (yes/no) [Yy]"
 		stty -icanon -echo time 0 min 1
 		answer="$(head -c1)"
 		stty icanon echo
@@ -202,22 +137,11 @@ do_you_want_2_run_this_yes_or_no()
         [ -z "$answer" ] && answer="$default_value"
         
 		case "$answer" in
-			[Yy]) return 0;;
-			[Nn]) return 1 ;;
+			[Yy]) reboot_now="Y";;
+			[Nn]) reboot_now="";;
 			*) show_im "invalid response only y[yes] or n[No] are allowed.";;
 		esac
-	done
-}
 
-pre_script(){
-	show_m "Loading Script ....."
-	if [ -f "${installer_phases}/Done" ] || [ -f "/tmp/distro_done_installing" ];then
-		show_m "${__distro_name} installed successfully ....."
-		if do_you_want_2_run_this_yes_or_no 'reboot?' 'Y';then
-			reboot_now="Y"
-		else
-			reboot_now=""
-		fi
 		__Done
 	fi
 	
@@ -274,7 +198,6 @@ pre_script(){
 	else
 		dir_2_find_files_in="${all_temp_path}"
 	fi
-	check_if_user_has_root_access
  	create_dir_and_source_stuff
 }
 
@@ -285,42 +208,9 @@ create_dir_and_source_stuff(){
 	mkdir -p "${all_temp_path}"
 	chmod 700 "${all_temp_path}"
 	mkdir -p "${installer_phases}"
-				
 	if [ -f "${save_value_file}" ];then
 		. "${save_value_file}"
-	else
-		done_check_if_user_has_root_access
-		. "${save_value_file}"
 	fi
-	
-	if [ -f "${prompt_to_install_value_file}" ];then
-		show_im "file exist : ${prompt_to_install_value_file} form previce run."
-		if do_you_want_2_run_this_yes_or_no 'Do you want source it?' 'Y';then
-			. "${prompt_to_install_value_file}"
-			source_prompt_to_install_file=true
-		fi
-	fi
-}
-
-check_if_user_has_root_access(){
-	[ -f "${installer_phases}/check_if_user_has_root_access" ] && return
-	show_im "check if user has root access."
-    if command_exist doas;then
-    	show_im "doas command exist."
-    	doas_installed=true
-	fi
-		
-	if command_exist sudo;then
-    	sudo_installed=true
-	fi
-}
-
-done_check_if_user_has_root_access(){
-    	echo "SUGROUP=\"$SUGROUP\"" >> "${save_value_file}"
-        echo "doas_installed=\"$doas_installed\"" >> "${save_value_file}"
-    	echo "sudo_installed=\"$sudo_installed\"" >> "${save_value_file}"
-        echo "only_doas_installed=\"$only_doas_installed\"" >> "${save_value_file}"
-        touch "${installer_phases}/check_if_user_has_root_access"
 }
 
 test_internet_(){
@@ -385,218 +275,6 @@ test_internet_(){
 	fi
 }
 
-prompt_to_ask_to_what_to_install(){
-	if [ "${source_prompt_to_install_file}" = "true" ];then
-		return
-	fi
-
-	show_m "prompt for what do you want to install."
-	
-	if [ "$auto_run_script" != "true" ];then
-		if do_you_want_2_run_this_yes_or_no 'Autorun installation?' 'Y';then
-			return
-		fi
-		
-		if do_you_want_2_run_this_yes_or_no 'install GPU Drivers?' 'Y';then
-			enable_GPU_installer=true
-			install_cuda_=false
-			install_kernel_open_dkms_=false
-			install_akmod_nvidia=false
-			if do_you_want_2_run_this_yes_or_no 'do you want to add Cuda Support?' 'Y';then
-				install_cuda_=true
-			elif do_you_want_2_run_this_yes_or_no 'do you want to install opensource nvidia-kernel?' 'Y';then
-				install_kernel_open_dkms_=true
-			elif do_you_want_2_run_this_yes_or_no 'do you want to add akmod Support?' 'Y';then
-				install_akmod_nvidia=true
-			fi
-		else
-			enable_GPU_installer=false
-		fi
-		
-		if do_you_want_2_run_this_yes_or_no 'Do you want to install wayland packages?' 'Y';then
-			install_wayland=true
-			enable_GPU_installer=true
-			if do_you_want_2_run_this_yes_or_no 'Do you want to install X11 packages?' 'Y';then
-				install_X11=true
-			else
-				install_X11=false
-			fi
-		else
-			install_wayland=false
-		fi
-
-		if [ "$switch_to_doas" = false ] && [ "$only_doas_installed" = "false" ];then
-			if do_you_want_2_run_this_yes_or_no 'Switch to doas?' 'Y';then
-				switch_to_doas=true
-			fi
-		fi
-
-		if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
-			if do_you_want_2_run_this_yes_or_no 'do you want to purge some unnecessary pakages?' 'Y';then
-				run_purge_some_unnecessary_pakages="Y"
-			else
-				run_purge_some_unnecessary_pakages=""
-			fi
-			
-			if do_you_want_2_run_this_yes_or_no 'Do you want to disable some unnecessary services?' 'Y';then
-				run_disable_some_unnecessary_services="Y"
-			else
-				run_disable_some_unnecessary_services=""
-			fi
-			
-			if do_you_want_2_run_this_yes_or_no 'update grub image?' 'Y';then
-				run_update_grub_image="Y"
-			else
-				run_update_grub_image=""
-			fi
-			
-			if do_you_want_2_run_this_yes_or_no 'disable ipv6 stack?' 'Y';then
-				disable_ipv6_stack="Y"
-			else
-				if do_you_want_2_run_this_yes_or_no 'disable ipv6 only?' 'Y';then
-					disable_ipv6="Y"
-				else
-					disable_ipv6=""
-				fi
-				disable_ipv6_stack=""
-			fi
-			
-			if do_you_want_2_run_this_yes_or_no 'run autoclean and autoremove?' 'Y';then
-				autoclean_and_autoremove="Y"
-			else
-				autoclean_and_autoremove=""
-			fi
-		fi
-		
-		if [ "$install_apps" = "true" ];then
-			if ! command_exist zsh;then
-				if do_you_want_2_run_this_yes_or_no 'Do you want to install zsh?' 'Y';then
-					if do_you_want_2_run_this_yes_or_no 'Do you want to set zsh as default shell?' 'Y';then
-						install_zsh_now=zsh_default
-					else
-						install_zsh_now=zsh
-					fi
-				else
-					install_zsh_now=""
-				fi
-			else
-				if do_you_want_2_run_this_yes_or_no 'Do you want to set zsh as default shell?' 'Y';then
-					install_zsh_now=zsh_default
-				else
-					install_zsh_now=zsh
-				fi
-			fi
-			
-			if [ "$install_files_manager" = false ];then
-				if do_you_want_2_run_this_yes_or_no 'Do you want to File Manager?' 'Y';then
-					install_files_manager=true
-				fi
-				
-				if [ "$thunar_files_manager" = false ] && [ "$install_files_manager" = true ] ;then
-					if ! command_exist thunar;then
-						if do_you_want_2_run_this_yes_or_no 'Do you want to switch from pcmanfm to thunar?' 'Y';then
-							thunar_files_manager=true
-						else
-							pcmanfm_files_manager=true
-						fi
-					else
-						thunar_files_manager=true
-					fi
-				fi
-			fi
-		
-			if ! command_exist qt5ct;then
-				if do_you_want_2_run_this_yes_or_no 'Do you want to install qt5ct?' 'Y';then
-					install_qt5ct=qt5ct
-				else
-					install_qt5ct=""
-				fi
-			fi
-			
-			if [ "$install_X11" = "true" ];then
-				if ! command_exist jgmenu;then
-					if do_you_want_2_run_this_yes_or_no 'Do you want to install jgmenu?' 'Y';then
-						install_jgmenu=jgmenu
-					else
-						install_jgmenu=""
-					fi
-				fi
-				
-				if ! command_exist polybar;then
-					if do_you_want_2_run_this_yes_or_no 'Do you want to install polybar?' 'Y';then
-						install_polybar=polybar
-					else
-						install_polybar=""
-					fi
-				fi
-							
-				if ! command_exist bspwm;then
-					if do_you_want_2_run_this_yes_or_no 'Do you want to install bspwm?' 'Y';then
-						install_bspwm=true
-						if do_you_want_2_run_this_yes_or_no 'Do you want to switch to bspwm session?' 'Y';then
-							switch_default_xsession_to="bspwm"
-						fi
-					else
-						install_bspwm=false
-					fi
-				fi
-				if ! command_exist dwm && [ "$ask_2_install_dwm" = true ];then
-					if do_you_want_2_run_this_yes_or_no 'Do you want to install dwm?' 'Y';then
-						install_dwm=true
-						if do_you_want_2_run_this_yes_or_no 'Do you want to switch to dwm session?' 'Y';then
-							switch_default_xsession_to="dwm"
-						fi
-					else
-						install_dwm=false
-					fi
-				fi
-			fi
-			
-			if do_you_want_2_run_this_yes_or_no 'Do you want to install extra apps?' 'Y';then
-				install_extra_now=extra
-			else
-				install_extra_now=""
-			fi
-		fi
-		
-		if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
-			if do_you_want_2_run_this_yes_or_no 'reboot?' 'Y';then
-				reboot_now="Y"
-			else
-				reboot_now=""
-			fi
-		fi
-	fi
-}
-
-create_prompt_to_install_value_file(){
-	show_im "creating: ${prompt_to_install_value_file}"
-	tee "${prompt_to_install_value_file}" <<- EOF >/dev/null
-		enable_GPU_installer=${enable_GPU_installer}
-		install_cuda_=${install_cuda_}
-		install_kernel_open_dkms_=${install_kernel_open_dkms_}
-		install_akmod_nvidia=${install_akmod_nvidia}
-		install_wayland="${install_wayland}"
-		install_X11="${install_X11}"
-		switch_to_doas="${switch_to_doas}"
-		run_purge_some_unnecessary_pakages="${run_purge_some_unnecessary_pakages}"
-		run_disable_some_unnecessary_services="${run_disable_some_unnecessary_services}"
-		disable_ipv6="${disable_ipv6}"
-		run_update_grub_image="${run_update_grub_image}"
-		disable_ipv6_stack="${disable_ipv6_stack}"
-		autoclean_and_autoremove="${autoclean_and_autoremove}"
-		install_zsh_now="${install_zsh_now}"
-		install_extra_now="${install_extra_now}"
-		install_polybar="${install_polybar}"
-		install_qt5ct="${install_qt5ct}"
-		install_jgmenu="${install_jgmenu}"
-		install_bspwm=${install_bspwm}
-		install_dwm=${install_dwm}
-		switch_default_xsession_to="${switch_default_xsession_to}"
-		reboot_now="${reboot_now}"		
-	EOF
-}
-
 check_and_download_()
 {
 	check_this_file_="${1:-}"
@@ -622,20 +300,6 @@ check_and_download_()
 
 kill_package_(){
 	ps aux | grep "${1}" | awk '{print $2}' | xargs kill -9 >/dev/null 2>&1 || :
-}
-
-detect_file_downloader_and_url_checker(){
-	[ -f "${installer_phases}/pick_file_downloader_and_url_checker" ] && return
-	show_m "picking url command"
-	if command_exist curl;then
-		url_package="curl"
-	elif command_exist wget;then
-		url_package="wget"
-	else
-		show_em "Neither curl nor wget is availabl, please install curl or wget.."
-	fi
-	echo "url_package=\"$url_package\"" >> "${save_value_file}"
-	touch "${installer_phases}/pick_file_downloader_and_url_checker"
 }
 
 pick_file_downloader_and_url_checker(){
@@ -687,7 +351,9 @@ internet_tester() {
 }
 
 fix_time_(){
-	[ "${__reinstall_distro}" = true ] && return || :
+	if [ "${__reinstall_distro}" = true ];then
+		return
+	fi
 	[ -f "${installer_phases}/fix_time_" ] && return
 	show_m "Setting date ,time ,and timezone."
 	ipinfo_full_head="$(get_full_header "https://ipinfo.io/")"
@@ -709,7 +375,9 @@ fix_time_(){
 }
 
 wifi_mode_installation(){
-	[ "${__reinstall_distro}" = true ] && return || :
+	if [ "${__reinstall_distro}" = true ];then
+		return
+	fi
 	wifi_interface="${1-}"
 	
 	ip link set "$wifi_interface" up
@@ -772,7 +440,9 @@ clean_up_now(){
 }
 
 disable_ipv6_now(){
-	[ "${__reinstall_distro}" = true ] && return || :
+	if [ "${__reinstall_distro}" = true ];then
+		return
+	fi
 	[ -f "${installer_phases}/disable_ipv6_now" ] && return
 	if [ "$disable_ipv6_stack" = "Y" ];then
 		tweek_as_dependency disable_ipv6_stack_kernal_level
@@ -785,7 +455,9 @@ disable_ipv6_now(){
 }
 
 update_grub(){
-	[ "${__reinstall_distro}" = true ] && return || :
+	if [ "${__reinstall_distro}" = true ];then
+		return
+	fi
 	[ -f "${installer_phases}/update_grub" ] && return
 	if [ "$need_to_update_grub" = "true" ];then
 		show_im "update grub"
@@ -808,7 +480,9 @@ update_grub(){
 }
 
 update_grub_image(){
-	[ "${__reinstall_distro}" = true ] && return || :
+	if [ "${__reinstall_distro}" = true ];then
+		return
+	fi
 	[ -f "${installer_phases}/update_grub_image" ] && return
 	if [ "$run_update_grub_image" = "Y" ];then
 		show_im "update image."
@@ -829,7 +503,9 @@ source_this_script(){
 
 install_doas_tools()
 {
-	[ "${__reinstall_distro}" = true ] && return || :
+	if [ "${__reinstall_distro}" = true ];then
+		return
+	fi
 	[ -f "${installer_phases}/install_doas_tools" ] && return
 	if [ "$switch_to_doas" = true ] && [ "$only_doas_installed" = "false" ];then
 		show_m "install superuser tools."
@@ -871,6 +547,8 @@ set_package_manager(){
 			show_em "Error: variable init_system_are are empty"
 		fi
 		
+		echo "init_system_are=\"${init_system_are}\"" >> "${save_value_file}"
+		
 		check_and_download_ "disto_init_manager"
 		if ! . "${all_temp_path}/disto_init_manager";then
 			show_em "Error: Failed to source disto_init_manager from ${all_temp_path}"
@@ -879,7 +557,6 @@ set_package_manager(){
 		show_im "running pre_package_manager_"
 		pre_package_manager_
 		echo "PACKAGER=\"${PACKAGER}\"" >> "${save_value_file}"
-		echo "init_system_are=\"${init_system_are}\"" >> "${save_value_file}"
 		touch "${installer_phases}/set_package_manager"
 	else
 		if ! . "${all_temp_path}/PACKAGE_MANAGER";then
@@ -905,7 +582,9 @@ switch_default_xsession(){
 }
 
 create_uninstaller_file(){
-	[ "${__reinstall_distro}" = true ] && return || :
+	if [ "${__reinstall_distro}" = true ];then
+		return
+	fi
 	[ -f "${__distro_path_uninstaller_var}" ] && return
 	show_m "Creating uninstaller file."
 	List_of_installed_packages_="${Packages_2_install}"
@@ -933,9 +612,12 @@ pick_clone_rep_commnad(){
 clone_rep_(){
 	getthis="${1-}"
 	getthis_location="${2-}"
-	if [ ! -f "${installer_phases}/${getthis}" ];then
+	if [ ! -f "${installer_phases}/${getthis}" ] || [ ! -d "${getthis_location}" ];then
 		show_im "clone distro files repo ( ${getthis} )."
-		$repo_commnad "https://github.com/dari862/${getthis}.git" "${getthis_location}"
+		if ! $repo_commnad "https://github.com/dari862/${getthis}.git" "${getthis_location}";then
+			rm -rdf "${getthis_location}"
+			show_em "failed to clone ${getthis}."
+		fi
 		touch "${installer_phases}/${getthis}"	
 	fi
 }
@@ -965,8 +647,12 @@ check_and_download_core_script(){
 		################################
 		# repo clone
 		show_m "clone distro files repo."
-		clone_rep_ "${__distro_name}" "${distro_temp_path}"
-		clone_rep_ "Theme_Stuff" "${theme_temp_path}"
+		if [ ! -d "${distro_temp_path}" ];then
+			clone_rep_ "${__distro_name}" "${distro_temp_path}"
+		fi
+		if [ ! -d "${theme_temp_path}" ];then
+			clone_rep_ "Theme_Stuff" "${theme_temp_path}"
+		fi
 		################################
 	fi
 	check_and_download_ "Files_4_Distros/${distro_name}/disto_specific_extra"
@@ -1028,7 +714,9 @@ run_my_alternatives(){
 }
 
 switch_to_doas_now(){
-	[ "${__reinstall_distro}" = true ] && return || :
+	if [ "${__reinstall_distro}" = true ];then
+		return
+	fi
 	[ -f "${installer_phases}/switch_to_doas_now" ] && return
 	if [ "$switch_to_doas" = true ];then
 		if command_exist sudo;then
@@ -1053,7 +741,9 @@ switch_to_doas_now(){
 }
 
 tweek_as_dependency(){
-	[ "${__reinstall_distro}" = true ] && return || :
+	if [ "${__reinstall_distro}" = true ];then
+		return
+	fi
 	grub_updater_function(){   need_to_update_grub=true; }
 	if [ -d "$distro_temp_path" ];then
 		tweek_location="$(find "${distro_temp_path}/bin/my_installer/tweeks_center/" "${distro_temp_path}/All_Distro_Specific/${distro_name}/tweeks_center/" -type f -name "${1:-}" )"
@@ -1064,7 +754,9 @@ tweek_as_dependency(){
 }
 
 install_GPU_Drivers_now(){
-	[ "${__reinstall_distro}" = true ] && return || :
+	if [ "${__reinstall_distro}" = true ];then
+		return
+	fi
 	grub_updater_function(){   need_to_update_grub=true; }
 	create_GPU_Drivers_ready=false
 	need_2_run_upgrade_now=false
@@ -1115,9 +807,10 @@ __Done(){
 	exit
 }
 
-install_network_manager()
-{
-	[ "${__reinstall_distro}" = true ] && return || :
+install_network_manager(){
+	if [ "${__reinstall_distro}" = true ];then
+		return
+	fi
 	[ -f "${installer_phases}/install_network_manager" ] && return
 	show_m "installing networkmanager"
 	install_single_package "$network_manager_app_from_Files_4_Distros"
@@ -1125,7 +818,9 @@ install_network_manager()
 }
 
 switch_to_network_manager(){
-	[ "${__reinstall_distro}" = true ] && return || :
+	if [ "${__reinstall_distro}" = true ];then
+		return
+	fi
 	[ -f "${installer_phases}/switch_to_network_manager" ] && return
 	if [ ! -f "/etc/network/interfaces.old" ] && [ -d "/etc/network" ];then
 		show_m "running switch_to_network_manager."
@@ -1167,7 +862,9 @@ switch_to_network_manager(){
 }
 
 disable_network_manager_powersaving(){
-	[ "${__reinstall_distro}" = true ] && return || :
+	if [ "${__reinstall_distro}" = true ];then
+		return
+	fi
  	if ls /sys/class/net | grep -q "^w";then
   		grep -q "wifi.powersave = 2" "/etc/NetworkManager/conf.d/wifi-powersave.conf" && grep -q "options iwlwifi power_save=0" "/etc/modprobe.d/iwlwifi.conf" && return
 	 	show_im "disable wifi powersaving (application level)."
@@ -1189,7 +886,9 @@ disable_network_manager_powersaving(){
 }
 
 install_yt_dlb(){
-	[ "${__reinstall_distro}" = true ] && return || :
+	if [ "${__reinstall_distro}" = true ];then
+		return
+	fi
 	[ -f "${installer_phases}/install_yt_dlb" ] && return
 	if command -v yt-dlp >/dev/null 2>&1;then
 		if ! remove_packages "yt-dlp";then
@@ -1215,10 +914,6 @@ PATH="/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:$PATH"
 
 pre_script
 
-prompt_to_ask_to_what_to_install
-create_prompt_to_install_value_file
-
-detect_file_downloader_and_url_checker
 pick_file_downloader_and_url_checker
 
 test_internet_
@@ -1373,7 +1068,7 @@ disable_some_unnecessary_services
 
 clean_up_now
 
-if [ "${__reinstall_distro}" = true ];then
+if [ "${__reinstall_distro}" = false ];then
 	show_m "running Grub scripts."
 	disable_ipv6_now
 	update_grub
