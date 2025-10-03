@@ -8,14 +8,37 @@ fi
 ################################################################################################################################
 # Var
 ################################################################################################################################
-__distro_title="My Stuff"
-__distro_name="my_stuff"
+__distro_name="${1:-}"
+export all_temp_path="${2:-}"
+distro_temp_path="${3:-}"
+theme_temp_path="${4:-}"
+###################################
+if [ -z "$__distro_name" ];then
+	printf "__distro_name var are empty."
+	exit 1
+fi
+if [ -z "$all_temp_path" ];then
+	printf "all_temp_path var are empty."
+	exit 1
+fi
+if [ -z "$distro_temp_path" ];then
+	printf "distro_temp_path var are empty."
+	exit 1
+fi
+if [ -z "$theme_temp_path" ];then
+	printf "theme_temp_path var are empty."
+	exit 1
+fi
+###################################
+__distro_title="$(echo "$__distro_name" | tr '._-' ' ' | awk '{ for (i=1; i<=NF; i++) { $i = tolower($i); $i = toupper(substr($i,1,1)) substr($i,2) } print }')"
 __distro_path_root="/usr/share/${__distro_name}"
+
 if [ -d "$__distro_path_root" ];then
 	__reinstall_distro=true
 else
 	__reinstall_distro=false
 fi
+
 _SUPERUSER=""
 export __distro_path_lib="${__distro_path_root}/lib/common/Distro_path"
 
@@ -23,8 +46,7 @@ install_wayland=false
 install_X11=true
 auto_run_script="false" # true to enable
 
-export temp_path="/temp_distro_installer_dir"
-installer_phases="${temp_path}/installer_phases"
+installer_phases="${all_temp_path}/installer_phases"
 if [ -f "${installer_phases}/__distro_path_root_removed" ];then
 	__reinstall_distro=true
 fi
@@ -35,8 +57,8 @@ NETWORK_TEST="http://network-test.debian.org/nm"
 url_to_test=debian.org
 test_dns="1.1.1.1"
 
-prompt_to_install_value_file="${temp_path}/value_of_picked_option_from_prompt_to_install"
-save_value_file="${temp_path}/save_value_file"
+prompt_to_install_value_file="${all_temp_path}/value_of_picked_option_from_prompt_to_install"
+save_value_file="${all_temp_path}/save_value_file"
 install_drivers=true
 install_apps=true
 arg_="${1-}"
@@ -83,16 +105,12 @@ __USER="$(logname)"
 current_user_home="/home/$__USER"
 source_prompt_to_install_file=""
 
-getthis_location=""
-distro_temp_path=""
-theme_temp_path=""
-
 doas_installed=false
 sudo_installed=false
 enable_GPU_installer=true
 
-list_of_apps_file_path="${temp_path}/list_of_apps"
-list_of_installed_apps_file_path="${temp_path}/list_of_installed_apps"
+list_of_apps_file_path="${all_temp_path}/list_of_apps"
+list_of_installed_apps_file_path="${all_temp_path}/list_of_installed_apps"
 
 version_=""
 distro_name=""
@@ -252,9 +270,9 @@ pre_script(){
 	fi
 	
 	if [ -d "$current_user_home/Desktop" ];then
-		dir_2_find_files_in="$current_user_home/Desktop ${temp_path}"
+		dir_2_find_files_in="$current_user_home/Desktop ${all_temp_path}"
 	else
-		dir_2_find_files_in="${temp_path}"
+		dir_2_find_files_in="${all_temp_path}"
 	fi
 	check_if_user_has_root_access
  	create_dir_and_source_stuff
@@ -264,8 +282,8 @@ create_dir_and_source_stuff(){
 	show_m "pre-script: create dir and source files."
 	show_im "create dir ${installer_phases}"
 	
-	mkdir -p "${temp_path}"
-	chmod 700 "${temp_path}"
+	mkdir -p "${all_temp_path}"
+	chmod 700 "${all_temp_path}"
 	mkdir -p "${installer_phases}"
 				
 	if [ -f "${save_value_file}" ];then
@@ -588,14 +606,14 @@ check_and_download_()
 	path_2_file="${__distro_name}_installer/core/${check_this_file_}"
 	
 	if [ -f "$current_user_home/Desktop/${path_2_file}" ];then
-		mv "$current_user_home/Desktop/${path_2_file}" "${temp_path}" || show_em "failed to move ($current_user_home/Desktop/${path_2_file}) to (${temp_path})"
+		mv "$current_user_home/Desktop/${path_2_file}" "${all_temp_path}" || show_em "failed to move ($current_user_home/Desktop/${path_2_file}) to (${all_temp_path})"
 		show_im "${filename} already exist."
-	elif [ -f "${temp_path}/${filename}" ];then
+	elif [ -f "${all_temp_path}/${filename}" ];then
 		show_im "${filename} already exist."
 	else
 		show_im "Download $check_this_file_ file from www.github.com/dari862/${__distro_name}_installer ."
-		if download_file "https://raw.githubusercontent.com/dari862/${__distro_name}_installer/main/core/${check_this_file_}" "${temp_path}/${filename}" ;then
-			chmod +x "${temp_path}/${filename}"
+		if download_file "https://raw.githubusercontent.com/dari862/${__distro_name}_installer/main/core/${check_this_file_}" "${all_temp_path}/${filename}" ;then
+			chmod +x "${all_temp_path}/${filename}"
 		else
 			show_em "Error: Failed to download ${filename} from https://raw.githubusercontent.com/dari862/${__distro_name}_installer/main/core/${check_this_file_}"
 		fi
@@ -803,10 +821,10 @@ source_this_script(){
 	file_to_source_and_check="${1-}"
 	message_to_show="${2-}"
 	run_check="${3-}"
-	[ ! -f "${temp_path}"/"${file_to_source_and_check}" ] && show_em "can not source this file ( ${temp_path}/${file_to_source_and_check} ). does not exist."
+	[ ! -f "${all_temp_path}"/"${file_to_source_and_check}" ] && show_em "can not source this file ( ${all_temp_path}/${file_to_source_and_check} ). does not exist."
 	[ "$run_check" = "run_check" ] && [ -f "${installer_phases}/${file_to_source_and_check}" ] && return
 	show_im "${message_to_show}"
-	. "${temp_path}"/"${file_to_source_and_check}"
+	. "${all_temp_path}"/"${file_to_source_and_check}"
 }
 
 install_doas_tools()
@@ -835,12 +853,12 @@ set_package_manager(){
 	show_m "running set_package_manager function"
 	show_im "Using ${PACKAGER}"
 	if [ ! -f "${installer_phases}/set_package_manager" ];then
-		if [ ! -f "${temp_path}/PACKAGE_MANAGER" ];then
+		if [ ! -f "${all_temp_path}/PACKAGE_MANAGER" ];then
 			check_and_download_ "Files_4_Distros/${PACKAGER}"
-			mv "${temp_path}/${PACKAGER}" "${temp_path}/PACKAGE_MANAGER"
+			mv "${all_temp_path}/${PACKAGER}" "${all_temp_path}/PACKAGE_MANAGER"
 		fi
-		if ! . "${temp_path}/PACKAGE_MANAGER";then
-			show_em "Error: Failed to source PACKAGE_MANAGER from ${temp_path}"
+		if ! . "${all_temp_path}/PACKAGE_MANAGER";then
+			show_em "Error: Failed to source PACKAGE_MANAGER from ${all_temp_path}"
 		fi
 		
 		create_package_list
@@ -854,8 +872,8 @@ set_package_manager(){
 		fi
 		
 		check_and_download_ "disto_init_manager"
-		if ! . "${temp_path}/disto_init_manager";then
-			show_em "Error: Failed to source disto_init_manager from ${temp_path}"
+		if ! . "${all_temp_path}/disto_init_manager";then
+			show_em "Error: Failed to source disto_init_manager from ${all_temp_path}"
 		fi
 		
 		show_im "running pre_package_manager_"
@@ -864,11 +882,11 @@ set_package_manager(){
 		echo "init_system_are=\"${init_system_are}\"" >> "${save_value_file}"
 		touch "${installer_phases}/set_package_manager"
 	else
-		if ! . "${temp_path}/PACKAGE_MANAGER";then
-			show_em "Error: Failed to source PACKAGE_MANAGER from ${temp_path}"
+		if ! . "${all_temp_path}/PACKAGE_MANAGER";then
+			show_em "Error: Failed to source PACKAGE_MANAGER from ${all_temp_path}"
 		fi
-		if ! . "${temp_path}/disto_init_manager";then
-			show_em "Error: Failed to source disto_init_manager from ${temp_path}"
+		if ! . "${all_temp_path}/disto_init_manager";then
+			show_em "Error: Failed to source disto_init_manager from ${all_temp_path}"
 		fi
 	fi
 }
@@ -912,26 +930,12 @@ pick_clone_rep_commnad(){
 	touch "${installer_phases}/pick_clone_rep_commnad"
 }
 
-print_getthis_location(){
-	check_this_location="${1-}"
-	if [ -d "$current_user_home/Desktop/${check_this_location}" ];then
-		printf '%s' "$current_user_home/Desktop"
-	else
-		printf '%s' "${temp_path}"
-	fi
-}
-
 clone_rep_(){
 	getthis="${1-}"
-	getthis_location="$(print_getthis_location "${getthis}")"
-
+	getthis_location="${2-}"
 	if [ ! -f "${installer_phases}/${getthis}" ];then
 		show_im "clone distro files repo ( ${getthis} )."
-		if [ ! -d "${getthis_location}/${getthis}" ];then 
-			$repo_commnad "https://github.com/dari862/${getthis}.git" "${getthis_location}/${getthis}"
-		else
-			show_im "${getthis} Folder does exsist"
-		fi
+		$repo_commnad "https://github.com/dari862/${getthis}.git" "${getthis_location}"
 		touch "${installer_phases}/${getthis}"	
 	fi
 }
@@ -961,10 +965,8 @@ check_and_download_core_script(){
 		################################
 		# repo clone
 		show_m "clone distro files repo."
-		clone_rep_ "${__distro_name}"
-		distro_temp_path="${getthis_location}/${__distro_name}"
-		clone_rep_ "Theme_Stuff"
-		theme_temp_path="${getthis_location}"
+		clone_rep_ "${__distro_name}" "${distro_temp_path}"
+		clone_rep_ "Theme_Stuff" "${theme_temp_path}"
 		################################
 	fi
 	check_and_download_ "Files_4_Distros/${distro_name}/disto_specific_extra"
@@ -1096,8 +1098,8 @@ install_GPU_Drivers_now(){
 
 __Done(){
 	if [ -f "/tmp/distro_done_installing" ];then
-		show_m "Removing ${temp_path}"
-		rm -rdf "${temp_path}"
+		show_m "Removing ${all_temp_path}"
+		rm -rdf "${all_temp_path}"
 	fi
 	show_m "Done"
 	if [ "$failed_2_install_ufw" = true ];then
@@ -1128,7 +1130,7 @@ switch_to_network_manager(){
 	if [ ! -f "/etc/network/interfaces.old" ] && [ -d "/etc/network" ];then
 		show_m "running switch_to_network_manager."
 		show_im "create to interfaces file"
-		tee "${temp_path}"/interfaces <<- 'EOF' >/dev/null
+		tee "${all_temp_path}"/interfaces <<- 'EOF' >/dev/null
 		# This file describes the network interfaces available on your system
 		# and how to activate them. For more information, see interfaces(5).
 			
@@ -1138,10 +1140,10 @@ switch_to_network_manager(){
 		auto lo
 		iface lo inet loopback
 		EOF
-		chmod 644 "${temp_path}"/interfaces
+		chmod 644 "${all_temp_path}"/interfaces
 		show_im "create backup of interfaces file"
 		mv /etc/network/interfaces /etc/network/interfaces.old
-		mv "${temp_path}"/interfaces /etc/network/interfaces
+		mv "${all_temp_path}"/interfaces /etc/network/interfaces
  		if ip route | awk '/default/ { print $5 }' | grep -q "^w";then
 			__SSID4switch=$(awk '/wpa-ssid/ {gsub(/"/, "", $2); print $2}' /etc/network/interfaces.old)
 			__PASS4switch=$(awk '/wpa-psk/ {gsub(/"/, "", $2); print $2}' /etc/network/interfaces.old)
@@ -1287,8 +1289,7 @@ if [ ! -f "${installer_phases}/create_List_of_apt_2_install_" ];then
 	
 	if [ "$install_dwm" = true ];then
 		show_m "Download dwm..."
-		dwm_script_location="$(print_getthis_location "${__distro_name}")"
-		"${dwm_script_location}/${__distro_name}"/bin/my_installer/apps_center/Windows_Manager/dwm_Extra/build.sh download-only "$__USER" || show_em "failed to download dwm."
+		"${distro_temp_path}"/bin/my_installer/apps_center/Windows_Manager/dwm_Extra/build.sh download-only "$__USER" || show_em "failed to download dwm."
 	fi
 	
 	install_lightdm_now

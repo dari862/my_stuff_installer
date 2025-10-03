@@ -131,17 +131,17 @@ post_disto_apps_installer(){
 		
 		tlp start || tlp_error="true"
 		if [ "$tlp_error" = "true" ];then
-			 tlp start | grep '>>> Invoke' >> "${temp_path}"/tlp_error_Invoke
-			if [ -f "${temp_path}/tlp_error_Invoke" ];then
-				sed -i "s/' to correct this.//g" "${temp_path}"/tlp_error_Invoke
-				sed -i "s/>>> Invoke '//g" "${temp_path}"/tlp_error_Invoke
-				. "${temp_path}"/tlp_error_Invoke
+			 tlp start | grep '>>> Invoke' >> "${all_temp_path}"/tlp_error_Invoke
+			if [ -f "${all_temp_path}/tlp_error_Invoke" ];then
+				sed -i "s/' to correct this.//g" "${all_temp_path}"/tlp_error_Invoke
+				sed -i "s/>>> Invoke '//g" "${all_temp_path}"/tlp_error_Invoke
+				. "${all_temp_path}"/tlp_error_Invoke
 				 tlp start
 			fi
 			if tlp-stat |  grep '* Install' >/dev/null 2>&1 ;then
-				tlp-stat |  grep '* Install' | awk -F' '  '{print "add_packages_2_install_list " $3}' >> "${temp_path}"/tlp_install_exta_apps
-				if [ -f "${temp_path}/tlp_install_exta_apps" ];then
-					. "${temp_path}"/tlp_install_exta_apps
+				tlp-stat |  grep '* Install' | awk -F' '  '{print "add_packages_2_install_list " $3}' >> "${all_temp_path}"/tlp_install_exta_apps
+				if [ -f "${all_temp_path}/tlp_install_exta_apps" ];then
+					. "${all_temp_path}"/tlp_install_exta_apps
 					install_packages
 				fi
 			fi

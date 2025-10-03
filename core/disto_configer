@@ -2,14 +2,14 @@
 ################################################################################################################################
 [ -f "${installer_phases}/disto_configer" ] && return
 show_im "moving Theme_Stuff to ${__distro_name}"
-mv "${theme_temp_path}"/Theme_Stuff "${distro_temp_path}"
+mv "${theme_temp_path}" "${distro_temp_path}"
 
 show_im "change ownership to root"
 chown -R root:root "${distro_temp_path}"
 
 [ -d "${__distro_path_root}" ] && rm -rdf "${__distro_path_root}"
 
-if [ "${__reinstall_distro}" = true ] && [ ! -f "${installer_phases}/__distro_path_root_removed" ] ;then
+if [ "${__reinstall_distro}" = true ] && [ ! -f "${installer_phases}/__distro_path_root_removed" ];then
 	mv "${__distro_path_root}"/never_remove "${distro_temp_path}"
 	rm -rdf "$__distro_path_root"
 	touch "${installer_phases}/__distro_path_root_removed"
@@ -17,25 +17,25 @@ fi
 show_im "moving usr_share"
 mv "${distro_temp_path}" /usr/share/
 
-for f in ${__distro_path_root}/applications/* ; do
+for f in ${__distro_path_root}/applications/*;do
 	ln -sf "$f" /usr/share/applications
 done
 
 show_im "Adding themes"
 mkdir -p /usr/share/themes
-for d in ${__distro_path_root}/Theme_Stuff/themes/* ${__distro_path_root}/Theme_Stuff/openbox_themes/*; do
+for d in ${__distro_path_root}/themes/* ${__distro_path_root}/openbox_themes/*;do
 	ln -sf "$d" /usr/share/themes
 done
 
 show_im "Adding icons and cursors"
 mkdir -p /usr/share/icons
-for d in ${__distro_path_root}/Theme_Stuff/icons/* ${__distro_path_root}/Theme_Stuff/cursors/* ${__distro_path_root}/Theme_Stuff/lightdm-icons; do
+for d in ${__distro_path_root}/icons/* ${__distro_path_root}/cursors/* ${__distro_path_root}/lightdm-icons;do
 	ln -sf "$d" /usr/share/icons
 done
 
 show_im "Adding fonts"
 mkdir -p /usr/share/fonts
-for e in ${__distro_path_root}/Theme_Stuff/fonts/* ; do
+for e in ${__distro_path_root}/fonts/*;do
 	ln -sf "$e" /usr/share/fonts
 done
 
