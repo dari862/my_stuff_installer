@@ -21,9 +21,10 @@ install_common_passman="keepassxc"
 install_common_firefox_=""
 
 # ffmpeg for screen recoding and manymore , at for bl-beepmein
-install_common_for_scripts="ffmpeg at"
+install_common_for_scripts1="ffmpeg at"
 # python3-pyte for theoops , python3-pyte for pickbg
 install_common_for_scripts2=""
+install_common_for_scripts="$install_common_for_scripts1 $install_common_for_scripts2"
 
 #for x11
 install_common_X11_apps=""

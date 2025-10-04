@@ -22,9 +22,10 @@ install_passman=""
 #firefox
 install_firefox_="firefox-esr"
 
-install_for_scripts=""
+install_for_scripts1=""
 # python3-pyte for theoops , python3-pyte for pickbg
 install_for_scripts2="python3-pyte python3-tk"
+install_for_scripts="$install_for_scripts1 $install_for_scripts2"
 
 #for x11
 install_X11_apps="x11-utils xorg xserver-xorg-input-all xinput dbus-x11 xinit x11-xserver-utils xclip xwallpaper xdotool xprintidle"

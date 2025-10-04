@@ -69,7 +69,6 @@ pre_disto_apps_installer(){
 	add_packages_2_install_list "${install_text_editer_app} ${install_common_text_editer_app}"
 	add_packages_2_install_list "${install_mediaplayer_app} ${install_common_mediaplayer_app}"
 	add_packages_2_install_list "${install_for_scripts} ${install_common_for_scripts}"
-	add_packages_2_install_list "${install_for_scripts2} ${install_common_for_scripts2}"
 	add_packages_2_install_list "${install_image_viewer_apps} ${install_common_image_viewer_apps}"
 	add_packages_2_install_list "${install_polkit_apps} ${install_common_polkit_apps}"
 	add_packages_2_install_list "${install_fonts}"

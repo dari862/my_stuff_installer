@@ -23,9 +23,10 @@ install_passman=""
 install_firefox_="mozilla-firefox"
 
 # ffmpeg for screen recoding and manymore , at for bl-beepmein
-install_for_scripts="ffmpeg at"
+install_for_scripts1="ffmpeg at"
 # python3-pyte for theoops , python3-pyte for pickbg
 install_for_scripts2="python3-pyte python3-tk"
+install_for_scripts="$install_for_scripts1 $install_for_scripts2"
 
 #for x11
 install_X11_apps="x11-utils xorg-x11-server xorg-x11-driver-input dbus-x11 xorg-x11-xinit xdg-user-dirs xclip xwallpaper xdotool xprintidle"
