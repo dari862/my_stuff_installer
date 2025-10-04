@@ -1,23 +1,19 @@
-##################################################
-# random wifi disconnect
-##################################################
-# some time polybar does not work
-##################################################
-# pkexec
-############
+pkexec
+================================
 skel_extra/.config/openbox/Menu/bl-menu-openbox.xml:						lightdm-gtk-greeter-settings-pkexec
 skel_extra/.config/jgmenu/prepend.csv:Login Interface,lightdm-gtk-greeter-settings-pkexec,lightdm-settings
 ##################################################
 create universal gtk: icons cursor theme openbox
 skel/.config/myshell/bash/themes/pure.bash-prompt-theme:	# work on this
 bin/X11/bin/clipmanager:    	# work on this : sleep and ownership of clipboard
-
-
+fix dynmiac theme
+some time polybar does not work
+random wifi disconnect
+##################################################
 (process:693010): GLib-CRITICAL **: 15:57:40.958: g_markup_escape_text: assertion 'text != NULL' failed
 =============================
 block and many more for rofi-lancher and runner
-
-
+##################################################
 sometime polybar does not launch
 ================================
  BlackArch clean Hacker_Den Japanese_Street keyboards Neon_punk Tokyo_City
