@@ -1,13 +1,7 @@
 ##################################################
-random wifi disconnect
+# random wifi disconnect
 ##################################################
-some time polybar does not work
-##################################################
-skel/.config/myshell/bash/themes/pure.bash-prompt-theme:	# work on this
-bin/X11/rofi/apps_as_root:	# work on this : remove expect
-bin/X11/bin/my-record:# work on this : trap
-bin/X11/bin/clipmanager:    	# work on this : sleep and ownership of clipboard
-bin/my_installer/apps_center/Super_User/doas:# work on this : remove expect
+# some time polybar does not work
 ##################################################
 # pkexec
 ############
@@ -15,7 +9,8 @@ skel_extra/.config/openbox/Menu/bl-menu-openbox.xml:						lightdm-gtk-greeter-se
 skel_extra/.config/jgmenu/prepend.csv:Login Interface,lightdm-gtk-greeter-settings-pkexec,lightdm-settings
 ##################################################
 create universal gtk: icons cursor theme openbox
-
+skel/.config/myshell/bash/themes/pure.bash-prompt-theme:	# work on this
+bin/X11/bin/clipmanager:    	# work on this : sleep and ownership of clipboard
 
 
 (process:693010): GLib-CRITICAL **: 15:57:40.958: g_markup_escape_text: assertion 'text != NULL' failed
