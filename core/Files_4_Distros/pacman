@@ -1,9 +1,6 @@
 #!/bin/sh -e
 network_manager_app_from_Files_4_Distros="networkmanager"
 
-##################################
-# only for ${PACKAGER}
-##################################
 if [ -z "$PACKAGER" ];then
 	PACKAGER="pacman"
 else
@@ -12,7 +9,7 @@ else
     fi
 fi
 
-__remove_package="${PACKAGER} -Rns --noconfirm"
+__remove_package="pacman -Rns --noconfirm"
 packages_to_install_pacman=""
 packages_to_install_AUR=""
 yay_package_name=""
@@ -29,7 +26,7 @@ install_AUR_helper(){
 	pacman -Syu --needed git base-devel archlinux-keyring
 
     if ! command_exist yay && ! command_exist paru; then
-    	${PACKAGER} --noconfirm -Syu
+    	pacman --noconfirm -Syu
     	for package in yay yay-bin yay-git;do
     		pacman -Si $package 2>/dev/null | grep -q "/$package " && yay_package_name="$package"
     		break
@@ -56,8 +53,6 @@ install_AUR_helper(){
 			fi
 			"${temp_yay_bin}" --noconfirm -Syu yay
         fi
-    else
-    	${PACKAGER} --noconfirm -Syu
     fi
     
     if command_exist yay; then
@@ -78,7 +73,7 @@ create_package_list(){
     
     if [ ! -f "${list_of_installed_apps_file_path}" ];then
 		show_im "Creating installed package list..."
-		${PACKAGER} -Q 2>/dev/null > "${list_of_installed_apps_file_path}" 
+		${PACKAGER} -Q 2>/dev/null > "${list_of_installed_apps_file_path}"
 	fi
 }
 
@@ -90,7 +85,7 @@ install_packages(){
 	fi
 	
 	if [ -n "${packages_to_install_AUR}" ];then
-    	${PACKAGER} --noconfirm -Syu ${packages_to_install_AUR}
+    	su - $__USER -c "${PACKAGER} --noconfirm -Syu ${packages_to_install_AUR}"
     else
     	show_wm_only "packages_to_install_AUR are empty"
     fi
@@ -134,8 +129,8 @@ add_packages_2_install_list(){
 }
 
 upgrade_now(){
-	${PACKAGER} --noconfirm -Sy archlinux-keyring
-    ${PACKAGER} -Syu --noconfirm
+	pacman --noconfirm -Sy archlinux-keyring
+    pacman -Syu --noconfirm
 }
 
 remove_packages()
@@ -151,7 +146,7 @@ remove_packages()
 
 run_autoclean(){
 	show_im "run autoremove autoclean."
-	${PACKAGER} -Sc --noconfirm
+	pacman -Sc --noconfirm
 	remove_packages "$(pacman -Qtdq)" > /dev/null || true
 }
 
@@ -203,7 +198,7 @@ switch_lightdm_now(){
 updating_rate_mirrors(){
 	[ -f "${installer_phases}/updating_rate_mirrors" ] && return
 	show_sm "updating rate-mirrors..."
-    ${PACKAGER} --noconfirm -S rate-mirrors-bin
+    pacman --noconfirm -S rate-mirrors-bin
     cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
     rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch || show_wm "failed to update rate-mirrors..."
     touch "${installer_phases}/updating_rate_mirrors"

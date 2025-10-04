@@ -340,11 +340,13 @@ create_prompt_to_install_value_file(){
 if command_exist curl;then
 	url_package="curl"
 	download_file(){
+		printf "downloading %s to %s using %s ." "${1-}" "${2-}" "${url_package}"
 		curl -SsL --progress-bar "${1-}" -o "${2-}" 2>/dev/null
 	}
 elif command_exist wget;then
 	url_package="wget"
 	download_file(){
+		printf "downloading %s to %s using %s ." "${1-}" "${2-}" "${url_package}"
 		wget -q --no-check-certificate --progress=bar "${1-}" -O "${2-}" 2>/dev/null
 	}
 else
@@ -373,7 +375,7 @@ if [ ! -f "$tmp_installer_file" ];then
 	download_file "$download_url" "$tmp_installer_file"
 fi
 
-chmod +x installer.sh
+chmod +x "$tmp_installer_file"
 
 if [ -f "${prompt_to_install_value_file}" ];then
 	print_m "file exist : ${prompt_to_install_value_file} form previce run."
