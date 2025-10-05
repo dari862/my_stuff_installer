@@ -1,5 +1,6 @@
 #!/bin/sh -e
 yay_ver="12.5.0"
+_temp_user="aurtempuser"
 network_manager_app_from_Files_4_Distros="networkmanager"
 
 if [ -z "$PACKAGER" ];then
@@ -21,66 +22,88 @@ clean_pacman_db_locl_file(){
 	fi
 }
 
+aur_command(){
+	case "$1" in
+		single)
+			if su - "$_temp_user" -c "${temp_yay_bin} --noconfirm -S $2";then
+				return
+			else
+				return 1
+			fi
+		;;
+		check)
+			if su - "$_temp_user" -c "${temp_yay_bin} -Si $2 >/dev/null 2>&1";then
+				return
+			else
+				return 1
+			fi		
+		;;
+		all) 
+			if [ -n "${packages_to_install_AUR}" ];then
+				su - "$_temp_user" -c "${temp_yay_bin} --noconfirm -Syu ${packages_to_install_AUR}"
+			else
+				show_wm_only "packages_to_install_AUR are empty"
+			fi
+		;;
+		fromtemp) su - "$_temp_user" -c "${temp_yay_bin} --noconfirm -Syu yay";;
+	esac
+}
+
 install_AUR_helper(){
-	[ -f "${installer_phases}/install_AUR_helper" ] && return
+	[ -f "${installer_phases}/install_AUR_helper" ] && return || :
 	clean_pacman_db_locl_file  
-	true
+	
+	useradd -m "${_temp_user}"
+	usermod -s /bin/sh "${_temp_user}"
+	PASSWORD=$(openssl rand -base64 48)
+	printf "%s:%s" "${_temp_user}" "$PASSWORD" | chpasswd
+	passwd -l "${_temp_user}"
+	PASSWORD=""
+
+	if command_exist sudo;then
+		printf "%s ALL=(ALL) NOPASSWD: ALL" "${_temp_user}" | tee "/etc/sudoers.d/${_temp_user}" >/dev/null 2>&1
+		chmod 440 "/etc/sudoers.d/${_temp_user}"
+	fi
+
+	if command_exist doas;then
+		printf "permit nopass %s" "${_temp_user}" | tee -a /etc/doas.conf >/dev/null 2>&1
+	fi
 	
 	show_im "Updating your system..."
 	pacman -Syu --noconfirm
-	
-	show_im "Installing git base-devel archlinux-keyring..."
-	pacman -Syu --needed git base-devel archlinux-keyring
 
-    if ! command_exist yay && ! command_exist paru; then
-    	pacman --noconfirm -Syu
-    	for package in yay yay-bin yay-git;do
-    		pacman -Si $package 2>/dev/null | grep -q "/$package " && yay_package_name="$package"
-    		break
-    	done
-        if [ -n "$yay_package_name" ];then
-        	show_im "Installing yay as AUR helper..."
-        	pacman --noconfirm -Syu $yay_package_name
-        else
-        	show_im "installing yay..."
-        	temp_yay_bin="/tmp/temp_yay"
-        	if [ ! -f "$temp_yay_bin" ];then
-        		temp_yay_dir="/tmp/yay-bin"
-        		[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir"
-        		mkdir -p "$temp_yay_dir"
-        		if [ -z "$yay_ver" ];then
-					yay_ver="latest"
-				else
-					yay_ver="tags/v${yay_ver}"
-				fi
-				yay_github_api_url="https://api.github.com/repos/Jguer/yay/releases/$yay_ver"
-				yay_github_api_url="https://api.github.com/repos/Jguer/yay/releases/$yay_ver"
-        		if command -v curl >/dev/null;then
-					  case "$(uname -m)" in
-						x86_64)  ARCH="x86_64" ;;
-						aarch64) ARCH="aarch64"			  ;;
-						armv7*)  ARCH="armv7h"					  ;;
-					  esac
-					url2downloadyay="$(curl -fsSL "$yay_github_api_url" | grep -oP '(?<=browser_download_url": ")[^"]*' | grep "${ARCH}.tar.gz")"
-					curl -fSLo "${temp_yay_dir}/yay_bin.tar.gz" "${url2downloadyay}" --progress-bar
-				elif command -v wget >/dev/null;then
-					url2downloadyay="$(wget -qO- "https://api.github.com/repos/Jguer/yay/releases/latest" | grep -oP '(?<=browser_download_url": ")[^"]*' | grep "x86_64.tar.gz")"
-					wget -q --show-progress -O "${temp_yay_dir}/yay_bin.tar.gz" "${url2downloadyay}"
-				fi
-				( cd "$temp_yay_dir" && tar -xzf yay_bin.tar.gz && rm -rf yay_bin.tar.gz && mv yay_*/yay "${temp_yay_bin}")
-				[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir"
-			fi
-			"${temp_yay_bin}" --noconfirm -Syu yay
-        fi
-    fi
-    
-    if command_exist yay; then
-    	show_sm "swtiching to yay..."
-        PACKAGER="yay"
-    elif command_exist paru; then
-    	show_sm "swtiching to paru..."
-        PACKAGER="paru"
-    fi
+	show_im "installing yay..."
+	temp_yay_bin="/tmp/temp_yay"
+	
+	if [ ! -f "$temp_yay_bin" ];then
+		temp_yay_dir="/tmp/yay-bin"
+		[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir" || :
+		mkdir -p "$temp_yay_dir"
+		if [ -z "$yay_ver" ];then
+			yay_ver="latest"
+		else
+			yay_ver="tags/v${yay_ver}"
+		fi
+		yay_github_api_url="https://api.github.com/repos/Jguer/yay/releases/$yay_ver"
+		yay_github_api_url="https://api.github.com/repos/Jguer/yay/releases/$yay_ver"
+		if command_exist curl;then
+			case "$(uname -m)" in
+				x86_64)  ARCH="x86_64" ;;
+				aarch64) ARCH="aarch64";;
+				armv7*)  ARCH="armv7h" ;;
+			esac
+			url2downloadyay="$(curl -fsSL "$yay_github_api_url" | grep -oP '(?<=browser_download_url": ")[^"]*' | grep "${ARCH}.tar.gz")"
+			curl -fSLo "${temp_yay_dir}/yay_bin.tar.gz" "${url2downloadyay}" --progress-bar
+		elif command_exist wget;then
+			url2downloadyay="$(wget -qO- "https://api.github.com/repos/Jguer/yay/releases/latest" | grep -oP '(?<=browser_download_url": ")[^"]*' | grep "x86_64.tar.gz")"
+			wget -q --show-progress -O "${temp_yay_dir}/yay_bin.tar.gz" "${url2downloadyay}"
+		fi
+		( cd "$temp_yay_dir" && tar -xzf yay_bin.tar.gz && rm -rf yay_bin.tar.gz && mv yay_*/yay "${temp_yay_bin}")
+		[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir"
+		aur_command fromtemp
+	fi
+   
+    PACKAGER="${temp_yay_bin}"
 	touch "${installer_phases}/install_AUR_helper"
 }
 
@@ -93,7 +116,7 @@ create_package_list(){
     
     if [ ! -f "${list_of_installed_apps_file_path}" ];then
 		show_im "Creating installed package list..."
-		${PACKAGER} -Q 2>/dev/null > "${list_of_installed_apps_file_path}"
+		pacman -Q 2>/dev/null > "${list_of_installed_apps_file_path}"
 	fi
 }
 
@@ -101,15 +124,13 @@ install_packages(){
 	clean_pacman_db_locl_file
 	single_package_to_install="${1:-}"
 	if [ -n "${single_package_to_install}" ];then
-		pacman --noconfirm -Syu ${single_package_to_install}
-		return
-	fi
-	
-	if [ -n "${packages_to_install_AUR}" ];then
-    	su - $__USER -c "${PACKAGER} --noconfirm -Syu ${packages_to_install_AUR}"
-    else
-    	show_wm_only "packages_to_install_AUR are empty"
+    	if ! pacman --noconfirm -Syu ${single_package_to_install};then
+			show_wm "faile to install $single_package"
+			return
+		fi
     fi
+	
+    aur_command all
     
     if [ -n "${packages_to_install_pacman}" ];then
     	pacman --noconfirm -Syu ${packages_to_install_pacman}
@@ -122,13 +143,7 @@ install_packages(){
 
 install_single_package(){
 	single_package="${1:-}"
-	if [ -n "${single_package}" ];then
-		clean_pacman_db_locl_file
-    	pacman --noconfirm -Syu ${single_package_to_install}
-    else
-    	show_wm "faile to install $single_package"
-    	sleep 1
-    fi
+	
 }
 
 add_packages_2_install_list(){
@@ -139,7 +154,7 @@ add_packages_2_install_list(){
             	packages_to_install_pacman="$packages_to_install_pacman $INDEX"
             	Packages_2_install="$Packages_2_install $INDEX"
             	echo "$INDEX added to install list."
-        	elif ${PACKAGER} -Si "${INDEX}" >/dev/null 2>&1;then
+        	elif aur_command check "${INDEX}";then
             	packages_to_install_AUR="$packages_to_install_AUR $INDEX"
             	Packages_2_install="$Packages_2_install $INDEX"
             	echo "$INDEX added to install list."
@@ -224,10 +239,10 @@ updating_rate_mirrors(){
 	show_sm "updating rate-mirrors..."
 	clean_pacman_db_locl_file
 	if ! command_exist rate-mirrors;then
-		pacman --noconfirm -S rate-mirrors-bin
-	else
-		show_wm "failed to update rate-mirrors..."
-		return
+		if ! aur_command single rate-mirrors-bin;then
+			show_wm "failed to update rate-mirrors..."
+			return
+		fi
 	fi
     cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
     rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch || show_wm "failed to update rate-mirrors..."
@@ -256,6 +271,20 @@ pre_package_manager_(){
     install_AUR_helper
     updating_rate_mirrors
     touch "${installer_phases}/pre_package_manager_"
+}
+
+clean_up_aur_user(){
+	if grep -q "permit nopass ${_temp_user}" /etc/doas.conf;then
+		sed -i "/permit nopass ${_temp_user}/d" /etc/doas.conf
+	fi
+	
+	if [ -f "/etc/sudoers.d/${_temp_user}" ];then
+		rm -f "/etc/sudoers.d/${_temp_user}"
+	fi
+	
+	if id "$_temp_user" >/dev/null 2>&1; then
+		userdel -r "$_temp_user"
+	fi
 }
 
 enable_repo(){   :; }

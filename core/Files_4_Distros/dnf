@@ -27,19 +27,7 @@ install_packages(){
 		dnf install -y ${packages_to_install}
     else
     	show_wm_only "packages_to_install are empty"
-    	sleep 1
-    fi
-}
-
-install_single_package(){
-	single_package="${1:-}"
-	if [ -n "${single_package}" ];then
-    	(dnf install -y ${single_package} && kill_package_ dnf) || \
-		(dnf install -y ${single_package} && kill_package_ dnf) || \
-		dnf install -y ${single_package}
-    else
-    	show_wm "faile to install $single_package"
-    	sleep 1
+    	return
     fi
 }
 
@@ -157,3 +145,4 @@ enable_repo() {
   dnf install -y --non-interactive addrepo -f ${REPO_ID}
   dnf install -y --non-interactive --gpg-auto-import-keys refresh
 }
+clean_up_aur_user(){   :; }

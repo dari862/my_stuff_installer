@@ -789,6 +789,8 @@ install_GPU_Drivers_now(){
 }
 
 __Done(){
+	clean_up_aur_user
+	
 	if [ -f "/tmp/distro_done_installing" ];then
 		show_m "Removing ${all_temp_path}"
 		rm -rdf "${all_temp_path}"
@@ -813,7 +815,7 @@ install_network_manager(){
 	fi
 	[ -f "${installer_phases}/install_network_manager" ] && return
 	show_m "installing networkmanager"
-	install_single_package "$network_manager_app_from_Files_4_Distros"
+	install_packages "$network_manager_app_from_Files_4_Distros"
 	touch "${installer_phases}/install_network_manager"
 }
 

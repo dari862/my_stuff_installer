@@ -2,7 +2,7 @@
 create_to_be_purged_list(){
 	[ -f "${installer_phases}/create_to_be_purged_list" ] && return
 		if grep -q pam_wtmpdb.so /etc/pam.d/common-session;then
-			sudo sed -i '/^[[:space:]]*session[[:space:]]\+optional[[:space:]]\+pam_wtmpdb\.so/ s/^/# /' /etc/pam.d/common-session
+			sed -i '/^[[:space:]]*session[[:space:]]\+optional[[:space:]]\+pam_wtmpdb\.so/ s/^/# /' /etc/pam.d/common-session
 		fi
 		
 		_purge_it=""

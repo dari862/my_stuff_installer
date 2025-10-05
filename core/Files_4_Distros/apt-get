@@ -61,19 +61,7 @@ install_packages(){
 		apt install -yq ${packages_to_install}
     else
     	show_wm_only "Packages_2_install are empty"
-    	sleep 1
-    fi
-}
-
-install_single_package(){
-	single_package="${1:-}"
-	if [ -n "${single_package}" ];then
-    	(apt install -y ${single_package} && kill_package_ apt) || \
-		(apt install -y ${single_package} && kill_package_ apt) || \
-		apt install -y ${single_package}
-    else
-    	show_wm "faile to install $single_package"
-    	sleep 1
+    	return
     fi
 }
 
@@ -234,3 +222,4 @@ pre_package_manager_(){
 }
 
 enable_repo(){   :; }
+clean_up_aur_user(){   :; }

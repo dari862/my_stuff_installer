@@ -27,19 +27,7 @@ install_packages(){
 		zypper install -y ${packages_to_install}
     else
     	show_wm_only "packages_to_install are empty"
-    	sleep 1
-    fi
-}
-
-install_single_package(){
-	single_package="${1:-}"
-	if [ -n "${single_package}" ];then
-    	(zypper install -y ${single_package} && kill_package_ zypper) || \
-		(zypper install -y ${single_package} && kill_package_ zypper) || \
-		zypper install -y ${single_package}
-    else
-    	show_wm "faile to install $single_package"
-    	sleep 1
+    	return
     fi
 }
 
@@ -159,3 +147,4 @@ enable_repo() {
     fi
   fi
 }
+clean_up_aur_user(){   :; }

@@ -35,6 +35,8 @@ elif [ "$install_mode" = "dev" ];then
 	download_url="https://raw.githubusercontent.com/dari862/my_stuff_installer/main/For_dev/pre_dev_env"
 fi
 
+install_sudo=false
+
 command_exist() {
 	if command -v $1 > /dev/null 2>&1;then
 		return
@@ -290,6 +292,9 @@ prompt_to_ask_to_what_to_install(){
 		fi
 	fi
 	
+	if [ "$switch_to_doas" = false ] && [ "$doas_installed" = false ] && [ "$sudo_installed" = false ];then
+		install_sudo=true
+	fi
 	if [ "$doas_installed" = true ] && [ "$sudo_installed" = false ];then
 		only_doas_installed=true
 	else
@@ -315,6 +320,7 @@ create_prompt_to_install_value_file(){
 		install_akmod_nvidia=${install_akmod_nvidia}
 		install_wayland="${install_wayland}"
 		install_X11="${install_X11}"
+		install_sudo="${install_sudo}"
 		switch_to_doas="${switch_to_doas}"
 		run_purge_some_unnecessary_pakages="${run_purge_some_unnecessary_pakages}"
 		run_disable_some_unnecessary_services="${run_disable_some_unnecessary_services}"

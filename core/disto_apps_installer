@@ -22,6 +22,10 @@ pre_disto_apps_installer(){
 		:
 	fi
 	
+	if [ "$install_sudo" = "true" ];then
+		add_packages_2_install_list "sudo"
+	fi
+	
 	if [ "$install_X11" = "true" ];then
 		add_packages_2_install_list "${install_X11_apps} ${install_common_X11_apps}"
 		add_packages_2_install_list "${install_res_apps_for_X11} ${install_common_res_apps_for_X11}"
