@@ -1,4 +1,5 @@
 #!/bin/sh -e
+yay_ver="12.5.0"
 network_manager_app_from_Files_4_Distros="networkmanager"
 
 if [ -z "$PACKAGER" ];then
@@ -14,9 +15,15 @@ packages_to_install_pacman=""
 packages_to_install_AUR=""
 yay_package_name=""
 
+clean_pacman_db_locl_file(){
+	if [ -f "/var/lib/pacman/db.lck" ];then
+			rm /var/lib/pacman/db.lck
+	fi
+}
+
 install_AUR_helper(){
 	[ -f "${installer_phases}/install_AUR_helper" ] && return
-	        
+	clean_pacman_db_locl_file  
 	true
 	
 	show_im "Updating your system..."
@@ -41,8 +48,20 @@ install_AUR_helper(){
         		temp_yay_dir="/tmp/yay-bin"
         		[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir"
         		mkdir -p "$temp_yay_dir"
+        		if [ -z "$yay_ver" ];then
+					yay_ver="latest"
+				else
+					yay_ver="tags/v${yay_ver}"
+				fi
+				yay_github_api_url="https://api.github.com/repos/Jguer/yay/releases/$yay_ver"
+				yay_github_api_url="https://api.github.com/repos/Jguer/yay/releases/$yay_ver"
         		if command -v curl >/dev/null;then
-					url2downloadyay="$(curl -fsSL "https://api.github.com/repos/Jguer/yay/releases/latest" | grep -oP '(?<=browser_download_url": ")[^"]*' | grep "x86_64.tar.gz")"
+					  case "$(uname -m)" in
+						x86_64)  ARCH="x86_64" ;;
+						aarch64) ARCH="aarch64"			  ;;
+						armv7*)  ARCH="armv7h"					  ;;
+					  esac
+					url2downloadyay="$(curl -fsSL "$yay_github_api_url" | grep -oP '(?<=browser_download_url": ")[^"]*' | grep "${ARCH}.tar.gz")"
 					curl -fSLo "${temp_yay_dir}/yay_bin.tar.gz" "${url2downloadyay}" --progress-bar
 				elif command -v wget >/dev/null;then
 					url2downloadyay="$(wget -qO- "https://api.github.com/repos/Jguer/yay/releases/latest" | grep -oP '(?<=browser_download_url": ")[^"]*' | grep "x86_64.tar.gz")"
@@ -66,6 +85,7 @@ install_AUR_helper(){
 }
 
 create_package_list(){
+	clean_pacman_db_locl_file
     if [ ! -f "${list_of_apps_file_path}" ]; then
         show_im "Creating package list..."
         pacman -Ss > "${list_of_apps_file_path}"
@@ -78,6 +98,7 @@ create_package_list(){
 }
 
 install_packages(){
+	clean_pacman_db_locl_file
 	single_package_to_install="${1:-}"
 	if [ -n "${single_package_to_install}" ];then
 		pacman --noconfirm -Syu ${single_package_to_install}
@@ -102,6 +123,7 @@ install_packages(){
 install_single_package(){
 	single_package="${1:-}"
 	if [ -n "${single_package}" ];then
+		clean_pacman_db_locl_file
     	pacman --noconfirm -Syu ${single_package_to_install}
     else
     	show_wm "faile to install $single_package"
@@ -129,6 +151,7 @@ add_packages_2_install_list(){
 }
 
 upgrade_now(){
+	clean_pacman_db_locl_file
 	pacman --noconfirm -Sy archlinux-keyring
     pacman -Syu --noconfirm
 }
@@ -146,6 +169,7 @@ remove_packages()
 
 run_autoclean(){
 	show_im "run autoremove autoclean."
+	clean_pacman_db_locl_file
 	pacman -Sc --noconfirm
 	remove_packages "$(pacman -Qtdq)" > /dev/null || true
 }
@@ -198,7 +222,13 @@ switch_lightdm_now(){
 updating_rate_mirrors(){
 	[ -f "${installer_phases}/updating_rate_mirrors" ] && return
 	show_sm "updating rate-mirrors..."
-    pacman --noconfirm -S rate-mirrors-bin
+	clean_pacman_db_locl_file
+	if ! command_exist rate-mirrors;then
+		pacman --noconfirm -S rate-mirrors-bin
+	else
+		show_wm "failed to update rate-mirrors..."
+		return
+	fi
     cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
     rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch || show_wm "failed to update rate-mirrors..."
     touch "${installer_phases}/updating_rate_mirrors"

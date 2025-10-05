@@ -340,13 +340,13 @@ create_prompt_to_install_value_file(){
 if command_exist curl;then
 	url_package="curl"
 	download_file(){
-		printf "downloading %s to %s using %s ." "${1-}" "${2-}" "${url_package}"
+		print_m "downloading ${1-} to ${2-} using ${url_package} ."
 		curl -SsL --progress-bar "${1-}" -o "${2-}" 2>/dev/null
 	}
 elif command_exist wget;then
 	url_package="wget"
 	download_file(){
-		printf "downloading %s to %s using %s ." "${1-}" "${2-}" "${url_package}"
+		print_m "downloading ${1-} to ${2-} using ${url_package} ."
 		wget -q --no-check-certificate --progress=bar "${1-}" -O "${2-}" 2>/dev/null
 	}
 else
@@ -370,7 +370,7 @@ fi
 
 if [ ! -f "$tmp_installer_file" ];then
 	mkdir -p "$tmp_installer_dir"
-	chmod 700 "$tmp_installer_dir"
+	chmod 750 "$tmp_installer_dir"
 
 	download_file "$download_url" "$tmp_installer_file"
 fi
