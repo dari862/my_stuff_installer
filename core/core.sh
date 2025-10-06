@@ -1048,19 +1048,11 @@ source_this_script "disto_configer" "Configering $__distro_title." "run_check"
 . "${__distro_path_lib}"
 . "${__distro_path_root}/lib/common/common"
 
-create_applicationsdotdesktop_4_xsessions "openbox" "openbox"
-
 if [ "$install_dwm" = true ];then
 	show_m "Building dwm."
 	"${__distro_path_root}"/bin/my_installer/apps_center/Windows_Manager/dwm_Extra/build.sh build "$__USER"
-	show_im "create ${__distro_name}_dwm to xsessions."
-	create_applicationsdotdesktop_4_xsessions "dwm" "dwm"
 fi
 
-if [ "$install_bspwm" = true ];then
-	show_im "create ${__distro_name}_bspwm to xsessions."
-	create_applicationsdotdesktop_4_xsessions "bspwm" "bspwm"
-fi
 source_this_script "disto_specific_extra" "Source purge_some_unnecessary_pakages and  disable_some_unnecessary_services from (disto_specific_extra)"
 
 purge_some_unnecessary_pakages
