@@ -111,7 +111,7 @@ end_of_post_install(){
 	ln -sf ${__distro_path_root}/lib/manpage/* /usr/share/man/man1
 	
 	show_im "installing update-notification"
-	sh -c "export __distro_path_lib=\"${__distro_path_lib}\"; \"${__distro_path_root}\"/system_files/bin/update-notification -I"
+	"${__distro_path_root}"/system_files/bin/update-notification -I
 	
 	show_im "pick correct apps_as_root."
 	if command_exist doas;then

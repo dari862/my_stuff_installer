@@ -707,7 +707,7 @@ create_new_os_release_file(){
 run_my_alternatives(){
 	[ -f "${installer_phases}/my_alternatives" ] && return
 	show_m "update alternatives apps"
-	${__distro_path_root}/bin/bin/my-alternatives --install
+	${__distro_path_root}/bin/cli/my-alternatives --install
 	touch "${installer_phases}/my_alternatives"
 }
 
