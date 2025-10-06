@@ -125,8 +125,10 @@ aur_command_install_all(){
 }
 
 delete_auruser(){
-	if grep -q "permit nopass ${_temp_user}" /etc/doas.conf;then
-		sed -i "/permit nopass ${_temp_user}/d" /etc/doas.conf
+	if [ -f "/etc/doas.conf" ];then
+		if grep -q "permit nopass ${_temp_user}" /etc/doas.conf;then
+			sed -i "/permit nopass ${_temp_user}/d" /etc/doas.conf
+		fi
 	fi
 	
 	if [ -f "/etc/sudoers.d/${_temp_user}" ];then

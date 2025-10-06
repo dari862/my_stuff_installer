@@ -787,10 +787,6 @@ install_GPU_Drivers_now(){
 }
 
 __Done(){
-	if [ -f "/tmp/distro_done_installing" ];then
-		show_m "Removing ${all_temp_path}"
-		rm -rdf "${all_temp_path}"
-	fi
 	show_m "Done"
 	if [ "$failed_2_install_ufw" = true ];then
 		echo "Press any key to reboot."
@@ -798,9 +794,16 @@ __Done(){
 		head -c1 >/dev/null
 		stty icanon echo
 	fi
+	
 	touch "/tmp/distro_done_installing"
+	
 	if [ "$reboot_now" = "Y" ];then
+		show_m "Removing ${all_temp_path}"
+		[ -d "${all_temp_path}" ] && rm -rdf "${all_temp_path}"
 		${__distro_path_root}/system_files/bin/my_session_manager_cli reboot
+	else
+		show_m "Removing ${all_temp_path}"
+		[ -d "${all_temp_path}" ] && rm -rdf "${all_temp_path}"
 	fi
 	exit
 }
