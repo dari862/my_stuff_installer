@@ -22,31 +22,30 @@ clean_pacman_db_locl_file(){
 	fi
 }
 
-aur_command(){
-	case "$1" in
-		single)
-			if su - "$_temp_user" -c "${temp_yay_bin} --noconfirm -S $2";then
-				return
-			else
-				return 1
-			fi
-		;;
-		check)
-			if su - "$_temp_user" -c "${temp_yay_bin} -Si $2 >/dev/null 2>&1";then
-				return
-			else
-				return 1
-			fi		
-		;;
-		all) 
-			if [ -n "${packages_to_install_AUR}" ];then
-				su - "$_temp_user" -c "${temp_yay_bin} --noconfirm -Syu ${packages_to_install_AUR}"
-			else
-				show_wm_only "packages_to_install_AUR are empty"
-			fi
-		;;
-		fromtemp) su - "$_temp_user" -c "${temp_yay_bin} --noconfirm -Syu yay";;
-	esac
+aur_command_single_install(){
+	if su - "$_temp_user" -c "${temp_yay_bin} --noconfirm -S $1";then
+		return
+	else
+		return 1
+	fi
+}
+
+aur_command_check(){
+	if su - "$_temp_user" -c "${temp_yay_bin} -Si $1 >/dev/null 2>&1";then
+		return
+	else
+		return 1
+	fi
+}
+
+aur_command_install_all(){
+	if [ -n "${packages_to_install_AUR}" ];then
+		for aurpackage in ${packages_to_install_AUR};do
+			aur_command_single_install "$aurpackage" || show_wm "failed to install from aur: $aurpackage"
+		done
+	else
+		show_wm_only "packages_to_install_AUR are empty"
+	fi
 }
 
 install_AUR_helper(){
@@ -102,7 +101,7 @@ install_AUR_helper(){
 		fi
 		( cd "$temp_yay_dir" && tar -xzf yay_bin.tar.gz && rm -rf yay_bin.tar.gz && mv yay_*/yay "${temp_yay_bin}")
 		[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir"
-		aur_command fromtemp
+		aur_command_single_install yay
 	fi
    
     PACKAGER="${temp_yay_bin}"
@@ -132,20 +131,15 @@ install_packages(){
 		fi
     fi
 	
-    aur_command all
-    
     if [ -n "${packages_to_install_pacman}" ];then
     	pacman --noconfirm -Syu ${packages_to_install_pacman}
     else
     	show_wm_only "packages_to_install_pacman are empty"
     fi
     
+    aur_command_install_all
+    
     sleep 1
-}
-
-install_single_package(){
-	single_package="${1:-}"
-	
 }
 
 add_packages_2_install_list(){
@@ -156,7 +150,7 @@ add_packages_2_install_list(){
             	packages_to_install_pacman="$packages_to_install_pacman $INDEX"
             	Packages_2_install="$Packages_2_install $INDEX"
             	echo "$INDEX added to install list."
-        	elif aur_command check "${INDEX}";then
+        	elif aur_command_check "${INDEX}";then
             	packages_to_install_AUR="$packages_to_install_AUR $INDEX"
             	Packages_2_install="$Packages_2_install $INDEX"
             	echo "$INDEX added to install list."
@@ -241,7 +235,7 @@ updating_rate_mirrors(){
 	show_sm "updating rate-mirrors..."
 	clean_pacman_db_locl_file
 	if ! command_exist rate-mirrors;then
-		if ! aur_command single rate-mirrors-bin;then
+		if ! aur_command_single_install rate-mirrors-bin;then
 			show_wm "failed to update rate-mirrors..."
 			return
 		fi

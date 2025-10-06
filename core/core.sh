@@ -204,9 +204,7 @@ pre_script(){
 create_dir_and_source_stuff(){
 	show_m "pre-script: create dir and source files."
 	show_im "create dir ${installer_phases}"
-	
-	mkdir -p "${all_temp_path}"
-	chmod 700 "${all_temp_path}"
+
 	mkdir -p "${installer_phases}"
 	if [ -f "${save_value_file}" ];then
 		. "${save_value_file}"

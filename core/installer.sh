@@ -305,6 +305,7 @@ prompt_to_ask_to_what_to_install(){
 create_prompt_to_install_value_file(){
 	print_m "creating: ${prompt_to_install_value_file}"
 	$__super_command mkdir -p "${all_temp_path}"
+	$__super_command chmod 755 "${all_temp_path}"
 	$__super_command tee "${prompt_to_install_value_file}" <<- EOF >/dev/null
 		__distro_name="$__distro_name"
 		export all_temp_path="${all_temp_path}"
