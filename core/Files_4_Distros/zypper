@@ -20,13 +20,13 @@ create_package_list(){
 }
 
 install_packages(){
-	packages_to_install="${1:-${Packages_2_install}}"
+	packages_to_install="${1:-${all_Packages_to_install}}"
 	if [ -n "${packages_to_install}" ];then
     	(zypper install -y ${packages_to_install} && kill_package_ zypper) || \
 		(zypper install -y ${packages_to_install} && kill_package_ zypper) || \
 		zypper install -y ${packages_to_install}
     else
-    	show_wm_only "packages_to_install are empty"
+    	show_wm_only "all_Packages_to_install are empty"
     	return
     fi
 }
@@ -36,7 +36,7 @@ add_packages_2_install_list(){
 	for INDEX in ${localarray};do
 		if ! package_installed "${INDEX}";then
 			if grep -q "^$INDEX" "${list_of_apps_file_path}";then
-				packages_to_install="$packages_to_install $INDEX"
+				all_Packages_to_install="$all_Packages_to_install $INDEX"
 				show_im "${INDEX} added to install apps" 
 			else
 				show_filed_2_add_pakage_m "${INDEX} does not exist." 
@@ -147,4 +147,5 @@ enable_repo() {
     fi
   fi
 }
-clean_up_aur_user(){   :; }
+
+install_aur_and_all_needed_packages(){   :; }

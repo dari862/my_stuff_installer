@@ -1,57 +1,31 @@
 #!/bin/sh -e
-yay_ver="12.5.0"
-_temp_user="aurtempuser"
 network_manager_app_from_Files_4_Distros="networkmanager"
 
-if [ -z "$PACKAGER" ];then
-	PACKAGER="pacman"
-else
-	if command_exist yay; then
-        PACKAGER="yay"
-    fi
-fi
-
 __remove_package="pacman -Rns --noconfirm"
-packages_to_install_pacman=""
+packages_to_install=""
+
+########################################################
+# aur
+########################################################
+_temp_user="aurtempuser"
+yay_ver="12.5.0"
+_temp_user="aurtempuser"
+temp_yay_bin="/home/$_temp_user/temp_yay"
+temp_yay_command="${temp_yay_bin} --noconfirm -Sy"
 packages_to_install_AUR=""
-yay_package_name=""
+use_aur=true
 
-clean_pacman_db_locl_file(){
-	if [ -f "/var/lib/pacman/db.lck" ];then
-			rm /var/lib/pacman/db.lck
-	fi
-}
+yay_env_installer_script_path="$current_user_home/yay_installer"
 
-aur_command_single_install(){
-	if su - "$_temp_user" -c "${temp_yay_bin} --noconfirm -S $1";then
+command_exist() {
+	if command -v $1 > /dev/null 2>&1;then
 		return
 	else
 		return 1
 	fi
 }
 
-aur_command_check(){
-	if su - "$_temp_user" -c "${temp_yay_bin} -Si $1 >/dev/null 2>&1";then
-		return
-	else
-		return 1
-	fi
-}
-
-aur_command_install_all(){
-	if [ -n "${packages_to_install_AUR}" ];then
-		for aurpackage in ${packages_to_install_AUR};do
-			aur_command_single_install "$aurpackage" || show_wm "failed to install from aur: $aurpackage"
-		done
-	else
-		show_wm_only "packages_to_install_AUR are empty"
-	fi
-}
-
-install_AUR_helper(){
-	[ -f "${installer_phases}/install_AUR_helper" ] && return || :
-	clean_pacman_db_locl_file  
-	
+create_auruser(){
 	useradd -m "${_temp_user}"
 	usermod -s /bin/sh "${_temp_user}"
 	PASSWORD=$(openssl rand -base64 48)
@@ -67,13 +41,31 @@ install_AUR_helper(){
 	if command_exist doas;then
 		printf "permit nopass %s" "${_temp_user}" | tee -a /etc/doas.conf >/dev/null 2>&1
 	fi
-	
-	show_im "Updating your system..."
-	pacman -Syu --noconfirm
+}
 
-	show_im "installing yay..."
-	temp_yay_bin="/home/$_temp_user/temp_yay"
+aur_command_single_install(){
+	if su - "$_temp_user" -c "${temp_yay_command} $1";then
+		return
+	else
+		return 1
+	fi
+}
+
+aur_command_check(){
+	if su - "$_temp_user" -c "${temp_yay_bin} -Si $1 >/dev/null 2>&1";then
+		return
+	else
+		return 1
+	fi
+}
+
+install_AUR_helper(){
+	if [ -f "/var/lib/pacman/db.lck" ];then
+		rm /var/lib/pacman/db.lck
+	fi  
+	
 	if [ ! -f "$temp_yay_bin" ];then
+		show_im "installing yay..."
 		temp_yay_dir="/tmp/yay-bin"
 		[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir" || :
 		mkdir -p "$temp_yay_dir"
@@ -82,10 +74,8 @@ install_AUR_helper(){
 		else
 			yay_ver="tags/v${yay_ver}"
 		fi
-		
 		yay_github_api_url="https://api.github.com/repos/Jguer/yay/releases/$yay_ver"
-		yay_github_api_url="https://api.github.com/repos/Jguer/yay/releases/$yay_ver"
-		if command_exist curl;then
+		if [ "$url_package" = "curl" ];then
 			case "$(uname -m)" in
 				x86_64)  ARCH="x86_64" ;;
 				aarch64) ARCH="aarch64";;
@@ -93,19 +83,116 @@ install_AUR_helper(){
 			esac
 			url2downloadyay="$(curl -fsSL "$yay_github_api_url" | grep -oP '(?<=browser_download_url": ")[^"]*' | grep "${ARCH}.tar.gz")"
 			curl -fSLo "${temp_yay_dir}/yay_bin.tar.gz" "${url2downloadyay}" --progress-bar
-			curl 'https://aur.archlinux.org/' >/dev/null
-		elif command_exist wget;then
+			curl 'https://aur.archlinux.org/' >/dev/null || use_aur=false
+		elif [ "$url_package" = "wget" ];then
 			url2downloadyay="$(wget -qO- "https://api.github.com/repos/Jguer/yay/releases/latest" | grep -oP '(?<=browser_download_url": ")[^"]*' | grep "x86_64.tar.gz")"
 			wget -q --show-progress -O "${temp_yay_dir}/yay_bin.tar.gz" "${url2downloadyay}"
-			wget -O- 'https://aur.archlinux.org/' >/dev/null
+			wget -O- 'https://aur.archlinux.org/' >/dev/null || use_aur=false
 		fi
+		echo "use_aur=\"$use_aur\"" >> "${save_value_file}"
+		if [  "$use_aur" = true ];then
+			if ! id "${_temp_user}" >/dev/null 2>&1;then
+				create_auruser
+			fi
+			( cd "$temp_yay_dir" && tar -xzf yay_bin.tar.gz && rm -rf yay_bin.tar.gz && mv yay_*/yay "${temp_yay_bin}")
+			[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir"
+			aur_command_single_install yay
+		fi
+	fi
+}
+
+updating_rate_mirrors(){
+	show_sm "updating rate-mirrors..."
+	if ! command_exist rate-mirrors;then
+		if ! aur_command_single_install rate-mirrors-bin;then
+			show_wm "failed to update rate-mirrors..."
+			return
+		fi
+	fi
+    cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
+    rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch || show_wm "failed to update rate-mirrors..."
+    touch "${installer_phases}/updating_rate_mirrors"
+}
+
+aur_command_install_all(){
+	if [ -n "${packages_to_install_AUR}" ];then
+		for aurpackage in ${packages_to_install_AUR};do
+			aur_command_single_install "$aurpackage" || show_wm "failed to install from aur: $aurpackage"
+		done
+	else
+		show_wm_only "packages_to_install_AUR are empty"
+	fi
+}
+
+delete_auruser(){
+	if grep -q "permit nopass ${_temp_user}" /etc/doas.conf;then
+		sed -i "/permit nopass ${_temp_user}/d" /etc/doas.conf
+	fi
+	
+	if [ -f "/etc/sudoers.d/${_temp_user}" ];then
+		rm -f "/etc/sudoers.d/${_temp_user}"
+	fi
+	
+	if id "$_temp_user" >/dev/null 2>&1; then
+		userdel -r "$_temp_user"
+	fi
+}
+
+# main aur
+install_aur_and_all_needed_packages(){
+	install_AUR_helper
+	if [  "$use_aur" = false ];then
+		show_wm "failed to run yay aur"
+		show_wm "######################"
+		show_wm "failed to install: yay"
+		show_wm "failed to install: rate-mirrors"
+		show_wm "failed to run: cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak"
+		show_wm "failed to run: rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch"
+		show_wm "failed to install: ${packages_to_install_AUR}"
+		show_wm "######################"
+		show_wm "# you can do above by running ${yay_env_installer_script_path}"
+		show_wm "######################"
+		
+		echo '#!/bin/sh -e' > "${yay_env_installer_script_path}"
+		if [ "$url_package" = "curl" ];then
+			tee -a "${yay_env_installer_script_path}" <<- EOF >/dev/null 2>&1
+			curl -fSLo "${temp_yay_dir}/yay_bin.tar.gz" "${url2downloadyay}" --progress-bar
+			curl 'https://aur.archlinux.org/' >/dev/null || :
+			EOF
+		elif [ "$url_package" = "wget" ];then
+			tee -a "${yay_env_installer_script_path}" <<- EOF >/dev/null 2>&1
+			wget -q --show-progress -O "${temp_yay_dir}/yay_bin.tar.gz" "${url2downloadyay}"
+			wget -O- 'https://aur.archlinux.org/' >/dev/null || :
+			EOF
+		fi
+		tee -a "${yay_env_installer_script_path}" <<- EOF >/dev/null 2>&1
 		( cd "$temp_yay_dir" && tar -xzf yay_bin.tar.gz && rm -rf yay_bin.tar.gz && mv yay_*/yay "${temp_yay_bin}")
 		[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir"
-		aur_command_single_install yay
+		${temp_yay_command} yay
+		${temp_yay_command} rate-mirrors-bin
+		cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
+    	rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch
+    	: > \$HOME/failed_2_install_from_aur
+    	for aurpackage in ${packages_to_install_AUR};do
+			${temp_yay_command} "\$aurpackage" || echo "failed to install from aur: \$aurpackage" >> \$HOME/failed_2_install_from_aur
+		done
+		EOF
+		chmod +x "${yay_env_installer_script_path}"
+		return
 	fi
-   
-    PACKAGER="${temp_yay_bin}"
-	touch "${installer_phases}/install_AUR_helper"
+	updating_rate_mirrors
+	aur_command_install_all
+	if id "${_temp_user}" >/dev/null 2>&1;then
+		delete_auruser
+	fi
+}
+
+######################################################################
+
+clean_pacman_db_locl_file(){
+	if [ -f "/var/lib/pacman/db.lck" ];then
+		rm /var/lib/pacman/db.lck
+	fi
 }
 
 create_package_list(){
@@ -123,23 +210,15 @@ create_package_list(){
 
 install_packages(){
 	clean_pacman_db_locl_file
-	single_package_to_install="${1:-}"
-	if [ -n "${single_package_to_install}" ];then
-    	if ! pacman --noconfirm -Syu ${single_package_to_install};then
-			show_wm "faile to install $single_package"
-			return
-		fi
-    fi
-	
-    if [ -n "${packages_to_install_pacman}" ];then
-    	pacman --noconfirm -Syu ${packages_to_install_pacman}
+	packages_to_install="${1:-${all_Packages_to_install}}"
+	if [ -n "${packages_to_install}" ];then
+    	(pacman --noconfirm -Syu ${packages_to_install} && kill_package_ pacman) || \
+		(pacman --noconfirm -Syu ${packages_to_install} && kill_package_ pacman) || \
+		pacman --noconfirm -Syu ${packages_to_install}
     else
-    	show_wm_only "packages_to_install_pacman are empty"
+    	show_wm_only "all_Packages_to_install are empty"
+    	return
     fi
-    
-    aur_command_install_all
-    
-    sleep 1
 }
 
 add_packages_2_install_list(){
@@ -147,15 +226,11 @@ add_packages_2_install_list(){
 	for INDEX in ${localarray};do
     	if ! package_installed "${INDEX}";then
         	if grep -q "^${INDEX} " "${list_of_apps_file_path}";then
-            	packages_to_install_pacman="$packages_to_install_pacman $INDEX"
-            	Packages_2_install="$Packages_2_install $INDEX"
+            	all_Packages_to_install="$all_Packages_to_install $INDEX"
             	echo "$INDEX added to install list."
-        	elif aur_command_check "${INDEX}";then
+        	else
             	packages_to_install_AUR="$packages_to_install_AUR $INDEX"
-            	Packages_2_install="$Packages_2_install $INDEX"
             	echo "$INDEX added to install list."
-            else
-				show_filed_2_add_pakage_m "${INDEX} does not exist." 
         	fi
         fi
     done
@@ -230,21 +305,6 @@ switch_lightdm_now(){
     touch "${installer_phases}/switch_lightdm_now"
 }
 
-updating_rate_mirrors(){
-	[ -f "${installer_phases}/updating_rate_mirrors" ] && return
-	show_sm "updating rate-mirrors..."
-	clean_pacman_db_locl_file
-	if ! command_exist rate-mirrors;then
-		if ! aur_command_single_install rate-mirrors-bin;then
-			show_wm "failed to update rate-mirrors..."
-			return
-		fi
-	fi
-    cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
-    rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch || show_wm "failed to update rate-mirrors..."
-    touch "${installer_phases}/updating_rate_mirrors"
-}
-
 package_installed(){
 	package="${1:-}"
 	if grep -q "^$package" "$list_of_installed_apps_file_path";then
@@ -264,23 +324,8 @@ must_install_apps()
 
 pre_package_manager_(){
 	[ -f "${installer_phases}/pre_package_manager_" ] && return
-    install_AUR_helper
-    updating_rate_mirrors
+    
     touch "${installer_phases}/pre_package_manager_"
-}
-
-clean_up_aur_user(){
-	if grep -q "permit nopass ${_temp_user}" /etc/doas.conf;then
-		sed -i "/permit nopass ${_temp_user}/d" /etc/doas.conf
-	fi
-	
-	if [ -f "/etc/sudoers.d/${_temp_user}" ];then
-		rm -f "/etc/sudoers.d/${_temp_user}"
-	fi
-	
-	if id "$_temp_user" >/dev/null 2>&1; then
-		userdel -r "$_temp_user"
-	fi
 }
 
 enable_repo(){   :; }

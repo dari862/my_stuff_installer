@@ -787,8 +787,6 @@ install_GPU_Drivers_now(){
 }
 
 __Done(){
-	clean_up_aur_user
-	
 	if [ -f "/tmp/distro_done_installing" ];then
 		show_m "Removing ${all_temp_path}"
 		rm -rdf "${all_temp_path}"
@@ -991,8 +989,6 @@ if [ ! -f "${installer_phases}/create_List_of_apt_2_install_" ];then
 	
 	if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
 		echo "Packages_2_install=\"$Packages_2_install\"" >> "${save_value_file}"
-		echo "packages_to_install_pacman=\"$packages_to_install_pacman\"" >> "${save_value_file}"
-		echo "packages_to_install_AUR=\"$packages_to_install_AUR\"" >> "${save_value_file}"
 	fi
 	touch "${installer_phases}/create_List_of_apt_2_install_"
 fi
@@ -1004,6 +1000,8 @@ if [ ! -f "${installer_phases}/install_List_of_apt_2_install_" ];then
 		touch "${installer_phases}/install_List_of_apt_2_install_"
 	fi
 fi
+
+install_aur_and_all_needed_packages
 
 install_GPU_Drivers_now
 

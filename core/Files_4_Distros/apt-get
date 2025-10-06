@@ -54,13 +54,13 @@ create_package_list(){
 }
 
 install_packages(){
-	packages_to_install="${1:-${Packages_2_install}}"
+	packages_to_install="${1:-${all_Packages_to_install}}"
 	if [ -n "${packages_to_install}" ];then
     	(apt install -yq ${packages_to_install} && kill_package_ apt) || \
 		(apt install -yq ${packages_to_install} && kill_package_ apt) || \
 		apt install -yq ${packages_to_install}
     else
-    	show_wm_only "Packages_2_install are empty"
+    	show_wm_only "all_Packages_to_install are empty"
     	return
     fi
 }
@@ -70,7 +70,7 @@ add_packages_2_install_list(){
 	for INDEX in ${localarray};do
 		if ! package_installed "${INDEX}";then
 			if grep -q "^$INDEX/" "${list_of_apps_file_path}";then
-				Packages_2_install="$Packages_2_install $INDEX"
+				all_Packages_to_install="$all_Packages_to_install $INDEX"
 				show_im "${INDEX} added to install apps" 
 			else
 				show_filed_2_add_pakage_m "${INDEX} does not exist."
@@ -222,4 +222,5 @@ pre_package_manager_(){
 }
 
 enable_repo(){   :; }
-clean_up_aur_user(){   :; }
+
+install_aur_and_all_needed_packages(){   :; }
