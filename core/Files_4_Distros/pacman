@@ -113,7 +113,7 @@ create_package_list(){
 	clean_pacman_db_locl_file
     if [ ! -f "${list_of_apps_file_path}" ]; then
         show_im "Creating package list..."
-        pacman -Ss > "${list_of_apps_file_path}"
+        pacman -Sl | awk '{print $2 " " $NF}' > "${list_of_apps_file_path}"
     fi
     
     if [ ! -f "${list_of_installed_apps_file_path}" ];then
