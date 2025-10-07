@@ -846,19 +846,18 @@ switch_to_network_manager(){
 		fi
   		sed -i 's/managed=.*/managed=false/g' /etc/NetworkManager/NetworkManager.conf
  	fi
-	if service_manager status NetworkManager;then
+	if ! service_manager is-enabled NetworkManager;then
 		service_manager enable-only NetworkManager
-	 	show_im "disable not needed network service."
-		service_manager disable networking
-	  	service_manager disable systemd-networkd.service
-	  	service_manager disable systemd-networkd.socket
-	  	service_manager disable systemd-resolved.service
-	  	service_manager disable iwd
-	   	service_manager disable netctl
 		if [ -n "$__SSID4switch" ];then
 			nmcli device wifi connect "$SSID" password "$PASS"
 	 	fi
 	fi
+	show_im "disable not needed network service."
+	for servicename in systemd-networkd.service systemd-networkd.socket systemd-resolved.service iwd netctl;do
+		if service_manager is-enabled ${servicename};then
+			service_manager disable-stop ${servicename}
+		fi
+	done
 	touch "${installer_phases}/switch_to_network_manager"
 }
 

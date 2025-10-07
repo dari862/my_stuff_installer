@@ -57,12 +57,6 @@ disable_some_unnecessary_services(){
 			#service_manager mask gvfs-udisks2-volume-monitor.service
 			#service_manager mask gvfs-daemon.service
 			#service_manager mask gvfs-metadata.service
-			
-			if service_manager status NetworkManager.service >/dev/null 2>&1;then
-				service_manager disable networking
-				service_manager stop systemd-networkd.service
-				service_manager disable systemd-networkd.service
-			fi
 		fi
 	fi
 	touch "${installer_phases}/disable_some_unnecessary_services"
