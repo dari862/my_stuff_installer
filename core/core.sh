@@ -73,6 +73,7 @@ install_hwclock=false
 Distro_installer_mode=true
 
 usr_local_bin_path="/usr/local/bin"
+List_of_installed_packages_=""
 
 ################################################################################################################################
 # Function
@@ -585,11 +586,10 @@ create_uninstaller_file(){
 	fi
 	[ -f "${__distro_path_uninstaller_var}" ] && return
 	show_m "Creating uninstaller file."
-	List_of_installed_packages_="${Packages_2_install}"
 	tee "${__distro_path_uninstaller_var}" <<- EOF >/dev/null
-	grub_image_name=\"${grub_image_name}\"
-	List_of_pakages_installed_=\"${List_of_installed_packages_}\"
-	switch_default_xsession=\"$switch_default_xsession\"
+	grub_image_name="${grub_image_name}"
+	List_of_pakages_installed_="${List_of_installed_packages_}"
+	switch_default_xsession="${switch_default_xsession}"
 	EOF
 }
 

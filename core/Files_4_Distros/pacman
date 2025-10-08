@@ -213,6 +213,7 @@ create_package_list(){
 install_packages(){
 	clean_pacman_db_locl_file
 	packages_to_install="${1:-${all_Packages_to_install}}"
+	List_of_installed_packages_="${List_of_installed_packages_} ${packages_to_install}"
 	if [ -n "${packages_to_install}" ];then
     	(pacman --noconfirm -Syu ${packages_to_install} && kill_package_ pacman) || \
 		(pacman --noconfirm -Syu ${packages_to_install} && kill_package_ pacman) || \
