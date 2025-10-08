@@ -3,6 +3,25 @@ install_mode="${1:-install}"
 tmp_installer_dir="/tmp/installer_dir"
 tmp_installer_file="$tmp_installer_dir/installer.sh"
 
+__USER="$(logname)"
+current_user_home="$HOME"
+
+if [ "$__USER" = "root" ];then
+	non_root_users="$(awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd)"
+	for u in ${non_root_users};do
+		id "$u" | grep -E "sudo|wheel" && user_with_superuser_access="$user_with_superuser_access $u" || :
+	done
+	if [ -z "$user_with_superuser_access" ];then
+		printf "you need user with superuser access." 
+		exit 1
+	fi
+else
+	if ! id "$__USER" | grep -Eq "sudo|wheel";then
+		printf "you need user with superuser access." 
+		exit 1
+	fi
+fi
+
 check_installer_file="$HOME/Desktop/my_stuff_installer/core/core.sh"
 
 __distro_name="my_stuff"
@@ -36,6 +55,7 @@ elif [ "$install_mode" = "dev" ];then
 fi
 
 install_sudo=false
+user_with_superuser_accese=""
 
 command_exist() {
 	if command -v $1 > /dev/null 2>&1;then
@@ -293,7 +313,7 @@ prompt_to_ask_to_what_to_install(){
 	fi
 	
 	if [ "$switch_to_doas" = false ] && [ "$doas_installed" = false ] && [ "$sudo_installed" = false ];then
-		install_sudo=true
+		switch_to_doas=true
 	fi
 	if [ "$doas_installed" = true ] && [ "$sudo_installed" = false ];then
 		only_doas_installed=true
@@ -321,7 +341,6 @@ create_prompt_to_install_value_file(){
 		install_akmod_nvidia=${install_akmod_nvidia}
 		install_wayland="${install_wayland}"
 		install_X11="${install_X11}"
-		install_sudo="${install_sudo}"
 		switch_to_doas="${switch_to_doas}"
 		run_purge_some_unnecessary_pakages="${run_purge_some_unnecessary_pakages}"
 		run_disable_some_unnecessary_services="${run_disable_some_unnecessary_services}"
@@ -394,7 +413,7 @@ fi
 prompt_to_ask_to_what_to_install
 create_prompt_to_install_value_file
 
-if $__super_command "$tmp_installer_file" "$prompt_to_install_value_file";then
+if $__super_command "$tmp_installer_file" "$prompt_to_install_value_file" "$__USER" "$current_user_home";then
 	if [ "$tmp_installer_file" != "$check_installer_file" ];then
 		rm -rdf "$tmp_installer_dir"
 	fi

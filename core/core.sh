@@ -9,6 +9,9 @@ fi
 # Var
 ################################################################################################################################
 prompt_to_install_value_file="${1:-}"
+__USER="${2:-}"
+current_user_home="${3:-}"
+
 . "${prompt_to_install_value_file}"
 
 __distro_title="$(echo "$__distro_name" | tr '._-' ' ' | awk '{ for (i=1; i<=NF; i++) { $i = tolower($i); $i = toupper(substr($i,1,1)) substr($i,2) } print }')"
@@ -46,9 +49,6 @@ elif [ "$arg_" = "apps" ];then
 fi
 
 internet_status=""
-
-__USER="$(logname)"
-current_user_home="/home/$__USER"
 
 list_of_apps_file_path="${all_temp_path}/list_of_apps"
 list_of_installed_apps_file_path="${all_temp_path}/list_of_installed_apps"
