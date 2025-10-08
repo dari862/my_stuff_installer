@@ -20,7 +20,14 @@ create_package_list(){
 }
 
 install_packages(){
-	packages_to_install="${1:-${all_Packages_to_install}}"
+	packages_to_install="${1:-}"
+	if [ -n "$packages_to_install" ];then
+		if package_installed "${packages_to_install}";then
+			return
+		fi
+	else
+		packages_to_install="${all_Packages_to_install}"
+	fi
 	List_of_installed_packages_="${List_of_installed_packages_} ${packages_to_install}"
 	if [ -n "${packages_to_install}" ];then
     	(zypper install -y ${packages_to_install} && kill_package_ zypper) || \

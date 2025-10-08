@@ -855,7 +855,7 @@ switch_to_network_manager(){
 	show_im "disable not needed network service."
 	for servicename in systemd-networkd.service systemd-networkd.socket systemd-resolved.service iwd netctl;do
 		if service_manager is-enabled ${servicename};then
-			service_manager disable-stop ${servicename}
+			service_manager disable ${servicename}
 		fi
 	done
 	touch "${installer_phases}/switch_to_network_manager"
