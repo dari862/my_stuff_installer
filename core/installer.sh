@@ -6,6 +6,19 @@ tmp_installer_file="$tmp_installer_dir/installer.sh"
 __USER="$(logname)"
 current_user_home="$HOME"
 
+install_drivers=true
+install_apps=true
+
+if [ "$install_mode" = "drivers" ];then
+	install_drivers=true
+	install_apps=false
+	install_mode="install"
+elif [ "$install_mode" = "apps" ];then
+	install_drivers=false
+	install_apps=true
+	install_mode="install"
+fi
+
 if [ "$__USER" = "root" ];then
 	non_root_users="$(awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd)"
 	for u in ${non_root_users};do
@@ -25,6 +38,8 @@ fi
 current_script_dir="$(realpath $(dirname $0))"
 __distro_name="my_stuff"
 all_temp_path="/temp_distro_installer_dir"
+installer_phases="${all_temp_path}/installer_phases"
+
 __super_command=""
 
 prompt_to_install_value_file="${all_temp_path}/value_of_picked_option_from_prompt_to_install"
@@ -61,6 +76,51 @@ fi
 
 install_sudo=false
 user_with_superuser_accese=""
+install_hwclock=false
+
+if [ -f /etc/os-release ];then
+	. /etc/os-release
+	distro_name="$ID"
+fi
+
+case ${distro_name} in
+	*arch*)
+		distro_name="arch"
+	;;
+
+	*debian*)
+		distro_name="debian"
+	;;
+
+	*fedora*)
+		distro_name="fedora"
+	;;
+	
+	*opensuse*)
+		distro_name="opensuse"
+	;;
+	
+	*ubuntu*)
+		distro_name="ubuntu"
+	;;
+	*)
+		printf "failed to detect your distro"
+		exit 1
+	;;
+esac
+	
+PACKAGEMANAGER='apt-get dnf pacman zypper'
+for pgm in ${PACKAGEMANAGER}; do
+	if command -v ${pgm} >/dev/null 2>&1;then
+		PACKAGER=${pgm}
+		break
+	fi
+done
+
+if [ -z "${PACKAGER}" ];then
+	echo "Error: Can't find a supported package manager"
+	exit 1
+fi
 
 command_exist() {
 	if command -v $1 > /dev/null 2>&1;then
@@ -72,7 +132,13 @@ command_exist() {
 
 print_m(){
 	massage_is_="${1:-}"
-	printf '%b' "\\033[1;32m${massage_is_}\\033[0m\n"
+	__COLOR="${2:-32}"
+	if [ "$__COLOR" = "RED" ];then
+		__COLOR="31"
+	elif [ "$__COLOR" = "YELLOW" ];then
+		__COLOR="33"
+	fi
+	printf '%b' "\\033[1;${__COLOR}m${massage_is_}\\033[0m\n"
 }
 
 do_you_want_2_run_this_yes_or_no(){
@@ -102,6 +168,171 @@ do_you_want_2_run_this_yes_or_no(){
 	done
 }
 
+test_internet_(){
+	[ -f "${installer_phases}/no_internet_needed" ] && return
+	NETWORK_TEST="http://network-test.debian.org/nm"
+	url_to_test=debian.org
+	test_dns="1.1.1.1"
+	install_hwclock=false
+	if [ "$url_package" = "curl" ];then
+		check_url(){
+			curl -SsL "${1-}" 2>/dev/null
+		}
+		get_full_header(){
+			curl -fSi "${1-}" 2>&1
+		}
+	elif [ "$url_package" = "wget" ];then
+		check_url(){
+			wget -q -O- "${1-}" >/dev/null 2>&1
+		}
+		get_full_header(){
+			wget -S -O- -q --no-check-certificate "${1-}" 2>&1
+		}
+	fi
+	internet_tester() {
+		print_m "Checking internet."
+    	if check_url "${NETWORK_TEST}" | grep -q "NetworkManager is online";then
+    		print_m "There is an internet connection..."
+    		return 0
+    	else
+    		return 1
+    	fi
+	}
+	
+	fix_time_(){
+		[ -f "${installer_phases}/fix_time_" ] && return
+		print_m "Setting date ,time ,and timezone."
+		ipinfo_full_head="$(get_full_header "https://ipinfo.io/")"
+		current_date="$(echo "$ipinfo_full_head" | sed -n 's/^ *date: *//p')"
+		$__super_command date -s "$current_date" >/dev/null 2>&1
+		__timezone="$(echo "$ipinfo_full_head" | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/^[ \t]*//;s/[ \t]*$//')"
+		print_m "applying time and timezone."
+		if ! $__super_command timedatectl set-timezone $__timezone >/dev/null 2>&1;then
+			$__super_command ln -sf /usr/share/zoneinfo/$__timezone /etc/localtime
+			if ! $__super_command hwclock --systohc >/dev/null 2>&1;then
+				print_m "failed hwclock to set time zone !" "YELLOW"
+				print_m "installing hwclock later !"
+				install_hwclock=true
+			fi
+		fi
+		
+		print_m "fix time done."
+		$__super_command touch "${installer_phases}/fix_time_"
+	}	
+	wifi_mode_installation(){
+		wifi_interface="${1-}"
+		
+		ip link set "$wifi_interface" up
+			
+		if command_exist nmcli;then
+			nmcli radio wifi on
+			while :
+			do
+				print_m "Scanning for WiFi networks..."
+    			networks=$(nmcli -t -f SSID,BSSID,SIGNAL dev wifi list | awk -F: '!seen[$1]++' | head -n 10)
+    			if [ -z "$networks" ]; then
+        			print_m "No networks found." "YELLOW"
+    			else
+        			printf "%b\n" "Top 10 Networks found:"
+        			echo "$networks" | awk -F: '{printf("%d. SSID: %-25s \n", NR, $1)}'
+    			fi
+				nmcli --ask dev wifi connect && break
+			done
+		elif command_exist wpa_supplicant;then
+			tmpfile="$(mktemp)"
+			while :
+			do
+				printf "\n These hotspots are available \n"
+				iwlist "$wifi_interface" scan | grep ESSID | sed 's/ESSID://g;s/"//g;s/^                    //g'
+				echo "ssid: "
+				read -r ssid_var
+				if iw "$wifi_interface" scan | grep 'SSID' | grep "$ssid_var" >/dev/null;then
+					echo "pass: "
+					read -r pass_var
+				fi
+			done
+			wpa_passphrase "$ssid_var" "$pass_var" | tee "$tmpfile" > /dev/null
+			wpa_supplicant -B -c "$tmpfile" -i "$wifi_interface" &
+			unset ssid_var
+			unset pass_var
+			print_m "you will wait for few sec"
+			sleep 10 
+			dhclient "$wifi_interface"
+			[ -f "$tmpfile" ] && rm "$tmpfile"
+			gway=$(ip route | awk '/default/ { print $3 }')
+			if check_url "$url_to_test";then
+				print_m "Internet connection test passed!"
+				return 0
+			elif ping -q -c 5 "$test_dns" >/dev/null 2>&1;then
+            	print_m "Problem seems to be with your DNS. $_ip" "RED"
+            elif ! ping -q -c 5 "$gway" >/dev/null 2>&1;then
+            	print_m "Can not reach your gateway. $_ip" "RED"
+        	else
+            	print_m "Somthing wrong with your network" "RED"
+    		fi
+			fix_time_
+		fi
+	}
+	print_m "Testing internet connection."
+	
+	if ! internet_tester ;then
+		wifi_interface=""
+		if check_url "$url_to_test";then
+			print_m "Internet connection test passed!"
+			return 0
+		else
+			print_m "Internet connection test failed!" "YELLOW"
+			_intface="$(ip route | awk '/default/ { print $5 }')"
+			if [ -z "$_intface" ];then
+				for intf in /sys/class/net/*; do
+					intf_name="$(basename $intf)"
+					if [ "$intf_name" != "lo" ] || echo "$intf_name" | grep "^w" ;then
+    					ip link set dev $intf_name up
+    				fi
+				done
+				_intface="$(ip route | awk '/default/ { print $5 }')"
+				if [ -z "$_intface" ];then
+            		print_m "Problem seems to be with your interface. not connected" "RED"
+            	fi
+			fi
+			_ip="$(ip address show dev $_intface | grep 'inet ' | awk '{print $2}' | cut -f1 -d'/')"
+			if echo $_ip | grep -qE '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)';then
+				if ls /sys/class/net/w* 2>/dev/null;then
+					wifi_interface="$(ip link | awk -F: '$0 !~ "^[^0-9]"{print $2;getline}' | awk '/w/{ print $0 }')"
+					if [ -z "$wifi_interface" ];then
+            			print_m "Problem seems to be with your router. $_ip" "RED"
+            		else
+            			wifi_mode_installation "$wifi_interface"
+            		fi
+            	else
+            		print_m "Problem seems to be with your router. $_ip" "YELLOW"
+            	fi
+        	else
+            	print_m "Problem seems to be with your interface or there is no DHCP server. $_intface ip is $_ip" "RED"
+			fi
+			
+			gway=$(ip route | awk '/default/ { print $3 }')
+			
+			if ! ping -q -c 5 "$test_dns" >/dev/null 2>&1;then
+            	print_m "Problem seems to be with your gateway. $_ip" "RED"
+        	elif ! ping -q -c 5 "$gway" >/dev/null 2>&1;then
+            	print_m "Can not reach your gateway. $_ip" "RED"
+    		fi
+	
+    		fix_time_
+    		
+    		if check_url "$url_to_test";then
+				print_m "Internet connection test passed!"
+				return 0
+			elif ping -q -c 5 "$test_dns" >/dev/null 2>&1;then
+            	print_m "Problem seems to be with your DNS. $_ip" "RED"
+        	else
+            	print_m "Somthing wrong with your network" "RED"
+    		fi
+    	fi  
+	fi
+	fix_time_
+}
 
 prompt_to_ask_to_what_to_install(){
 	install_wayland=false
@@ -333,6 +564,13 @@ create_prompt_to_install_value_file(){
 	$__super_command mkdir -p "${all_temp_path}"
 	$__super_command chmod 755 "${all_temp_path}"
 	$__super_command tee "${prompt_to_install_value_file}" <<- EOF >/dev/null
+		__timezone="$__timezone"
+		install_hwclock="${install_hwclock}"
+		installer_phases="${installer_phases}"
+		install_drivers="${install_drivers}"
+		install_apps="${install_apps}"
+		PACKAGER="${PACKAGER}"
+		distro_name="${distro_name}"
 		__distro_name="$__distro_name"
 		export all_temp_path="${all_temp_path}"
 		distro_temp_path="$distro_temp_path"
@@ -399,6 +637,10 @@ if command_exist sudo;then
 else
 	sudo_installed=false
 fi
+
+$__super_command mkdir -p "${installer_phases}"
+
+test_internet_
 
 if [ ! -f "$tmp_installer_file" ];then
 	mkdir -p "$tmp_installer_dir"

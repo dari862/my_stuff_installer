@@ -26,27 +26,12 @@ fi
 _SUPERUSER=""
 export __distro_path_lib="${__distro_path_root}/lib/common/Distro_path"
 
-installer_phases="${all_temp_path}/installer_phases"
 if [ -f "${installer_phases}/__distro_path_root_removed" ];then
 	__reinstall_distro=true
 fi
 switch_default_xsession=""
 
-NETWORK_TEST="http://network-test.debian.org/nm"
-url_to_test=debian.org
-test_dns="1.1.1.1"
-
 save_value_file="${all_temp_path}/save_value_file"
-install_drivers=true
-install_apps=true
-arg_="${1-}"
-if [ "$arg_" = "drivers" ];then
-	install_drivers=true
-	install_apps=false
-elif [ "$arg_" = "apps" ];then
-	install_drivers=false
-	install_apps=true
-fi
 
 internet_status=""
 
@@ -54,22 +39,18 @@ list_of_apps_file_path="${all_temp_path}/list_of_apps"
 list_of_installed_apps_file_path="${all_temp_path}/list_of_installed_apps"
 
 version_=""
-distro_name=""
 distro_desc=""
 distro_name_and_ver_=""
 distro_name_and_ver_2=""
 version_codename=""
 VERSION_ID=""
 
-PACKAGEMANAGER=""
-PACKAGER=""
 dir_2_find_files_in=""
 
 failed_2_install_ufw=false
 
 machine_type_are=""
 
-install_hwclock=false
 Distro_installer_mode=true
 
 usr_local_bin_path="/usr/local/bin"
@@ -149,49 +130,11 @@ pre_script(){
 	if [ -f /etc/os-release ];then
 		. /etc/os-release
 		version_="$(echo "${VERSION_ID}" | tr -d '.')"
-		distro_name="$ID"
 		distro_desc="$PRETTY_NAME"
 		distro_name_and_ver_="$ID$version_"
 		distro_name_and_ver_2="${ID}_${version_}"
 		version_codename="${VERSION_CODENAME}"
 		VERSION_ID="$VERSION_ID"
-	fi
-	
-	case ${distro_name} in
-		*arch*)
-			distro_name="arch"
-		;;
-	
-		*debian*)
-			distro_name="debian"
-		;;
-	
-		*fedora*)
-			distro_name="fedora"
-		;;
-		
-		*opensuse*)
-			distro_name="opensuse"
-		;;
-		
-		*ubuntu*)
-			distro_name="ubuntu"
-		;;
-	esac
-	
-	
-	
-	PACKAGEMANAGER='apt-get dnf pacman zypper'
-	for pgm in ${PACKAGEMANAGER}; do
-		if command -v ${pgm} >/dev/null 2>&1;then
-			PACKAGER=${pgm}
-			break
-		fi
-	done
-	
-	if [ -z "${PACKAGER}" ];then
-		echo "Error: Can't find a supported package manager"
-		exit 1
 	fi
 	
 	if [ -d "$current_user_home/Desktop" ];then
@@ -209,68 +152,6 @@ create_dir_and_source_stuff(){
 	mkdir -p "${installer_phases}"
 	if [ -f "${save_value_file}" ];then
 		. "${save_value_file}"
-	fi
-}
-
-test_internet_(){
-	[ -f "${installer_phases}/no_internet_needed" ] && return
-	show_m "Testing internet connection."
-	
-	if ! internet_tester ;then
-		wifi_interface=""
-		if check_url "$url_to_test";then
-			show_im "Internet connection test passed!"
-			return 0
-		else
-			show_wm "Internet connection test failed!"
-			_intface="$(ip route | awk '/default/ { print $5 }')"
-			if [ -z "$_intface" ];then
-				for intf in /sys/class/net/*; do
-					intf_name="$(basename $intf)"
-					if [ "$intf_name" != "lo" ] || echo "$intf_name" | grep "^w" ;then
-    					ip link set dev $intf_name up
-    				fi
-				done
-				_intface="$(ip route | awk '/default/ { print $5 }')"
-				if [ -z "$_intface" ];then
-            		show_em "Problem seems to be with your interface. not connected"
-            	fi
-			fi
-			_ip="$(ip address show dev $_intface | grep 'inet ' | awk '{print $2}' | cut -f1 -d'/')"
-			if echo $_ip | grep -qE '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)';then
-				if ls /sys/class/net/w* 2>/dev/null;then
-					wifi_interface="$(ip link | awk -F: '$0 !~ "^[^0-9]"{print $2;getline}' | awk '/w/{ print $0 }')"
-					if [ -z "$wifi_interface" ];then
-            			show_em "Problem seems to be with your router. $_ip"
-            		else
-            			wifi_mode_installation "$wifi_interface"
-            		fi
-            	else
-            		show_wm "Problem seems to be with your router. $_ip"
-            	fi
-        	else
-            	show_em "Problem seems to be with your interface or there is no DHCP server. $_intface ip is $_ip"
-			fi
-			
-			gway=$(ip route | awk '/default/ { print $3 }')
-			
-			if ! ping -q -c 5 "$test_dns" >/dev/null 2>&1;then
-            	show_em "Problem seems to be with your gateway. $_ip"
-        	elif ! ping -q -c 5 "$gway" >/dev/null 2>&1;then
-            	show_em "Can not reach your gateway. $_ip"s
-    		fi
-	
-    		fix_time_
-    		
-    		if check_url "$url_to_test";then
-				show_im "Internet connection test passed!"
-				return 0
-			elif ping -q -c 5 "$test_dns" >/dev/null 2>&1;then
-            	show_em "Problem seems to be with your DNS. $_ip"
-        	else
-            	show_em "Somthing wrong with your network"
-    		fi
-    	fi  
 	fi
 }
 
@@ -305,9 +186,6 @@ pick_file_downloader_and_url_checker(){
 	show_im "picked url command: $url_package "
 	
 	if [ "$url_package" = "curl" ];then
-		check_url(){
-			curl -SsL "${1-}" 2>/dev/null
-		}
 		get_url_content(){
 			curl -fsSL "${1-}"
 		}
@@ -317,13 +195,7 @@ pick_file_downloader_and_url_checker(){
 		get_url_content(){
 			curl -s "${1-}" 2>/dev/null
 		}
-		get_full_header(){
-			curl -fSi "${1-}" 2>&1
-		}
 	elif [ "$url_package" = "wget" ];then
-		check_url(){
-			wget -q -O- "${1-}" >/dev/null 2>&1
-		}
 		get_url_content(){
 			wget -O- "${1-}"
 		}
@@ -333,91 +205,6 @@ pick_file_downloader_and_url_checker(){
 		get_url_content(){
 			wget -q -O- "${1-}" 2>/dev/null
 		}
-		get_full_header(){
-			wget -S -O- -q --no-check-certificate "${1-}" 2>&1
-		}
-	fi
-}
-
-internet_tester() {
-	show_im "Checking internet."
-    if check_url "${NETWORK_TEST}" | grep -q "NetworkManager is online";then
-    	show_im "There is an internet connection..."
-    	return 0
-    else
-    	return 1
-    fi
-}
-
-fix_time_(){
-	if [ "${__reinstall_distro}" = true ];then
-		return
-	fi
-	[ -f "${installer_phases}/fix_time_" ] && return
-	show_m "Setting date ,time ,and timezone."
-	ipinfo_full_head="$(get_full_header "https://ipinfo.io/")"
-	current_date="$(echo "$ipinfo_full_head" | sed -n 's/^ *date: *//p')"
-	date -s "$current_date" >/dev/null 2>&1
-	__timezone="$(echo "$ipinfo_full_head" | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/^[ \t]*//;s/[ \t]*$//')"
-	show_im "applying time and timezone."
-	if ! timedatectl set-timezone $__timezone >/dev/null 2>&1;then
-		ln -sf /usr/share/zoneinfo/$__timezone /etc/localtime
-		if ! hwclock --systohc >/dev/null 2>&1;then
-			show_wm "failed hwclock to set time zone !"
-			show_im "installing hwclock later !"
-			install_hwclock=true
-		fi
-	fi
-	echo "__timezone=\"$__timezone\"" >> "${save_value_file}"
-	show_im "fix time done."
-	touch "${installer_phases}/fix_time_"
-}
-
-wifi_mode_installation(){
-	if [ "${__reinstall_distro}" = true ];then
-		return
-	fi
-	wifi_interface="${1-}"
-	
-	ip link set "$wifi_interface" up
-		
-	if command_exist nmcli;then
-		nmcli radio wifi on
-		while :
-		do
-			show_im "Scanning for WiFi networks..."
-    		networks=$(nmcli -t -f SSID,BSSID,SIGNAL dev wifi list | awk -F: '!seen[$1]++' | head -n 10)
-    		if [ -z "$networks" ]; then
-        		show_wm "No networks found."
-    		else
-        		printf "%b\n" "Top 10 Networks found:"
-        		echo "$networks" | awk -F: '{printf("%d. SSID: %-25s \n", NR, $1)}'
-    		fi
-			nmcli --ask dev wifi connect && break
-		done
-	elif command_exist wpa_supplicant;then
-		tmpfile="$(mktemp)"
-		while :
-		do
-			printf "\n These hotspots are available \n"
-			iwlist "$wifi_interface" scan | grep ESSID | sed 's/ESSID://g;s/"//g;s/^                    //g'
-			echo "ssid: "
-			read -r ssid_var
-			if iw "$wifi_interface" scan | grep 'SSID' | grep "$ssid_var" >/dev/null;then
-				echo "pass: "
-				read -r pass_var
-			fi
-		done
-		wpa_passphrase "$ssid_var" "$pass_var" | tee "$tmpfile" > /dev/null
-		wpa_supplicant -B -c "$tmpfile" -i "$wifi_interface" &
-		unset ssid_var
-		unset pass_var
-		show_im "you will wait for few sec"
-		sleep 10 
-		dhclient "$wifi_interface"
-		ping -c4 google.com || show_em "no internet connection"
-		[ -f "$tmpfile" ] && rm "$tmpfile"
-		test_internet_
 	fi
 }
 
@@ -916,10 +703,6 @@ pre_script
 
 pick_file_downloader_and_url_checker
 
-test_internet_
-
-fix_time_
-
 set_package_manager
 
 install_network_manager
@@ -943,7 +726,7 @@ _unattended_upgrades_ stop
 if [ "$install_drivers" = "true" ] && [ "$install_apps" = "true" ];then
 	show_m "Sourcing drivers and apps files."
 elif [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
-	show_m "Sourcing $arg_ files."
+	show_m "Sourcing $install_mode files."
 fi
 	
 if [ "$install_drivers" = "true" ];then
@@ -970,7 +753,7 @@ if [ ! -f "${installer_phases}/create_List_of_apt_2_install_" ];then
 	if [ "$install_drivers" = "true" ] && [ "$install_apps" = "true" ];then
 		show_m "Sourcing drivers and apps files."
 	elif [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
-		show_m "Sourcing $arg_ files."
+		show_m "Sourcing $install_mode files."
 	fi
 	
 	if [ "$install_drivers" = "true" ];then
