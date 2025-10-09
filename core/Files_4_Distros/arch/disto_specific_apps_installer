@@ -2,8 +2,8 @@
 disto_specific_apps_installer(){
 	[ -f "${installer_phases}/disto_specific_apps_installer" ] && return
 		
-	service_manager enable dbus.service
-	service_manager enable avahi-daemon
+	service_manager enable dbus.service || show_wm "failed to enable dbus.service"
+	service_manager enable avahi-daemon || show_wm "failed to enable avahi-daemon"
 	
 	pkgfile --update
 	touch "${installer_phases}/disto_specific_apps_installer"

@@ -4,24 +4,20 @@ if [ "$init_system_are" = "systemd" ];then
 		_command="${1-}"
 		_file="${2-}"
 		if [ "${_command}" = "stop" ];then
-			systemctl stop ${_file} || show_wm_only "failed to stop ${_file}"
+			systemctl stop ${_file} || return 1
 		elif [ "${_command}" = "enable-only" ];then
-			systemctl enable ${_file} || show_wm "failed to enable ${_file}"
+			systemctl enable ${_file} || return 1
 		elif [ "${_command}" = "enable" ];then
-			systemctl enable --now ${_file} || show_wm "failed to start and enable ${_file}"
+			systemctl enable --now ${_file} || return 1
 		elif [ "${_command}" = "disable" ];then
-			systemctl disable ${_file} || show_wm_only "failed to disable ${_file}"
+			systemctl disable ${_file} || return 1
 		elif [ "${_command}" = "disable-stop" ];then
-			systemctl disable ${_file} || show_wm_only "failed to disable ${_file}"
-			systemctl stop ${_file} || show_wm_only "failed to stop ${_file}"
+			systemctl disable ${_file} || return 1
+			systemctl stop ${_file} || return 1
 		elif [ "${_command}" = "is-enabled" ];then
-			if systemctl is-enabled --quiet ${_file};then
-				return
-			else
-				show_wm_only "${_file} are disabled."
-			fi
+			systemctl is-enabled --quiet ${_file} || return 1
 		elif [ "${_command}" = "mask" ];then
-			systemctl mask ${_file} || show_wm "failed to mask ${_file}"
+			systemctl mask ${_file} || return 1
 		fi
 	}
 elif [ "$init_system_are" = "openrc" ];then
@@ -29,20 +25,20 @@ elif [ "$init_system_are" = "openrc" ];then
 		_command="${1-}"
 		_file="${2-}"
 		if [ "${_command}" = "stop" ];then
-			rc-service ${_file} stop || show_wm_only "failed to stop ${_file}"
+			rc-service ${_file} stop || return 1
 		elif [ "${_command}" = "enable-only" ];then
-			rc-update add ${_file} || show_wm "failed to enable ${_file}"
+			rc-update add ${_file} || return 1
 		elif [ "${_command}" = "enable" ];then
-			rc-update add ${_file} || show_wm "failed to enable and start ${_file}"
+			rc-update add ${_file} || return 1
 		elif [ "${_command}" = "disable" ];then
-			rc-update del ${_file} || show_wm_only "failed to disable ${_file}"
+			rc-update del ${_file} || return 1
 		elif [ "${_command}" = "disable-stop" ];then
-			rc-update del ${_file} || show_wm_only "failed to disable ${_file}"
-			rc-service ${_file} stop || show_wm_only "failed to stop ${_file}"
+			rc-update del ${_file} || return 1
+			rc-service ${_file} stop || return 1
 		elif [ "${_command}" = "is-enabled" ];then
-			rc-service ${_file} status --quiet || show_wm "failed to show status of ${_file}"
+			rc-service ${_file} status --quiet || return 1
 		elif [ "${_command}" = "mask" ];then
-			rc-update del ${_file} || show_wm "failed to mask ${_file}"
+			rc-update del ${_file} || return 1
 		fi
 	}
 else

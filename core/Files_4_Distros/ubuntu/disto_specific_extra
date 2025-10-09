@@ -46,17 +46,17 @@ disable_some_unnecessary_services(){
 			
 			# INFO: Some boot services included in Debian are unnecesary for most usres (like NetworkManager-wait-online.service, ModemManager.service or pppd-dns.service)
 			for service in NetworkManager-wait-online.service ModemManager.service pppd-dns.service;do
-				service_manager stop $service
-				service_manager mask $service
+				service_manager stop $service || show_wm_only "failed to stop $service"
+				service_manager mask $service || show_wm_only "failed to mask $service"
 			done
 	
 			# Disable tracker (Data indexing for GNOME mostly)
 			for service in tracker-store.service tracker-miner-fs.service tracker-miner-rss.service tracker-extract.service tracker-miner-apps.service tracker-writeback.service;do
-				service_manager mask $service
+				service_manager mask $service || show_wm_only "failed to mask $service"
 			done
-			#service_manager mask gvfs-udisks2-volume-monitor.service
-			#service_manager mask gvfs-daemon.service
-			#service_manager mask gvfs-metadata.service
+			#service_manager mask gvfs-udisks2-volume-monitor.service || show_wm_only "failed to mask gvfs-udisks2-volume-monitor.service"
+			#service_manager mask gvfs-daemon.service || show_wm_only "failed to mask gvfs-daemon.service"
+			#service_manager mask gvfs-metadata.service || show_wm_only "failed to mask gvfs-metadata.service"
 		fi
 	fi
 	touch "${installer_phases}/disable_some_unnecessary_services"

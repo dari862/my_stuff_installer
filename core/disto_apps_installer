@@ -115,10 +115,10 @@ post_disto_apps_installer(){
 			kill_package_ mpd
 		fi
 		
-		service_manager stop mpd.socket
-		service_manager stop mpd.service 
-		service_manager disable mpd.socket 
-		service_manager disable mpd.service
+		service_manager stop mpd.socket || show_wm_only "failed to stop mpd.socket"
+		service_manager stop mpd.service || show_wm_only "failed to stop mpd.service"
+		service_manager disable mpd.socket || show_wm_only "failed to disable mpd.socket"
+		service_manager disable mpd.service || show_wm_only "failed to disable mpd.service"
 	fi
 	
 	if [ "$machine_type_are" = "laptop" ];then
@@ -127,10 +127,10 @@ post_disto_apps_installer(){
 			[ -f "/etc/tlp.conf" ] && sed -i "s/#DEVICES_TO_DISABLE_ON_STARTUP=.*/DEVICES_TO_DISABLE_ON_STARTUP=\"bluetooth\"/g" /etc/tlp.conf
 		fi
 		
-		service_manager mask rfkill
-		service_manager mask systemd-rfkill.service
-		service_manager mask systemd-rfkill.socket 
-		service_manager enable tlp
+		service_manager mask rfkill || show_wm_only "failed to mask rfkill"
+		service_manager mask systemd-rfkill.service || show_wm_only "failed to mask systemd-rfkill.service"
+		service_manager mask systemd-rfkill.socket  || show_wm_only "failed to mask systemd-rfkill.socket"
+		service_manager enable tlp || show_wm_only "failed to enable tlp"
 		
 		tlp start || tlp_error="true"
 		if [ "$tlp_error" = "true" ];then

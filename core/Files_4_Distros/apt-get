@@ -143,7 +143,7 @@ _unattended_upgrades_()
 			start)
 				[ -f "${installer_phases}/_unattended_upgrades_start" ] && return
 				show_im "start unattended upgrades."
-				service_manager stop unattended-upgrades
+				service_manager stop unattended-upgrades || show_wm_only "failed to stop unattended-upgrades"
 				if [ ! -f "${auto_upgrades_file_bak}" ];then
 					mv "${auto_upgrades_file}" "${auto_upgrades_file_bak}"
 				fi
@@ -216,8 +216,8 @@ pre_package_manager_(){
 	
 	kill_package_ apt-get
 	kill_package_ apt
-	service_manager stop apt-daily.timer
-	service_manager stop apt-daily-upgrade.timer
+	service_manager stop apt-daily.timer || show_wm_only "failed to stop apt-daily.timer"
+	service_manager stop apt-daily-upgrade.timer || show_wm_only "failed to stop apt-daily-upgrade.timer "
 	aptfixer
 	install_apt_fast || :
 	if command_exist apt-get;then
