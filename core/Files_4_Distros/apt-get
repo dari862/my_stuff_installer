@@ -49,7 +49,7 @@ create_package_list(){
 	
 	if [ ! -f "${list_of_installed_apps_file_path}" ];then
 		show_im "Creating installed package list..."
-		apt list --installed 2>/dev/null > "${list_of_installed_apps_file_path}" 
+		apt list --installed 2>/dev/null | awk -F'/' '{print $1 " " $NF}' > "${list_of_installed_apps_file_path}" 
 	fi
 }
 
@@ -192,7 +192,7 @@ switch_lightdm_now(){
 
 package_installed(){
 	package="${1:-}"
-	if grep -q "^$package" "$list_of_installed_apps_file_path";then
+	if grep -q "^$package " "$list_of_installed_apps_file_path";then
 		return 0
 	else
 		return 1

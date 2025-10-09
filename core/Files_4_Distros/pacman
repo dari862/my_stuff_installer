@@ -317,7 +317,7 @@ switch_lightdm_now(){
 
 package_installed(){
 	package="${1:-}"
-	if grep -q "^$package" "$list_of_installed_apps_file_path";then
+	if grep -q "^$package " "$list_of_installed_apps_file_path";then
 		return 0
 	else
 		return 1

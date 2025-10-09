@@ -22,8 +22,7 @@ else
 	fi
 fi
 
-check_installer_file="$HOME/Desktop/my_stuff_installer/core/core.sh"
-
+current_script_dir="$(realpath $(dirname $0))"
 __distro_name="my_stuff"
 all_temp_path="/temp_distro_installer_dir"
 __super_command=""
@@ -32,6 +31,7 @@ prompt_to_install_value_file="${all_temp_path}/value_of_picked_option_from_promp
 
 auto_run_script="false" # true to enable
 source_prompt_to_install_file=false
+check_installer_file=""
 
 if [ -d "$HOME/Desktop/$__distro_name" ];then
 	distro_temp_path="$HOME/Desktop/$__distro_name"
@@ -46,12 +46,17 @@ else
 fi
 
 if [ "$install_mode" = "install" ];then
+	check_installer_file="${current_script_dir}/core.sh"
 	download_url="https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/core.sh"
 	if [ -f "$check_installer_file" ];then
 		tmp_installer_file="$check_installer_file"
 	fi
 elif [ "$install_mode" = "dev" ];then
+	check_installer_file="${current_script_dir}/../For_dev/pre_dev_env"
 	download_url="https://raw.githubusercontent.com/dari862/my_stuff_installer/main/For_dev/pre_dev_env"
+	if [ -f "$check_installer_file" ];then
+		tmp_installer_file="$check_installer_file"
+	fi
 fi
 
 install_sudo=false
@@ -315,6 +320,7 @@ prompt_to_ask_to_what_to_install(){
 	if [ "$switch_to_doas" = false ] && [ "$doas_installed" = false ] && [ "$sudo_installed" = false ];then
 		switch_to_doas=true
 	fi
+	
 	if [ "$doas_installed" = true ] && [ "$sudo_installed" = false ];then
 		only_doas_installed=true
 	else
@@ -403,18 +409,21 @@ fi
 
 chmod +x "$tmp_installer_file"
 
-if [ -f "${prompt_to_install_value_file}" ];then
-	print_m "file exist : ${prompt_to_install_value_file} form previce run."
-	if do_you_want_2_run_this_yes_or_no 'Do you want source it?' 'Y';then
-		source_prompt_to_install_file=true
+if [ "$install_mode" = "install" ];then
+	if [ -f "${prompt_to_install_value_file}" ];then
+		print_m "file exist : ${prompt_to_install_value_file} form previce run."
+		if do_you_want_2_run_this_yes_or_no 'Do you want source it?' 'Y';then
+			source_prompt_to_install_file=true
+		fi
 	fi
-fi
-
-prompt_to_ask_to_what_to_install
-create_prompt_to_install_value_file
-
-if $__super_command "$tmp_installer_file" "$prompt_to_install_value_file" "$__USER" "$current_user_home";then
-	if [ "$tmp_installer_file" != "$check_installer_file" ];then
-		rm -rdf "$tmp_installer_dir"
+	
+	prompt_to_ask_to_what_to_install
+	create_prompt_to_install_value_file
+	if $__super_command "$tmp_installer_file" "$prompt_to_install_value_file" "$__USER" "$current_user_home";then
+		if [ "$tmp_installer_file" != "$check_installer_file" ];then
+			rm -rdf "$tmp_installer_dir"
+		fi
 	fi
+elif [ "$install_mode" = "dev" ];then
+	$__super_command "$tmp_installer_file"
 fi
