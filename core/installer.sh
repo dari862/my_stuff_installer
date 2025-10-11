@@ -64,13 +64,17 @@ if [ "$install_mode" = "install" ];then
 	check_installer_file="${current_script_dir}/core.sh"
 	download_url="https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/core.sh"
 	if [ -f "$check_installer_file" ];then
-		tmp_installer_file="$check_installer_file"
+		installation_file_path="$check_installer_file"
+	else
+		installation_file_path="$tmp_installer_file"
 	fi
 elif [ "$install_mode" = "dev" ];then
 	check_installer_file="${current_script_dir}/../For_dev/pre_dev_env"
 	download_url="https://raw.githubusercontent.com/dari862/my_stuff_installer/main/For_dev/pre_dev_env"
 	if [ -f "$check_installer_file" ];then
-		tmp_installer_file="$check_installer_file"
+		installation_file_path="$check_installer_file"
+	else
+		installation_file_path="$tmp_installer_file"
 	fi
 fi
 
@@ -640,32 +644,35 @@ fi
 
 $__super_command mkdir -p "${installer_phases}"
 
-test_internet_
-
-if [ ! -f "$tmp_installer_file" ];then
-	mkdir -p "$tmp_installer_dir"
-	chmod 750 "$tmp_installer_dir"
-
-	download_file "$download_url" "$tmp_installer_file"
-fi
-
-chmod +x "$tmp_installer_file"
-
 if [ "$install_mode" = "install" ];then
 	if [ -f "${prompt_to_install_value_file}" ];then
 		print_m "file exist : ${prompt_to_install_value_file} form previce run."
 		if do_you_want_2_run_this_yes_or_no 'Do you want source it?' 'Y';then
 			source_prompt_to_install_file=true
 		fi
+	else
+		prompt_to_ask_to_what_to_install
+		create_prompt_to_install_value_file
 	fi
-	
-	prompt_to_ask_to_what_to_install
-	create_prompt_to_install_value_file
-	if $__super_command "$tmp_installer_file" "$prompt_to_install_value_file" "$__USER" "$current_user_home";then
-		if [ "$tmp_installer_file" != "$check_installer_file" ];then
+fi
+
+test_internet_
+
+if [ ! -f "$installation_file_path" ];then
+	mkdir -p "$tmp_installer_dir"
+	chmod 750 "$tmp_installer_dir"
+
+	download_file "$download_url" "$tmp_installer_file"
+fi
+
+chmod +x "$installation_file_path"
+
+if [ "$install_mode" = "install" ];then
+	if $__super_command "$installation_file_path" "$prompt_to_install_value_file" "$__USER" "$current_user_home";then
+		if [ -f "$tmp_installer_file" ];then
 			rm -rdf "$tmp_installer_dir"
 		fi
 	fi
 elif [ "$install_mode" = "dev" ];then
-	$__super_command "$tmp_installer_file"
+	$__super_command "$installation_file_path"
 fi
