@@ -123,14 +123,14 @@ end_of_post_install(){
 	fi	
 	
 	weather_script_config_path="${__distro_path_root}/system_files/skel/.config/scriptconfig/weather"
-	#. "$weather_script_config_path"
+	. "$weather_script_config_path"
 	
 	if [ -z "$place" ];then
 		show_im "set place var in $weather_script_config_path"
 		. "${__distro_path_root}/bin/not_add_2_path/weather/country_list"
    		# Geolocate IP:
    		place=$(echo "$__timezone" | awk -F/ '{print $2}')
-   		chosen="$(printf "%s" "$country_list" | grep "$place" )"
+   		chosen="$(grep "$place" "$country_list")"
 		
 		# Set continent code and radar code.
 		continentcode=$(printf "%s" "$chosen" | cut -d':' -f1 | tr "[:lower:]" "[:upper:]")
