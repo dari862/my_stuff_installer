@@ -17,7 +17,9 @@ current_user_home="${3:-}"
 __distro_title="$(echo "$__distro_name" | tr '._-' ' ' | awk '{ for (i=1; i<=NF; i++) { $i = tolower($i); $i = toupper(substr($i,1,1)) substr($i,2) } print }')"
 __distro_path_root="/usr/share/${__distro_name}"
 
-if [ -d "$__distro_path_root" ];then
+if [ -d "$__distro_path_root" ] && [ ! -d "$installer_phases" ];then
+	__reinstall_distro=true
+elif [ -f "${installer_phases}/__distro_path_root_removed" ];then
 	__reinstall_distro=true
 else
 	__reinstall_distro=false
@@ -26,9 +28,6 @@ fi
 _SUPERUSER=""
 export __distro_path_lib="${__distro_path_root}/lib/common/Distro_path"
 
-if [ -f "${installer_phases}/__distro_path_root_removed" ];then
-	__reinstall_distro=true
-fi
 switch_default_xsession=""
 
 save_value_file="${all_temp_path}/save_value_file"
@@ -431,12 +430,14 @@ check_and_download_core_script(){
 		
 		################################
 		# repo clone
-		show_m "clone distro files repo."
-		if [ ! -d "${distro_temp_path}" ];then
-			clone_rep_ "${__distro_name}" "${distro_temp_path}"
-		fi
-		if [ ! -d "${theme_temp_path}" ];then
-			clone_rep_ "Theme_Stuff" "${theme_temp_path}"
+		if [ "$__reinstall_distro" = true ] || [ ! -d "$__distro_path_root" ];then
+			show_m "clone distro files repo."
+			if [ ! -d "${distro_temp_path}" ];then
+				clone_rep_ "${__distro_name}" "${distro_temp_path}"
+			fi
+			if [ ! -d "${theme_temp_path}" ];then
+				clone_rep_ "Theme_Stuff" "${theme_temp_path}"
+			fi
 		fi
 		################################
 	fi

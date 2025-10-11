@@ -642,8 +642,6 @@ else
 	sudo_installed=false
 fi
 
-$__super_command mkdir -p "${installer_phases}"
-
 if [ "$install_mode" = "install" ];then
 	if [ -f "${prompt_to_install_value_file}" ];then
 		print_m "file exist : ${prompt_to_install_value_file} form previce run."
@@ -655,6 +653,8 @@ if [ "$install_mode" = "install" ];then
 		create_prompt_to_install_value_file
 	fi
 fi
+
+$__super_command mkdir -p "${installer_phases}"
 
 test_internet_
 
