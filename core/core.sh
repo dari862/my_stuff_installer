@@ -48,8 +48,6 @@ dir_2_find_files_in=""
 
 failed_2_install_ufw=false
 
-machine_type_are=""
-
 Distro_installer_mode=true
 
 usr_local_bin_path="/usr/local/bin"
@@ -447,18 +445,20 @@ check_and_download_core_script(){
 source_and_set_machine_type(){
 	[ -f "${installer_phases}/check_machine_type" ] && return
 	
-	if [ -f "${__distro_path_root}/lib/common/machine_type" ];then
-		. "${__distro_path_root}/lib/common/machine_type"
-	elif [ -f "${distro_temp_path}/lib/common/machine_type" ];then
-		. "${distro_temp_path}/lib/common/machine_type"
-	else
-		show_em "failed to source machine_type"
+	if [ -n "${machine_type_are}" ];then
+		if [ -f "${__distro_path_root}/lib/common/machine_type" ];then
+			. "${__distro_path_root}/lib/common/machine_type"
+		elif [ -f "${distro_temp_path}/lib/common/machine_type" ];then
+			. "${distro_temp_path}/lib/common/machine_type"
+		else
+			show_em "failed to source machine_type"
+		fi
+		
+		show_m "check machine type"
+		
+		machine_type_are="$(check_machine_type)"
 	fi
 	
-	show_m "check machine type"
-	
-	machine_type_are="$(check_machine_type)"
-		
 	if [ "${machine_type_are}" = "laptop" ];then
 		show_im "this is laptop"
 	elif [ -n "${machine_type_are}" ];then
@@ -654,7 +654,11 @@ disable_network_manager_powersaving(){
 		return
 	fi
  	if ls /sys/class/net | grep -q "^w";then
-  		grep -q "wifi.powersave = 2" "/etc/NetworkManager/conf.d/wifi-powersave.conf" && grep -q "options iwlwifi power_save=0" "/etc/modprobe.d/iwlwifi.conf" && return
+ 		if [ -f "/etc/NetworkManager/conf.d/wifi-powersave.conf" ] && [ -f "/etc/modprobe.d/iwlwifi.conf" ];then
+  			grep -q "wifi.powersave = 2" "/etc/NetworkManager/conf.d/wifi-powersave.conf" && \
+  			grep -q "options iwlwifi power_save=0" "/etc/modprobe.d/iwlwifi.conf" && \
+  			return
+  		fi
 	 	show_im "disable wifi powersaving (application level)."
 	 	tee /etc/NetworkManager/conf.d/wifi-powersave.conf <<- 'EOF' >/dev/null
 		[connection]

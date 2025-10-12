@@ -2,6 +2,7 @@
 install_mode="${1:-install}"
 tmp_installer_dir="/tmp/installer_dir"
 tmp_installer_file="$tmp_installer_dir/installer.sh"
+machine_type_are=""
 
 __USER="$(logname)"
 current_user_home="$HOME"
@@ -143,6 +144,9 @@ print_m(){
 		__COLOR="33"
 	fi
 	printf '%b' "\\033[1;${__COLOR}m${massage_is_}\\033[0m\n"
+	if [ "$__COLOR" = "RED" ];then
+		exit 1
+	fi
 }
 
 do_you_want_2_run_this_yes_or_no(){
@@ -568,6 +572,7 @@ create_prompt_to_install_value_file(){
 	$__super_command mkdir -p "${all_temp_path}"
 	$__super_command chmod 755 "${all_temp_path}"
 	$__super_command tee "${prompt_to_install_value_file}" <<- EOF >/dev/null
+		machine_type_are="$machine_type_are"
 		__timezone="$__timezone"
 		install_hwclock="${install_hwclock}"
 		installer_phases="${installer_phases}"
