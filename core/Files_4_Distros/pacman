@@ -44,10 +44,13 @@ create_auruser(){
 }
 
 aur_command_single_install(){
-	if su - "$_temp_user" -c "${temp_yay_command} $1";then
-		return
-	else
-		return 1
+	package_name="${1:-}"
+	if ! command_exist "${package_name}";then
+		if su - "$_temp_user" -c "${temp_yay_command} ${package_name}";then
+			return
+		else
+			return 1
+		fi
 	fi
 }
 
@@ -60,6 +63,7 @@ aur_command_check(){
 }
 
 install_AUR_helper(){
+	[ -f "${installer_phases}/install_AUR_helper" ] && return
 	if [ -f "/var/lib/pacman/db.lck" ];then
 		rm /var/lib/pacman/db.lck
 	fi  
@@ -99,9 +103,11 @@ install_AUR_helper(){
 			aur_command_single_install yay
 		fi
 	fi
+	touch "${installer_phases}/install_AUR_helper"
 }
 
 updating_rate_mirrors(){
+	[ -f "${installer_phases}/updating_rate_mirrors" ] && return
 	show_sm "updating rate-mirrors..."
 	if ! command_exist rate-mirrors;then
 		if ! aur_command_single_install rate-mirrors-bin;then
