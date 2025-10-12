@@ -11,6 +11,7 @@ fi
 prompt_to_install_value_file="${1:-}"
 __USER="${2:-}"
 current_user_home="${3:-}"
+machine_type_are="${4:-}"
 
 . "${prompt_to_install_value_file}"
 
@@ -339,7 +340,6 @@ set_package_manager(){
 		
 		show_im "running pre_package_manager_"
 		pre_package_manager_
-		echo "PACKAGER=\"${PACKAGER}\"" >> "${save_value_file}"
 		touch "${installer_phases}/set_package_manager"
 	else
 		if ! . "${all_temp_path}/PACKAGE_MANAGER";then
@@ -375,20 +375,6 @@ create_uninstaller_file(){
 	List_of_pakages_installed_="${List_of_installed_packages_}"
 	switch_default_xsession="${switch_default_xsession}"
 	EOF
-}
-
-pick_clone_rep_commnad(){
-	[ -f "${installer_phases}/pick_clone_rep_commnad" ] && return
-	show_m "pick clone repo commnad"
-	if command_exist git;then
-		show_im "clone repo commnad: git"
-		repo_commnad="git clone --depth=1"
-	elif command_exist svn;then
-		show_im "clone repo commnad: svn"
-		repo_commnad="svn clone --depth=1"
-	fi
-	echo "repo_commnad=\"${repo_commnad}\"" >> "${save_value_file}"
-	touch "${installer_phases}/pick_clone_rep_commnad"
 }
 
 clone_rep_(){
@@ -445,7 +431,7 @@ check_and_download_core_script(){
 source_and_set_machine_type(){
 	[ -f "${installer_phases}/check_machine_type" ] && return
 	
-	if [ -n "${machine_type_are}" ];then
+	if [ -z "${machine_type_are}" ];then
 		if [ -f "${__distro_path_root}/lib/common/machine_type" ];then
 			. "${__distro_path_root}/lib/common/machine_type"
 		elif [ -f "${distro_temp_path}/lib/common/machine_type" ];then
@@ -718,8 +704,6 @@ install_doas_tools
 
 must_install_apps
  
-pick_clone_rep_commnad
-
 check_and_download_core_script
 
 source_and_set_machine_type

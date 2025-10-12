@@ -165,9 +165,9 @@ do_you_want_2_run_this_yes_or_no(){
 		answer="$(head -c1)"
 		stty icanon echo
 		echo
-        
-        [ -z "$answer" ] && answer="$default_value"
-        
+				
+				[ -z "$answer" ] && answer="$default_value"
+				
 		case "$answer" in
 			[Yy]) return 0;;
 			[Nn]) return 1 ;;
@@ -176,170 +176,181 @@ do_you_want_2_run_this_yes_or_no(){
 	done
 }
 
-test_internet_(){
+test_internet_() {
 	[ -f "${installer_phases}/no_internet_needed" ] && return
+
 	NETWORK_TEST="http://network-test.debian.org/nm"
-	url_to_test=debian.org
-	test_dns="1.1.1.1"
+	TEST_DNS="1.1.1.1"
+	URL_TO_TEST="http://debian.org"
 	install_hwclock=false
-	if [ "$url_package" = "curl" ];then
-		check_url(){
-			curl -SsL "${1-}" 2>/dev/null
+	
+	_intf=""
+	_ip=""
+	gateway=""
+	
+	if [ "$url_package" = "curl" ]; then
+		check_url() {
+				curl -SsL "$1" >/dev/null 2>&1
 		}
-		get_full_header(){
-			curl -fSi "${1-}" 2>&1
+		get_full_header() {
+				curl -fSi "$1" 2>&1
 		}
-	elif [ "$url_package" = "wget" ];then
-		check_url(){
-			wget -q -O- "${1-}" >/dev/null 2>&1
+	elif [ "$url_package" = "wget" ]; then
+		check_url() {
+				wget -q -O- "$1" >/dev/null 2>&1
 		}
-		get_full_header(){
-			wget -S -O- -q --no-check-certificate "${1-}" 2>&1
+		get_full_header() {
+				wget -S -O- -q --no-check-certificate "$1" 2>&1
 		}
 	fi
+	
 	internet_tester() {
 		print_m "Checking internet."
-    	if check_url "${NETWORK_TEST}" | grep -q "NetworkManager is online";then
-    		print_m "There is an internet connection..."
-    		return 0
-    	else
-    		return 1
-    	fi
-	}
-	
-	fix_time_(){
-		[ -f "${installer_phases}/fix_time_" ] && return
-		print_m "Setting date ,time ,and timezone."
-		ipinfo_full_head="$(get_full_header "https://ipinfo.io/")"
-		current_date="$(echo "$ipinfo_full_head" | sed -n 's/^ *date: *//p')"
-		$__super_command date -s "$current_date" >/dev/null 2>&1
-		__timezone="$(echo "$ipinfo_full_head" | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/^[ \t]*//;s/[ \t]*$//')"
-		print_m "applying time and timezone."
-		if ! $__super_command timedatectl set-timezone $__timezone >/dev/null 2>&1;then
-			$__super_command ln -sf /usr/share/zoneinfo/$__timezone /etc/localtime
-			if ! $__super_command hwclock --systohc >/dev/null 2>&1;then
-				print_m "failed hwclock to set time zone !" "YELLOW"
-				print_m "installing hwclock later !"
-				install_hwclock=true
-			fi
-		fi
-		
-		print_m "fix time done."
-		$__super_command touch "${installer_phases}/fix_time_"
-	}	
-	wifi_mode_installation(){
-		wifi_interface="${1-}"
-		
-		ip link set "$wifi_interface" up
-			
-		if command_exist nmcli;then
-			nmcli radio wifi on
-			while :
-			do
-				print_m "Scanning for WiFi networks..."
-    			networks=$(nmcli -t -f SSID,BSSID,SIGNAL dev wifi list | awk -F: '!seen[$1]++' | head -n 10)
-    			if [ -z "$networks" ]; then
-        			print_m "No networks found." "YELLOW"
-    			else
-        			printf "%b\n" "Top 10 Networks found:"
-        			echo "$networks" | awk -F: '{printf("%d. SSID: %-25s \n", NR, $1)}'
-    			fi
-				nmcli --ask dev wifi connect && break
-			done
-		elif command_exist wpa_supplicant;then
-			tmpfile="$(mktemp)"
-			while :
-			do
-				printf "\n These hotspots are available \n"
-				iwlist "$wifi_interface" scan | grep ESSID | sed 's/ESSID://g;s/"//g;s/^                    //g'
-				echo "ssid: "
-				read -r ssid_var
-				if iw "$wifi_interface" scan | grep 'SSID' | grep "$ssid_var" >/dev/null;then
-					echo "pass: "
-					read -r pass_var
-				fi
-			done
-			wpa_passphrase "$ssid_var" "$pass_var" | tee "$tmpfile" > /dev/null
-			wpa_supplicant -B -c "$tmpfile" -i "$wifi_interface" &
-			unset ssid_var
-			unset pass_var
-			print_m "you will wait for few sec"
-			sleep 10 
-			dhclient "$wifi_interface"
-			[ -f "$tmpfile" ] && rm "$tmpfile"
-			gway=$(ip route | awk '/default/ { print $3 }')
-			if check_url "$url_to_test";then
-				print_m "Internet connection test passed!"
-				return 0
-			elif ping -q -c 5 "$test_dns" >/dev/null 2>&1;then
-            	print_m "Problem seems to be with your DNS. $_ip" "RED"
-            elif ! ping -q -c 5 "$gway" >/dev/null 2>&1;then
-            	print_m "Can not reach your gateway. $_ip" "RED"
-        	else
-            	print_m "Somthing wrong with your network" "RED"
-    		fi
-			fix_time_
-		fi
-	}
-	print_m "Testing internet connection."
-	
-	if ! internet_tester ;then
-		wifi_interface=""
-		if check_url "$url_to_test";then
-			print_m "Internet connection test passed!"
+		if check_url "${NETWORK_TEST}" | grep -q "NetworkManager is online";then
+			print_m "There is an internet connection..."
 			return 0
 		else
-			print_m "Internet connection test failed!" "YELLOW"
-			_intface="$(ip route | awk '/default/ { print $5 }')"
-			if [ -z "$_intface" ];then
-				for intf in /sys/class/net/*; do
-					intf_name="$(basename $intf)"
-					if [ "$intf_name" != "lo" ] || echo "$intf_name" | grep "^w" ;then
-    					ip link set dev $intf_name up
-    				fi
-				done
-				_intface="$(ip route | awk '/default/ { print $5 }')"
-				if [ -z "$_intface" ];then
-            		print_m "Problem seems to be with your interface. not connected" "RED"
-            	fi
-			fi
-			_ip="$(ip address show dev $_intface | grep 'inet ' | awk '{print $2}' | cut -f1 -d'/')"
-			if echo $_ip | grep -qE '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.)';then
-				if ls /sys/class/net/w* 2>/dev/null;then
-					wifi_interface="$(ip link | awk -F: '$0 !~ "^[^0-9]"{print $2;getline}' | awk '/w/{ print $0 }')"
-					if [ -z "$wifi_interface" ];then
-            			print_m "Problem seems to be with your router. $_ip" "RED"
-            		else
-            			wifi_mode_installation "$wifi_interface"
-            		fi
-            	else
-            		print_m "Problem seems to be with your router. $_ip" "YELLOW"
-            	fi
-        	else
-            	print_m "Problem seems to be with your interface or there is no DHCP server. $_intface ip is $_ip" "RED"
-			fi
-			
-			gway=$(ip route | awk '/default/ { print $3 }')
-			
-			if ! ping -q -c 5 "$test_dns" >/dev/null 2>&1;then
-            	print_m "Problem seems to be with your gateway. $_ip" "RED"
-        	elif ! ping -q -c 5 "$gway" >/dev/null 2>&1;then
-            	print_m "Can not reach your gateway. $_ip" "RED"
-    		fi
+			return 1
+		fi
+	}
+
+	test_internet_via_url() {
+		__test_internet_massage_="${1:-}"
+		if check_url "$URL_TO_TEST"; then
+			print_m "$__test_internet_massage_"
+			return 0
+		fi
+	}
 	
-    		fix_time_
-    		
-    		if check_url "$url_to_test";then
-				print_m "Internet connection test passed!"
-				return 0
-			elif ping -q -c 5 "$test_dns" >/dev/null 2>&1;then
-            	print_m "Problem seems to be with your DNS. $_ip" "RED"
-        	else
-            	print_m "Somthing wrong with your network" "RED"
-    		fi
-    	fi  
+	fix_time_() {
+		[ -f "${installer_phases}/fix_time_" ] && return
+
+		print_m "Setting date, time, and timezone..."
+		header="$(get_full_header 'https://ipinfo.io/')"
+		current_date=$(printf "%s\n" "$header" | sed -n 's/^ *[Dd]ate: *//p')
+
+		if [ -n "$current_date" ]; then
+			$__super_command date -s "$current_date" >/dev/null 2>&1
+		fi
+
+		__timezone=$(printf "%s\n" "$header" | grep -i timezone | awk -F: '{print $2}' | sed 's/[",]//g; s/^[[:space:]]*//;s/[[:space:]]*$//')
+
+		if [ -n "$__timezone" ]; then
+			print_m "applying time and timezone."
+			if ! $__super_command timedatectl set-timezone "$__timezone" >/dev/null 2>&1; then
+				$__super_command ln -sf "/usr/share/zoneinfo/$__timezone" /etc/localtime
+				if ! $__super_command hwclock --systohc >/dev/null 2>&1; then
+					print_m "Failed to set hardware clock!" "YELLOW"
+					install_hwclock=true
+				fi
+			fi
+		fi
+
+		print_m "Time sync complete."
+		$__super_command touch "${installer_phases}/fix_time_"
+	}
+
+	wifi_mode_installation() {
+		wifi_if="${1}"
+		ip link set "$wifi_if" up
+
+		if command_exist nmcli; then
+			nmcli radio wifi on
+			while :; do
+				print_m "Scanning for WiFi..."
+				networks=$(nmcli -t -f SSID dev wifi list | sed 's/^$//g' | awk '!seen[$0]++' | head -n 10)
+
+				if [ -z "$networks" ]; then
+					print_m "No WiFi networks found." "YELLOW"
+				else
+					printf "%b\n" "Top 10 Networks found:"
+					printf '%b\n' "$networks" | awk -F: '{printf("%d. SSID: %-25s \n", NR, $1)}'
+				fi
+
+				nmcli --ask dev wifi connect && break
+			done
+		elif command_exist wpa_supplicant; then
+			tmpfile=$(mktemp)
+			while :; do
+				print_m "Available WiFi:"
+				iwlist "$wifi_if" scan | grep ESSID | sed 's/ESSID://g;s/"//g;s/^ *//'
+
+				printf "SSID: "
+				read ssid_var
+				iw "$wifi_if" scan | grep 'SSID' | grep "$ssid_var" >/dev/null || continue
+				printf "Password: "
+				read pass_var
+
+				wpa_passphrase "$ssid_var" "$pass_var" > "$tmpfile"
+				wpa_supplicant -B -c "$tmpfile" -i "$wifi_if"
+				print_m "you will wait for few sec"
+				sleep 10
+				dhclient "$wifi_if"
+
+				rm -f "$tmpfile"
+				break
+			done
+		fi
+	}
+
+	check_ip_and_route() {
+		_intf=$(ip route | awk '/default/ {print $5}' | head -n1)
+		[ -n "$_intf" ] || _intf=""
+
+		if [ -z "$_intf" ]; then
+			for intf in /sys/class/net/*; do
+				name=$(basename "$intf")
+				[ "$name" != "lo" ] && ip link set "$name" up
+			done
+			_intf=$(ip route | awk '/default/ {print $5}' | head -n1)
+		fi
+
+		if [ -z "$_intf" ]; then
+			print_m "No active interface found." "RED"
+		fi
+
+		_ip=$(ip -o -f inet addr show "$_intf" | awk '{print $4}' | cut -d/ -f1)
+		gateway=$(ip route | awk '/default/ {print $3}' | head -n1)
+	}
+	
+	print_m "Testing internet connection..."
+
+	if internet_tester; then
+		return 0
 	fi
+
+	if test_internet_via_url "Internet available via fallback check."; then
+		return 0
+	fi
+
+	print_m "Internet check failed." "YELLOW"
+	check_ip_and_route
+	if [ -z "$_ip" ]; then
+		print_m "No IP address assigned. Checking for WiFi interfaces..."
+		wifi_if=$(ip -o link show | awk -F': ' '/state/ && $2 ~ /^w/ {print $2; exit}')
+		[ -n "$wifi_if" ] && wifi_mode_installation
+	fi
+
+	# Second chance test
+	if test_internet_via_url "Internet connection restored."; then
+		return 0
+	fi
+
+	if ping -q -c 2 "$TEST_DNS" >/dev/null 2>&1; then
+		print_m "DNS seems to be the issue. IP: $_ip" "RED"
+	elif ! ping -q -c 2 "$gateway" >/dev/null 2>&1; then
+		print_m "Cannot reach gateway ($gateway). IP: $_ip" "RED"
+	else
+		print_m "General network error. IP: $_ip" "RED"
+	fi
+
 	fix_time_
+
+	if test_internet_via_url "Internet available after fixing time."; then
+		return 0
+	fi
+
+	print_m "Still no internet connection." "RED"
 }
 
 prompt_to_ask_to_what_to_install(){
@@ -572,7 +583,6 @@ create_prompt_to_install_value_file(){
 	$__super_command mkdir -p "${all_temp_path}"
 	$__super_command chmod 755 "${all_temp_path}"
 	$__super_command tee "${prompt_to_install_value_file}" <<- EOF >/dev/null
-		machine_type_are="$machine_type_are"
 		__timezone="$__timezone"
 		install_hwclock="${install_hwclock}"
 		installer_phases="${installer_phases}"
@@ -612,6 +622,7 @@ create_prompt_to_install_value_file(){
 		install_bspwm=${install_bspwm}
 		install_dwm=${install_dwm}
 		switch_default_xsession_to="${switch_default_xsession_to}"
+		repo_commnad="${repo_commnad}"
 		reboot_now="${reboot_now}"
 	EOF
 }
@@ -647,6 +658,15 @@ else
 	sudo_installed=false
 fi
 
+print_m "pick clone repo commnad"
+if command_exist git;then
+	print_m "clone repo commnad: git"
+	repo_commnad="git clone --depth=1"
+elif command_exist svn;then
+	print_m "clone repo commnad: svn"
+	repo_commnad="svn clone --depth=1"
+fi
+	
 if [ "$install_mode" = "install" ];then
 	if [ -f "${prompt_to_install_value_file}" ];then
 		print_m "file exist : ${prompt_to_install_value_file} form previce run."
@@ -673,7 +693,7 @@ fi
 chmod +x "$installation_file_path"
 
 if [ "$install_mode" = "install" ];then
-	if $__super_command "$installation_file_path" "$prompt_to_install_value_file" "$__USER" "$current_user_home";then
+	if $__super_command "$installation_file_path" "$prompt_to_install_value_file" "$__USER" "$current_user_home" "$machine_type_are";then
 		if [ -f "$tmp_installer_file" ];then
 			rm -rdf "$tmp_installer_dir"
 		fi
