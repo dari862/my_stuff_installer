@@ -68,7 +68,7 @@ install_AUR_helper(){
 		rm /var/lib/pacman/db.lck
 	fi  
 	
-	if [ ! -f "$temp_yay_bin" ];then
+	if [ ! -f "$temp_yay_bin" ] || ! command_exist yay;then
 		show_im "installing yay..."
 		temp_yay_dir="/tmp/yay-bin"
 		[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir" || :
