@@ -1,0 +1,81 @@
+#!/bin/sh
+set -e
+op__="${1-}"
+op2__="${2-}"
+__lang="${3-}"
+
+. "$__distro_path_lib"
+tldr_dir="$__distro_for_all_path/tldr"
+
+git_clone(){
+	git clone --depth=1 $@
+}
+
+update_tldr_(){
+	[ ! -d "${tldr_dir}" ] && git_clone https://github.com/tldr-pages/tldr "${tldr_dir}"
+	cd "${tldr_dir}" >/dev/null 2>&1 && git pull 2> /dev/null
+}
+
+run_my_tldr_(){
+	command_to_look_for="${1-}"
+	if [ -z "$command_to_look_for" ];then
+		help
+	fi
+	[ ! -d "${tldr_dir}" ] && git_clone https://github.com/tldr-pages/tldr "${tldr_dir}"
+	[ ! -d "${tldr_dir}/.git" ] && rm -rdf "${tldr_dir}" && git_clone https://github.com/tldr-pages/tldr "${tldr_dir}"
+	
+	if [ "$(stat -c %y "${tldr_dir}/pages" 2>/dev/null | cut -d' ' -f1 | cut -d'-' -f1-2)" != "$(date +'%Y-%m')" ]
+	then
+		update_tldr_
+	fi
+	
+	[ -n "$(cd "${tldr_dir}" >/dev/null 2>&1 && git checkout | sed '$ d')" ] && git checkout .
+	
+	if [ -z "$__lang" ];then
+		__lang=".en"
+	fi
+	
+	command_2_find_="$(find "${tldr_dir}/pages${__lang}/" -name ${command_to_look_for}.md)"
+	
+	if [ -z "${command_2_find_}" ]
+	then
+		echo "no tldr entry for ${command_to_look_for}" 
+		exit 1
+	fi
+	grep_this="common|linux"
+	command_2_find_="$(echo "${command_2_find_}" | grep -E "$grep_this")"
+	bat --style=plain --paging=never ${command_2_find_}
+}
+
+help()
+{
+	script_name="$(basename $0)"
+	echo "Usage: $script_name [-c|-u|-h] command2find "
+	echo "  -c  --cheat                 show cheat sheet"
+	echo "  -u  --update                update tldr"
+	echo "  -h  --help                  to show help menu"
+	exit
+}
+
+main()
+{
+case $op__ in
+	-c|--cheat)
+		getURL '2term' "cheat.sh/$op2__"
+	;;
+	-t|--tldr)
+		run_my_tldr_ "${op2__}"
+	;;
+	-u|--update)
+		update_tldr_
+	;;
+	-h |--help)
+		help
+	;;
+	*)
+		run_my_tldr_ "${op__}"
+	;;
+esac
+}
+
+main
