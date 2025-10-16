@@ -28,3 +28,7 @@ to_test(){
         sleep 3
     done
 }
+
+##################################################
+wikicli does not work
+fix bookmarks
