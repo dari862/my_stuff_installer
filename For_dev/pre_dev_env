@@ -1,25 +1,9 @@
 #!/bin/sh
 set -e
 url_2_check_time="https://ipinfo.io/"
-dont_install="wireless|fingerprint|bluetooth|laptop|gpu|firefox|must_purge|#install_"
+dont_install="wireless|fingerprint|bluetooth|laptop|gpu|must_purge|#install_"
 
 __superuser=""
-if command -v doas >/dev/null;then
-	__superuser="doas"
-elif command -v sudo >/dev/null;then
-	__superuser="sudo"
-fi
-
-printf ""
-printf "Do you want to install all software in disto_Installapps_list disto_Drivers? [y|n]"
-stty -icanon -echo time 0 min 1
-yn="$(head -c1)"
-stty icanon echo
-if printf "%s" "$yn" | tr '[:lower:]' '[:upper:]' | grep -q "Y";then
-	install_packages=true
-else
-	install_packages=false
-fi
 
 getURL(){
 	mode="${1-}"
@@ -93,11 +77,31 @@ install_all_packages_in_repo(){
 	[ "${install_packages}" = false ] && return
 	. /etc/os-release
 	cd "$HOME/Desktop"
-	all_packages_are="$(grep -E 'install_|=' \
-	my_stuff_installer/core/Files_4_Distros/$ID/disto_apps_list my_stuff_installer/core/Files_4_Distros/$ID/disto_Drivers_list \
-	| grep -vE "${dont_install}" | grep -oP '"\K[^"]+(?=")')"
-	$__superuser apt-get install -y ${all_packages_are} firefox-esr
+	all_packages_are="$(
+		grep -E 'install_|=' \
+		my_stuff_installer/core/Files_4_Distros/{disto_apps_list_common,disto_Drivers_list_common} \
+		my_stuff_installer/core/Files_4_Distros/$ID/{disto_apps_list,disto_Drivers_list} \
+		| grep -vE "${dont_install}" | grep -oP '"\K[^"]+(?=")'
+	)"
+	$__superuser apt-get install -y ${all_packages_are}
 }
+
+if command -v doas >/dev/null;then
+	__superuser="doas"
+elif command -v sudo >/dev/null;then
+	__superuser="sudo"
+fi
+
+printf ""
+printf "Do you want to install all software in disto_Installapps_list disto_Drivers? [y|n]"
+stty -icanon -echo time 0 min 1
+yn="$(head -c1)"
+stty icanon echo
+if printf "%s" "$yn" | tr '[:lower:]' '[:upper:]' | grep -q "Y";then
+	install_packages=true
+else
+	install_packages=false
+fi
 
 set_time_and_time_zone
 remove_cdrom_from_apt

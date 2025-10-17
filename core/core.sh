@@ -12,22 +12,14 @@ prompt_to_install_value_file="${1:-}"
 __USER="${2:-}"
 current_user_home="${3:-}"
 machine_type_are="${4:-}"
+__reinstall_distro="${5:-}"
+__temp_distro_path_lib="${6:-}"
 
 . "${prompt_to_install_value_file}"
 
 __distro_title="$(echo "$__distro_name" | tr '._-' ' ' | awk '{ for (i=1; i<=NF; i++) { $i = tolower($i); $i = toupper(substr($i,1,1)) substr($i,2) } print }')"
-__distro_path_root="/usr/share/${__distro_name}"
-
-if [ -d "$__distro_path_root" ] && [ ! -d "$installer_phases" ];then
-	__reinstall_distro=true
-elif [ -f "${installer_phases}/__distro_path_root_removed" ];then
-	__reinstall_distro=true
-else
-	__reinstall_distro=false
-fi
 
 _SUPERUSER=""
-export __distro_path_lib="${__distro_path_root}/lib/common/Distro_path"
 
 switch_default_xsession=""
 
@@ -706,6 +698,8 @@ must_install_apps
  
 check_and_download_core_script
 
+. "${__temp_distro_path_lib}"
+
 source_and_set_machine_type
 
 clear
@@ -816,7 +810,6 @@ fi
 show_m "Sourceing disto_configer."
 source_this_script "disto_configer" "Configering $__distro_title." "run_check"
 
-. "${__distro_path_lib}"
 . "${__distro_path_root}/lib/common/common"
 
 if [ "$install_dwm" = true ];then

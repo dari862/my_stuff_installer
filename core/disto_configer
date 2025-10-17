@@ -7,8 +7,6 @@ mv "${theme_temp_path}" "${distro_temp_path}"
 show_im "change ownership to root"
 chown -R root:root "${distro_temp_path}"
 
-themes_dir_in_distro_path="${__distro_path_root}/Theme_Stuff"
-
 if [ "${__reinstall_distro}" = true ] && [ ! -f "${installer_phases}/__distro_path_root_removed" ];then
 	mv "${__distro_path_root}"/never_remove "${distro_temp_path}"
 	rm -rdf "$__distro_path_root"
@@ -26,19 +24,19 @@ done
 
 show_im "Adding themes"
 mkdir -p /usr/share/themes
-for d in "${themes_dir_in_distro_path}"/themes/* "${themes_dir_in_distro_path}"/openbox_themes/*;do
+for d in "${__distro_path_themes}"/themes/* "${__distro_path_themes}"/openbox_themes/*;do
 	ln -sf "$d" /usr/share/themes
 done
 
 show_im "Adding icons and cursors"
 mkdir -p /usr/share/icons
-for d in "${themes_dir_in_distro_path}"/icons/* "${themes_dir_in_distro_path}"/cursors/* "${themes_dir_in_distro_path}"/lightdm-icons;do
+for d in "${__distro_path_themes}"/system-icons/* "${__distro_path_themes}"/cursors/* "${__distro_path_themes}"/lightdm-icons;do
 	ln -sf "$d" /usr/share/icons
 done
 
 show_im "Adding fonts"
 mkdir -p /usr/share/fonts
-for e in "${themes_dir_in_distro_path}"/fonts/*;do
+for e in "${__distro_path_themes}"/fonts/*;do
 	ln -sf "$e" /usr/share/fonts
 done
 

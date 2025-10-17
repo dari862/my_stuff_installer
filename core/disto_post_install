@@ -1,5 +1,5 @@
 #!/bin/sh
-lightdm_background="${__distro_path_root}/my_wallpapers/default_wall-01.jpg"
+lightdm_background="${__distro_path_themes}/my_wallpapers/default_wall-01.jpg"
 
 pre_post_install(){
 	[ -f "${installer_phases}/pre_post_install" ] && return

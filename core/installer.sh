@@ -1,4 +1,7 @@
 #!/bin/sh
+####################################################################################
+#	Var
+####################################################################################
 install_mode="${1:-install}"
 tmp_installer_dir="/tmp/installer_dir"
 tmp_installer_file="$tmp_installer_dir/installer.sh"
@@ -10,34 +13,11 @@ current_user_home="$HOME"
 install_drivers=true
 install_apps=true
 
-if [ "$install_mode" = "drivers" ];then
-	install_drivers=true
-	install_apps=false
-	install_mode="install"
-elif [ "$install_mode" = "apps" ];then
-	install_drivers=false
-	install_apps=true
-	install_mode="install"
-fi
-
-if [ "$__USER" = "root" ];then
-	non_root_users="$(awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd)"
-	for u in ${non_root_users};do
-		id "$u" | grep -E "sudo|wheel" && user_with_superuser_access="$user_with_superuser_access $u" || :
-	done
-	if [ -z "$user_with_superuser_access" ];then
-		printf "you need user with superuser access." 
-		exit 1
-	fi
-else
-	if ! id "$__USER" | grep -Eq "sudo|wheel";then
-		printf "you need user with superuser access." 
-		exit 1
-	fi
-fi
-
 current_script_dir="$(realpath $(dirname $0))"
 __distro_name="my_stuff"
+__distro_path_root="/usr/share/${__distro_name}"
+__distro_path_lib="${__distro_path_root}/lib/common/Distro_path"
+
 all_temp_path="/temp_distro_installer_dir"
 installer_phases="${all_temp_path}/installer_phases"
 
@@ -49,84 +29,15 @@ auto_run_script="false" # true to enable
 source_prompt_to_install_file=false
 check_installer_file=""
 
-if [ -d "$HOME/Desktop/$__distro_name" ];then
-	distro_temp_path="$HOME/Desktop/$__distro_name"
-else
-	distro_temp_path="${all_temp_path}/$__distro_name"
-fi
-
-if [ -d "$HOME/Desktop/Theme_Stuff" ];then
-	theme_temp_path="$HOME/Desktop/Theme_Stuff"
-else
-	theme_temp_path="${all_temp_path}/Theme_Stuff"
-fi
-
-if [ "$install_mode" = "install" ];then
-	check_installer_file="${current_script_dir}/core.sh"
-	download_url="https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/core.sh"
-	if [ -f "$check_installer_file" ];then
-		installation_file_path="$check_installer_file"
-	else
-		installation_file_path="$tmp_installer_file"
-	fi
-elif [ "$install_mode" = "dev" ];then
-	check_installer_file="${current_script_dir}/../For_dev/pre_dev_env"
-	download_url="https://raw.githubusercontent.com/dari862/my_stuff_installer/main/For_dev/pre_dev_env"
-	if [ -f "$check_installer_file" ];then
-		installation_file_path="$check_installer_file"
-	else
-		installation_file_path="$tmp_installer_file"
-	fi
-fi
-
 install_sudo=false
 user_with_superuser_accese=""
 install_hwclock=false
 
-if [ -f /etc/os-release ];then
-	. /etc/os-release
-	distro_name="$ID"
-fi
-
-case ${distro_name} in
-	*arch*)
-		distro_name="arch"
-	;;
-
-	*debian*)
-		distro_name="debian"
-	;;
-
-	*fedora*)
-		distro_name="fedora"
-	;;
-	
-	*opensuse*)
-		distro_name="opensuse"
-	;;
-	
-	*ubuntu*)
-		distro_name="ubuntu"
-	;;
-	*)
-		printf "failed to detect your distro"
-		exit 1
-	;;
-esac
-	
 PACKAGEMANAGER='apt-get dnf pacman zypper'
-for pgm in ${PACKAGEMANAGER}; do
-	if command -v ${pgm} >/dev/null 2>&1;then
-		PACKAGER=${pgm}
-		break
-	fi
-done
 
-if [ -z "${PACKAGER}" ];then
-	echo "Error: Can't find a supported package manager"
-	exit 1
-fi
-
+####################################################################################
+#	functions
+####################################################################################
 command_exist() {
 	if command -v $1 > /dev/null 2>&1;then
 		return
@@ -585,13 +496,15 @@ create_prompt_to_install_value_file(){
 	$__super_command tee "${prompt_to_install_value_file}" <<- EOF >/dev/null
 		__timezone="$__timezone"
 		install_hwclock="${install_hwclock}"
+		__distro_path_root="$__distro_path_root"
+		export __distro_path_lib="$__distro_path_lib"
 		installer_phases="${installer_phases}"
 		install_drivers="${install_drivers}"
 		install_apps="${install_apps}"
 		PACKAGER="${PACKAGER}"
 		distro_name="${distro_name}"
 		__distro_name="$__distro_name"
-		export all_temp_path="${all_temp_path}"
+		all_temp_path="${all_temp_path}"
 		distro_temp_path="$distro_temp_path"
 		theme_temp_path="$theme_temp_path"
 		url_package="$url_package"
@@ -640,8 +553,122 @@ elif command_exist wget;then
 		wget -q --no-check-certificate --progress=bar "${1-}" -O "${2-}" 2>/dev/null
 	}
 else
-	print_m "Neither curl nor wget is availabl, please install curl or wget.."
-	exit 1
+	print_m "Neither curl nor wget is availabl, please install curl or wget.." 'RED'
+fi
+
+####################################################################################
+#	main
+####################################################################################
+
+if [ "$__USER" = "root" ];then
+	non_root_users="$(awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd)"
+	for u in ${non_root_users};do
+		id "$u" | grep -E "sudo|wheel" && user_with_superuser_access="$user_with_superuser_access $u" || :
+	done
+	if [ -z "$user_with_superuser_access" ];then
+		print_m "you need user with superuser access." 'RED'
+	fi
+else
+	if ! id "$__USER" | grep -Eq "sudo|wheel";then
+		print_m "you need user with superuser access." 'RED'
+	fi
+fi
+
+if [ "$install_mode" = "drivers" ];then
+	install_drivers=true
+	install_apps=false
+	install_mode="install"
+elif [ "$install_mode" = "apps" ];then
+	install_drivers=false
+	install_apps=true
+	install_mode="install"
+fi
+
+if [ -d "$__distro_path_root" ] && [ ! -d "$installer_phases" ];then
+	__reinstall_distro=true
+elif [ -f "${installer_phases}/__distro_path_root_removed" ];then
+	__reinstall_distro=true
+else
+	__reinstall_distro=false
+fi
+
+if [ -d "$HOME/Desktop/$__distro_name" ];then
+	distro_temp_path="$HOME/Desktop/$__distro_name"
+else
+	distro_temp_path="${all_temp_path}/$__distro_name"
+fi
+
+if [ -d "$__distro_path_root" ];then
+	__temp_distro_path_lib="${__distro_path_lib}"
+else
+	__temp_distro_path_lib="${distro_temp_path}/lib/common/Distro_path"
+fi
+
+if [ -d "$HOME/Desktop/Theme_Stuff" ];then
+	theme_temp_path="$HOME/Desktop/Theme_Stuff"
+else
+	theme_temp_path="${all_temp_path}/Theme_Stuff"
+fi
+
+if [ "$install_mode" = "install" ];then
+	check_installer_file="${current_script_dir}/core.sh"
+	download_url="https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/core.sh"
+	if [ -f "$check_installer_file" ];then
+		installation_file_path="$check_installer_file"
+	else
+		installation_file_path="$tmp_installer_file"
+	fi
+elif [ "$install_mode" = "dev" ];then
+	check_installer_file="${current_script_dir}/../For_dev/pre_dev_env"
+	download_url="https://raw.githubusercontent.com/dari862/my_stuff_installer/main/For_dev/pre_dev_env"
+	if [ -f "$check_installer_file" ];then
+		installation_file_path="$check_installer_file"
+	else
+		installation_file_path="$tmp_installer_file"
+	fi
+else
+	print_m "Error: picked incorrect install_mode=$install_mode, you should choose either install or dev" 'RED'
+fi
+
+if [ -f /etc/os-release ];then
+	. /etc/os-release
+	distro_name="$ID"
+fi
+
+case ${distro_name} in
+	*arch*)
+		distro_name="arch"
+	;;
+
+	*debian*)
+		distro_name="debian"
+	;;
+
+	*fedora*)
+		distro_name="fedora"
+	;;
+	
+	*opensuse*)
+		distro_name="opensuse"
+	;;
+	
+	*ubuntu*)
+		distro_name="ubuntu"
+	;;
+	*)
+		print_m "failed to detect your distro" 'RED'
+	;;
+esac
+
+for pgm in ${PACKAGEMANAGER}; do
+	if command_exist ${pgm};then
+		PACKAGER=${pgm}
+		break
+	fi
+done
+
+if [ -z "${PACKAGER}" ];then
+	print_m "Error: Can't find a supported package manager" 'RED'
 fi
 
 if command_exist doas;then
@@ -693,7 +720,7 @@ fi
 chmod +x "$installation_file_path"
 
 if [ "$install_mode" = "install" ];then
-	if $__super_command "$installation_file_path" "$prompt_to_install_value_file" "$__USER" "$current_user_home" "$machine_type_are";then
+	if $__super_command "$installation_file_path" "$prompt_to_install_value_file" "$__USER" "$current_user_home" "$machine_type_are" "$__reinstall_distro" "$__temp_distro_path_lib";then
 		if [ -f "$tmp_installer_file" ];then
 			rm -rdf "$tmp_installer_dir"
 		fi

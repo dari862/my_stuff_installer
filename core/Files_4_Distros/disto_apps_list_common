@@ -3,15 +3,15 @@
 ## must have apps
 #######################
 install_common_ufw_apps="ufw"
-install_common_must_have_apps="jq git plocate htop unzip "
+install_common_must_have_apps="jq git plocate htop unzip"
 install_common_must_have_apps2="psmisc gparted inxi s-tui dfc hwinfo acl ntfs-3g"
-install_common_image_viewer_apps="viewnior imagemagick "
+install_common_image_viewer_apps="viewnior imagemagick"
 install_common_files_manager_support_app="gvfs file-roller baobab"
 install_common_terminal="kitty"
 install_common_if_laptop_apps="tlp tlp-rdw powertop"
 install_common_cli_sound_app="mpd mpc ncmpcpp"
 install_common_MIDI_sound_app="wildmidi"
-install_common_text_editer_app="geany geany-plugins zathura"
+install_common_text_editer_app="geany geany-plugins"
 install_common_mediaplayer_app="mpv cava"
 install_common_polkit_apps="gnome-keyring"
 install_common_fonts=""
@@ -24,6 +24,7 @@ install_common_firefox_=""
 install_common_for_scripts1="ffmpeg at"
 # python3-pyte for theoops , python3-pyte for pickbg
 install_common_for_scripts2=""
+
 install_common_for_scripts="$install_common_for_scripts1 $install_common_for_scripts2"
 
 #for x11
