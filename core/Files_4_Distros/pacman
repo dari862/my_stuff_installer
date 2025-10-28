@@ -68,38 +68,43 @@ install_AUR_helper(){
 		rm /var/lib/pacman/db.lck
 	fi  
 	
-	if [ ! -f "$temp_yay_bin" ] || ! command_exist yay;then
+	if [ ! -f "$temp_yay_bin" ] && ! command_exist yay;then
 		show_im "installing yay..."
-		temp_yay_dir="/tmp/yay-bin"
-		[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir" || :
-		mkdir -p "$temp_yay_dir"
-		if [ -z "$yay_ver" ];then
-			yay_ver="latest"
-		else
-			yay_ver="tags/v${yay_ver}"
-		fi
-		yay_github_api_url="https://api.github.com/repos/Jguer/yay/releases/$yay_ver"
-		if [ "$url_package" = "curl" ];then
-			case "$(uname -m)" in
-				x86_64)  ARCH="x86_64" ;;
-				aarch64) ARCH="aarch64";;
-				armv7*)  ARCH="armv7h" ;;
-			esac
-			url2downloadyay="$(curl -fsSL "$yay_github_api_url" | grep -oP '(?<=browser_download_url": ")[^"]*' | grep "${ARCH}.tar.gz")"
-			curl -fSLo "${temp_yay_dir}/yay_bin.tar.gz" "${url2downloadyay}" --progress-bar
-			curl 'https://aur.archlinux.org/' >/dev/null || use_aur=false
-		elif [ "$url_package" = "wget" ];then
-			url2downloadyay="$(wget -qO- "https://api.github.com/repos/Jguer/yay/releases/latest" | grep -oP '(?<=browser_download_url": ")[^"]*' | grep "x86_64.tar.gz")"
-			wget -q --show-progress -O "${temp_yay_dir}/yay_bin.tar.gz" "${url2downloadyay}"
-			wget -O- 'https://aur.archlinux.org/' >/dev/null || use_aur=false
-		fi
-		echo "use_aur=\"$use_aur\"" >> "${save_value_file}"
-		if [  "$use_aur" = true ];then
-			if ! id "${_temp_user}" >/dev/null 2>&1;then
-				create_auruser
+		if [ ! -f "$temp_yay_bin" ];then
+			temp_yay_dir="/tmp/yay-bin"
+			[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir" || :
+			mkdir -p "$temp_yay_dir"
+			if [ -z "$yay_ver" ];then
+				yay_ver="latest"
+			else
+				yay_ver="tags/v${yay_ver}"
 			fi
-			( cd "$temp_yay_dir" && tar -xzf yay_bin.tar.gz && rm -rf yay_bin.tar.gz && mv yay_*/yay "${temp_yay_bin}")
-			[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir"
+			yay_github_api_url="https://api.github.com/repos/Jguer/yay/releases/$yay_ver"
+			if [ "$url_package" = "curl" ];then
+				case "$(uname -m)" in
+					x86_64)  ARCH="x86_64" ;;
+					aarch64) ARCH="aarch64";;
+					armv7*)  ARCH="armv7h" ;;
+				esac
+				url2downloadyay="$(curl -fsSL "$yay_github_api_url" | grep -oP '(?<=browser_download_url": ")[^"]*' | grep "${ARCH}.tar.gz")"
+				curl -fSLo "${temp_yay_dir}/yay_bin.tar.gz" "${url2downloadyay}" --progress-bar
+				curl 'https://aur.archlinux.org/' >/dev/null || use_aur=false
+			elif [ "$url_package" = "wget" ];then
+				url2downloadyay="$(wget -qO- "https://api.github.com/repos/Jguer/yay/releases/latest" | grep -oP '(?<=browser_download_url": ")[^"]*' | grep "x86_64.tar.gz")"
+				wget -q --show-progress -O "${temp_yay_dir}/yay_bin.tar.gz" "${url2downloadyay}"
+				wget -O- 'https://aur.archlinux.org/' >/dev/null || use_aur=false
+			fi
+			echo "use_aur=\"$use_aur\"" >> "${save_value_file}"
+			if [  "$use_aur" = true ];then
+				if ! id "${_temp_user}" >/dev/null 2>&1;then
+					create_auruser
+				fi
+				( cd "$temp_yay_dir" && tar -xzf yay_bin.tar.gz && rm -rf yay_bin.tar.gz && mv yay_*/yay "${temp_yay_bin}")
+				[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir"
+			fi
+		fi
+		
+		if [  "$use_aur" = true ];then
 			aur_command_single_install yay
 		fi
 	fi
@@ -148,6 +153,7 @@ delete_auruser(){
 
 # main aur
 install_aur_and_all_needed_packages(){
+	[ -f "${installer_phases}/install_aur_and_all_needed_packages" ] && return
 	install_AUR_helper
 	if [  "$use_aur" = false ];then
 		show_wm "failed to run yay aur"
@@ -186,13 +192,14 @@ install_aur_and_all_needed_packages(){
 		done
 		EOF
 		chmod +x "${yay_env_installer_script_path}"
-		return
+	else
+		updating_rate_mirrors
+		aur_command_install_all
+		if id "${_temp_user}" >/dev/null 2>&1;then
+			delete_auruser
+		fi
 	fi
-	updating_rate_mirrors
-	aur_command_install_all
-	if id "${_temp_user}" >/dev/null 2>&1;then
-		delete_auruser
-	fi
+	touch "${installer_phases}/install_aur_and_all_needed_packages"
 }
 
 ######################################################################
