@@ -8,7 +8,7 @@ tmp_installer_file="$tmp_installer_dir/installer.sh"
 machine_type_are=""
 
 __USER="$(logname)"
-current_user_home="$HOME"
+current_user_home="/home/$__USER"
 
 install_drivers=true
 install_apps=true
@@ -702,7 +702,7 @@ test_internet_
 
 if [ ! -f "$installation_file_path" ];then
 	mkdir -p "$tmp_installer_dir"
-	chmod 750 "$tmp_installer_dir"
+	chmod 700 "$tmp_installer_dir"
 
 	download_file "$download_url" "$tmp_installer_file"
 fi
@@ -716,5 +716,9 @@ if [ "$install_mode" = "install" ];then
 		fi
 	fi
 elif [ "$install_mode" = "dev" ];then
-	$__super_command "$installation_file_path"
+	__packagemanager_file="$tmp_installer_dir/PACKAGEMANAGER"
+	if [ ! -f "$__packagemanager_file" ];then
+		download_file "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/Files_4_Distros/${PACKAGER}" "$__packagemanager_file"
+	fi
+	$__super_command "$installation_file_path" "$__USER" "$__packagemanager_file"
 fi

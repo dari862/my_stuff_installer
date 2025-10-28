@@ -1,96 +1,43 @@
 #!/bin/sh
 set -e
-url_2_check_time="https://ipinfo.io/"
+__USER="${1:-$(logname)}"
+__packagemanager_file="${2:-}"
+current_user_home="/home/$__USER"
+all_packages_are=""
 dont_install="wireless|fingerprint|bluetooth|laptop|gpu|must_purge|#install_"
 
-__superuser=""
-
-getURL(){
-	mode="${1-}"
-	url="${2-}"
-	if command -v curl >/dev/null;then
-		if [ "${mode}" = "head" ];then
-			curl -S --head -fsS --max-redirs 0 "${url}"
-		elif [ "${mode}" = "2term" ];then
-			curl -fsSL "${url}"
-		fi
-	elif command -v wget >/dev/null;then
-		if [ "${mode}" = "head" ]; then
-    		wget --spider --max-redirect=0 "${url}"
-		elif [ "${mode}" = "2term" ]; then
-    		wget -qO- "${url}"
-		fi
-	fi
+kill_package_(){
+	ps aux | grep "${1}" | awk '{print $2}' | xargs kill -9 >/dev/null 2>&1 || :
 }
 
-set_time_and_time_zone(){
-	if command -v curl >/dev/null 2>&1;then
-		url_full_head="$(curl -fSi "${url_2_check_time}" 2>&1)"
-	elif command -v curl >/dev/null 2>&1;then
-		url_full_head="$(wget -S -O- -q --no-check-certificate "${url_2_check_time}" 2>&1)"
-	fi
-	current_date="$(echo "$url_full_head" | sed -n 's/^ *date: *//p')"
-	$_SUPERUSER date -s "$current_date" >/dev/null 2>&1
-	__timezone="$(echo "$url_full_head" | grep timezone | awk -F: '{print $2}' | sed 's/"//g;s/,//g;s/^[ \t]*//;s/[ \t]*$//')"
-	echo "Using ${__timezone} as time zone."
-	if command -v timedatectl >/dev/null 2>&1;then
-		$__superuser timedatectl set-timezone $__timezone
-	else
-		$__superuser ln -sf /usr/share/zoneinfo/$__timezone /etc/localtime
-		$__superuser hwclock --systohc
-	fi
-}
-
-remove_cdrom_from_apt(){
-	if grep -q 'deb cdrom' /etc/apt/sources.list;then
-		$__superuser sed -i '/deb cdrom/d' /etc/apt/sources.list
-	fi
-}
-
-upgrade_system(){
-	$__superuser apt-get update
-	$__superuser apt-get -y upgrade
-}
-
-install_essential_packages(){
-	$__superuser apt-get -y install featherpad git openssh-server shellcheck meld
-	$__superuser systemctl start ssh
-	$__superuser systemctl enable ssh
-}
+aptfixer(){   :; }
 
 git_clone_repos(){
-	[ ! -d "$HOME/Desktop" ] && mkdir -p $HOME/Desktop
-	cd $HOME/Desktop
+	[ ! -d "$current_user_home/Desktop" ] && mkdir -p "$current_user_home"/Desktop
+	cd "$current_user_home"/Desktop
 	
 	for repo in my_stuff_installer my_stuff Theme_Stuff YadAppsStore secureMyLinux;do
 		if [ ! -d "$repo" ];then
 			git clone https://github.com/dari862/$repo.git
+			chown -R ${__USER}:${__USER} "$repo"
 		fi
 	done
 	
 	ln -sf my_stuff_installer/For_dev/push_to_git .
 	ln -sf my_stuff_installer/For_dev/dev_scripts .
 	ln -sf my_stuff_installer/workon .
+	chown ${__USER}:${__USER} push_to_git dev_scripts workon
 }
 
-install_all_packages_in_repo(){
-	[ "${install_packages}" = false ] && return
-	. /etc/os-release
-	cd "$HOME/Desktop"
+add_all_packages_in_repo_to_var(){
+	cd "$current_user_home/Desktop"
 	all_packages_are="$(
 		grep -E 'install_|=' \
 		my_stuff_installer/core/Files_4_Distros/{disto_apps_list_common,disto_Drivers_list_common} \
-		my_stuff_installer/core/Files_4_Distros/$ID/{disto_apps_list,disto_Drivers_list} \
+		my_stuff_installer/core/Files_4_Distros/$distro_name/{disto_apps_list,disto_Drivers_list} \
 		| grep -vE "${dont_install}" | grep -oP '"\K[^"]+(?=")'
 	)"
-	$__superuser apt-get install -y ${all_packages_are}
 }
-
-if command -v doas >/dev/null;then
-	__superuser="doas"
-elif command -v sudo >/dev/null;then
-	__superuser="sudo"
-fi
 
 printf ""
 printf "Do you want to install all software in disto_Installapps_list disto_Drivers? [y|n]"
@@ -103,12 +50,21 @@ else
 	install_packages=false
 fi
 
-set_time_and_time_zone
-remove_cdrom_from_apt
-upgrade_system
-install_essential_packages
+. "${__packagemanager_file}"
+aptfixer
+upgrade_now
+install_packages_for_dev "featherpad git openssh-server shellcheck meld"
+systemctl enable --now ssh || :
 git_clone_repos
-install_all_packages_in_repo
+
+if [ "${install_packages}" = true ];then
+	add_all_packages_in_repo_to_var
+	install_packages_for_dev "${all_packages_are}"
+	if [ -n "$failed_to_install" ];then
+		echo "failed to install : $failed_to_install"
+	fi
+fi
+
 echo "Done!!"
 echo "Done!!"
 echo "Done!!"

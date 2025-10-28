@@ -249,6 +249,22 @@ install_packages(){
     fi
 }
 
+install_packages_for_dev(){
+	failed_to_locate=""
+	all_packages_to_install=""
+	clean_pacman_db_locl_file
+	for package in $@;do
+		if pacman -Ss $package | grep -q "/$package ";then
+			all_packages_to_install="$all_packages_to_install $package"
+		else
+			failed_to_install="$failed_to_install $package"
+		fi
+	done
+	(pacman --noconfirm -Syu ${all_packages_to_install} && kill_package_ pacman) || \
+	(pacman --noconfirm -Syu ${all_packages_to_install} && kill_package_ pacman) || \
+	pacman --noconfirm -Syu ${all_packages_to_install}
+}
+
 add_packages_2_install_list(){
 	localarray="$@"
 	for INDEX in ${localarray};do
