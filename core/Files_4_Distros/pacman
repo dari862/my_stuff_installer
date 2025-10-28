@@ -117,11 +117,15 @@ updating_rate_mirrors(){
 	if ! command_exist rate-mirrors;then
 		if ! aur_command_single_install rate-mirrors-bin;then
 			show_wm "failed to update rate-mirrors..."
+			use_aur=false
 			return
 		fi
 	fi
     cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
-    rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch || show_wm "failed to update rate-mirrors..."
+    if ! rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch;then
+    	use_aur=false
+    	show_wm "failed to update rate-mirrors..."
+    fi
     touch "${installer_phases}/updating_rate_mirrors"
 }
 
@@ -192,6 +196,7 @@ install_aur_and_all_needed_packages(){
 		done
 		EOF
 		chmod +x "${yay_env_installer_script_path}"
+		sleep 1
 	else
 		updating_rate_mirrors
 		aur_command_install_all
@@ -265,8 +270,7 @@ upgrade_now(){
     pacman -Syu --noconfirm
 }
 
-remove_packages()
-{
+remove_packages(){
 	packages="$@"
 	if [ -n "$packages" ];then
 		show_im "Removing ${packages}."
@@ -298,8 +302,7 @@ run_package_manager_autoclean(){
     fi
 }
 
-_unattended_upgrades_()
-{
+_unattended_upgrades_(){
 	:
 }
 
@@ -337,8 +340,7 @@ package_installed(){
 	fi
 }
 
-must_install_apps()
-{
+must_install_apps(){
 	[ -f "${installer_phases}/must_install_apps" ] && return
 	show_m "installing req apps"
 	install_packages "git"
