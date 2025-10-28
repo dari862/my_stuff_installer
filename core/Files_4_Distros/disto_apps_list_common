@@ -50,7 +50,6 @@ install_common_for_x11_scripts="slop wmctrl"
 #install_common_clipman_manager_for_X11="xfce4-clipman"
 install_common_files_manager_thunar="thunar thunar-archive-plugin"
 install_common_files_manager_pcmanfm="pcmanfm"
-install_common_qt5ct="qt5ct"
 install_common_zsh="zsh"
 
 #for x11

@@ -277,7 +277,6 @@ prompt_to_ask_to_what_to_install(){
 	autoclean_and_autoremove="Y"
 	install_zsh_now=""
 	install_extra_now=""
-	install_qt5ct=""
 	install_files_manager=true
 	thunar_files_manager=false
 	pcmanfm_files_manager=false
@@ -415,14 +414,6 @@ prompt_to_ask_to_what_to_install(){
 				fi
 			fi
 		
-			if ! command_exist qt5ct;then
-				if do_you_want_2_run_this_yes_or_no 'Do you want to install qt5ct?' 'Y';then
-					install_qt5ct=qt5ct
-				else
-					install_qt5ct=""
-				fi
-			fi
-			
 			if [ "$install_X11" = "true" ];then
 				if ! command_exist jgmenu;then
 					if do_you_want_2_run_this_yes_or_no 'Do you want to install jgmenu?' 'Y';then
@@ -530,7 +521,6 @@ create_prompt_to_install_value_file(){
 		pcmanfm_files_manager="$pcmanfm_files_manager"
 		install_extra_now="${install_extra_now}"
 		install_polybar="${install_polybar}"
-		install_qt5ct="${install_qt5ct}"
 		install_jgmenu="${install_jgmenu}"
 		install_bspwm=${install_bspwm}
 		install_dwm=${install_dwm}

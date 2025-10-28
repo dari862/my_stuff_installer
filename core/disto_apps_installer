@@ -14,6 +14,7 @@ must_purge_first(){
 
 pre_disto_apps_installer(){
 	. "${prompt_to_install_value_file}"
+	install_for_scripts="$install_for_scripts1 $install_for_scripts2"
 	show_im "Adding needed packages to install list."
 	##################################################################################
 	# main
@@ -83,10 +84,6 @@ pre_disto_apps_installer(){
 		add_packages_2_install_list "${install_files_manager_thunar} ${install_common_files_manager_thunar}"
 	elif [ "$pcmanfm_files_manager" = true ];then
 		add_packages_2_install_list "${install_files_manager_pcmanfm} ${install_common_files_manager_pcmanfm}"
-	fi
-
-	if [ "$install_qt5ct" = "qt5ct" ];then
-		add_packages_2_install_list "${install_qt5ct} ${install_common_qt5ct}"
 	fi
 
 	if [ "$install_zsh_now" = "zsh_default" ] || [ "$install_zsh_now" = "zsh" ];then

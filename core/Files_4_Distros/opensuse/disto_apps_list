@@ -26,7 +26,6 @@ install_firefox_="mozilla-firefox"
 install_for_scripts1="ffmpeg at"
 # python3-pyte for theoops , python3-pyte for pickbg
 install_for_scripts2="python3-pyte python3-tk"
-install_for_scripts="$install_for_scripts1 $install_for_scripts2"
 
 #for x11
 install_X11_apps="x11-utils xorg-x11-server xorg-x11-driver-input dbus-x11 xorg-x11-xinit xdg-user-dirs xclip xwallpaper xdotool xprintidle"
@@ -47,7 +46,6 @@ install_for_x11_scripts=""
 #######################
 install_files_manager_thunar=""
 install_files_manager_pcmanfm=""
-install_qt5ct="qt5-style-kvantum qt5-svg qt5-quickcontrols"
 install_zsh=""
 
 #for x11

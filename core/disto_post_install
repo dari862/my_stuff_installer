@@ -111,7 +111,7 @@ end_of_post_install(){
 	ln -sf ${__distro_path_root}/lib/manpage/* /usr/share/man/man1
 	
 	show_im "installing update-notification"
-	"${__distro_path_root}"/system_files/bin/update-notification -I
+	"${__distro_path_root}"/bin/WM/update-notification -I
 
 	show_im "prepare completed"
 	touch "${installer_phases}/end_of_post_install"

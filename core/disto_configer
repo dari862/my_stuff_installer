@@ -18,28 +18,6 @@ fi
 show_im "moving usr_share"
 mv "${distro_temp_path}" /usr/share/
 
-for f in "${__distro_path_root}"/applications/*;do
-	ln -sf "$f" /usr/share/applications
-done
-
-show_im "Adding themes"
-mkdir -p /usr/share/themes
-for d in "${__distro_path_themes}"/themes/* "${__distro_path_themes}"/openbox_themes/*;do
-	ln -sf "$d" /usr/share/themes
-done
-
-show_im "Adding icons and cursors"
-mkdir -p /usr/share/icons
-for d in "${__distro_path_themes}"/system-icons/* "${__distro_path_themes}"/cursors/* "${__distro_path_themes}"/lightdm-icons;do
-	ln -sf "$d" /usr/share/icons
-done
-
-show_im "Adding fonts"
-mkdir -p /usr/share/fonts
-for e in "${__distro_path_themes}"/fonts/*;do
-	ln -sf "$e" /usr/share/fonts
-done
-
 show_im "create Distro_Specific dir."
 ln -sf "${__distro_path_root}/All_Distro_Specific/${distro_name}" "${__distro_path_root}/Distro_Specific"
 

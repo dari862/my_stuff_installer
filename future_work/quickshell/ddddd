@@ -1,0 +1,23 @@
+#!/bin/sh
+# Full installation script for Hyprland, Quickshell, Caelestia-Dots Shell, and SDDM
+# This sets up Hyprland with SDDM and Wayland session, along with the Caelestia-Dots Shell
+
+set -e
+
+echo "==> Updating system..."
+sudo pacman -Syu --needed --noconfirm git nano featherpad wget fish
+cd /tmp
+
+# --- Check for yay or paru (AUR helper) ---
+if ! command -v yay &>/dev/null; then
+  echo "==> No AUR helper found. Installing yay..."
+  wget https://github.com/Jguer/yay/releases/download/v12.5.2/yay_12.5.2_x86_64.tar.gz
+  tar -xzf yay_12.5.2_x86_64.tar.gz
+  cd yay_12.5.2_x86_64
+  ./yay --noconfirm -Sy yay
+fi
+
+if [ -d "$HOME/.local/share/caelestia" ];then
+    git clone https://github.com/caelestia-dots/caelestia.git "$HOME"/.local/share/caelestia
+    "$HOME"/.local/share/caelestia/install.fish --noconfirm --aur-helper=yay
+fi

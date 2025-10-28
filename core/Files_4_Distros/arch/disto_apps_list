@@ -26,7 +26,6 @@ install_firefox_="firefox"
 install_for_scripts1="bind"
 # python3-pyte for theoops , python3-pyte for pickbg
 install_for_scripts2="python-pyte tk"
-install_for_scripts="$install_for_scripts1 $install_for_scripts2"
 
 #for x11
 install_X11_apps="xorg-xprop xorg-server xorg-xinput dbus xorg-xinit xdg-user-dirs xorg-xdpyinfo xclip xwallpaper xdotool xprintidle"
@@ -45,7 +44,6 @@ install_openbox_="obconf-qt-git xorg-xset"
 #######################
 install_files_manager_thunar="tumbler"
 install_files_manager_pcmanfm=""
-install_qt5ct="kvantum qt5-svg qt5-quickcontrols"
 install_zsh=""
 
 #for x11
