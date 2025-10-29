@@ -1,0 +1,21 @@
+#!/bin/bash
+unalias -a
+. "/usr/share/my_stuff/lib/common/WM"
+run_rofi_test(){
+	panel="${1:-}"
+	cd $HOME/.config/blob/$panel
+	panel_changer $panel
+	sleep 2
+    for t in *;do
+        [ -f "$t" ] && continue
+        style_changer "$panel" $t >/dev/null 2>&1
+        sleep 2
+        echo "style name are : $t"
+        echo "style name are : $t"
+        echo "style name are : $t"
+        sleep 3
+    done
+}
+
+run_rofi_test polybar
+run_rofi_test tint2
