@@ -19,7 +19,12 @@ __distro_path_root="/usr/share/${__distro_name}"
 __distro_path_lib="${__distro_path_root}/lib/common/Distro_path"
 
 all_temp_path="/temp_distro_installer_dir"
-installer_phases="${all_temp_path}/installer_phases"
+
+if [ "$install_mode" != "dev" ];then
+	installer_phases="${all_temp_path}/installer_phases"
+else
+	installer_phases="${tmp_installer_dir}/installer_phases"
+fi
 
 __super_command=""
 

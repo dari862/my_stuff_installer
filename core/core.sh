@@ -90,7 +90,7 @@ show_sm(){
 	printf '%b' "\\033[1;36m[**] \\033[0m${message}\n"
 }
 
-show_filed_2_add_pakage_m(){
+failed_2_add_pakage(){
 	message="${1-}"
 	printf '%b' "\\033[1;36m[**] \\033[0m${message}\n"
 	printf '%s\n' "${message}" >> "$current_user_home/filed_2_add_pakages"

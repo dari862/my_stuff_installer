@@ -132,7 +132,7 @@ updating_rate_mirrors(){
 aur_command_install_all(){
 	if [ -n "${packages_to_install_AUR}" ];then
 		for aurpackage in ${packages_to_install_AUR};do
-			aur_command_single_install "$aurpackage" || show_wm "failed to install from aur: $aurpackage"
+			aur_command_single_install "$aurpackage" || failed_2_add_pakage "failed to install from aur: $aurpackage"
 		done
 	else
 		show_wm_only "packages_to_install_AUR are empty"
@@ -229,6 +229,7 @@ create_package_list(){
 }
 
 install_packages(){
+	check_before_install=false
 	clean_pacman_db_locl_file
 	packages_to_install="${1:-}"
 	if [ -n "$packages_to_install" ];then
@@ -236,9 +237,10 @@ install_packages(){
 			return
 		fi
 	else
+		check_before_install=true
 		packages_to_install="${all_Packages_to_install}"
 	fi
-	List_of_installed_packages_="${List_of_installed_packages_} ${packages_to_install}"
+
 	if [ -n "${packages_to_install}" ];then
     	(pacman --noconfirm -Syu ${packages_to_install} && kill_package_ pacman) || \
 		(pacman --noconfirm -Syu ${packages_to_install} && kill_package_ pacman) || \
@@ -246,6 +248,19 @@ install_packages(){
     else
     	show_wm_only "all_Packages_to_install are empty"
     	return
+    fi
+    
+    if [ "${check_before_install}" = true ];then
+    	failed_2_install=""
+    	create_package_list
+    	for package in ${packages_to_install};do
+    		if ! package_installed "${package}";then
+    			failed_2_install="${failed_2_install} ${package}"
+    		else
+    			List_of_installed_packages_="${List_of_installed_packages_} ${package}"
+    		fi
+    	done
+    	failed_2_add_pakage "${INDEX} does not exist."
     fi
 }
 
@@ -271,10 +286,10 @@ add_packages_2_install_list(){
     	if ! package_installed "${INDEX}";then
         	if grep -q "^${INDEX} " "${list_of_apps_file_path}";then
             	all_Packages_to_install="$all_Packages_to_install $INDEX"
-            	echo "$INDEX added to install list."
+            	show_wm_only "$INDEX added to install list."
         	else
             	packages_to_install_AUR="$packages_to_install_AUR $INDEX"
-            	echo "$INDEX added to install list."
+            	show_wm_only "$INDEX added to install list."
         	fi
         fi
     done
