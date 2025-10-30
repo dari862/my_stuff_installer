@@ -1,7 +1,10 @@
 #!/bin/sh
 set -e
+
 __USER="${1:-$(logname)}"
 __packagemanager_file="${2:-}"
+distro_name="${3:-}"
+
 current_user_home="/home/$__USER"
 all_packages_are=""
 dont_install="wireless|fingerprint|bluetooth|laptop|gpu|must_purge|#install_"
@@ -62,25 +65,26 @@ git_clone_repos(){
 }
 
 add_all_packages_in_repo_to_var(){
-	cd "$current_user_home/Desktop"
-	all_packages_are="$(
-		grep -E 'install_|=' \
-		my_stuff_installer/core/Files_4_Distros/{disto_apps_list_common,disto_Drivers_list_common} \
-		my_stuff_installer/core/Files_4_Distros/$distro_name/{disto_apps_list,disto_Drivers_list} \
-		| grep -vE "${dont_install}" | grep -oP '"\K[^"]+(?=")'
+	
+	all_packages_are="$( cd "$current_user_home"/Desktop/my_stuff_installer/core/Files_4_Distros && \
+		grep 'install_' \
+		disto_apps_list_common disto_Drivers_list_common \
+		"$distro_name"/disto_Drivers_list "$distro_name"/disto_apps_list \
+		| grep '=' | grep -vE "${dont_install}" | grep -oP '"\K[^"]+(?=")'
 	)"
 }
 
 printf ""
-printf "Do you want to install all software in disto_Installapps_list disto_Drivers? [y|n]"
+printf "Do you want to install all software in disto_Installapps_list disto_Drivers? [Y|n]"
 stty -icanon -echo time 0 min 1
 yn="$(head -c1)"
 stty icanon echo
-if printf "%s" "$yn" | tr '[:lower:]' '[:upper:]' | grep -q "Y";then
-	install_packages=true
-else
+if printf "%s" "$yn" | tr '[:lower:]' '[:upper:]' | grep -q "N";then
 	install_packages=false
+else
+	install_packages=true
 fi
+printf ""
 
 . "${__packagemanager_file}"
 aptfixer
