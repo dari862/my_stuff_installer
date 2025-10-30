@@ -22,8 +22,7 @@ install_passman=""
 #firefox
 install_firefox_="firefox"
 
-# bind (dig) for get_public_ip
-install_for_scripts1="bind"
+install_for_scripts1=""
 # python3-pyte for theoops , python3-pyte for pickbg
 install_for_scripts2="python-pyte tk"
 

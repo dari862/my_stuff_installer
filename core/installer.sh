@@ -20,10 +20,12 @@ __distro_path_lib="${__distro_path_root}/lib/common/Distro_path"
 
 all_temp_path="/temp_distro_installer_dir"
 
+tmp_installer_phases=false
 if [ "$install_mode" != "dev" ];then
 	installer_phases="${all_temp_path}/installer_phases"
 else
 	installer_phases="${tmp_installer_dir}/installer_phases"
+	tmp_installer_phases=true
 fi
 
 __super_command=""
@@ -701,7 +703,11 @@ if [ "$install_mode" = "install" ];then
 	fi
 fi
 
-$__super_command mkdir -p "${installer_phases}"
+if [ "$tmp_installer_phases" = true ];then
+	mkdir -p "${installer_phases}"
+else
+	$__super_command mkdir -p "${installer_phases}"
+fi
 
 test_internet_
 
