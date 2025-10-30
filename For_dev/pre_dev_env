@@ -6,6 +6,38 @@ current_user_home="/home/$__USER"
 all_packages_are=""
 dont_install="wireless|fingerprint|bluetooth|laptop|gpu|must_purge|#install_"
 
+show_m(){
+	message="${1-}"
+	printf '%b' "\n==[ \\033[1;32m${message}\\033[0m ]==\n"
+}
+
+show_wm(){
+	message="${1-}"
+	printf '%b' "\\033[1;33m[!] \\033[0m${message}\n"
+	printf '%s\n' "${message}"
+}
+
+show_wm_only(){
+	message="${1-}"
+	printf '%b' "\\033[1;33m[!] \\033[0m${message}\n"
+}
+
+show_em(){
+	message="${1-}"
+	printf '%b' "\\033[1;31m[-] ${message}\\033[0m\n"
+	exit 1
+}
+
+show_im(){
+	message="${1-}"
+	printf '%b' "\\033[1;34m[*] \\033[0m${message}\n"
+}
+
+show_sm(){
+	message="${1-}"
+	printf '%b' "\\033[1;36m[**] \\033[0m${message}\n"
+}
+
 kill_package_(){
 	ps aux | grep "${1}" | awk '{print $2}' | xargs kill -9 >/dev/null 2>&1 || :
 }
@@ -52,19 +84,28 @@ fi
 
 . "${__packagemanager_file}"
 aptfixer
+
+show_m "Running upgrade."
 upgrade_now
+
+show_m "install packages: featherpad git openssh-server shellcheck meld"
 install_packages_for_dev "featherpad git openssh-server shellcheck meld"
-systemctl enable --now ssh || :
+
+show_m "Enable ssh."
+systemctl enable --now ssh || ystemctl enable --now sshd || :
+
+show_m "Clone distro repo."
 git_clone_repos
 
 if [ "${install_packages}" = true ];then
+	show_m "install packages for dev"
 	add_all_packages_in_repo_to_var
 	install_packages_for_dev "${all_packages_are}"
 	if [ -n "$failed_to_install" ];then
-		echo "failed to install : $failed_to_install"
+		show_wm_only "failed to install : $failed_to_install"
 	fi
 fi
 
-echo "Done!!"
-echo "Done!!"
-echo "Done!!"
+show_m "Done!!"
+show_m "Done!!"
+show_m "Done!!"
