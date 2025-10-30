@@ -731,5 +731,5 @@ elif [ "$install_mode" = "dev" ];then
 	if [ ! -f "$__packagemanager_file" ];then
 		download_file "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/Files_4_Distros/${PACKAGER}" "$__packagemanager_file"
 	fi
-	$__super_command "$installation_file_path" "$__USER" "$__packagemanager_file"
+	$__super_command "$installation_file_path" "$__USER" "$__packagemanager_file" "$distro_name"
 fi

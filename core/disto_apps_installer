@@ -14,7 +14,9 @@ must_purge_first(){
 
 pre_disto_apps_installer(){
 	. "${prompt_to_install_value_file}"
-	install_for_scripts="$install_for_scripts1 $install_for_scripts2"
+	install_for_scripts="$install_for_scripts1 $install_for_scripts2"	
+	install_common_for_scripts="$install_common_for_scripts1 $install_common_for_scripts2"
+	
 	show_im "Adding needed packages to install list."
 	##################################################################################
 	# main
