@@ -357,11 +357,14 @@ clone_rep_(){
 	getthis_location="${2-}"
 	if [ ! -f "${installer_phases}/${getthis}" ] || [ ! -d "${getthis_location}" ];then
 		show_im "clone distro files repo ( ${getthis} )."
-		if ! $repo_commnad "https://github.com/dari862/${getthis}.git" "${getthis_location}";then
+		if ! $repo_commnad clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}";then
 			rm -rdf "${getthis_location}"
 			show_em "failed to clone ${getthis}."
 		fi
-		touch "${installer_phases}/${getthis}"	
+		touch "${installer_phases}/${getthis}"
+	elif [ -d "${getthis_location}" ];then
+		$repo_commnad pull "${getthis_location}"
+		touch "${installer_phases}/${getthis}"
 	fi
 }
 

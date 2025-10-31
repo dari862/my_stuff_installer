@@ -685,10 +685,10 @@ fi
 print_m "pick clone repo commnad"
 if command_exist git;then
 	print_m "clone repo commnad: git"
-	repo_commnad="git clone --depth=1"
+	repo_commnad="git"
 elif command_exist svn;then
 	print_m "clone repo commnad: svn"
-	repo_commnad="svn clone --depth=1"
+	repo_commnad="svn"
 fi
 	
 if [ "$install_mode" = "install" ];then
