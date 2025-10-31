@@ -45,6 +45,10 @@ PACKAGEMANAGER='apt-get dnf pacman zypper'
 ####################################################################################
 #	functions
 ####################################################################################
+update_install_repo_if_exist() {
+	(cd "$current_user_home"/Desktop/my_stuff_installer >/dev/null 2>&1 && git pull || :)
+}
+
 command_exist() {
 	if command -v $1 > /dev/null 2>&1;then
 		return
@@ -556,6 +560,8 @@ fi
 ####################################################################################
 #	main
 ####################################################################################
+
+update_install_repo_if_exist
 
 if [ "$__USER" = "root" ];then
 	non_root_users="$(awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd)"
