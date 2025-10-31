@@ -500,7 +500,7 @@ create_prompt_to_install_value_file(){
 		install_drivers="${install_drivers}"
 		install_apps="${install_apps}"
 		PACKAGER="${PACKAGER}"
-		distro_name="${distro_name}"
+		root_distro_name="${root_distro_name}"
 		__custom_distro_name="$__custom_distro_name"
 		all_temp_path="${all_temp_path}"
 		distro_temp_path="$distro_temp_path"
@@ -629,28 +629,28 @@ fi
 
 if [ -f /etc/os-release ];then
 	. /etc/os-release
-	distro_name="$ID"
+	root_distro_name="$ID"
 fi
 
-case ${distro_name} in
+case "${root_distro_name}" in
 	*arch*)
-		distro_name="arch"
+		root_distro_name="arch"
 	;;
 
 	*debian*)
-		distro_name="debian"
+		root_distro_name="debian"
 	;;
 
 	*fedora*)
-		distro_name="fedora"
+		root_distro_name="fedora"
 	;;
 	
 	*opensuse*)
-		distro_name="opensuse"
+		root_distro_name="opensuse"
 	;;
 	
 	*ubuntu*)
-		distro_name="ubuntu"
+		root_distro_name="ubuntu"
 	;;
 	*)
 		print_m "failed to detect your distro" 'RED'
@@ -731,5 +731,5 @@ elif [ "$install_mode" = "dev" ];then
 	if [ ! -f "$__packagemanager_file" ];then
 		download_file "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/Files_4_Distros/${PACKAGER}" "$__packagemanager_file"
 	fi
-	$__super_command "$installation_file_path" "$__USER" "$__packagemanager_file" "$distro_name"
+	$__super_command "$installation_file_path" "$__USER" "$__packagemanager_file" "$root_distro_name"
 fi

@@ -19,6 +19,6 @@ show_im "moving usr_share"
 mv "${distro_temp_path}" /usr/share/
 
 show_im "create Distro_Specific dir."
-ln -sf "${__distro_path_root}/All_Distro_Specific/${distro_name}" "${__distro_path_root}/Distro_Specific"
+ln -sf "${__distro_path_root}/All_Distro_Specific/${root_distro_name}" "${__distro_path_root}/Distro_Specific"
 
 touch "${installer_phases}/disto_configer"

@@ -370,16 +370,16 @@ check_and_download_core_script(){
 	
 	if [ "$install_drivers" = "true" ];then
 		check_and_download_ "Files_4_Distros/disto_Drivers_list_common" 
-		check_and_download_ "Files_4_Distros/${distro_name}/disto_Drivers_list" 
+		check_and_download_ "Files_4_Distros/${root_distro_name}/disto_Drivers_list" 
 		check_and_download_ "disto_Drivers_installer"
-		check_and_download_ "Files_4_Distros/${distro_name}/disto_specific_Drivers_installer"
+		check_and_download_ "Files_4_Distros/${root_distro_name}/disto_specific_Drivers_installer"
 	fi
 	
 	if [ "$install_apps" = "true" ];then
 		check_and_download_ "Files_4_Distros/disto_apps_list_common"
-		check_and_download_ "Files_4_Distros/${distro_name}/disto_apps_list"
+		check_and_download_ "Files_4_Distros/${root_distro_name}/disto_apps_list"
 		check_and_download_ "disto_apps_installer"
-		check_and_download_ "Files_4_Distros/${distro_name}/disto_specific_apps_installer"
+		check_and_download_ "Files_4_Distros/${root_distro_name}/disto_specific_apps_installer"
 	fi
 	
 	if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
@@ -400,7 +400,7 @@ check_and_download_core_script(){
 		fi
 		################################
 	fi
-	check_and_download_ "Files_4_Distros/${distro_name}/disto_specific_extra"
+	check_and_download_ "Files_4_Distros/${root_distro_name}/disto_specific_extra"
 }
 
 source_and_set_machine_type(){
@@ -479,9 +479,9 @@ tweek_as_dependency(){
 	fi
 	grub_updater_function(){   need_to_update_grub=true; }
 	if [ -d "$distro_temp_path" ];then
-		tweek_location="$(find "${distro_temp_path}/bin/my_installer/tweeks_center/" "${distro_temp_path}/All_Distro_Specific/${distro_name}/tweeks_center/" -type f -name "${1:-}" )"
+		tweek_location="$(find "${distro_temp_path}/bin/my_installer/tweeks_center/" "${distro_temp_path}/All_Distro_Specific/${root_distro_name}/tweeks_center/" -type f -name "${1:-}" )"
 	elif [ -d "$__distro_path_root" ];then
-		tweek_location="$(find "${__distro_path_root}/bin/my_installer/tweeks_center/" "${__distro_path_root}/All_Distro_Specific/${distro_name}/tweeks_center/" -type f -name "${1:-}" )"
+		tweek_location="$(find "${__distro_path_root}/bin/my_installer/tweeks_center/" "${__distro_path_root}/All_Distro_Specific/${root_distro_name}/tweeks_center/" -type f -name "${1:-}" )"
 	fi
 	. "${tweek_location}" "${2:-}"
 }
@@ -505,7 +505,7 @@ install_GPU_Drivers_now(){
 	Package_update_(){   upgrade_now; }
 	
 	show_im "Installing GPU Drivers"
-	. "${distro_temp_path}/All_Distro_Specific/${distro_name}/apps_center/Drivers_Pakages/GPU"
+	. "${distro_temp_path}/All_Distro_Specific/${root_distro_name}/apps_center/Drivers_Pakages/GPU"
 	
 	create_GPU_Drivers_ready=true
 	echo "create_GPU_Drivers_ready=$create_GPU_Drivers_ready" >> "${save_value_file}"
