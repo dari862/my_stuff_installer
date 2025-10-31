@@ -51,7 +51,8 @@ push_now() {
 start_ssh_agent
 
 repos_name=$(printf "%s" "$repos" | tr '\n' ' ')
-
+printf "#######################################################"
+printf "\n#######################################################\n"
 printf "Starting push for all Git repositories: %s" "$repos_name"
 printf "\n#######################################################"
 printf "\n#######################################################\n"
