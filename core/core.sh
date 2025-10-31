@@ -363,7 +363,7 @@ clone_rep_(){
 		fi
 		touch "${installer_phases}/${getthis}"
 	elif [ -d "${getthis_location}" ];then
-		$repo_commnad pull "${getthis_location}"
+		(cd "${getthis_location}" && $repo_commnad pull)
 		touch "${installer_phases}/${getthis}"
 	fi
 }
