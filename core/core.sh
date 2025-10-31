@@ -17,7 +17,7 @@ __temp_distro_path_lib="${6:-}"
 
 . "${prompt_to_install_value_file}"
 
-__distro_title="$(echo "$__distro_name" | tr '._-' ' ' | awk '{ for (i=1; i<=NF; i++) { $i = tolower($i); $i = toupper(substr($i,1,1)) substr($i,2) } print }')"
+__distro_title="$(echo "$__custom_distro_name" | tr '._-' ' ' | awk '{ for (i=1; i<=NF; i++) { $i = tolower($i); $i = toupper(substr($i,1,1)) substr($i,2) } print }')"
 
 _SUPERUSER=""
 
@@ -29,13 +29,6 @@ internet_status=""
 
 list_of_apps_file_path="${all_temp_path}/list_of_apps"
 list_of_installed_apps_file_path="${all_temp_path}/list_of_installed_apps"
-
-version_=""
-distro_desc=""
-distro_name_and_ver_=""
-distro_name_and_ver_2=""
-version_codename=""
-VERSION_ID=""
 
 dir_2_find_files_in=""
 
@@ -99,7 +92,7 @@ failed_2_add_pakage(){
 pre_script(){
 	show_m "Loading Script ....."
 	if [ -f "${installer_phases}/Done" ] || [ -f "/tmp/distro_done_installing" ];then
-		show_m "${__distro_name} installed successfully ....."
+		show_m "${__custom_distro_name} installed successfully ....."
 		printf "reboot? (yes/no) [Yy]"
 		stty -icanon -echo time 0 min 1
 		answer="$(head -c1)"
@@ -115,16 +108,6 @@ pre_script(){
 		esac
 
 		__Done
-	fi
-	
-	if [ -f /etc/os-release ];then
-		. /etc/os-release
-		version_="$(echo "${VERSION_ID}" | tr -d '.')"
-		distro_desc="$PRETTY_NAME"
-		distro_name_and_ver_="$ID$version_"
-		distro_name_and_ver_2="${ID}_${version_}"
-		version_codename="${VERSION_CODENAME}"
-		VERSION_ID="$VERSION_ID"
 	fi
 	
 	if [ -d "$current_user_home/Desktop" ];then
@@ -151,7 +134,7 @@ check_and_download_()
 	filename="$(basename "${check_this_file_}")"
 	show_im "running check_and_download_ function on ($check_this_file_)"
 	
-	path_2_file="${__distro_name}_installer/core/${check_this_file_}"
+	path_2_file="${__custom_distro_name}_installer/core/${check_this_file_}"
 	
 	if [ -f "$current_user_home/Desktop/${path_2_file}" ];then
 		mv "$current_user_home/Desktop/${path_2_file}" "${all_temp_path}" || show_em "failed to move ($current_user_home/Desktop/${path_2_file}) to (${all_temp_path})"
@@ -159,11 +142,11 @@ check_and_download_()
 	elif [ -f "${all_temp_path}/${filename}" ];then
 		show_im "${filename} already exist."
 	else
-		show_im "Download $check_this_file_ file from www.github.com/dari862/${__distro_name}_installer ."
-		if download_file "https://raw.githubusercontent.com/dari862/${__distro_name}_installer/main/core/${check_this_file_}" "${all_temp_path}/${filename}" ;then
+		show_im "Download $check_this_file_ file from www.github.com/dari862/${__custom_distro_name}_installer ."
+		if download_file "https://raw.githubusercontent.com/dari862/${__custom_distro_name}_installer/main/core/${check_this_file_}" "${all_temp_path}/${filename}" ;then
 			chmod +x "${all_temp_path}/${filename}"
 		else
-			show_em "Error: Failed to download ${filename} from https://raw.githubusercontent.com/dari862/${__distro_name}_installer/main/core/${check_this_file_}"
+			show_em "Error: Failed to download ${filename} from https://raw.githubusercontent.com/dari862/${__custom_distro_name}_installer/main/core/${check_this_file_}"
 		fi
 	fi
 }
@@ -409,7 +392,7 @@ check_and_download_core_script(){
 		if [ "$__reinstall_distro" = true ] || [ ! -d "$__distro_path_root" ];then
 			show_m "clone distro files repo."
 			if [ ! -d "${distro_temp_path}" ];then
-				clone_rep_ "${__distro_name}" "${distro_temp_path}"
+				clone_rep_ "${__custom_distro_name}" "${distro_temp_path}"
 			fi
 			if [ ! -d "${theme_temp_path}" ];then
 				clone_rep_ "Theme_Stuff" "${theme_temp_path}"
@@ -454,20 +437,6 @@ source_and_set_machine_type(){
 	echo "machine_type_are=$machine_type_are" >> "${save_value_file}"
 	echo "has_bluetooth=$has_bluetooth" >> "${save_value_file}"
 	touch "${installer_phases}/check_machine_type"
-}
-
-create_new_os_release_file(){
-	[ -f "${__distro_path_root}/os-release" ] && return
-	show_m "Running create_new_os_release_file function."
-	tee "${__distro_path_root}/os-release" <<- EOF > /dev/null 2>&1
-	version_="$version_"
-	distro_name="$distro_name"
-	distro_desc="$distro_desc"
-	distro_name_and_ver_="$distro_name_and_ver_"
-	distro_name_and_ver_2="$distro_name_and_ver_2"
-	version_codename="${version_codename}"
-	VERSION_ID="$VERSION_ID"
-	EOF
 }
 
 run_my_alternatives(){
@@ -853,8 +822,6 @@ end_of_post_install
 create_uninstaller_file
 
 switch_default_xsession
-
-create_new_os_release_file
 
 run_my_alternatives
 

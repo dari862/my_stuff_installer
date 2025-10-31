@@ -14,8 +14,8 @@ install_drivers=true
 install_apps=true
 
 current_script_dir="$(realpath $(dirname $0))"
-__distro_name="my_stuff"
-__distro_path_root="/usr/share/${__distro_name}"
+__custom_distro_name="my_stuff"
+__distro_path_root="/usr/share/${__custom_distro_name}"
 __distro_path_lib="${__distro_path_root}/lib/common/Distro_path"
 
 all_temp_path="/temp_distro_installer_dir"
@@ -501,7 +501,7 @@ create_prompt_to_install_value_file(){
 		install_apps="${install_apps}"
 		PACKAGER="${PACKAGER}"
 		distro_name="${distro_name}"
-		__distro_name="$__distro_name"
+		__custom_distro_name="$__custom_distro_name"
 		all_temp_path="${all_temp_path}"
 		distro_temp_path="$distro_temp_path"
 		theme_temp_path="$theme_temp_path"
@@ -589,10 +589,10 @@ else
 	__reinstall_distro=false
 fi
 
-if [ -d "$HOME/Desktop/$__distro_name" ];then
-	distro_temp_path="$HOME/Desktop/$__distro_name"
+if [ -d "$HOME/Desktop/$__custom_distro_name" ];then
+	distro_temp_path="$HOME/Desktop/$__custom_distro_name"
 else
-	distro_temp_path="${all_temp_path}/$__distro_name"
+	distro_temp_path="${all_temp_path}/$__custom_distro_name"
 fi
 
 if [ -d "$__distro_path_root" ];then

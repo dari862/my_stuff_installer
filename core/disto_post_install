@@ -26,17 +26,17 @@ end_of_post_install(){
 	mkdir -p "/usr/share/lightdm/lightdm.conf.d"
 	mkdir -p "/usr/share/lightdm/lightdm-gtk-greeter.conf.d"
 
-	tee /usr/share/lightdm/lightdm.conf.d/"50_${__distro_name}".conf <<- EOF >/dev/null 2>&1
+	tee /usr/share/lightdm/lightdm.conf.d/"50_${__custom_distro_name}".conf <<- EOF >/dev/null 2>&1
 	# Distro specific defaults for lightdm
 	#
 	
 	[Seat:*]
 	# show users
 	greeter-hide-users=false
-	user-session=${__distro_name}${switch_default_xsession_to}
+	user-session=${__custom_distro_name}${switch_default_xsession_to}
 	EOF
 	
-	tee /usr/share/lightdm/lightdm-gtk-greeter.conf.d/"50_${__distro_name}".conf <<- 'EOF' >/dev/null 2>&1
+	tee /usr/share/lightdm/lightdm-gtk-greeter.conf.d/"50_${__custom_distro_name}".conf <<- 'EOF' >/dev/null 2>&1
 	# Distro specific defaults for lightdm-gtk-greeter
 	#
 	# LightDM GTK+ Configuration
@@ -105,7 +105,7 @@ end_of_post_install(){
 	position = 57%,start 22%,start
 	EOF
 	
-	sed -i "s|background = will be changed with sed|background = ${lightdm_background}|g" /usr/share/lightdm/lightdm-gtk-greeter.conf.d/"50_${__distro_name}".conf
+	sed -i "s|background = will be changed with sed|background = ${lightdm_background}|g" /usr/share/lightdm/lightdm-gtk-greeter.conf.d/"50_${__custom_distro_name}".conf
 	
 	show_im "copy manpages."
 	ln -sf ${__distro_path_root}/lib/manpage/* /usr/share/man/man1
