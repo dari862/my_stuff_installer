@@ -52,18 +52,19 @@ start_ssh_agent
 
 repos_name=$(printf "%s" "$repos" | tr '\n' ' ')
 
-printf "Starting push for all Git repositories: $repos_name"
-echo "-------------------------------------------------------"
+printf "Starting push for all Git repositories: %s" "$repos_name"
+printf "\n#######################################################"
+printf "\n#######################################################\n"
 
 for repo in ${repos}; do
     repo_path="$HOME/Desktop/$repo"
     if [ -d "$repo_path" ]; then
         cd "$repo_path" || { echo "Failed to cd into $repo_path"; continue; }
-        echo "  Pushing repository: $repo"
-        echo "-------------------------------------------------------"
+        printf "\n-------------------------------------------------------\n"
+		printf "  Pushing repository: %s" "$repo"
+		printf "\n-------------------------------------------------------\n"
         push_now "$repo"
-        echo " "
-        echo " "
+        printf "\n\n"
     else
         echo "Directory not found: $repo_path"
     fi
