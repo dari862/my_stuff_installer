@@ -14,45 +14,15 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # No color
 
-start_ssh_agent() {
-	eval "$(ssh-agent -s)" >/dev/null 2>&1
-	ssh_key="$(find ~/.ssh/* -name id_* | grep -v ".pub" | head -n1)"
-	ssh-add "${ssh_key}" >/dev/null 2>&1
-}
-
 push_now() {
     repo_name="$1"
     printf "\n-------------------------------------------------------\n"
-	printf "  Pushing repository: %s" "$repo"
+	printf "  Pulling repository: %s" "$repo"
 	printf "\n-------------------------------------------------------\n"
     echo "🔍 Checking repo: $repo_name"
-    git remote set-url origin "git@github.com:dari862/${repo_name}.git"
-    git add -A
-
-    if git diff-index --quiet HEAD --; then
-        echo "${GREEN}✅ No changes to commit for $repo_name${NC}"
-        return
-    else
-        if git commit -m "Update README.md"; then
-            echo "${GREEN}✅ Successfully Committed changes in $repo_name ${NC}"
-        else
-            echo "${RED}❌ Failed to commit changes in $repo_name${NC}"
-            return 1
-        fi
-
-        CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-
-    	if git push origin "$CURRENT_BRANCH"; then
-            echo "${GREEN}✅ Successfully pushed $repo_name ($CURRENT_BRANCH)${NC}"
-        else
-            echo "${RED}❌ Failed to push $repo_name ($CURRENT_BRANCH)${NC}"
-            git push --force
-        fi
-    fi
+    git pull
     printf "\n\n"
 }
-
-start_ssh_agent
 
 repos_name=$(printf "%s" "$repos" | tr '\n' ' ')
 printf "#######################################################"
