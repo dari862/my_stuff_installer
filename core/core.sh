@@ -388,8 +388,6 @@ check_and_download_core_script(){
 	if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
 		check_and_download_ "disto_configer"
 		
-		check_and_download_ "disto_post_install"
-		
 		################################
 		# repo clone
 		if [ "$__reinstall_distro" = true ] || [ ! -d "$__distro_path_root" ];then
@@ -440,13 +438,6 @@ source_and_set_machine_type(){
 	echo "machine_type_are=$machine_type_are" >> "${save_value_file}"
 	echo "has_bluetooth=$has_bluetooth" >> "${save_value_file}"
 	touch "${installer_phases}/check_machine_type"
-}
-
-run_my_alternatives(){
-	[ -f "${installer_phases}/my_alternatives" ] && return
-	show_m "update alternatives apps"
-	${__distro_path_root}/bin/cli/my-alternatives --install
-	touch "${installer_phases}/my_alternatives"
 }
 
 switch_to_doas_now(){
@@ -804,29 +795,18 @@ if [ "${__reinstall_distro}" = false ];then
 	update_grub_image
 fi
 
-show_m "Sourceing disto_post_install."
-source_this_script "disto_post_install" "prepare some script"
-
-show_m "Running pre_post_install function."
-pre_post_install
-
-if [ ! -f "${installer_phases}/create_blob_system_files" ];then
+if [ ! -f "${installer_phases}/system_files_creater" ];then
 	show_m "Running system_files_creater."
 	unset service_manager
 	export PATH="${PATH}:${__distro_path_bin}"
 	"${__distro_path_root}"/distro_manager/system_files_creater
 	
-	touch "${installer_phases}/create_blob_system_files"
+	touch "${installer_phases}/system_files_creater"
 fi
-
-show_m "Running end_of_post_install function."
-end_of_post_install
 
 create_uninstaller_file
 
 switch_default_xsession
-
-run_my_alternatives
 
 switch_to_doas_now
 
