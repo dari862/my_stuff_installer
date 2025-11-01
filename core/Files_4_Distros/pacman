@@ -64,9 +64,7 @@ aur_command_check(){
 
 install_AUR_helper(){
 	[ -f "${installer_phases}/install_AUR_helper" ] && return
-	if [ -f "/var/lib/pacman/db.lck" ];then
-		rm /var/lib/pacman/db.lck
-	fi  
+	clean_pacman_db_locl_file
 	
 	if [ ! -f "$temp_yay_bin" ] && ! command_exist yay;then
 		show_im "installing yay..."
@@ -96,15 +94,15 @@ install_AUR_helper(){
 			fi
 			echo "use_aur=\"$use_aur\"" >> "${save_value_file}"
 			if [  "$use_aur" = true ];then
-				if ! id "${_temp_user}" >/dev/null 2>&1;then
-					create_auruser
-				fi
 				( cd "$temp_yay_dir" && tar -xzf yay_bin.tar.gz && rm -rf yay_bin.tar.gz && mv yay_*/yay "${temp_yay_bin}")
 				[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir"
 			fi
 		fi
 		
 		if [  "$use_aur" = true ];then
+			if ! id "${_temp_user}" >/dev/null 2>&1;then
+				create_auruser
+			fi
 			aur_command_single_install yay
 		fi
 	fi
