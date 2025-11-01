@@ -4,7 +4,6 @@
 ####################################################################################
 install_mode="${1:-install}"
 tmp_installer_dir="/tmp/installer_dir"
-tmp_installer_file="$tmp_installer_dir/installer.sh"
 machine_type_are=""
 
 __USER="$(logname)"
@@ -41,6 +40,8 @@ user_with_superuser_accese=""
 install_hwclock=false
 
 PACKAGEMANAGER='apt-get dnf pacman zypper'
+
+repo_raw_url="https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core"
 
 ####################################################################################
 #	functions
@@ -587,6 +588,14 @@ elif [ "$install_mode" = "apps" ];then
 	install_mode="install"
 fi
 
+if [ "$install_mode" = "install" ];then
+	file_2_download="core.sh"
+elif [ "$install_mode" = "dev" ];then
+	file_2_download="pre_dev_env"
+else
+	print_m "Error: picked incorrect install_mode=$install_mode, you should choose install , dev , drivers , or apps" 'RED'
+fi
+
 if [ -d "$__distro_path_root" ] && [ ! -d "$installer_phases" ];then
 	__reinstall_distro=true
 elif [ -f "${installer_phases}/__distro_path_root_removed" ];then
@@ -613,24 +622,13 @@ else
 	theme_temp_path="${all_temp_path}/Theme_Stuff"
 fi
 
-if [ "$install_mode" = "install" ];then
-	check_installer_file="${current_script_dir}/core.sh"
-	download_url="https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/core.sh"
-	if [ -f "$check_installer_file" ];then
-		installation_file_path="$check_installer_file"
-	else
-		installation_file_path="$tmp_installer_file"
-	fi
-elif [ "$install_mode" = "dev" ];then
-	check_installer_file="${current_script_dir}/../For_dev/pre_dev_env"
-	download_url="https://raw.githubusercontent.com/dari862/my_stuff_installer/main/For_dev/pre_dev_env"
-	if [ -f "$check_installer_file" ];then
-		installation_file_path="$check_installer_file"
-	else
-		installation_file_path="$tmp_installer_file"
-	fi
+tmp_installer_file="$tmp_installer_dir/${file_2_download}"
+check_installer_file="${current_script_dir}/${file_2_download}"
+download_url="$repo_raw_url/${file_2_download}"
+if [ -f "$check_installer_file" ];then
+	installation_file_path="$check_installer_file"
 else
-	print_m "Error: picked incorrect install_mode=$install_mode, you should choose either install or dev" 'RED'
+	installation_file_path="$tmp_installer_file"
 fi
 
 if [ -f /etc/os-release ];then
@@ -735,7 +733,7 @@ if [ "$install_mode" = "install" ];then
 elif [ "$install_mode" = "dev" ];then
 	__packagemanager_file="$tmp_installer_dir/PACKAGEMANAGER"
 	if [ ! -f "$__packagemanager_file" ];then
-		download_file "https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core/Files_4_Distros/${PACKAGER}" "$__packagemanager_file"
+		download_file "$repo_raw_url/Files_4_Distros/${PACKAGER}" "$__packagemanager_file"
 	fi
 	$__super_command "$installation_file_path" "$__USER" "$__packagemanager_file" "$root_distro_name"
 fi

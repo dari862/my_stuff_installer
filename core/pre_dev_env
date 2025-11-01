@@ -59,7 +59,7 @@ git_clone_repos(){
 	done
 	
 	ln -sf my_stuff_installer/For_dev/push_to_git .
-	ln -sf my_stuff_installer/For_dev/dev_scripts .
+	ln -sf my_stuff_installer/For_dev .
 	ln -sf my_stuff_installer/workon .
 	chown ${__USER}:${__USER} push_to_git dev_scripts workon
 }
