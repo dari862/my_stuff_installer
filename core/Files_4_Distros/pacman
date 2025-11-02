@@ -261,7 +261,6 @@ install_packages(){
     			List_of_installed_packages_="${List_of_installed_packages_} ${package}"
     		fi
     	done
-    	failed_2_add_pakage "${INDEX} does not exist."
     fi
 }
 
