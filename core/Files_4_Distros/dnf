@@ -142,8 +142,8 @@ switch_lightdm_now(){
 	fi
 	
 	if [ "$lightdm_does_not_exist" = true  ];then
-		systemctl disable $d_d_m
-		systemctl enable lightdm
+		service_manager disable "$d_d_m" || :
+		service_manager enable-only lightdm || :
 	else
 		show_im "lightdm already exist."
 	fi

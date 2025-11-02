@@ -356,7 +356,8 @@ switch_lightdm_now(){
     
     if [ "$lightdm_does_not_exist" = true ]; then
         echo "/usr/sbin/lightdm" | tee /etc/X11/default-display-manager > /dev/null 2>&1
-        systemctl enable lightdm
+        service_manager disable "$d_d_m" || :
+        service_manager enable-only lightdm || :
     else
         show_sm "LightDM already exists."
     fi
