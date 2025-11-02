@@ -253,9 +253,7 @@ update_grub_image(){
 source_this_script(){
 	file_to_source_and_check="${1-}"
 	message_to_show="${2-}"
-	run_check="${3-}"
 	[ ! -f "${all_temp_path}"/"${file_to_source_and_check}" ] && show_em "can not source this file ( ${all_temp_path}/${file_to_source_and_check} ). does not exist."
-	[ "$run_check" = "run_check" ] && [ -f "${installer_phases}/${file_to_source_and_check}" ] && return
 	show_im "${message_to_show}"
 	. "${all_temp_path}"/"${file_to_source_and_check}"
 }
@@ -385,6 +383,10 @@ check_and_download_core_script(){
 		check_and_download_ "Files_4_Distros/${root_distro_name}/disto_specific_apps_installer"
 	fi
 	
+	check_and_download_ "Files_4_Distros/${root_distro_name}/disto_specific_extra"
+}
+
+clone_all_distro_repo(){
 	if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
 		check_and_download_ "disto_configer"
 		
@@ -401,7 +403,6 @@ check_and_download_core_script(){
 		fi
 		################################
 	fi
-	check_and_download_ "Files_4_Distros/${root_distro_name}/disto_specific_extra"
 }
 
 source_and_set_machine_type(){
@@ -661,6 +662,8 @@ must_install_apps
  
 check_and_download_core_script
 
+clone_all_distro_repo
+
 . "${__temp_distro_path_lib}"
 
 source_and_set_machine_type
@@ -719,20 +722,18 @@ if [ ! -f "${installer_phases}/create_List_of_apt_2_install_" ];then
 	install_lightdm_now
 	
 	if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
-		echo "Packages_2_install=\"$Packages_2_install\"" >> "${save_value_file}"
+		echo "all_Packages_to_install=\"$all_Packages_to_install\"" >> "${save_value_file}"
 	fi
 	touch "${installer_phases}/create_List_of_apt_2_install_"
 fi
 
-if [ ! -f "${installer_phases}/install_List_of_apt_2_install_" ];then
-	if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
-		show_m "Install list of apps."
-		install_packages || show_em "failed to run install_packages"
-		touch "${installer_phases}/install_List_of_apt_2_install_"
-	fi
+if [ ! -f "${installer_phases}/install_the_list_of_packages_" ] && ([ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ]);then
+	show_m "Install list of apps."
+	install_packages || show_em "failed to run install_packages"
+	touch "${installer_phases}/install_the_list_of_packages_"
 fi
 
-install_aur_and_all_needed_packages
+install_aur_and_all_needed_packages || show_em "failed to run install_aur_and_all_needed_packages"
 
 install_GPU_Drivers_now
 
@@ -770,8 +771,10 @@ fi
 
 ##################################################################################
 
-show_m "Sourceing disto_configer."
-source_this_script "disto_configer" "Configering $__distro_title." "run_check"
+if [ ! -L "${__distro_path_root}/Distro_Specific" ] || [ "${__reinstall_distro}" = true ];then
+	show_m "Sourceing disto_configer."
+	source_this_script "disto_configer" "Configering $__distro_title."
+fi
 
 . "${__distro_path_root}/lib/common/common"
 

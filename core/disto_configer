@@ -1,6 +1,10 @@
 #!/bin/sh
-################################################################################################################################
-[ -f "${installer_phases}/disto_configer" ] && return
+if [ -d "${__distro_path_root}" ] && [ "${__reinstall_distro}" = false ];then
+	show_im "create Distro_Specific dir."
+	ln -sf "${__distro_path_root}/All_Distro_Specific/${root_distro_name}" "${__distro_path_root}/Distro_Specific" || show_em "failed to create Distro_Specific dir."
+	return
+fi
+
 show_im "moving Theme_Stuff to ${__custom_distro_name}"
 mv "${theme_temp_path}" "${distro_temp_path}"
 
@@ -21,4 +25,4 @@ mv "${distro_temp_path}" /usr/share/
 show_im "create Distro_Specific dir."
 ln -sf "${__distro_path_root}/All_Distro_Specific/${root_distro_name}" "${__distro_path_root}/Distro_Specific"
 
-touch "${installer_phases}/disto_configer"
+sed -i "s/__reinstall_distro=.*/__reinstall_distro=false/g" "${prompt_to_install_value_file}"
