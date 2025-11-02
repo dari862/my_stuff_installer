@@ -10,7 +10,7 @@ packages_to_install=""
 _temp_user="aurtempuser"
 yay_ver="12.5.0"
 _temp_user="aurtempuser"
-temp_yay_bin="/home/$_temp_user/temp_yay"
+temp_yay_bin="/tmp/temp_yay"
 temp_yay_command="${temp_yay_bin} --noconfirm -Sy"
 packages_to_install_AUR=""
 use_aur=true
@@ -69,7 +69,7 @@ install_AUR_helper(){
 	if [ ! -f "$temp_yay_bin" ] && ! command_exist yay;then
 		show_im "installing yay..."
 		if [ ! -f "$temp_yay_bin" ];then
-			temp_yay_dir="/tmp/yay-bin"
+			temp_yay_dir="/tmp/yay-bin-temp-dir"
 			[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir" || :
 			mkdir -p "$temp_yay_dir"
 			if [ -z "$yay_ver" ];then
@@ -94,7 +94,10 @@ install_AUR_helper(){
 			fi
 			echo "use_aur=\"$use_aur\"" >> "${save_value_file}"
 			if [  "$use_aur" = true ];then
-				( cd "$temp_yay_dir" && tar -xzf yay_bin.tar.gz && rm -rf yay_bin.tar.gz && mv yay_*/yay "${temp_yay_bin}")
+				if [ -f "${temp_yay_bin}" ];then
+					rm "${temp_yay_bin}"
+				fi
+				( cd "$temp_yay_dir" && tar -xzf yay_bin.tar.gz && rm -rf yay_bin.tar.gz && mv yay_*/yay "${temp_yay_bin}" && chmod +x "${temp_yay_bin}")
 				[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir"
 			fi
 		fi
