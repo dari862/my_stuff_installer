@@ -45,12 +45,11 @@ install_packages(){
     	create_package_list
     	for package in ${packages_to_install};do
     		if ! package_installed "${package}";then
-    			failed_2_install="${failed_2_install} ${package}"
+    			failed_2_add_pakage "${package} does not exist."
     		else
     			List_of_installed_packages_="${List_of_installed_packages_} ${package}"
     		fi
     	done
-    	failed_2_add_pakage "${INDEX} does not exist."
     fi
 }
 
