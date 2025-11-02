@@ -199,7 +199,8 @@ install_aur_and_all_needed_packages(){
 		chmod +x "${yay_env_installer_script_path}"
 		sleep 1
 	else
-		updating_rate_mirrors
+		updating_rate_mirrors || show_wm "failed to run rate-mirrors"
+		echo "packages_to_install_AUR=\"$packages_to_install_AUR\"" >> "${save_value_file}"
 		aur_command_install_all
 		if id "${_temp_user}" >/dev/null 2>&1;then
 			delete_auruser
@@ -230,19 +231,18 @@ create_package_list(){
 }
 
 install_packages(){
-	check_before_install=false
-	clean_pacman_db_locl_file
-	packages_to_install="${1:-}"
+	packages_from_arg_to_install="${1:-}"
+	packages_to_install="${packages_from_arg_to_install}"
 	if [ -n "$packages_to_install" ];then
 		if package_installed "${packages_to_install}";then
 			return
 		fi
 	else
-		check_before_install=true
 		packages_to_install="${all_Packages_to_install}"
 	fi
-
+	
 	if [ -n "${packages_to_install}" ];then
+		clean_pacman_db_locl_file
     	(pacman --noconfirm -Syu ${packages_to_install} && kill_package_ pacman) || \
 		(pacman --noconfirm -Syu ${packages_to_install} && kill_package_ pacman) || \
 		pacman --noconfirm -Syu ${packages_to_install}
@@ -251,9 +251,10 @@ install_packages(){
     	return
     fi
     
-    if [ "${check_before_install}" = true ];then
+    create_package_list
+    
+    if [ -z "${packages_from_arg_to_install}" ];then
     	failed_2_install=""
-    	create_package_list
     	for package in ${packages_to_install};do
     		if ! package_installed "${package}";then
     			failed_2_add_pakage "${package} does not exist."

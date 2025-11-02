@@ -20,17 +20,16 @@ create_package_list(){
 }
 
 install_packages(){
-	check_before_install=false
-	packages_to_install="${1:-}"
+	packages_from_arg_to_install="${1:-}"
+	packages_to_install="${packages_from_arg_to_install}"
 	if [ -n "$packages_to_install" ];then
 		if package_installed "${packages_to_install}";then
 			return
 		fi
 	else
-		check_before_install=true
 		packages_to_install="${all_Packages_to_install}"
 	fi
-
+	
 	if [ -n "${packages_to_install}" ];then
     	(zypper install -y ${packages_to_install} && kill_package_ zypper) || \
 		(zypper install -y ${packages_to_install} && kill_package_ zypper) || \
@@ -40,9 +39,10 @@ install_packages(){
     	return
     fi
     
-    if [ "${check_before_install}" = true ];then
+    create_package_list
+    
+    if [ -z "${packages_from_arg_to_install}" ];then
     	failed_2_install=""
-    	create_package_list
     	for package in ${packages_to_install};do
     		if ! package_installed "${package}";then
     			failed_2_add_pakage "${package} does not exist."
