@@ -33,7 +33,7 @@ install_packages(){
 	if [ -n "${packages_to_install}" ];then
     	(zypper install -y ${packages_to_install} && kill_package_ zypper) || \
 		(zypper install -y ${packages_to_install} && kill_package_ zypper) || \
-		zypper install -y ${packages_to_install}
+		zypper install -y ${packages_to_install} || return 1
     else
     	show_wm_only "all_Packages_to_install are empty"
     	return

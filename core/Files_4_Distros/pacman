@@ -245,7 +245,7 @@ install_packages(){
 		clean_pacman_db_locl_file
     	(pacman --noconfirm -Syu ${packages_to_install} && kill_package_ pacman) || \
 		(pacman --noconfirm -Syu ${packages_to_install} && kill_package_ pacman) || \
-		pacman --noconfirm -Syu ${packages_to_install}
+		pacman --noconfirm -Syu ${packages_to_install} || return 1
     else
     	show_wm_only "all_Packages_to_install are empty"
     	return

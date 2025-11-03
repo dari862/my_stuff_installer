@@ -67,7 +67,7 @@ install_packages(){
 	if [ -n "${packages_to_install}" ];then
     	(apt install -yq ${packages_to_install} && kill_package_ apt) || \
 		(apt install -yq ${packages_to_install} && kill_package_ apt) || \
-		apt install -yq ${packages_to_install}
+		apt install -yq ${packages_to_install} || return 1
     else
     	show_wm_only "all_Packages_to_install are empty"
     	return
