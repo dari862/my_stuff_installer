@@ -257,7 +257,6 @@ pre_package_manager_(){
 	elif command_exist apt-fast;then
 		PACKAGER="apt-fast"
 	fi
-	upgrade_now
 	touch "${installer_phases}/pre_package_manager_"
 }
 

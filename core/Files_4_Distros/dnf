@@ -177,7 +177,6 @@ kill_package_manager(){
 pre_package_manager_(){
 	[ -f "${installer_phases}/pre_package_manager_" ] && return
 	kill_package_manager
-	upgrade_now
 	#enable_rpmfusion_repo
 	touch "${installer_phases}/pre_package_manager_"
 }
