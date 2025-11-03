@@ -31,8 +31,8 @@ install_packages(){
 	fi
 	
 	if [ -n "${packages_to_install}" ];then
-    	(zypper install -y ${packages_to_install} && kill_package_ zypper) || \
-		(zypper install -y ${packages_to_install} && kill_package_ zypper) || \
+    	(zypper install -y ${packages_to_install} && kill_package_manager) || \
+		(zypper install -y ${packages_to_install} && kill_package_manager) || \
 		zypper install -y ${packages_to_install} || return 1
     else
     	show_wm_only "all_Packages_to_install are empty"
@@ -63,8 +63,8 @@ install_packages_for_dev(){
 			failed_to_install="$failed_to_install $package"
 		fi
 	done
-	(zypper install -y ${all_packages_to_install} && kill_package_ zypper) || \
-	(zypper install -y ${all_packages_to_install} && kill_package_ zypper) || \
+	(zypper install -y ${all_packages_to_install} && kill_package_manager) || \
+	(zypper install -y ${all_packages_to_install} && kill_package_manager) || \
 	zypper install -y ${all_packages_to_install}
 }
 
@@ -179,9 +179,13 @@ must_install_apps()
 	touch "${installer_phases}/must_install_apps"
 }
 
+kill_package_manager(){
+	kill_package_ zypper
+}
+
 pre_package_manager_(){
 	[ -f "${installer_phases}/pre_package_manager_" ] && return
-	kill_package_ zypper
+	kill_package_manager
 	upgrade_now
 	touch "${installer_phases}/pre_package_manager_"
 }

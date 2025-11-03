@@ -294,7 +294,10 @@ set_package_manager(){
 			show_em "Error: Failed to source PACKAGE_MANAGER from ${all_temp_path}"
 		fi
 		
-		create_package_list
+		show_im "running pre_package_manager_"
+		pre_package_manager_
+		
+		create_package_list		
 		
 		if package_installed systemd ;then
 			init_system_are="systemd"
@@ -311,8 +314,6 @@ set_package_manager(){
 			show_em "Error: Failed to source disto_init_manager from ${all_temp_path}"
 		fi
 		
-		show_im "running pre_package_manager_"
-		pre_package_manager_
 		touch "${installer_phases}/set_package_manager"
 	else
 		if ! . "${all_temp_path}/PACKAGE_MANAGER";then

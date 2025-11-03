@@ -65,8 +65,8 @@ install_packages(){
 	fi
 	
 	if [ -n "${packages_to_install}" ];then
-    	(apt install -yq ${packages_to_install} && kill_package_ apt) || \
-		(apt install -yq ${packages_to_install} && kill_package_ apt) || \
+    	(apt install -yq ${packages_to_install} && kill_package_manager) || \
+		(apt install -yq ${packages_to_install} && kill_package_manager) || \
 		apt install -yq ${packages_to_install} || return 1
     else
     	show_wm_only "all_Packages_to_install are empty"
@@ -97,8 +97,8 @@ install_packages_for_dev(){
 			failed_to_install="$failed_to_install $package"
 		fi
 	done
-	(apt install -yq ${all_packages_to_install} && kill_package_ apt) || \
-	(apt install -yq ${all_packages_to_install} && kill_package_ apt) || \
+	(apt install -yq ${all_packages_to_install} && kill_package_manager) || \
+	(apt install -yq ${all_packages_to_install} && kill_package_manager) || \
 	apt install -yq ${all_packages_to_install}
 }
 
@@ -237,13 +237,17 @@ must_install_apps()
 	touch "${installer_phases}/must_install_apps"
 }
 
+kill_package_manager(){
+	kill_package_ apt
+	kill_package_ apt-get
+}
+
 pre_package_manager_(){
 	[ -f "${installer_phases}/pre_package_manager_" ] && return
 	export DEBIAN_FRONTEND=noninteractive
 	export DEBCONF_NONINTERACTIVE_SEEN=true
 	
-	kill_package_ apt-get
-	kill_package_ apt
+	kill_package_manager
 	service_manager stop apt-daily.timer || show_wm_only "failed to stop apt-daily.timer"
 	service_manager stop apt-daily-upgrade.timer || show_wm_only "failed to stop apt-daily-upgrade.timer "
 	aptfixer

@@ -243,8 +243,8 @@ install_packages(){
 	
 	if [ -n "${packages_to_install}" ];then
 		clean_pacman_db_locl_file
-    	(pacman --noconfirm -Syu ${packages_to_install} && kill_package_ pacman) || \
-		(pacman --noconfirm -Syu ${packages_to_install} && kill_package_ pacman) || \
+    	(pacman --noconfirm -Syu ${packages_to_install} && kill_package_manager) || \
+		(pacman --noconfirm -Syu ${packages_to_install} && kill_package_manager) || \
 		pacman --noconfirm -Syu ${packages_to_install} || return 1
     else
     	show_wm_only "all_Packages_to_install are empty"
@@ -276,8 +276,8 @@ install_packages_for_dev(){
 			failed_to_install="$failed_to_install $package"
 		fi
 	done
-	(pacman --noconfirm -Syu ${all_packages_to_install} && kill_package_ pacman) || \
-	(pacman --noconfirm -Syu ${all_packages_to_install} && kill_package_ pacman) || \
+	(pacman --noconfirm -Syu ${all_packages_to_install} && kill_package_manager) || \
+	(pacman --noconfirm -Syu ${all_packages_to_install} && kill_package_manager) || \
 	pacman --noconfirm -Syu ${all_packages_to_install}
 }
 
@@ -290,7 +290,7 @@ add_packages_2_install_list(){
             	show_wm_only "$INDEX added to install list."
         	else
             	packages_to_install_AUR="$packages_to_install_AUR $INDEX"
-            	show_wm_only "$INDEX added to install list."
+            	show_wm_only "$INDEX added to aur install list."
         	fi
         fi
     done
@@ -380,9 +380,15 @@ must_install_apps(){
 	touch "${installer_phases}/must_install_apps"
 }
 
+kill_package_manager(){
+	clean_pacman_db_locl_file
+	kill_package_ pacman
+}
+
 pre_package_manager_(){
 	[ -f "${installer_phases}/pre_package_manager_" ] && return
-    
+	kill_package_manager
+    upgrade_now
     touch "${installer_phases}/pre_package_manager_"
 }
 
