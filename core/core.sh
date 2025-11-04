@@ -357,10 +357,11 @@ clone_rep_(){
 	getthis="${1-}"
 	getthis_location="${2-}"
 	if [ -d "${getthis_location}" ];then
+		show_im "Update distro files repo ( ${getthis} )."
 		su - "$__USER" -c "(cd "${getthis_location}" && $repo_commnad pull)"
 		touch "${installer_phases}/${getthis}"
 	else
-		show_im "clone distro files repo ( ${getthis} )."
+		show_im "Clone distro files repo ( ${getthis} )."
 		if ! $repo_commnad clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}";then
 			rm -rdf "${getthis_location}"
 			show_em "failed to clone ${getthis}."

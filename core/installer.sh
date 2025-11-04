@@ -582,7 +582,6 @@ fi
 #	main
 ####################################################################################
 
-print_m "pick clone repo commnad"
 if command_exist git;then
 	print_m "clone repo commnad: git"
 	repo_commnad="git"
