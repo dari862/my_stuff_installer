@@ -356,15 +356,15 @@ create_uninstaller_file(){
 clone_rep_(){
 	getthis="${1-}"
 	getthis_location="${2-}"
-	if [ ! -f "${installer_phases}/${getthis}" ] || [ ! -d "${getthis_location}" ];then
+	if [ -d "${getthis_location}" ];then
+		(cd "${getthis_location}" && $repo_commnad pull)
+		touch "${installer_phases}/${getthis}"
+	else
 		show_im "clone distro files repo ( ${getthis} )."
 		if ! $repo_commnad clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}";then
 			rm -rdf "${getthis_location}"
 			show_em "failed to clone ${getthis}."
 		fi
-		touch "${installer_phases}/${getthis}"
-	elif [ -d "${getthis_location}" ];then
-		(cd "${getthis_location}" && $repo_commnad pull)
 		touch "${installer_phases}/${getthis}"
 	fi
 }
@@ -397,12 +397,8 @@ clone_all_distro_repo(){
 		# repo clone
 		if [ "$__reinstall_distro" = true ] || [ ! -d "$__distro_path_root" ];then
 			show_m "clone distro files repo."
-			if [ ! -d "${distro_temp_path}" ];then
-				clone_rep_ "${__custom_distro_name}" "${distro_temp_path}"
-			fi
-			if [ ! -d "${theme_temp_path}" ];then
-				clone_rep_ "Theme_Stuff" "${theme_temp_path}"
-			fi
+			clone_rep_ "${__custom_distro_name}" "${distro_temp_path}"
+			clone_rep_ "Theme_Stuff" "${theme_temp_path}"
 		fi
 		################################
 	fi
