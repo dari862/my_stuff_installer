@@ -594,8 +594,6 @@ else
 	repo_commnad="git"
 fi
 
-update_install_repo_if_exist
-
 if [ "$__USER" = "root" ];then
 	non_root_users="$(awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' /etc/passwd)"
 	for u in ${non_root_users};do
@@ -711,6 +709,8 @@ if [ "$install_mode" = "install" ];then
 		create_prompt_to_install_value_file
 	fi
 fi
+
+update_install_repo_if_exist
 
 if [ "$tmp_installer_phases" = true ];then
 	mkdir -p "${installer_phases}"
