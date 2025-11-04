@@ -26,3 +26,6 @@ show_im "create Distro_Specific dir."
 ln -sf "${__distro_path_root}/All_Distro_Specific/${root_distro_name}" "${__distro_path_root}/Distro_Specific"
 
 sed -i "s/__reinstall_distro=.*/__reinstall_distro=false/g" "${prompt_to_install_value_file}"
+
+git config --system --add safe.directory "${__distro_path_root}"
+git config --system --add safe.directory "${__distro_path_themes}"

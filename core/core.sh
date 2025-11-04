@@ -368,7 +368,6 @@ clone_rep_(){
 		fi
 		touch "${installer_phases}/${getthis}"
 	fi
-	git config --system --add safe.directory "${getthis_location}"
 }
 
 check_and_download_core_script(){
