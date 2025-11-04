@@ -14,6 +14,8 @@ install_apps=true
 
 current_script_dir="$(realpath $(dirname $0))"
 __custom_distro_name="my_stuff"
+__installer_script_repo_name="my_stuff_installer"
+__Theme_repo_name="Theme_Stuff"
 __distro_path_root="/usr/share/${__custom_distro_name}"
 __distro_path_lib="${__distro_path_root}/lib/common/Distro_path"
 
@@ -41,13 +43,31 @@ install_hwclock=false
 
 PACKAGEMANAGER='apt-get dnf pacman zypper'
 
-repo_raw_url="https://raw.githubusercontent.com/dari862/my_stuff_installer/main/core"
+repo_raw_url="https://raw.githubusercontent.com/dari862/${__installer_script_repo_name}/main/core"
+
+if [ -d "$current_user_home/Desktop/$__custom_distro_name" ];then
+	distro_temp_path="$current_user_home/Desktop/$__custom_distro_name"
+else
+	distro_temp_path="${all_temp_path}/$__custom_distro_name"
+fi
+
+if [ -d "$current_user_home/Desktop/Theme_Stuff" ];then
+	theme_temp_path="$current_user_home/Desktop/$__Theme_repo_name"
+else
+	theme_temp_path="${all_temp_path}/$__Theme_repo_name"
+fi
+
+if [ -d "$__distro_path_root" ];then
+	__temp_distro_path_lib="${__distro_path_lib}"
+else
+	__temp_distro_path_lib="${distro_temp_path}/lib/common/Distro_path"
+fi
 
 ####################################################################################
 #	functions
 ####################################################################################
 update_install_repo_if_exist() {
-	(cd "$current_user_home"/Desktop/my_stuff_installer >/dev/null 2>&1 && git pull || :)
+	(cd "$current_user_home/Desktop/${__installer_script_repo_name}" >/dev/null 2>&1 && "${repo_commnad}" pull || :)
 }
 
 command_exist() {
@@ -562,6 +582,18 @@ fi
 #	main
 ####################################################################################
 
+print_m "pick clone repo commnad"
+if command_exist git;then
+	print_m "clone repo commnad: git"
+	repo_commnad="git"
+elif command_exist svn;then
+	print_m "clone repo commnad: svn"
+	repo_commnad="svn"
+else
+	print_m "clone repo commnad: git"
+	repo_commnad="git"
+fi
+
 update_install_repo_if_exist
 
 if [ "$__USER" = "root" ];then
@@ -602,24 +634,6 @@ elif [ -f "${installer_phases}/__distro_path_root_removed" ];then
 	__reinstall_distro=true
 else
 	__reinstall_distro=false
-fi
-
-if [ -d "$HOME/Desktop/$__custom_distro_name" ];then
-	distro_temp_path="$HOME/Desktop/$__custom_distro_name"
-else
-	distro_temp_path="${all_temp_path}/$__custom_distro_name"
-fi
-
-if [ -d "$__distro_path_root" ];then
-	__temp_distro_path_lib="${__distro_path_lib}"
-else
-	__temp_distro_path_lib="${distro_temp_path}/lib/common/Distro_path"
-fi
-
-if [ -d "$HOME/Desktop/Theme_Stuff" ];then
-	theme_temp_path="$HOME/Desktop/Theme_Stuff"
-else
-	theme_temp_path="${all_temp_path}/Theme_Stuff"
 fi
 
 tmp_installer_file="$tmp_installer_dir/${file_2_download}"
@@ -684,18 +698,6 @@ if command_exist sudo;then
 	__super_command="sudo"
 else
 	sudo_installed=false
-fi
-
-print_m "pick clone repo commnad"
-if command_exist git;then
-	print_m "clone repo commnad: git"
-	repo_commnad="git"
-elif command_exist svn;then
-	print_m "clone repo commnad: svn"
-	repo_commnad="svn"
-else
-	print_m "clone repo commnad: git"
-	repo_commnad="git"
 fi
 	
 if [ "$install_mode" = "install" ];then

@@ -357,7 +357,7 @@ clone_rep_(){
 	getthis="${1-}"
 	getthis_location="${2-}"
 	if [ -d "${getthis_location}" ];then
-		(cd "${getthis_location}" && $repo_commnad pull)
+		su - "$__USER" -c "(cd "${getthis_location}" && $repo_commnad pull)"
 		touch "${installer_phases}/${getthis}"
 	else
 		show_im "clone distro files repo ( ${getthis} )."
