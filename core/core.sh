@@ -295,7 +295,8 @@ set_package_manager(){
 		fi
 		
 		upgrade_now
-		create_package_list		
+		
+		create_packages_installed_list
 		
 		if package_installed systemd ;then
 			init_system_are="systemd"

@@ -6,17 +6,14 @@ network_manager_app_from_Files_4_Distros="NetworkManager-1"
 ##################################
 __remove_package="zypper remove -y"
 
-create_package_list(){
-	# create list_of_apps file
-	if [ ! -f "${list_of_apps_file_path}" ];then
-		show_im "Creating package list..."
-		zypper se 2>/dev/null | awk -F'|' '{print $2}' | sed 's/^ //g' > "${list_of_apps_file_path}" 
-	fi
-	
-	if [ ! -f "${list_of_installed_apps_file_path}" ];then
-		show_im "Creating installed package list..."
-		rpm -qa 2>/dev/null > "${list_of_installed_apps_file_path}" 
-	fi
+create_packages_list_for_repo(){
+	show_im "Creating package list..."
+	zypper se 2>/dev/null | awk -F'|' '{print $2}' | sed 's/^ //g' > "${list_of_apps_file_path}"
+}
+
+create_packages_installed_list(){
+	show_im "Creating installed package list..."
+	rpm -qa 2>/dev/null > "${list_of_installed_apps_file_path}"
 }
 
 install_packages(){
@@ -39,7 +36,7 @@ install_packages(){
     	return
     fi
     
-    create_package_list
+    create_packages_installed_list
     
     if [ -z "${packages_from_arg_to_install}" ];then
     	failed_2_install=""
@@ -185,6 +182,7 @@ kill_package_manager(){
 
 pre_package_manager_(){
 	[ -f "${installer_phases}/pre_package_manager_" ] && return
+	create_packages_list_for_repo
 	kill_package_manager
 	touch "${installer_phases}/pre_package_manager_"
 }
