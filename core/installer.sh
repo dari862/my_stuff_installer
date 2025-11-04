@@ -702,6 +702,9 @@ if [ "$install_mode" = "install" ];then
 		print_m "file exist : ${prompt_to_install_value_file} form previce run."
 		if do_you_want_2_run_this_yes_or_no 'Do you want source it?' 'Y';then
 			source_prompt_to_install_file=true
+		else
+			prompt_to_ask_to_what_to_install
+			create_prompt_to_install_value_file
 		fi
 	else
 		prompt_to_ask_to_what_to_install
