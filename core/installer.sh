@@ -693,6 +693,9 @@ if command_exist git;then
 elif command_exist svn;then
 	print_m "clone repo commnad: svn"
 	repo_commnad="svn"
+else
+	print_m "clone repo commnad: git"
+	repo_commnad="git"
 fi
 	
 if [ "$install_mode" = "install" ];then
