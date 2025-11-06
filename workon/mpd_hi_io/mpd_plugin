@@ -1,3 +1,10 @@
+needed in new build
+==============
+libaudiofile-dev
+
+==============
+how to build
+==============
 cd /tmp
 wget https://www.musicpd.org/download/mpd/0.24/mpd-0.24.6.tar.xz
 tar xf mpd-0.24.6.tar.xz
@@ -65,13 +72,7 @@ ln -s /usr/lib/x86_64-linux-gnu/pkgconfig/libsystemd.pc /usr/lib/x86_64-linux-gn
 meson setup . output/release --buildtype=debugoptimized -Db_ndebug=true
 ninja -C output/release
 
-case hi io
-===========
-liburing-dev
-
-
-
-
-needed in new build
 ==============
-libaudiofile-dev
+case hi io
+==============
+liburing-dev
