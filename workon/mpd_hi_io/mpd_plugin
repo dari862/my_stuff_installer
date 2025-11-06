@@ -68,3 +68,10 @@ ninja -C output/release
 case hi io
 ===========
 liburing-dev
+
+
+
+
+needed in new build
+==============
+libaudiofile-dev
