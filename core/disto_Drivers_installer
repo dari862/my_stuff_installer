@@ -5,11 +5,7 @@ pre_disto_Drivers_installer(){
 	
 	add_packages_2_install_list "${install_exfat} ${install_common_exfat}"
 	
-	if ls /sys/class/backlight | head -n 1 | grep -q "intel_";then
-		new_install_drivers_if_laptop="${install_drivers_if_laptop} ${install_drivers_if_laptop_xbacklight} ${install_common_drivers_if_laptop} ${install_common_drivers_if_laptop_xbacklight}"
-	else
-		new_install_drivers_if_laptop="${install_drivers_if_laptop} ${install_drivers_if_laptop_light} ${install_common_drivers_if_laptop} ${install_common_drivers_if_laptop_light}"
-	fi
+	new_install_drivers_if_laptop="${install_drivers_if_laptop} ${install_common_drivers_if_laptop}"
 
 	##################################################################################
 	# main
