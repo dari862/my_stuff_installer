@@ -1,8 +1,8 @@
 #!/bin/sh
-sh_scripts="$(grep -r "#\!/" -I ~/Desktop/my_stuff | awk -F: '{print $1}')"
+sh_scripts="$(grep -rm1 "#\!/" -I ~/Desktop/my_stuff | grep -v "/.git/" | awk -F: '{print $1}')"
 script_2_fix=""
 for script in ${sh_scripts};do
-	if shellcheck -i SC2086 $script | grep "\[" >/dev/null 2>&1;then
+	if shellcheck -i SC2086 $script | grep -q "\[";then
 		script_2_fix="$script\n$script_2_fix"
 	fi
 done

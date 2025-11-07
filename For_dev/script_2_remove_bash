@@ -1,2 +1,2 @@
 #!/bin/sh
-grep -r "#\!/" -I ~/Desktop/my_stuff/bin | grep "bash" | grep -v "kali" | awk -F: '{print $1}' > ~/Desktop/remove_bashizem_files
+grep -r "#\!/" -I ~/Desktop/my_stuff/bin | grep -w "bash" | grep -v "kali" | awk -F: '{print $1}' > ~/Desktop/remove_bashizem_files
