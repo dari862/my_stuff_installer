@@ -1,0 +1,3 @@
+bin/X11/rofi/rofi-network-manager:# work on this : random wifi disconnect
+lib/rc.xml:<!--# work on this : kswitch -->
+lib/rc.xml:  <!--# work on this : <mouse> -->

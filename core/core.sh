@@ -611,9 +611,9 @@ disable_network_manager_powersaving(){
 		tee /etc/modprobe.d/iwlwifi.conf <<- 'EOF' >/dev/null
 		options iwlwifi power_save=0
 		EOF
-	 	if command -v update-initramfs >/dev/null 2>&1;then
+	 	if command_exist update-initramfs;then
 			update-initramfs -u
-	 	elif command -v mkinitcpio >/dev/null 2>&1;then
+	 	elif command_exist mkinitcpio;then
 			mkinitcpio -P
 	 	fi
 	fi
@@ -624,11 +624,10 @@ install_yt_dlb(){
 		return
 	fi
 	[ -f "${installer_phases}/install_yt_dlb" ] && return
-	if command -v yt-dlp >/dev/null 2>&1;then
-		if ! remove_packages "yt-dlp";then
-			yt_dlp_path="$(which yt-dlp)"
-			rm -rdf $yt_dlp_path
-		fi
+	if command_exist yt-dlp;then
+		remove_packages "yt-dlp" || :
+		yt_dlp_path="$(which yt-dlp)"
+		rm -rdf $yt_dlp_path
 	fi
 	mkdir -p "$usr_local_bin_path"
 	download_file "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" "${usr_local_bin_path}/yt-dlp"

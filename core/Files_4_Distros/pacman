@@ -17,14 +17,6 @@ use_aur=true
 
 yay_env_installer_script_path="$current_user_home/yay_installer"
 
-command_exist() {
-	if command -v $1 > /dev/null 2>&1;then
-		return
-	else
-		return 1
-	fi
-}
-
 create_auruser(){
 	useradd -m "${_temp_user}"
 	usermod -s /bin/sh "${_temp_user}"
@@ -46,7 +38,7 @@ create_auruser(){
 aur_command_single_install(){
 	package_name="${1:-}"
 	if ! command_exist "${package_name}";then
-		if su - "$_temp_user" -c "${temp_yay_command} ${package_name}";then
+		if su - "$_temp_user" -c "yay --noconfirm -Sy ${package_name}";then
 			return
 		else
 			return 1
@@ -106,7 +98,7 @@ install_AUR_helper(){
 			if ! id "${_temp_user}" >/dev/null 2>&1;then
 				create_auruser
 			fi
-			aur_command_single_install yay
+			"${temp_yay_command}" yay
 		fi
 	fi
 	touch "${installer_phases}/install_AUR_helper"
@@ -188,12 +180,12 @@ install_aur_and_all_needed_packages(){
 		( cd "$temp_yay_dir" && tar -xzf yay_bin.tar.gz && rm -rf yay_bin.tar.gz && mv yay_*/yay "${temp_yay_bin}")
 		[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir"
 		${temp_yay_command} yay
-		${temp_yay_command} rate-mirrors-bin
+		yay --noconfirm -Sy rate-mirrors-bin
 		cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
     	rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch
     	: > \$HOME/failed_2_install_from_aur
     	for aurpackage in ${packages_to_install_AUR};do
-			${temp_yay_command} "\$aurpackage" || echo "failed to install from aur: \$aurpackage" >> \$HOME/failed_2_install_from_aur
+			yay --noconfirm -Sy "\$aurpackage" || echo "failed to install from aur: \$aurpackage" >> \$HOME/failed_2_install_from_aur
 		done
 		EOF
 		chmod +x "${yay_env_installer_script_path}"
