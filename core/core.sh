@@ -626,8 +626,10 @@ install_yt_dlb(){
 	[ -f "${installer_phases}/install_yt_dlb" ] && return
 	if command_exist yt-dlp;then
 		remove_packages "yt-dlp" || :
-		yt_dlp_path="$(which yt-dlp)"
-		rm -rdf $yt_dlp_path
+		yt_dlp_path="$(which yt-dlp || :)"
+		if [ -f "$yt_dlp_path" ];then
+			rm -rdf "$yt_dlp_path"
+		fi
 	fi
 	mkdir -p "$usr_local_bin_path"
 	download_file "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" "${usr_local_bin_path}/yt-dlp"
