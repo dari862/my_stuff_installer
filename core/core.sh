@@ -624,6 +624,7 @@ install_yt_dlb(){
 		return
 	fi
 	[ -f "${installer_phases}/install_yt_dlb" ] && return
+	show_im "Replacing yt-dlb."
 	if command_exist yt-dlp;then
 		remove_packages "yt-dlp" || :
 		yt_dlp_path="$(which yt-dlp || :)"
@@ -632,32 +633,13 @@ install_yt_dlb(){
 		fi
 	fi
 	mkdir -p "$usr_local_bin_path"
+	show_im "Downloading new yt-dlb."
 	download_file "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" "${usr_local_bin_path}/yt-dlp"
 	chmod +x "${usr_local_bin_path}/yt-dlp"
+	show_im "Done replacing yt-dlb."
 	touch "${installer_phases}/install_yt_dlb"
 }
 
-packages_fixer(){
-	if [ "${__reinstall_distro}" = true ];then
-		return
-	fi
-	[ -f "${installer_phases}/packages_fixer" ] && return
-	. "${__distro_path_root}/os-release"
-	packages_2_fix_path="${__distro_path_root}/All_Distro_Specific/${root_distro_name}/packages_fixer/${version_}"
-	if [ ! -d "${packages_2_fix_path}" ];then
-		return
-	fi
-	
-	show_im "Fix some packages."
-	cd "${packages_2_fix_path}"
-	for p in *;do
-		if command_exist "$p";then
-			__dirname="$(dirname "$(which "$p")")"
-			cp -r "$p" "$__dirname"
-		fi
-	done
-	touch "${installer_phases}/packages_fixer"
-}
 ################################################################################################################################
 ################################################################################################################################
 ################################################################################################################################
@@ -829,7 +811,10 @@ if [ ! -f "${installer_phases}/system_files_creater" ];then
 	touch "${installer_phases}/system_files_creater"
 fi
 
-packages_fixer
+if [ "${__reinstall_distro}" = false ] || [ ! -f "${installer_phases}/packages_fixer" ];then
+	"${__distro_path_root}"/All_Distro_Specific/packages_fixer/packages_fixer "$__distro_path_root"
+	touch "${installer_phases}/packages_fixer"
+fi
 
 create_uninstaller_file
 
