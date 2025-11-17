@@ -67,7 +67,7 @@ fi
 #	functions
 ####################################################################################
 update_install_repo_if_exist() {
-	(cd "$current_user_home/Desktop/${__installer_script_repo_name}" >/dev/null 2>&1 && "${repo_commnad}" pull || :)
+	(cd "$current_user_home/Desktop/${__installer_script_repo_name}" >/dev/null 2>&1 && print_m "Update ${__installer_script_repo_name} repo files." && "${repo_commnad}" pull || :)
 }
 
 command_exist() {
