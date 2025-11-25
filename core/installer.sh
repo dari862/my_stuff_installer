@@ -119,6 +119,40 @@ do_you_want_2_run_this_yes_or_no(){
 	done
 }
 
+fix_time_() {
+	if [ -f "${installer_phases}/fix_time_" ];then
+		return
+	fi
+
+	print_m "Setting date, time, and timezone..."
+	header="$(get_full_header 'https://ipinfo.io/')"
+	current_date=$(printf "%s\n" "$header" | sed -n 's/^ *[Dd]ate: *//p')
+
+	if [ -n "$current_date" ]; then
+		$__super_command date -s "$current_date" >/dev/null 2>&1
+	else
+		print_m "Failed to set time." "RED"
+	fi
+	
+	__timezone=$(printf "%s\n" "$header" | grep -i timezone | awk -F: '{print $2}' | sed 's/[",]//g; s/^[[:space:]]*//;s/[[:space:]]*$//')
+
+	if [ -n "$__timezone" ]; then
+		print_m "applying time and timezone."
+		if ! $__super_command timedatectl set-timezone "$__timezone" >/dev/null 2>&1; then
+			$__super_command ln -sf "/usr/share/zoneinfo/$__timezone" /etc/localtime
+			if ! $__super_command hwclock --systohc >/dev/null 2>&1; then
+				print_m "Failed to set hardware clock!" "YELLOW"
+				install_hwclock=true
+			fi
+		fi
+	else
+		print_m "Failed to set timezone." "RED"
+	fi
+	
+	print_m "Time sync complete."
+	$__super_command touch "${installer_phases}/fix_time_"
+}
+	
 test_internet_() {
 	[ -f "${installer_phases}/no_internet_needed" ] && return
 
@@ -163,34 +197,6 @@ test_internet_() {
 			print_m "$__test_internet_massage_"
 			return 0
 		fi
-	}
-	
-	fix_time_() {
-		[ -f "${installer_phases}/fix_time_" ] && return
-
-		print_m "Setting date, time, and timezone..."
-		header="$(get_full_header 'https://ipinfo.io/')"
-		current_date=$(printf "%s\n" "$header" | sed -n 's/^ *[Dd]ate: *//p')
-
-		if [ -n "$current_date" ]; then
-			$__super_command date -s "$current_date" >/dev/null 2>&1
-		fi
-
-		__timezone=$(printf "%s\n" "$header" | grep -i timezone | awk -F: '{print $2}' | sed 's/[",]//g; s/^[[:space:]]*//;s/[[:space:]]*$//')
-
-		if [ -n "$__timezone" ]; then
-			print_m "applying time and timezone."
-			if ! $__super_command timedatectl set-timezone "$__timezone" >/dev/null 2>&1; then
-				$__super_command ln -sf "/usr/share/zoneinfo/$__timezone" /etc/localtime
-				if ! $__super_command hwclock --systohc >/dev/null 2>&1; then
-					print_m "Failed to set hardware clock!" "YELLOW"
-					install_hwclock=true
-				fi
-			fi
-		fi
-
-		print_m "Time sync complete."
-		$__super_command touch "${installer_phases}/fix_time_"
 	}
 
 	wifi_mode_installation() {
@@ -721,6 +727,7 @@ else
 fi
 
 test_internet_
+fix_time_
 
 if [ ! -f "$installation_file_path" ];then
 	mkdir -p "$tmp_installer_dir"

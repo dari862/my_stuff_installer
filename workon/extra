@@ -1,10 +1,4 @@
 ===================
-toremove          =
-===================
-taudio
-imgpipe
-
-===================
 tofix             =
 ===================
 fzf-history
@@ -32,16 +26,6 @@ nm-wg-delete
 nm-wg-import
 swapfile
 vpn-killswitch
-
-===================
-2merge            =
-===================
-clipify
 converter
 convertvid
-extract-audio
-ffmpeg_extra
-ffmpeg_tools
-strip-audio
-gifify
 

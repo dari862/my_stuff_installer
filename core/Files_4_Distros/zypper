@@ -173,6 +173,13 @@ must_install_apps()
 	[ -f "${installer_phases}/must_install_apps" ] && return
 	show_m "installing req apps"
 	install_packages "git"
+	if [ "$install_hwclock" = true ];then
+		install_packages util-linux-extra util-linux
+		ln -sf "/usr/share/zoneinfo/$__timezone" /etc/localtime
+		if ! hwclock --systohc >/dev/null 2>&1; then
+			show_em "Failed to set hardware clock!(must_install_apps)"
+		fi
+	fi
 	touch "${installer_phases}/must_install_apps"
 }
 
