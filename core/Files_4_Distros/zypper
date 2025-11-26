@@ -189,8 +189,8 @@ kill_package_manager(){
 
 pre_package_manager_(){
 	[ -f "${installer_phases}/pre_package_manager_" ] && return
-	create_packages_list_for_repo
 	kill_package_manager
+	create_packages_list_for_repo
 	touch "${installer_phases}/pre_package_manager_"
 }
 

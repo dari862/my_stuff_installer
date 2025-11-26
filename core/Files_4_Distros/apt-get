@@ -249,8 +249,8 @@ pre_package_manager_(){
 	[ -f "${installer_phases}/pre_package_manager_" ] && return
 	export DEBIAN_FRONTEND=noninteractive
 	export DEBCONF_NONINTERACTIVE_SEEN=true
-	create_packages_list_for_repo
 	kill_package_manager
+	create_packages_list_for_repo
 	service_manager stop apt-daily.timer || show_wm_only "failed to stop apt-daily.timer"
 	service_manager stop apt-daily-upgrade.timer || show_wm_only "failed to stop apt-daily-upgrade.timer "
 	aptfixer
