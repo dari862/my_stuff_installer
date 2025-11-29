@@ -294,6 +294,8 @@ set_package_manager(){
 			show_em "Error: Failed to source PACKAGE_MANAGER from ${all_temp_path}"
 		fi
 		
+		kill_package_manager
+		
 		upgrade_now
 		
 		create_packages_installed_list
