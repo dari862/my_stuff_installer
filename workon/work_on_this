@@ -1,6 +1,5 @@
 bin_extra/cli/betterman:# work on this : add https://github.com/chubin/cheat.sh and https://github.com/denisidoro/navi
-bin/cli/setbg:# work on this : improve owl4ce
 bin/cli/kswitch:# work on this : fix RTL langs
 bin/X11/yad/style_picker:# work on this : fix it
-bin/X11/rofi/rofi-network-manager:# work on this : random wifi disconnect
 bin/X11/WM/dynamic_theme:# work on this : fix it
+bin/X11/rofi/rofi-network-manager:# work on this : random wifi disconnect
