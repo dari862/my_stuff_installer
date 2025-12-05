@@ -1,6 +1,8 @@
 #!/bin/bash
 # https://github.com/maximilionus/android-qemu-launcher
 set -e
+# install_mode option are : qemu and virtmanager
+install_mode="${1:-qemu}"
 provided_Android_image="${2:-}"
 if [ -z "$provided_Android_image" ]; then
 	echo "Error: No path to Android image provided. Exiting."
@@ -89,9 +91,10 @@ create_launcher_desktop_file(){
 pre_install
 
 echo "Directories initialized."
-if command -v qemu-img >/dev/null 2>&1;then
+if [ "$install_mode" = "qemu" ];then
 	install_vm_via_qemu
 	post_install_qemu
+elif [ "$install_mode" = "virtmanager" ];then
 fi
 
 create_launcher_desktop_file
