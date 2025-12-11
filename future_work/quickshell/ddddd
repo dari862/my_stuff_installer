@@ -5,7 +5,7 @@
 set -e
 
 echo "==> Updating system..."
-sudo pacman -Syu --needed --noconfirm git nano featherpad wget fish
+sudo pacman -Syu --needed --noconfirm git nano notepadqq wget fish
 cd /tmp
 
 # --- Check for yay or paru (AUR helper) ---

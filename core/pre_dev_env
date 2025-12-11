@@ -92,8 +92,8 @@ aptfixer
 show_m "Running upgrade."
 upgrade_now
 
-show_m "install packages: featherpad git openssh-server shellcheck meld"
-install_packages_for_dev "featherpad git openssh-server shellcheck meld"
+show_m "install packages: notepadqq git openssh-server shellcheck meld"
+install_packages_for_dev "notepadqq git openssh-server shellcheck meld"
 
 show_m "Enable ssh."
 systemctl enable --now ssh || ystemctl enable --now sshd || :
