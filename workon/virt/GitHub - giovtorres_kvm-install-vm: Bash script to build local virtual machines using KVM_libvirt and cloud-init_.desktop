@@ -1,7 +1,0 @@
-[Desktop Entry]
-Version=1.0
-Type=Link
-Name=GitHub - giovtorres/kvm-install-vm: Bash script to build local virtual machines using KVM/libvirt and cloud-init.
-Comment=
-Icon=user-bookmarks
-URL=https://github.com/giovtorres/kvm-install-vm

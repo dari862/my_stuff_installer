@@ -1,3 +1,2 @@
-bin_extra/cli/betterman:# work on this : add https://github.com/chubin/cheat.sh and https://github.com/denisidoro/navi
 bin/cli/kswitch:# work on this : fix RTL langs
 bin/X11/rofi/rofi-network-manager:# work on this : random wifi disconnect

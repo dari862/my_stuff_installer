@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+gui_file_editor="featherpad"
+
 __USER="${1:-$(logname)}"
 __packagemanager_file="${2:-}"
 distro_name="${3:-}"
@@ -92,8 +94,8 @@ aptfixer
 show_m "Running upgrade."
 upgrade_now
 
-show_m "install packages: notepadqq git openssh-server shellcheck meld"
-install_packages_for_dev "notepadqq git openssh-server shellcheck meld"
+show_m "install packages: ${gui_file_editor} git openssh-server shellcheck meld"
+install_packages_for_dev "${gui_file_editor} git openssh-server shellcheck meld"
 
 show_m "Enable ssh."
 systemctl enable --now ssh || ystemctl enable --now sshd || :
