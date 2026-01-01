@@ -1,1 +1,0 @@
-/home/dari/Desktop/my_stuff/bin/my_installer/apps_center/hypervisors/virt/virt_manager/install_winapps.sh
