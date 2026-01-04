@@ -1,6 +1,6 @@
 #!/bin/sh
-create_to_be_purged_list(){
-	[ -f "${installer_phases}/create_to_be_purged_list" ] && return
+build_to_be_purged_list(){
+	[ -f "${installer_phases}/build_to_be_purged_list" ] && return
 		_purge_it=""
 		to_be_purged="aisleriot anthy kasumi aspell debian-reference-common fcitx fcitx-bin fcitx-frontend-gtk2 fcitx-frontend-gtk3 fcitx-mozc five-or-more four-in-a-row gnome-chess gnome-klotski gnome-mahjongg gnome-mines gnome-music gnome-nibbles gnome-robots gnome-sudoku gnome-taquin gnome-tetravex gnote goldendict hamster-applet hdate-applet hexchat hitori iagno khmerconverter lightsoff mate-themes malcontent mlterm mlterm-tiny mozc-utils-gui quadrapassel reportbug rhythmbox scim simple-scan sound-juicer swell-foop tali uim xboard xiterm+thai xterm im-config xfce4-notifyd xfce4-power-manager* "
 		
@@ -17,13 +17,13 @@ create_to_be_purged_list(){
 			fi
 		done
 		echo "_purge_it=\"$_purge_it\"" >> "${save_value_file}"
-	touch "${installer_phases}/create_to_be_purged_list"
+	touch "${installer_phases}/build_to_be_purged_list"
 }
 
 purge_some_unnecessary_pakages(){
 	[ -f "${installer_phases}/purge_some_unnecessary_pakages" ] && return
 	show_m "purge some unnecessary pakages"
-	create_to_be_purged_list
+	build_to_be_purged_list
 	if [ "$run_purge_some_unnecessary_pakages" = "Y" ];then
 		show_im "purging apps"
 		remove_packages "${_purge_it}"

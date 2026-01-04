@@ -17,7 +17,7 @@ use_aur=true
 
 yay_env_installer_script_path="$current_user_home/yay_installer"
 
-create_auruser(){
+build_auruser(){
 	useradd -m "${_temp_user}"
 	usermod -s /bin/sh "${_temp_user}"
 	PASSWORD=$(openssl rand -base64 48)
@@ -96,7 +96,7 @@ install_AUR_helper(){
 		
 		if [  "$use_aur" = true ];then
 			if ! id "${_temp_user}" >/dev/null 2>&1;then
-				create_auruser
+				build_auruser
 			fi
 			"${temp_yay_command}" yay
 		fi
@@ -209,12 +209,12 @@ clean_pacman_db_locl_file(){
 	fi
 }
 
-create_packages_list_for_repo(){
+build_packages_list_for_repo(){
 	show_im "Creating package list..."
 	pacman -Sl | awk '{print $2 " " $NF}' > "${list_of_apps_file_path}"
 }
 
-create_packages_installed_list(){
+build_packages_installed_list(){
 	clean_pacman_db_locl_file
 	show_im "Creating installed package list..."
 	pacman -Q 2>/dev/null > "${list_of_installed_apps_file_path}"
@@ -241,7 +241,7 @@ install_packages(){
     	return
     fi
     
-    create_packages_installed_list
+    build_packages_installed_list
     
     if [ -z "${packages_from_arg_to_install}" ];then
     	failed_2_install=""
@@ -385,7 +385,7 @@ kill_package_manager(){
 pre_package_manager_(){
 	[ -f "${installer_phases}/pre_package_manager_" ] && return
 	kill_package_manager
-	create_packages_list_for_repo
+	build_packages_list_for_repo
     touch "${installer_phases}/pre_package_manager_"
 }
 

@@ -1,7 +1,7 @@
 #!/bin/sh
 if [ -d "${__distro_path_root}" ] && [ "${__reinstall_distro}" = false ];then
-	show_im "create Distro_Specific dir."
-	ln -sf "${__distro_path_root}/All_Distro_Specific/${root_distro_name}" "${__distro_path_root}/Distro_Specific" || show_em "failed to create Distro_Specific dir."
+	show_im "Establish Distro_Specific dir."
+	ln -sf "${__distro_path_root}/All_Distro_Specific/${root_distro_name}" "${__distro_path_root}/Distro_Specific" || show_em "failed to Establish Distro_Specific dir."
 	return
 fi
 
@@ -22,7 +22,7 @@ fi
 show_im "moving usr_share"
 mv "${distro_temp_path}" /usr/share/
 
-show_im "create Distro_Specific dir."
+show_im "Establish Distro_Specific dir."
 ln -sf "${__distro_path_root}/All_Distro_Specific/${root_distro_name}" "${__distro_path_root}/Distro_Specific"
 
 sed -i "s/__reinstall_distro=.*/__reinstall_distro=false/g" "${prompt_to_install_value_file}"

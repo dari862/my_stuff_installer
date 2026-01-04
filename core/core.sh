@@ -115,12 +115,12 @@ pre_script(){
 	else
 		dir_2_find_files_in="${all_temp_path}"
 	fi
- 	create_dir_and_source_stuff
+ 	establish_dir_and_source_stuff
 }
 
-create_dir_and_source_stuff(){
-	show_m "pre-script: create dir and source files."
-	show_im "create dir ${installer_phases}"
+establish_dir_and_source_stuff(){
+	show_m "pre-script: establish dir and source files."
+	show_im "establish dir ${installer_phases}"
 
 	mkdir -p "${installer_phases}"
 	if [ -f "${save_value_file}" ];then
@@ -294,11 +294,12 @@ set_package_manager(){
 			show_em "Error: Failed to source PACKAGE_MANAGER from ${all_temp_path}"
 		fi
 		
+		show_im "Stopping ${PACKAGER} if running."
 		kill_package_manager
 		
 		upgrade_now
 		
-		create_packages_installed_list
+		build_packages_installed_list
 		
 		if package_installed systemd ;then
 			init_system_are="systemd"
@@ -342,7 +343,7 @@ switch_default_xsession(){
 	touch "${installer_phases}/switch_default_xsession"
 }
 
-create_uninstaller_file(){
+build_uninstaller_file(){
 	if [ "${__reinstall_distro}" = true ];then
 		return
 	fi
@@ -360,8 +361,10 @@ clone_rep_(){
 	getthis_location="${2-}"
 	if [ -d "${getthis_location}" ];then
 		show_im "Update distro files repo ( ${getthis} )."
-		su - "$__USER" -c "(cd "${getthis_location}" && $repo_commnad pull)"
-		touch "${installer_phases}/${getthis}"
+		if ! su - "$__USER" -c "(cd "${getthis_location}" && $repo_commnad checkout)" >/dev/null 2>&1;then
+			su - "$__USER" -c "(cd "${getthis_location}" && $repo_commnad pull)"
+			touch "${installer_phases}/${getthis}"
+		fi
 	else
 		show_im "Clone distro files repo ( ${getthis} )."
 		if ! $repo_commnad clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}";then
@@ -488,7 +491,7 @@ install_GPU_Drivers_now(){
 		return
 	fi
 	grub_updater_function(){   need_to_update_grub=true; }
-	create_GPU_Drivers_ready=false
+	Generate_GPU_Drivers_ready=false
 	need_2_run_upgrade_now=false
 	[ "${enable_GPU_installer}" != true ] && return
 	[ -f "${installer_phases}/install_GPU_Drivers_now" ] && return
@@ -496,7 +499,7 @@ install_GPU_Drivers_now(){
 	failed_but_continue(){   show_em "$@"; }
 	alias continue="show_wm"
 	say(){   show_im "$@"; }
-	create_system_ready_file(){   :; }
+	generate_system_ready_file(){   :; }
 	update_pipemenu(){   :; }
 	Package_installer_(){   install_packages $@; }
 	Package_update_(){   upgrade_now; }
@@ -504,14 +507,14 @@ install_GPU_Drivers_now(){
 	show_im "Installing GPU Drivers"
 	. "${distro_temp_path}/All_Distro_Specific/${root_distro_name}/apps_center/Drivers_Pakages/GPU"
 	
-	create_GPU_Drivers_ready=true
-	echo "create_GPU_Drivers_ready=$create_GPU_Drivers_ready" >> "${save_value_file}"
+	Generate_GPU_Drivers_ready=true
+	echo "Generate_GPU_Drivers_ready=$Generate_GPU_Drivers_ready" >> "${save_value_file}"
 	
 	unset failed_to_run
 	unset failed_but_continue
 	unalias continue
 	unset say
-	unset create_system_ready_file
+	unset generate_system_ready_file
 	unset update_pipemenu
 	unset Package_installer_
 	unset need_2_run_upgrade_now
@@ -557,7 +560,7 @@ switch_to_network_manager(){
 	[ -f "${installer_phases}/switch_to_network_manager" ] && return
 	if [ ! -f "/etc/network/interfaces.old" ] && [ -d "/etc/network" ];then
 		show_m "running switch_to_network_manager."
-		show_im "create to interfaces file"
+		show_im "Generate file for interfaces interface"
 		tee "${all_temp_path}"/interfaces <<- 'EOF' >/dev/null
 		# This file describes the network interfaces available on your system
 		# and how to activate them. For more information, see interfaces(5).
@@ -569,7 +572,7 @@ switch_to_network_manager(){
 		iface lo inet loopback
 		EOF
 		chmod 644 "${all_temp_path}"/interfaces
-		show_im "create backup of interfaces file"
+		show_im "Generate backup of interfaces file"
 		mv /etc/network/interfaces /etc/network/interfaces.old
 		mv "${all_temp_path}"/interfaces /etc/network/interfaces
  		if ip route | awk '/default/ { print $5 }' | grep -q "^w";then
@@ -694,7 +697,7 @@ if [ "$install_apps" = "true" ];then
 	source_this_script "disto_specific_apps_installer" "Source Install apps functions from (disto_specific_apps_installer)"
 fi
 	
-if [ ! -f "${installer_phases}/create_List_of_apt_2_install_" ];then
+if [ ! -f "${installer_phases}/build_List_of_apt_2_install_" ];then
 	Packages_2_install=""
 	if [ "$install_drivers" = "true" ];then
 		source_this_script "disto_Drivers_list_common" "Add drivers list from (disto_Drivers_list_common)"
@@ -730,7 +733,7 @@ if [ ! -f "${installer_phases}/create_List_of_apt_2_install_" ];then
 	if [ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ];then
 		echo "all_Packages_to_install=\"$all_Packages_to_install\"" >> "${save_value_file}"
 	fi
-	touch "${installer_phases}/create_List_of_apt_2_install_"
+	touch "${installer_phases}/build_List_of_apt_2_install_"
 fi
 
 if [ ! -f "${installer_phases}/install_the_list_of_packages_" ] && ([ "$install_drivers" = "true" ] || [ "$install_apps" = "true" ]);then
@@ -804,13 +807,13 @@ if [ "${__reinstall_distro}" = false ];then
 	update_grub_image
 fi
 
-if [ ! -f "${installer_phases}/system_files_creater" ];then
-	show_m "Running system_files_creater."
+if [ ! -f "${installer_phases}/system_files_builder" ];then
+	show_m "Running system_files_builder."
 	unset service_manager
 	export PATH="${PATH}:${__distro_path_bin}"
-	"${__distro_path_root}"/distro_manager/system_files_creater
+	"${__distro_path_root}"/distro_manager/system_files_builder
 	
-	touch "${installer_phases}/system_files_creater"
+	touch "${installer_phases}/system_files_builder"
 fi
 
 if [ "${__reinstall_distro}" = false ] || [ ! -f "${installer_phases}/packages_fixer" ];then
@@ -818,14 +821,16 @@ if [ "${__reinstall_distro}" = false ] || [ ! -f "${installer_phases}/packages_f
 	touch "${installer_phases}/packages_fixer"
 fi
 
-create_uninstaller_file
+build_uninstaller_file
 
 switch_default_xsession
 
 switch_to_doas_now
 
-if [ "${create_GPU_Drivers_ready}" = true ];then
-	touch "${__distro_path_system_ready}/GPU_Drivers_ready"
+. "${__distro_path_root}/lib/common/system_ready"
+
+if [ "${Generate_GPU_Drivers_ready}" = true ];then
+	generate_system_ready_file "GPU_Drivers_ready"
 fi
 
 if [ "$failed_2_install_ufw" = true ];then

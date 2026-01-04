@@ -1,6 +1,6 @@
 #!/bin/sh
-create_to_be_purged_list(){
-	[ -f "${installer_phases}/create_to_be_purged_list" ] && return
+build_to_be_purged_list(){
+	[ -f "${installer_phases}/build_to_be_purged_list" ] && return
 		if grep -q pam_wtmpdb.so /etc/pam.d/common-session;then
 			sed -i '/^[[:space:]]*session[[:space:]]\+optional[[:space:]]\+pam_wtmpdb\.so/ s/^/# /' /etc/pam.d/common-session
 		fi
@@ -21,13 +21,13 @@ create_to_be_purged_list(){
 			fi
 		done
 		echo "_purge_it=\"$_purge_it\"" >> "${save_value_file}"
-	touch "${installer_phases}/create_to_be_purged_list"
+	touch "${installer_phases}/build_to_be_purged_list"
 }
 
 purge_some_unnecessary_pakages(){
 	[ -f "${installer_phases}/purge_some_unnecessary_pakages" ] && return
 	show_m "purge some unnecessary pakages"
-	create_to_be_purged_list
+	build_to_be_purged_list
 	if [ "$run_purge_some_unnecessary_pakages" = "Y" ];then
 		show_im "purging apps"
 		remove_packages "${_purge_it}"

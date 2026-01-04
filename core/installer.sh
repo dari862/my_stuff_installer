@@ -518,7 +518,7 @@ prompt_to_ask_to_what_to_install(){
 	fi
 }
 
-create_prompt_to_install_value_file(){
+build_prompt_to_install_value_file(){
 	print_m "creating: ${prompt_to_install_value_file}"
 	$__super_command mkdir -p "${all_temp_path}"
 	$__super_command chmod 755 "${all_temp_path}"
@@ -710,11 +710,11 @@ if [ "$install_mode" = "install" ];then
 			source_prompt_to_install_file=true
 		else
 			prompt_to_ask_to_what_to_install
-			create_prompt_to_install_value_file
+			build_prompt_to_install_value_file
 		fi
 	else
 		prompt_to_ask_to_what_to_install
-		create_prompt_to_install_value_file
+		build_prompt_to_install_value_file
 	fi
 fi
 

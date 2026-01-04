@@ -68,7 +68,7 @@ package_exists() {
     dpkg-query -W "$1" >/dev/null 2>&1
 }
 
-create_necessary_dirs() {
+establish_necessary_dirs() {
     mkdir -p "${_tools_directory}" "${_audit_directory}"
 }
 
@@ -188,7 +188,7 @@ run_unprivileged_checks() {
 }
 
 main() {
-    create_necessary_dirs
+    establish_necessary_dirs
     check_dependencies
     fetch_repos
     fetch_linpeas

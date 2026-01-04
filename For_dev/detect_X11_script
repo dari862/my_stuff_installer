@@ -1,6 +1,6 @@
 #!/bin/sh
 _X11_packages="diodon polybar libnm-dev bspwm sxhkd jgmenu xinput xinit xclip xwallpaper xdotool xprintidle yad cbatticon rofi picom dunst nsxiv arandr autorandr i3lock conky openbox obconf xcape tint2 xsettingsd lxappearance slop wmctrl xdpyinfo xev xfd xkill xprop xwininfo xhost xmodmap xrandr xrdb xset xsetroot"
-to_skip="^All_Distro_Specific/|^skel_extra|^distro_manager|^lib/|^applications_extra/|^blob/|^blob_extra/|^bin/my_installer|^bin/X11|^bin/must_create_script/pfetch|^bin_extra/X11|^bin/X11|^skel/.config|^bin/keybinds"
+to_skip="^All_Distro_Specific/|^skel_extra|^distro_manager|^lib/|^applications_extra/|^blob/|^blob_extra/|^bin/my_installer|^bin/X11|^bin/must_build_script/pfetch|^bin_extra/X11|^bin/X11|^skel/.config|^bin/keybinds"
 
 cd "$HOME/Desktop/my_stuff/"
 

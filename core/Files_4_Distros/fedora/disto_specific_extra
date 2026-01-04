@@ -1,6 +1,6 @@
 #!/bin/sh
-create_to_be_purged_list(){
-	[ -f "${installer_phases}/create_to_be_purged_list" ] && return
+build_to_be_purged_list(){
+	[ -f "${installer_phases}/build_to_be_purged_list" ] && return
 		package_installed snapd && show_sm "adding snap package to remove list" && snap="snapd" || snap=""
 		_purge_it=""
 		to_be_purged=""
@@ -13,13 +13,13 @@ create_to_be_purged_list(){
 			fi
 		done
 		echo "_purge_it=\"$_purge_it\"" >> "${save_value_file}"
-	touch "${installer_phases}/create_to_be_purged_list"
+	touch "${installer_phases}/build_to_be_purged_list"
 }
 
 purge_some_unnecessary_pakages(){
 	[ -f "${installer_phases}/purge_some_unnecessary_pakages" ] && return
 	show_m "purge some unnecessary pakages"
-	create_to_be_purged_list
+	build_to_be_purged_list
 	if [ "$run_purge_some_unnecessary_pakages" = "Y" ];then
 		show_im "purging apps"
 		remove_packages "${_purge_it}"

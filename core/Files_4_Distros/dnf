@@ -7,12 +7,12 @@ packages_to_install=""
 ##################################
 __remove_package="dnf remove -y"
 
-create_packages_list_for_repo(){
+build_packages_list_for_repo(){
 	show_im "Creating package list..."
 	dnf list 2>/dev/null > "${list_of_apps_file_path}"
 }
 
-create_packages_installed_list(){
+build_packages_installed_list(){
 	show_im "Creating installed package list..."
 	rpm -qa 2>/dev/null > "${list_of_installed_apps_file_path}" 
 }
@@ -37,7 +37,7 @@ install_packages(){
     	return
     fi
     
-    create_packages_installed_list
+    build_packages_installed_list
     
     if [ -z "${packages_from_arg_to_install}" ];then
     	failed_2_install=""
@@ -181,7 +181,7 @@ kill_package_manager(){
 pre_package_manager_(){
 	[ -f "${installer_phases}/pre_package_manager_" ] && return
 	kill_package_manager
-	create_packages_list_for_repo
+	build_packages_list_for_repo
 	#enable_rpmfusion_repo
 	touch "${installer_phases}/pre_package_manager_"
 }
