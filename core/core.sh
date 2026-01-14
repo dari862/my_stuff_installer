@@ -834,7 +834,7 @@ if [ "${Generate_GPU_Drivers_ready}" = true ];then
 fi
 
 if [ "$failed_2_install_ufw" = true ];then
-	show_wm "failed to install ${install_ufw_apps}."
+	show_wm "Failed to install ${install_ufw_apps} ${install_common_ufw_apps}."
 	show_im "sleep 10."
 	sleep 10
 fi

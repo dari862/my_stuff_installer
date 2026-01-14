@@ -4,6 +4,9 @@ disto_specific_Drivers_installer(){
 	show_im "Configer Disto Specific Drivers."
 	if [ "$machine_type_are" = "laptop" ];then
 		show_im "this is laptop"
+	elif [ "$machine_type_are" = "VM" ];then
+		show_im "this is VM"
+		remove_packages "linux-firewire"
 	fi
 	touch "${installer_phases}/disto_specific_Drivers_installer"
 }
