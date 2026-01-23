@@ -59,6 +59,8 @@ pre_disto_apps_installer(){
 	
 	if lsmod | grep -q ip_tables;then
 		add_packages_2_install_list "${install_ufw_apps} ${install_common_ufw_apps}"
+	elif lsmod | grep -q ip-tables;then
+		add_packages_2_install_list "${install_ufw_apps} ${install_common_ufw_apps}"
 	else
 		failed_2_install_ufw=true
 	fi
