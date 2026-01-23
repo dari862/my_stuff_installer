@@ -5,7 +5,7 @@ must_purge="system-config-printer zeitgeist"
 ## must have apps
 #######################
 install_ufw_apps=""
-install_must_have_apps="libnotify"
+install_must_have_apps="libnotify kernel-modules-hook"
 install_must_have_apps2="pamac-aur xdotool lm_sensors xz"
 install_image_viewer_apps=""
 install_files_manager_support_app="gvfs-mtp gvfs-afc avahi"

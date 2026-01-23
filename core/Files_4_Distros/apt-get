@@ -198,13 +198,15 @@ install_lightdm_now(){
 
 switch_lightdm_now(){
 	[ -f "${installer_phases}/switch_lightdm_now" ] && return
-	show_im "Switching to ( lightdm )."
 	
+	lightdm_does_not_exist=false
+	show_im "Switching to ( lightdm )."
 	if [ -f "/etc/X11/default-display-manager" ];then
 		d_d_m="$(basename "$(cat /etc/X11/default-display-manager)")"
-		[ "$d_d_m" != "lightdm"  ] && lightdm_does_not_exist=true
-	else
-		lightdm_does_not_exist=true
+		if [ "$d_d_m" != "lightdm" ];then
+        	lightdm_does_not_exist=true
+        	d_d_m="lightdm"
+        fi
 	fi
 	
 	if [ "$lightdm_does_not_exist" = true  ];then

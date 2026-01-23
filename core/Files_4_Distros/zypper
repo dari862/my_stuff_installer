@@ -143,12 +143,14 @@ install_lightdm_now(){
 
 switch_lightdm_now(){
 	[ -f "${installer_phases}/switch_lightdm_now" ] && return
-
+	
+	lightdm_does_not_exist=false
 	show_im "Switching to ( lightdm )."
 	d_d_m="$(basename "$(readlink /etc/systemd/system/display-manager.service)")"
-	if ! echo "$d_d_m" | grep -q "lightdm" ;then
-		lightdm_does_not_exist=true
-	fi
+	if [ "$d_d_m" != "lightdm.service" ];then
+        lightdm_does_not_exist=true
+        d_d_m="lightdm"
+    fi
 	
 	if [ "$lightdm_does_not_exist" = true  ];then
 		service_manager disable "$d_d_m" || :

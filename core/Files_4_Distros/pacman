@@ -8,10 +8,11 @@ packages_to_install=""
 # aur
 ########################################################
 _temp_user="aurtempuser"
-yay_ver="12.5.0"
+yay_ver=""
 _temp_user="aurtempuser"
 temp_yay_bin="/tmp/temp_yay"
 temp_yay_command="${temp_yay_bin} --noconfirm -Sy"
+yay_install_command="${temp_yay_bin} --noconfirm -Sy"
 packages_to_install_AUR=""
 use_aur=true
 
@@ -38,7 +39,7 @@ build_auruser(){
 aur_command_single_install(){
 	package_name="${1:-}"
 	if ! command_exist "${package_name}";then
-		if su - "$_temp_user" -c "yay --noconfirm -Sy ${package_name}";then
+		if su - "$_temp_user" -c "${yay_install_command} ${package_name}";then
 			return
 		else
 			return 1
@@ -98,7 +99,7 @@ install_AUR_helper(){
 			if ! id "${_temp_user}" >/dev/null 2>&1;then
 				build_auruser
 			fi
-			"${temp_yay_command}" yay
+			su - "$_temp_user" -c "${temp_yay_command} yay" 
 		fi
 	fi
 	touch "${installer_phases}/install_AUR_helper"
@@ -180,12 +181,19 @@ install_aur_and_all_needed_packages(){
 		( cd "$temp_yay_dir" && tar -xzf yay_bin.tar.gz && rm -rf yay_bin.tar.gz && mv yay_*/yay "${temp_yay_bin}")
 		[ -d "$temp_yay_dir" ] && rm -rdf "$temp_yay_dir"
 		${temp_yay_command} yay
-		yay --noconfirm -Sy rate-mirrors-bin
+		${yay_install_command} rate-mirrors-bin
 		cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
     	rate-mirrors --top-mirrors-number-to-retest=5 --disable-comments --save /etc/pacman.d/mirrorlist --allow-root arch
-    	: > \$HOME/failed_2_install_from_aur
+    	if [ -f "\$HOME/failed_2_install_from_aur" ];then
+    		: > \$HOME/failed_2_install_from_aur
+    	fi
     	for aurpackage in ${packages_to_install_AUR};do
-			yay --noconfirm -Sy "\$aurpackage" || echo "failed to install from aur: \$aurpackage" >> \$HOME/failed_2_install_from_aur
+			if yay -Ss "\$aurpackage";then
+				packages_to_install_AUR="\$packages_to_install_AUR \$aurpackage"
+			else
+				echo "failed to install from aur: \$aurpackage" >> \$HOME/failed_2_install_from_aur
+			fi
+			${yay_install_command} \${packages_to_install_AUR}
 		done
 		EOF
 		chmod +x "${yay_env_installer_script_path}"
@@ -343,13 +351,13 @@ install_lightdm_now(){
 
 switch_lightdm_now(){
 	[ -f "${installer_phases}/switch_lightdm_now" ] && return
-    show_im "Switching to lightdm..."
     
-    if [ -f "/etc/X11/default-display-manager" ]; then
-        d_d_m="$(basename "$(cat /etc/X11/default-display-manager)")"
-        [ "$d_d_m" != "lightdm" ] && lightdm_does_not_exist=true
-    else
+	lightdm_does_not_exist=false
+    show_im "Switching to lightdm..."
+    d_d_m="$(basename "$(readlink /etc/systemd/system/display-manager.service)")"
+	if [ "$d_d_m" != "lightdm.service" ];then
         lightdm_does_not_exist=true
+        d_d_m="lightdm"
     fi
     
     if [ "$lightdm_does_not_exist" = true ]; then
