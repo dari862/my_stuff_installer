@@ -1,4 +1,3 @@
 lib/rc.xml:  <!--# work on this : <mouse> -->
-bin_extra/cli/betterman:# work on this : add https://github.com/chubin/cheat.sh and https://github.com/denisidoro/navi
 bin_extra/X11/TV/movie:# work on this : this iptv script work on adding movie
 bin/X11/cli/clipmanager:    	# work on this : sleep and ownership of clipboard
