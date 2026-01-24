@@ -2,7 +2,6 @@
 #######################
 ## must have apps
 #######################
-install_common_ufw_apps="ufw"
 install_common_must_have_apps="jq git plocate htop unzip"
 install_common_must_have_apps2="psmisc gparted inxi s-tui dfc hwinfo acl ntfs-3g"
 install_common_image_viewer_apps="viewnior imagemagick"

@@ -57,14 +57,6 @@ pre_disto_apps_installer(){
 		fi
 	fi
 	
-	if lsmod | grep -q ip_tables;then
-		add_packages_2_install_list "${install_ufw_apps} ${install_common_ufw_apps}"
-	elif lsmod | grep -q ip-tables;then
-		add_packages_2_install_list "${install_ufw_apps} ${install_common_ufw_apps}"
-	else
-		failed_2_install_ufw=true
-	fi
-	
 	if [ "$machine_type_are" = "laptop" ];then
 		add_packages_2_install_list "${install_if_laptop_apps} ${install_common_if_laptop_apps}"
 	fi
@@ -97,6 +89,8 @@ pre_disto_apps_installer(){
 	if [ "$install_extra_now" = "extra" ];then
 		add_packages_2_install_list "${install_extra_apps} ${install_common_extra_apps}"
 	fi
+	
+	add_firewall_2_install_list
 }
 
 post_disto_apps_installer(){
@@ -149,41 +143,9 @@ post_disto_apps_installer(){
 			fi
 		fi
 	fi
-
-	if command_exist ufw;then
-		show_im "Disableing (UFW)"
-		ufw disable >/dev/null 2>&1
-				
-		if package_installed openssh;then
-			show_im "Limiting port 22/tcp (UFW)"
-    		ufw limit 22/tcp || show_wm "Failed to limiting port 22/tcp (UFW)"
-    		
-		fi
-		
-		show_im "Allow out port DNS 53 (UFW)"
-		ufw allow out 53 || show_wm "Failed to allow out port DNS 53 (UFW)"
-    	
-    	show_im "Allow out port 80/tcp (UFW)"
-    	ufw allow out 80/tcp || show_wm "Failed to allow out port 80/tcp (UFW)"
-    	
-		show_im "Allow out port 443/tcp (UFW)"
-    	ufw allow out 443/tcp || show_wm "Failed to allow out port 443/tcp (UFW)"
-    	
-		show_im "Allow out port NTP 123 (UFW)"
-		ufw allow out 123 || show_wm "Failed to allow out port NTP 123 (UFW)"
-    	
-    	show_im "Denying Incoming Packets by Default(UFW)"
-    	ufw default deny incoming || show_wm "Failed to denying Incoming Packets by Default(UFW)"
-    	
-		show_im "Allowing Outcoming Packets by Default(UFW)"
-    	ufw default allow outgoing || show_wm "Failed to allowing Outcoming Packets by Default(UFW)"
-    	
-		show_im "Enabled Firewall with Baselines!"
-    	ufw --force enable || show_wm "Failed to enabled Firewall with Baselines!"
-    	
-    	show_im "Enable Firewall logging"
-		ufw logging on || show_wm "Failed to enable Firewall logging"
-	fi
+	
+	configure_firewall
+	
 	touch "${installer_phases}/post_disto_apps_installer"
 }
 

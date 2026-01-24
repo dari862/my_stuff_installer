@@ -32,8 +32,6 @@ list_of_installed_apps_file_path="${all_temp_path}/list_of_installed_apps"
 
 dir_2_find_files_in=""
 
-failed_2_install_ufw=false
-
 Distro_installer_mode=true
 
 usr_local_bin_path="/usr/local/bin"
@@ -390,6 +388,7 @@ check_and_download_core_script(){
 		check_and_download_ "Files_4_Distros/${root_distro_name}/disto_apps_list"
 		check_and_download_ "disto_apps_installer"
 		check_and_download_ "Files_4_Distros/${root_distro_name}/disto_specific_apps_installer"
+		check_and_download_ "disto_firewall"
 	fi
 	
 	check_and_download_ "Files_4_Distros/${root_distro_name}/disto_specific_extra"
@@ -523,13 +522,7 @@ install_GPU_Drivers_now(){
 
 __Done(){
 	show_m "Done"
-	if [ "$failed_2_install_ufw" = true ];then
-		echo "Press any key to reboot."
-		stty -icanon -echo time 0 min 1
-		head -c1 >/dev/null
-		stty icanon echo
-	fi
-	
+
 	touch "/tmp/distro_done_installing"
 	
 	if [ "$reboot_now" = "Y" ];then
@@ -691,7 +684,7 @@ if [ "$install_drivers" = "true" ];then
 	source_this_script "disto_Drivers_installer" "Source Install drivers functions from (disto_Drivers_installer)"
 	source_this_script "disto_specific_Drivers_installer" "Source Install drivers functions from (disto_specific_Drivers_installer)"
 fi
-	
+
 if [ "$install_apps" = "true" ];then
 	source_this_script "disto_apps_installer" "Source Install apps functions from (disto_apps_installer)"
 	source_this_script "disto_specific_apps_installer" "Source Install apps functions from (disto_specific_apps_installer)"
@@ -831,12 +824,6 @@ switch_to_doas_now
 
 if [ "${Generate_GPU_Drivers_ready}" = true ];then
 	generate_system_ready_file "GPU_Drivers_ready"
-fi
-
-if [ "$failed_2_install_ufw" = true ];then
-	show_wm "Failed to install ${install_ufw_apps} ${install_common_ufw_apps}."
-	show_im "sleep 10."
-	sleep 10
 fi
 
 __Done

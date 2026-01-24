@@ -4,7 +4,6 @@ must_purge="system-config-printer zeitgeist zeitgeist-core"
 #######################
 ## must have apps
 #######################
-install_ufw_apps=""
 install_must_have_apps="libnotify-bin xdg-user-dirs"
 install_must_have_apps2="synaptic galternatives lm-sensors xz-utils"
 install_image_viewer_apps="gtk2-engines-murrine"
