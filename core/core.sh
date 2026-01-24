@@ -686,6 +686,7 @@ if [ "$install_drivers" = "true" ];then
 fi
 
 if [ "$install_apps" = "true" ];then
+	source_this_script "disto_firewall" "Source Firewall apps functions from (disto_firewall)"
 	source_this_script "disto_apps_installer" "Source Install apps functions from (disto_apps_installer)"
 	source_this_script "disto_specific_apps_installer" "Source Install apps functions from (disto_specific_apps_installer)"
 fi
