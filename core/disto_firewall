@@ -1,6 +1,6 @@
 #!/bin/sh
 add_firewall_2_install_list(){
-	install_firewall_apps=""
+	install_firewall_apps="ufw"
 	
 	case "${root_distro_name}" in
 		arch) 		install_firewall_apps="ufw";;
