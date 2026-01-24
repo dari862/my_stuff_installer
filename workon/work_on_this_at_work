@@ -1,15 +1,13 @@
-bin/not_add_2_path/my-installer:# work on this : add way to contiune install after login for distrobox container
-bin/cli/setbg:# work on this : improve owl4ce
+All_Distro_Themes/gtk_icons_builder/builder:# work on this : workonthis
+All_Distro_Themes/gtk_themes_builder/builder:# work on this : workonthis
 bin/my_installer/apps_center/hypervisors/virt/virt_manager/android_vm_builder:# work on this : workonthis
+
 bin/gui/pickbg:		echo	"# work on this : add ueberzugpp support"
 bin/gui/pickbg:		echo	"# work on this : add ueberzug support"
-bin/X11/not_add_2_path/owl4ce/owl4ce_scripts:# work on this : improve owl4ce
-bin/X11/yad/style_picker:# work on this : fix saveStyle
 bin/X11/WM/dynamic_theme:# work on this : colors not 100% accurete
 bin/X11/WM/style_file_builder:# work on this : improve owl4ce
 bin/X11/WM/style_file_builder:# work on this : improve rofi
 
-bin_extra/cli/vpn-killswitch:# work on this : improve
 bin_extra/cli/get-webseries:# work on this : improve
 bin_extra/cli/livewall:# work on this : improve
 bin_extra/cli/compress:# work on this : improve
@@ -32,5 +30,6 @@ bin_extra/X11/yad/livewall_gui:# work on this : improve
 bin_extra/X11/rofi/emoji:# work on this : improve
 bin_extra/X11/rofi/bookmarks:# work on this : improve
 
-All_Distro_Themes/gtk_icons_builder/builder:# work on this : workonthis
-All_Distro_Themes/gtk_themes_builder/builder:# work on this : workonthis
+bin/cli/setbg:# work on this : improve owl4ce
+bin/X11/yad/style_picker:# work on this : fix saveStyle
+bin/X11/not_add_2_path/owl4ce/owl4ce_scripts:# work on this : improve owl4ce
