@@ -8,7 +8,6 @@ bin/X11/WM/style_file_builder:# work on this : improve rofi
 
 bin_extra/cli/get-webseries:# work on this : improve
 bin_extra/cli/livewall:# work on this : improve
-bin_extra/cli/compress:# work on this : improve
 bin_extra/cli/swapfile:# work on this : improve
 bin_extra/cli/nm-wg-import:# work on this : improve
 bin_extra/cli/frontpage:# work on this : improve
@@ -17,7 +16,6 @@ bin_extra/cli/webconfig_tools:# work on this : improve
 bin_extra/cli/pdf-split:# work on this : improve
 bin_extra/cli/converter:# work on this : improve
 bin_extra/cli/compiler:# work on this : improve
-bin_extra/cli/mkscript:# work on this : improve
 bin_extra/cli/allow-ip:# work on this : improve
 bin_extra/cli/nm-wg-delete:# work on this : improve
 bin_extra/cli/booksplit:# work on this : improve
