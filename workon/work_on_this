@@ -1,27 +1,23 @@
+lib/rc.xml:  <!--# work on this : <mouse> -->
+bin_extra/X11/TV/movie:# work on this : this iptv script work on adding movie
+bin/X11/cli/clipmanager:    	# work on this : sleep and ownership of clipboard
+
 All_Distro_Themes/gtk_icons_builder/builder:# work on this : workonthis
 All_Distro_Themes/gtk_themes_builder/builder:# work on this : workonthis
 bin/my_installer/apps_center/hypervisors/virt/virt_manager/android_vm_builder:# work on this : workonthis
 
 bin/X11/WM/dynamic_theme:# work on this : colors not 100% accurete
-bin/X11/WM/style_file_builder:# work on this : improve owl4ce
 bin/X11/WM/style_file_builder:# work on this : improve rofi
 
 bin_extra/cli/livewall:# work on this : improve
 bin_extra/cli/frontpage:# work on this : improve
 bin_extra/cli/convertvid:# work on this : improve
 bin_extra/cli/converter:# work on this : improve
-bin_extra/cli/compiler:# work on this : improve
 bin_extra/X11/yad/livewall_gui:# work on this : improve
 bin_extra/X11/rofi/emoji:# work on this : improve
 bin_extra/X11/rofi/bookmarks:# work on this : improve
-bin_extra/cli/get-audio:# work on this : improve
 
 bin/cli/setbg:# work on this : improve owl4ce
 bin/X11/yad/style_picker:# work on this : fix saveStyle
 bin/X11/not_add_2_path/owl4ce/owl4ce_scripts:# work on this : improve owl4ce
-
-make them single script:
-bin_extra/cli/nm-wg-delete:# work on this : improve
-bin_extra/cli/nm-wg-import:# work on this : improve
-bin_extra/cli/nm-ovpn-import:# work on this : improve
-bin_extra/cli/nm-ovpn-delete:# work on this : improve
+bin/X11/WM/style_file_builder:# work on this : improve owl4ce
