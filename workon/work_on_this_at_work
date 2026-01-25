@@ -2,8 +2,6 @@ All_Distro_Themes/gtk_icons_builder/builder:# work on this : workonthis
 All_Distro_Themes/gtk_themes_builder/builder:# work on this : workonthis
 bin/my_installer/apps_center/hypervisors/virt/virt_manager/android_vm_builder:# work on this : workonthis
 
-bin/gui/pickbg:		echo	"# work on this : add ueberzugpp support"
-bin/gui/pickbg:		echo	"# work on this : add ueberzug support"
 bin/X11/WM/dynamic_theme:# work on this : colors not 100% accurete
 bin/X11/WM/style_file_builder:# work on this : improve owl4ce
 bin/X11/WM/style_file_builder:# work on this : improve rofi
