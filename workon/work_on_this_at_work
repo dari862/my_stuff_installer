@@ -8,22 +8,21 @@ bin/X11/WM/style_file_builder:# work on this : improve rofi
 
 bin_extra/cli/get-webseries:# work on this : improve
 bin_extra/cli/livewall:# work on this : improve
-bin_extra/cli/nm-wg-import:# work on this : improve
 bin_extra/cli/frontpage:# work on this : improve
 bin_extra/cli/convertvid:# work on this : improve
 bin_extra/cli/webconfig_tools:# work on this : improve
 bin_extra/cli/pdf-split:# work on this : improve
 bin_extra/cli/converter:# work on this : improve
 bin_extra/cli/compiler:# work on this : improve
-bin_extra/cli/allow-ip:# work on this : improve
 bin_extra/cli/nm-wg-delete:# work on this : improve
-bin_extra/cli/booksplit:# work on this : improve
+bin_extra/cli/nm-wg-import:# work on this : improve
 bin_extra/cli/nm-ovpn-import:# work on this : improve
-bin_extra/cli/get-audio:# work on this : improve
 bin_extra/cli/nm-ovpn-delete:# work on this : improve
 bin_extra/X11/yad/livewall_gui:# work on this : improve
 bin_extra/X11/rofi/emoji:# work on this : improve
 bin_extra/X11/rofi/bookmarks:# work on this : improve
+bin_extra/cli/get-audio:# work on this : improve
+bin_extra/cli/booksplit:# work on this : improve
 
 bin/cli/setbg:# work on this : improve owl4ce
 bin/X11/yad/style_picker:# work on this : fix saveStyle
