@@ -14,7 +14,6 @@ bin_extra/cli/frontpage:# work on this : improve
 bin_extra/cli/convertvid:# work on this : improve
 bin_extra/cli/converter:# work on this : improve
 bin_extra/X11/yad/livewall_gui:# work on this : improve
-bin_extra/X11/rofi/emoji:# work on this : improve
 bin_extra/X11/rofi/bookmarks:# work on this : improve
 
 bin/cli/setbg:# work on this : improve owl4ce
