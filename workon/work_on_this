@@ -20,3 +20,6 @@ bin/cli/setbg:# work on this : improve owl4ce
 bin/X11/yad/style_picker:# work on this : fix saveStyle
 bin/X11/not_add_2_path/owl4ce/owl4ce_scripts:# work on this : improve owl4ce
 bin/X11/WM/style_file_builder:# work on this : improve owl4ce
+
+
+sudo pacman -Syn noto-fonts-emoji
