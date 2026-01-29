@@ -9,9 +9,6 @@ bin/my_installer/apps_center/hypervisors/virt/virt_manager/android_vm_builder:# 
 bin/X11/WM/dynamic_theme:# work on this : colors not 100% accurete
 bin/X11/WM/style_file_builder:# work on this : improve rofi
 
-bin_extra/cli/convertvid:# work on this : improve
-bin_extra/cli/converter:# work on this : improve
-
 bin/X11/yad/style_picker:# work on this : fix saveStyle
 bin/X11/not_add_2_path/owl4ce/owl4ce_scripts:# work on this : improve owl4ce
 bin/X11/WM/style_file_builder:# work on this : improve owl4ce
