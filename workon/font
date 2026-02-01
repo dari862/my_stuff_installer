@@ -1,17 +1,1 @@
 sudo pacman -Syn noto-fonts-emoji
-
-##########################
-skel/.config/mpv/mpv.conf:osd-font=Iosevka
-skel/.config/kitty/kitty.conf:font_family      JetBrainsMono NF
-skel/.config/scriptconfig/locker/config.ini:font="Noto-Sans-Adlam-Bold"
-bin_extra/cli/frontpage:  body { background-color: var(--bg); color: var(--text); transition: background 0.2s; font-family: 'Segoe UI', sans-serif; }
-bin_extra/cli/ffmpeg_scripts/fade-title:font="OpenSans-Regular.ttf"
-bin/keybinds/keybinds:    	--fontname=Monospace --button=gtk-close
-bin/not_add_2_path/setLightdmGreeter:	font-name = Noto Sans 9
-skel_extra/.config/jgmenu/jgmenurc:font                = Noto Sans 10
-skel_extra/.config/geany/geany.conf:editor_font=mplus Nerd Font Mono 11
-skel_extra/.config/geany/geany.conf:tagbar_font=Cantarell 9
-skel_extra/.config/geany/geany.conf:msgwin_font=Cantarell 9
-skel_extra/.config/geany/geany.conf:font=mplus Nerd Font Mono 11
-skel_extra/.config/terminator/config:  title_font = Monospace 10
-skel_extra/.config/terminator/config:    font = Monospace 10
