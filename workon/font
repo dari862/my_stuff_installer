@@ -8,15 +8,6 @@ bin_extra/cli/frontpage:  body { background-color: var(--bg); color: var(--text)
 bin_extra/cli/ffmpeg_scripts/fade-title:font="OpenSans-Regular.ttf"
 bin/keybinds/keybinds:    	--fontname=Monospace --button=gtk-close
 bin/not_add_2_path/setLightdmGreeter:	font-name = Noto Sans 9
-bin/not_add_2_path/grub2_themes/extra/theme-1080p.txt:terminal-font: "Unifont Regular 14"
-bin/not_add_2_path/grub2_themes/extra/theme-1080p.txt:  item_font = "Unifont Regular 16"
-bin/not_add_2_path/grub2_themes/extra/theme-1080p.txt:  font = "Unifont Regular 16"
-bin/not_add_2_path/grub2_themes/extra/theme-4k.txt:terminal-font: "Unifont Regular 18"
-bin/not_add_2_path/grub2_themes/extra/theme-4k.txt:  item_font = "Unifont Regular 32"
-bin/not_add_2_path/grub2_themes/extra/theme-4k.txt:  font = "Unifont Regular 32"
-bin/not_add_2_path/grub2_themes/extra/theme-2k.txt:terminal-font: "Unifont Regular 18"
-bin/not_add_2_path/grub2_themes/extra/theme-2k.txt:  item_font = "Unifont Regular 24"
-bin/not_add_2_path/grub2_themes/extra/theme-2k.txt:  font = "Unifont Regular 24"
 skel_extra/.config/jgmenu/jgmenurc:font                = Noto Sans 10
 skel_extra/.config/geany/geany.conf:editor_font=mplus Nerd Font Mono 11
 skel_extra/.config/geany/geany.conf:tagbar_font=Cantarell 9
