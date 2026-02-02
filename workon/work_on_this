@@ -1,15 +1,11 @@
-lib/rc.xml:  <!--# work on this : <mouse> -->
 bin_extra/X11/TV/movie:# work on this : this iptv script work on adding movie
 bin/X11/cli/clipmanager:    	# work on this : sleep and ownership of clipboard
 
 All_Distro_Themes/gtk_icons_builder/builder:# work on this : workonthis
 All_Distro_Themes/gtk_themes_builder/builder:# work on this : workonthis
 
-bin/X11/WM/style_file_builder:# work on this : improve rofi
 bin/X11/WM/dynamic_theme:# work on this : colors not 100% accurete
+bin/X11/WM/style_file_builder:# work on this : improve rofi
 
 bin/my_installer/apps_center/hypervisors/virt/virt_manager/android_vm_builder:# work on this : workonthis
-
-bin/X11/not_add_2_path/owl4ce/owl4ce_scripts:# work on this : improve owl4ce
-bin/X11/WM/style_file_builder:# work on this : improve owl4ce
-bin/cli/setbg:# work on this : improve owl4ce
+lib/rc.xml:  <!--# work on this : <mouse> -->
