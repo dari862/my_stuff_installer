@@ -1,1 +1,0 @@
-/home/dari/Desktop/my_stuff/bin/dynamic_theme_scripts/palette_extractor.py
