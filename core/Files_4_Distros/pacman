@@ -60,6 +60,8 @@ install_AUR_helper(){
 	clean_pacman_db_locl_file
 	
 	if [ ! -f "$temp_yay_bin" ] && ! command_exist yay;then
+		show_im "installing base-devel (req for yay)..."
+		install_packages "base-devel"
 		show_im "installing yay..."
 		if [ ! -f "$temp_yay_bin" ];then
 			temp_yay_dir="/tmp/yay-bin-temp-dir"
