@@ -98,7 +98,11 @@ show_m "install packages: ${gui_file_editor} git openssh-server shellcheck meld"
 install_packages_for_dev "${gui_file_editor} git openssh-server shellcheck meld"
 
 show_m "Enable ssh."
-systemctl enable --now ssh || systemctl enable --now sshd || :
+if systemctl list-units --full -all | grep -Fq " sshd.service";then
+	systemctl enable --now sshd
+else
+	systemctl enable --now ssh
+fi
 
 show_m "Clone distro repo."
 git_clone_repos
