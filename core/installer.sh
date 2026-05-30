@@ -6,6 +6,10 @@ install_mode="${1:-install}"
 tmp_installer_dir="/tmp/installer_dir"
 machine_type_are=""
 
+remote_repo_link="github.com/dari862"
+pre_remote_repo_raw_link="raw.githubusercontent.com/dari862"
+post_remote_repo_raw_link="main"
+
 __USER="$(logname)"
 current_user_home="/home/$__USER"
 
@@ -42,8 +46,6 @@ user_with_superuser_accese=""
 install_hwclock=false
 
 PACKAGEMANAGER='apt-get dnf pacman zypper'
-
-repo_raw_url="https://raw.githubusercontent.com/dari862/${__installer_script_repo_name}/main/core"
 
 if [ -d "$current_user_home/Desktop/$__custom_distro_name" ];then
 	distro_temp_path="$current_user_home/Desktop/$__custom_distro_name"
@@ -565,6 +567,10 @@ build_prompt_to_install_value_file(){
 		switch_default_xsession_to="${switch_default_xsession_to}"
 		repo_commnad="${repo_commnad}"
 		reboot_now="${reboot_now}"
+		remote_repo_link="${remote_repo_link}"
+		pre_remote_repo_raw_link="${pre_remote_repo_raw_link}"
+		post_remote_repo_raw_link="${post_remote_repo_raw_link}"
+		__Theme_repo_name="${__Theme_repo_name}"
 	EOF
 }
 
@@ -641,7 +647,7 @@ fi
 
 tmp_installer_file="$tmp_installer_dir/${file_2_download}"
 check_installer_file="${current_script_dir}/${file_2_download}"
-download_url="$repo_raw_url/${file_2_download}"
+download_url="https://${pre_remote_repo_raw_link}/${__installer_script_repo_name}/${post_remote_repo_raw_link}/core/${file_2_download}"
 if [ -f "$check_installer_file" ];then
 	installation_file_path="$check_installer_file"
 else
@@ -747,7 +753,7 @@ if [ "$install_mode" = "install" ];then
 elif [ "$install_mode" = "dev" ];then
 	__packagemanager_file="$tmp_installer_dir/PACKAGEMANAGER"
 	if [ ! -f "$__packagemanager_file" ];then
-		download_file "$repo_raw_url/Files_4_Distros/${PACKAGER}" "$__packagemanager_file"
+		download_file "https://${pre_remote_repo_raw_link}/${__installer_script_repo_name}/${post_remote_repo_raw_link}/core/Files_4_Distros/${PACKAGER}" "$__packagemanager_file"
 	fi
-	$__super_command "$installation_file_path" "$__USER" "$__packagemanager_file" "$root_distro_name"
+	$__super_command "$installation_file_path" "$__USER" "$__packagemanager_file" "$root_distro_name" "${remote_repo_link}"
 fi

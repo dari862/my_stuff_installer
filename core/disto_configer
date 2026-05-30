@@ -6,7 +6,10 @@ if [ -d "${__distro_path_root}" ] && [ "${__reinstall_distro}" = false ];then
 fi
 
 show_im "moving Theme_Stuff to ${__custom_distro_name}"
-mv "${theme_temp_path}" "${distro_temp_path}"
+mv "${theme_temp_path}"/system-icons/* "${distro_temp_path}/${__Theme_repo_name}/system-icons"
+rm -rdf "${theme_temp_path}"/system-icons
+mv "${theme_temp_path}"/* "${distro_temp_path}/${__Theme_repo_name}"
+rm -rdf "${theme_temp_path}"
 
 show_im "change ownership to root"
 chown -R root:root "${distro_temp_path}"

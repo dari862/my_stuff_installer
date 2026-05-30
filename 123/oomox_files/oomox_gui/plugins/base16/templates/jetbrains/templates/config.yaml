@@ -1,0 +1,9 @@
+ide-theme:
+  extension: .theme.json
+  output: ide-themes
+editor-theme:
+  extension: .xml
+  output: editor-themes
+plugin:
+  extension: .xml
+  output: plugin

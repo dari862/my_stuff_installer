@@ -140,11 +140,11 @@ check_and_download_()
 	elif [ -f "${all_temp_path}/${filename}" ];then
 		show_im "${filename} already exist."
 	else
-		show_im "Download $check_this_file_ file from www.github.com/dari862/${__custom_distro_name}_installer ."
-		if download_file "https://raw.githubusercontent.com/dari862/${__custom_distro_name}_installer/main/core/${check_this_file_}" "${all_temp_path}/${filename}" ;then
+		show_im "Download $check_this_file_ file from ${remote_repo_link}/${__custom_distro_name}_installer ."
+		if download_file "https://${pre_remote_repo_raw_link}/${__custom_distro_name}_installer/${post_remote_repo_raw_link}/core/${check_this_file_}" "${all_temp_path}/${filename}" ;then
 			chmod +x "${all_temp_path}/${filename}"
 		else
-			show_em "Error: Failed to download ${filename} from https://raw.githubusercontent.com/dari862/${__custom_distro_name}_installer/main/core/${check_this_file_}"
+			show_em "Error: Failed to download ${filename} from https://${pre_remote_repo_raw_link}/${__custom_distro_name}_installer/${post_remote_repo_raw_link}/core/${check_this_file_}"
 		fi
 	fi
 }
@@ -365,7 +365,7 @@ clone_rep_(){
 		fi
 	else
 		show_im "Clone distro files repo ( ${getthis} )."
-		if ! $repo_commnad clone --depth=1 "https://github.com/dari862/${getthis}.git" "${getthis_location}";then
+		if ! $repo_commnad clone --depth=1 "https://${remote_repo_link}/${getthis}.git" "${getthis_location}";then
 			rm -rdf "${getthis_location}"
 			show_em "failed to clone ${getthis}."
 		fi

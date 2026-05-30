@@ -6,6 +6,7 @@ gui_file_editor="featherpad"
 __USER="${1:-$(logname)}"
 __packagemanager_file="${2:-}"
 distro_name="${3:-}"
+remote_repo_link="${4:-}"
 
 current_user_home="/home/$__USER"
 all_packages_are=""
@@ -55,7 +56,7 @@ git_clone_repos(){
 	
 	for repo in my_stuff_installer my_stuff Theme_Stuff YadAppsStore secureMyLinux;do
 		if [ ! -d "$repo" ];then
-			git clone https://github.com/dari862/$repo.git
+			git clone "https://${remote_repo_link}/$repo.git"
 			chown -R ${__USER}:${__USER} "$repo"
 		fi
 	done
