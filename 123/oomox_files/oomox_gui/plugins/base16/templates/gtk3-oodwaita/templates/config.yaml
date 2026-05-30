@@ -1,4 +1,0 @@
-gtk:
-  extension: /gtk-3.0/gtk.css
-  output: .themes/
-  force_filename:

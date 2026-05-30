@@ -1,9 +1,0 @@
-base16:
-    extension: .Xresources
-    output: xresources
-    supported-systems: [base16]
-
-base24:
-    extension: .Xresources
-    output: xresources
-    supported-systems: [base24]

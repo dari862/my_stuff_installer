@@ -1,8 +1,0 @@
-base16:
-    extension: .conf
-    output: colors
-
-base24:
-    extension: .conf
-    output: colors
-    supported-systems: [base24]

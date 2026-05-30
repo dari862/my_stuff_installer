@@ -1,6 +1,0 @@
-breeze:
-  extension: .conf
-  output: .config/qt5ct/colors/
-fusion:
-  extension: .conf
-  output: .config/qt5ct/colors/

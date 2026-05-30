@@ -54,7 +54,7 @@ git_clone_repos(){
 	[ ! -d "$current_user_home/Desktop" ] && mkdir -p "$current_user_home"/Desktop
 	cd "$current_user_home"/Desktop
 	
-	for repo in my_stuff_installer my_stuff Theme_Stuff YadAppsStore secureMyLinux;do
+	for repo in my_stuff_installer my_stuff Theme_Stuff secureMyLinux;do
 		if [ ! -d "$repo" ];then
 			git clone "https://${remote_repo_link}/$repo.git"
 			chown -R ${__USER}:${__USER} "$repo"

@@ -1,2 +1,0 @@
-#!/bin/sh
-cd oomox_gui && exec python3 -m oomox_gui "$@"
