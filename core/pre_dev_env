@@ -104,6 +104,11 @@ systemctl enable --now ssh || systemctl enable --now sshd || :
 show_m "Clone distro repo."
 git_clone_repos
 
+show_m "Adding mygrep alias."
+if ! grep -q "alias mygrep=" "$HOME/.bashrc";then
+	echo "alias mygrep='grep -rI --exclude-dir=\"\$HOME/my_stuff/Theme_Stuff\" --exclude-dir=\"\$HOME/my_stuff/All_Distro_Themes\"'" >> "$HOME/.bashrc"
+fi
+
 if [ "${install_packages}" = true ];then
 	show_m "install packages for dev"
 	add_all_packages_in_repo_to_var

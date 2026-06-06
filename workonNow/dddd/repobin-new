@@ -1,0 +1,469 @@
+#!/bin/bash
+# need superuser : use my-superuser
+unalias -a
+set -e
+current_script_name="$(basename "$0")"
+run_reinstall=false
+save_2_config_file=true
+repobinMODE="bin"
+extension=""
+File_to_link=""
+user_root_dir=false
+repo_to_find="" # Added initialization
+
+. "$__distro_path_lib"
+ROOT_CONFIG_DIR="${__distro_path_neverremove}"
+ROOT_CONFIG_FILE="${__distro_path_neverremove}/installs.json"
+ROOT_BIN_DIR="${__distro_path_bin}"
+ROOT_CORE_BIN_DIR="${__distro_path_downloaded}"
+ROOT_CORE_DOWNLOAD_DIR="${__distro_path_downloaded}"
+
+USER_BIN_DIR="$HOME/.local/bin" # Moved up to resolve sequence dependency
+USER_CONFIG_DIR="$USER_BIN_DIR"
+USER_CONFIG_FILE="${USER_CONFIG_DIR}/installs.json"
+USER_CORE_BIN_DIR="$USER_BIN_DIR/core"
+USER_CORE_DOWNLOAD_DIR="$USER_BIN_DIR/downloaded"
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --mode) repobinMODE="$2"; shift 2 ;;
+    --ext) extension="$2"; shift 2 ;;
+    --file) File_to_link="$2"; shift 2 ;;
+    --file-repo) repo_to_find="$2"; shift 2 ;;
+    --root) _SUPERUSER="my-superuser"; shift ;;
+    *) break ;;
+  esac
+done
+
+if [ "$(id -u)" -eq 0 ] || [ -n "$_SUPERUSER" ]; then
+    user_root_dir=true    
+fi
+
+if [ "$user_root_dir" = true ]; then
+    [ "$(id -u)" -eq 0 ] && _SUPERUSER=""
+    BIN_DIR="$ROOT_BIN_DIR"
+    CORE_BIN_DIR="$ROOT_CORE_BIN_DIR"
+    CORE_DOWNLOAD_DIR="$ROOT_CORE_DOWNLOAD_DIR"
+    CONFIG_DIR="$ROOT_CONFIG_DIR"
+    CONFIG_FILE="$ROOT_CONFIG_FILE"
+else
+    BIN_DIR="$USER_BIN_DIR"
+    CORE_BIN_DIR="$USER_CORE_BIN_DIR"
+    CORE_DOWNLOAD_DIR="$USER_CORE_DOWNLOAD_DIR"
+    CONFIG_DIR="$USER_CONFIG_DIR"
+    CONFIG_FILE="$USER_CONFIG_FILE"
+fi
+
+[ ! -d "$BIN_DIR" ] && $_SUPERUSER mkdir -p "$BIN_DIR"
+[ ! -d "$CORE_BIN_DIR" ] && $_SUPERUSER mkdir -p "$CORE_BIN_DIR"
+[ ! -d "$CORE_DOWNLOAD_DIR" ] && $_SUPERUSER mkdir -p "$CORE_DOWNLOAD_DIR"
+[ ! -d "$CONFIG_DIR" ] && $_SUPERUSER mkdir -p "$CONFIG_DIR"
+
+declare -A config
+if [ -f "$CONFIG_FILE" ]; then
+  while IFS="=" read -r repo ver; do
+    [ -z "$repo" ] && continue
+    config["$repo"]="$ver"
+  done < "$CONFIG_FILE"
+fi
+
+INFO_COLOR="\033[1;34m"
+WARN_COLOR="\033[1;33m"
+ERR_COLOR="\033[1;31m"
+RESET_COLOR="\033[0m"
+
+log()  { printf "${INFO_COLOR}[INFO]${RESET_COLOR} %s\n" "$*"; }
+warn() { printf "${WARN_COLOR}[WARN]${RESET_COLOR} %s\n" "$*" >&2; }
+err()  { printf "${ERR_COLOR}[ERROR]${RESET_COLOR} %s\n" "$*" >&2 ; exit 1; }
+
+find_binary_executable() {
+  local search_dir="$1"
+  local match_name="$2"
+  find "$search_dir" -type f -perm -111 ! -iname "*.so" ! -iname "*.dll" ! -iname "*.1" ! -iname "*.dylib" | grep -i "${match_name:-.}" | sort | head -n1
+}
+
+safe_mv() {
+  local local_ext="$extension"
+  [ -n "${local_ext}" ] && [ "${local_ext:0:1}" != "." ] && local_ext=".${local_ext}"
+  $_SUPERUSER mv "$tmpfile" "$CORE_DOWNLOAD_DIR/${bin_name}${local_ext}"
+  $_SUPERUSER chmod +x "$CORE_DOWNLOAD_DIR/${bin_name}${local_ext}"
+}
+
+Installing_deb() {
+  log "Installing deb file."
+  CONFIG_DIR="$ROOT_CONFIG_DIR"
+  CONFIG_FILE="$ROOT_CONFIG_FILE"
+  [ "$(id -u)" -ne 0 ] && _SUPERUSER="my-superuser"
+  [ ! -d "$CONFIG_DIR" ] && $_SUPERUSER mkdir -p "$CONFIG_DIR"
+  $_SUPERUSER mv "${tmpfile}" "${tmpfile}".deb
+  $_SUPERUSER apt-get install -y -f "${tmpfile}".deb
+}
+
+mv_appimage() {
+  log "appimage detected."
+  [ -d "$CORE_DOWNLOAD_DIR/${bin_name}.appimage" ] && $_SUPERUSER rm -rf "$CORE_DOWNLOAD_DIR/${bin_name}.appimage"
+  safe_mv
+  cd "$CORE_DOWNLOAD_DIR"
+  if ! $_SUPERUSER ./"${bin_name}${extension}" --version >/dev/null 2>&1; then
+      if $_SUPERUSER ./"${bin_name}${extension}" --appimage-extract >/dev/null 2>&1; then
+        $_SUPERUSER rm -rf "${bin_name}${extension}"
+        $_SUPERUSER mv "squashfs-root" "${bin_name}.appimage"
+        $_SUPERUSER ln -sf "$CORE_DOWNLOAD_DIR/${bin_name}.appimage/AppRun" "$CORE_BIN_DIR/${bin_name}"
+      fi
+  else
+      $_SUPERUSER ln -sf "${CORE_DOWNLOAD_DIR}/${bin_name}${extension}" "${CORE_BIN_DIR}/${bin_name}"
+  fi
+}
+
+extract_and_find_binary() {
+  local archive_type="$1"
+  local tmpdir
+  local tmpdir_extracted
+  local final_bin
+  
+  tmpdir="$(mktemp -d /tmp/repobin_XXXXXXXXXXXXXXXXX)"
+  tmpdir_extracted="$tmpdir/${bin_name}_extracted"
+  mkdir -p "$tmpdir_extracted"
+
+  mv "$tmpfile" "${tmpfile}.${archive_type}"
+  
+  case "$archive_type" in
+    zip) unzip -q "${tmpfile}.zip" -d "$tmpdir_extracted" ;;
+    tar.gz|tgz) tar -xf "${tmpfile}.${archive_type}" -C "$tmpdir_extracted" ;;
+    *) rm -rf "$tmpdir"; err "Unsupported archive type: $archive_type" ;;
+  esac
+
+  local deb_file
+  deb_file=$(find "$tmpdir_extracted" -iname "*.deb" | head -n1)
+  if [ -n "$deb_file" ]; then
+    tmpfile="$deb_file"
+    Installing_deb
+    rm -rf "$tmpdir"
+    return
+  fi
+   
+  local nested_archive
+  nested_archive=$(find "$tmpdir_extracted" -type f \( -iname "*.tar.gz" -o -iname "*.tgz" \) | head -n1)
+  if [ -n "$nested_archive" ]; then
+    log "nested archive file found"
+    local nested_dir="$tmpdir/nested"
+    mkdir -p "$nested_dir"
+    tar -xf "$nested_archive" -C "$nested_dir"
+    tmpdir_extracted="$nested_dir"
+    local subdir
+    subdir="$(find "$tmpdir_extracted" -mindepth 1 -maxdepth 1 -type d)"
+    [ "$(printf '%s\n' "$subdir" | wc -l)" -eq 1 ] && tmpdir_extracted="$subdir"
+  fi
+  
+  local found_bin
+  found_bin=$(find_binary_executable "$tmpdir_extracted" "$File_to_link")
+  if [ -z "$found_bin" ]; then
+     rm -rf "$tmpdir"
+     err "No executable binary found."
+  fi
+  tmpfile="$found_bin"
+  extension=""
+  
+  if [ "$repobinMODE" = "bin" ]; then
+    safe_mv
+    final_bin="$CORE_DOWNLOAD_DIR/${bin_name}${extension}"
+  elif [ "$repobinMODE" = "full" ]; then
+    $_SUPERUSER mv "$tmpdir_extracted" "$CORE_DOWNLOAD_DIR/${bin_name}"
+    final_bin=$(find_binary_executable "$CORE_DOWNLOAD_DIR/${bin_name}" "$File_to_link")
+    $_SUPERUSER chmod +x "$final_bin"
+  fi
+  $_SUPERUSER ln -sf "${final_bin}" "${CORE_BIN_DIR}/${bin_name}"
+  extra_bins
+  rm -rf "$tmpdir"
+}
+
+verify_checksum() {
+  local bin_path="$1"
+  local checksum_url="$2"
+  local tmp_checksum
+  local expected
+  local actual
+
+  tmp_checksum="$(mktemp /tmp/repobin_XXXXXXXXXXXXXXXXX)"
+  getURL "download2" "$checksum_url" "$tmp_checksum"
+
+  expected=$(grep "$(basename "$bin_path")" "$tmp_checksum" | awk '{print $1}')
+  if [ -z "$expected" ]; then
+    warn "Checksum file does not include $(basename "$bin_path")"
+    rm -f "$tmp_checksum"
+    return
+  fi
+
+  actual=$(sha256sum "$bin_path" | awk '{print $1}')
+  if [ "$expected" != "$actual" ]; then
+    rm -f "$tmp_checksum"
+    err "Checksum mismatch! Expected: $expected, Actual: $actual"
+  fi
+
+  log "Checksum verified for $(basename "$bin_path")"
+  rm -f "$tmp_checksum"
+}
+
+select_assets() {
+  local OS
+  local uname_ARCH
+  local ARCH=""
+  local assets
+  local filtered_assets=""
+  local appimage_assets=""
+
+  OS="$(uname -s)"
+  uname_ARCH="$(uname -m)"
+  case "$uname_ARCH" in
+    x86_64)   ARCH="x86_64|amd64|x86-64|_x64_" ;;
+    aarch64) ARCH="aarch64|arm64"              ;;
+    armv7*)  ARCH="armv7"                      ;;
+  esac
+  
+  assets="$(printf '%s\n' "${all_assets[@]}")"
+  
+  if [ -n "$ARCH" ] && printf '%s\n' "${assets}" | grep -iqE "${ARCH}" ; then
+      assets="$(printf '%s\n' "${assets}" | grep -iE "${ARCH}")"
+  fi
+  if printf '%s\n' "${assets}" | grep -iqE "${OS}" ; then
+    assets="$(printf '%s\n' "${assets}" | grep -i "${OS}")"
+  fi
+  if [ -n "$repo_to_find" ] && printf '%s\n' "${assets}" | grep -iqE "${repo_to_find}" ; then
+    assets="$(printf '%s\n' "${assets}" | grep -i "${repo_to_find}")"
+  fi
+  
+  if [ -n "$extension" ]; then
+    filtered_assets="$(printf '%s\n' "${assets}" | grep -i "$extension")"
+  elif [ "$extension" != "appimage" ]; then
+    filtered_assets="$(printf '%s\n' "${assets}" | grep -v "appimage")"
+  else
+    filtered_assets="${assets}"
+  fi
+  
+  if printf '%s\n' "${assets}" | grep -qi "appimage"; then
+      appimage_assets="$(printf '%s\n' "${assets}" | grep -i "appimage")"
+  fi
+  
+  local picked_assets=""
+  if [ -n "$filtered_assets" ]; then
+      picked_assets="$filtered_assets"
+  elif [ -n "$appimage_assets" ]; then
+      picked_assets="$appimage_assets"
+  fi
+    
+  for url in $picked_assets; do
+      case "$url" in
+          *sha256*) [ -z "$checksum_url" ] && checksum_url="$url" ;;
+          *) [ -z "$asset_url" ] && asset_url="$url" ;;
+      esac
+      if [ -n "$asset_url" ] && [ -n "$checksum_url" ]; then
+          break
+      fi
+  done
+}
+
+install_repo() {
+  bin_name="${repo##*/}"
+  local release_json
+  
+  if [ -z "$version" ]; then
+    release_json=$(getURL "2term" "https://api.github.com/repos/$repo/releases/latest")
+    version=$(echo "$release_json" | jq -r '.tag_name')
+  else
+    release_json=$(getURL "2term" "https://api.github.com/repos/$repo/releases/tags/$version")
+  fi
+  
+  if [[ "$(echo "$release_json" | jq -r '.draft')" == "true" || "$(echo "$release_json" | jq -r '.prerelease')" == "true" ]]; then
+    warn "Release is draft or prerelease. Skipping."; return 1
+  fi
+
+  mapfile -t all_assets < <(jq -r '.assets[].browser_download_url' <<< "$release_json" | grep -vE ".zsync|.changes$")
+  select_assets
+
+  [ -z "$asset_url" ] && err "No matching asset found."
+  [ "$run_reinstall" = false ] && [ -f "$BIN_DIR/${bin_name}${extension}" ] && err "Repo already installed."
+
+  tmpfile=$(mktemp /tmp/repobin_XXXXXXXXXXXXXXXXX)
+  log "Downloading from $asset_url"
+  getURL "download2" "$asset_url" "$tmpfile"
+
+  [[ -n "$checksum_url" ]] && verify_checksum "$tmpfile" "$checksum_url"
+  
+  local lower_asset_url="${asset_url,,}"
+  case "$lower_asset_url" in
+    *.deb) Installing_deb ;;
+    *.appimage) mv_appimage ;;
+    *.zip) extract_and_find_binary "zip" ;;
+    *.tar.gz|*.tgz) extract_and_find_binary "tar.gz" ;;
+    *) safe_mv; $_SUPERUSER mv "$CORE_DOWNLOAD_DIR/${bin_name}${extension}" "${CORE_BIN_DIR}" ;;
+  esac
+  
+  $_SUPERUSER ln -sf "${CORE_BIN_DIR}"/* "${BIN_DIR}/"
+  
+  log "Installed $bin_name@$version"
+  save_config "$repo" "${version}|${extension}"
+}
+
+update() {
+  while IFS="=" read -r repo version_and_extension; do
+    [ -z "$repo" ] && continue
+    log "Checking $repo..."
+    local release_json
+    release_json=$(getURL "2term" "https://api.github.com/repos/$repo/releases/latest")
+
+    if [ "$(printf '%s\n' "$release_json" | jq -r '.draft')" = "true" ] || [ "$(printf '%s\n' "$release_json" | jq -r '.prerelease')" = "true" ]; then
+      warn "Latest release is draft/prerelease. Skipping."
+      continue
+    fi
+
+    local latest
+    latest=$(printf '%s\n' "$release_json" | jq -r '.tag_name')
+    IFS='|' read -r version extension <<< "$version_and_extension"
+    local old_repo="$repo=${version}"
+    if [ "$latest" != "${version}" ]; then
+      log "Updating $repo: $version_and_extension → $latest"
+      install_repo
+      remove_repo_from_config "$old_repo" "$extension"
+    else
+      log "$repo is up-to-date."
+    fi
+  done < "$CONFIG_FILE"
+}
+
+list_installed() {
+  if [ ! -s "$ROOT_CONFIG_FILE" ]; then
+    printf '%s\n' "No binaries installed in root."
+  else
+    printf '%s\n' "Installed binaries and versions in root:"
+    sed 's/=/\t/g' "$ROOT_CONFIG_FILE" | column -t
+  fi
+  printf '\n'
+  if [ ! -s "$USER_CONFIG_FILE" ]; then
+    printf '%s\n' "No binaries installed in user."
+  else
+    printf '%s\n' "Installed binaries and versions in user:"
+    sed 's/=/\t/g' "$USER_CONFIG_FILE" | column -t
+  fi
+}
+
+save_config() {
+    [ "$save_2_config_file" = false ] && return
+    local reponame="${1:-}"
+    local value_of_repo="${2:-}"
+    printf '%s=%s\n' "$reponame" "$value_of_repo" | $_SUPERUSER tee -a "$CONFIG_FILE" >/dev/null 2>&1
+    log "Done."
+}
+
+remove_repo_from_config(){
+    $_SUPERUSER sed -i "\|${1:-}\|${2:-}|d" "$CONFIG_FILE"
+}
+
+remove_installed() {
+  repo="$1"
+  [ -z "${config[$repo]:-}" ] && err "No such repo installed: $repo"
+  
+  bin_name="${repo##*/}"
+  local target="$CORE_DOWNLOAD_DIR/$bin_name"
+
+  if [ -e "$target" ]; then
+    $_SUPERUSER rm -rf "$target"
+    log "Removed binary: $target"
+  else
+    warn "Binary file not found: $target"
+  fi
+  remove_repo_from_config "$repo"
+  log "Removed $repo from config"
+}
+
+info_installed() {
+  repo="$1"
+  [ -z "${config[$repo]:-}" ] && err "No such repo installed: $repo"
+
+  local version_and_extension="${config[$repo]}"
+  printf 'Repository: %s\n' "$repo"
+  printf 'Installed Version: %s\n' "$version_and_extension"
+  
+  local release_json
+  release_json=$(getURL "2term" "https://api.github.com/repos/$repo/releases/latest") || {
+    warn "Failed to fetch release info"
+    return 1
+  }
+
+  local latest_version
+  latest_version=$(printf '%s\n' "$release_json" | jq -r '.tag_name')
+  printf 'Latest Release Version: %s\n' "$latest_version"
+}
+
+clean_installed() {
+  $_SUPERUSER rm -rf /tmp/repobin_*
+  log "Removed temp file."
+}
+
+print_help() {
+  cat <<EOF
+Usage: $current_script_name [OPTIONS] <COMMAND> [ARGS...]
+    
+   $current_script_name [--root] [--ext extension] install <user/repo> [version]
+   $current_script_name [--root] update
+   
+Options:
+  --root                Use my-superuser when installing to protected paths
+
+Commands:
+  install <user/repo>   Install a GitHub release binary
+  update                Update all installed binaries to latest versions
+  list                  List installed binaries and their versions
+  remove <user/repo>    Remove installed binary and update config
+  info <user/repo>      Show installed and latest release version info
+  clean                 Clean temporary files generated by the script
+  reinstall <user/repo> Reinstall a specific binary
+  help                  Show this help message
+EOF
+}
+
+COMMAND="${1:-}"
+shift || true
+
+if [ -n "${1:-}" ] || [ "${COMMAND}" = "install" ] || [ "${COMMAND}" = "remove" ] || [ "${COMMAND}" = "reinstall" ]; then
+    case "${1}" in 
+        */*) repo="${1}"
+             version="${2:-}"
+             extra_bins() { :; }
+          ;;
+        *)   if [ -n "$__distro_path_lib" ] && [ -f "$__distro_path_lib" ]; then
+                 . "$__distro_path_lib"
+             fi
+             package_details_file_2_source="${__distro_path_root}/lib/$current_script_name/${1}.sh"
+             if [ -f "${package_details_file_2_source}" ]; then
+                 . "${package_details_file_2_source}"
+             else
+                 err "failed to install: $1 . does not exist in $current_script_name lib."
+             fi
+          ;;
+    esac
+fi
+
+case "$COMMAND" in
+  install) 
+    [ -z "${repo:-}" ] && err "Usage: $current_script_name install <user/repo>"
+    [ -n "${config[$repo]:-}" ] && err "repo installed: $repo to reinstall it switch to reinstall arg."
+    install_repo
+    ;;
+  update) run_reinstall=true ; update ;;
+  list) list_installed ;;
+  remove) [ -z "${1:-}" ] && err "Usage: $current_script_name remove <user/repo>"; remove_installed "$1" ;;
+  info) [ -z "${1:-}" ] && err "Usage: $current_script_name info <user/repo>"; info_installed "$1" ;;
+  clean) clean_installed ;;
+  reinstall) 
+    [ -z "${1:-}" ] && err "Usage: $current_script_name reinstall <user/repo>"
+    run_reinstall=true
+    save_2_config_file=false
+    repo="$1"
+    [ -z "${config[$repo]:-}" ] && err "No such repo installed: $repo"
+    IFS='|' read -r version extension <<< "${config[$repo]}"
+    log "Reinstalling $repo@$version"
+    install_repo
+    ;;
+  help|-h|--help) print_help ;;
+  *) print_help ; err "Unknown command: $COMMAND" ;;
+esac
