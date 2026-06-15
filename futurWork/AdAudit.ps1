@@ -2232,7 +2232,7 @@ Write-Both " _____ ____     _____       _ _ _
 |  _  |    \   |  _  |_ _ _| |_| |_
 |     |  |  |  |     | | | . | |  _|
 |__|__|____/   |__|__|___|___|_|_|
-$versionnum                  by phillips321
+$versionnum               
 "
 
 $running = $false
