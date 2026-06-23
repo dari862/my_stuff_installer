@@ -638,6 +638,16 @@ install_yt_dlb(){
 	touch "${installer_phases}/install_yt_dlb"
 }
 
+create_repo_var_file(){
+	show_m "Create repo var file"
+	tee "${__distro_path_neverremove}/repo" <<- EOF >/dev/null
+	#!/bin/sh
+	remote_repo_link="${remote_repo_link}"
+	pre_remote_repo_raw_link="${pre_remote_repo_raw_link}"
+	post_remote_repo_raw_link="${post_remote_repo_raw_link}"
+	EOF
+}
+
 ################################################################################################################################
 ################################################################################################################################
 ################################################################################################################################
@@ -765,6 +775,8 @@ fi
 switch_lightdm_now
 
 _unattended_upgrades_ start
+
+create_repo_var_file
 
 if [ "$install_drivers" = "false" ] && [ "$install_apps" = "true" ];then
 	__Done
