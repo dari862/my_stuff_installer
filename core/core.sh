@@ -640,6 +640,7 @@ install_yt_dlb(){
 
 create_repo_var_file(){
 	show_m "Create repo var file"
+	mkdir -p "${__distro_path_neverremove}"
 	tee "${__distro_path_neverremove}/repo" <<- EOF >/dev/null
 	#!/bin/sh
 	remote_repo_link="${remote_repo_link}"
@@ -776,8 +777,6 @@ switch_lightdm_now
 
 _unattended_upgrades_ start
 
-create_repo_var_file
-
 if [ "$install_drivers" = "false" ] && [ "$install_apps" = "true" ];then
 	__Done
 elif [ "$install_drivers" = "true" ] && [ "$install_apps" = "false" ];then
@@ -791,6 +790,7 @@ if [ ! -L "${__distro_path_root}/Distro_Specific" ] || [ "${__reinstall_distro}"
 	source_this_script "disto_configer" "Configering $__distro_title."
 fi
 
+create_repo_var_file
 . "${__distro_path_root}/lib/common/common"
 
 if [ "$install_dwm" = true ];then
