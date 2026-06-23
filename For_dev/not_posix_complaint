@@ -1,0 +1,11 @@
+#!/bin/sh
+sh_scripts="$(grep -r "#\!/" -I ~/Desktop/my_stuff/bin | grep "/sh" | awk -F: '{print $1}')"
+not_posix_complaint=""
+for script in ${sh_scripts};do
+	if shellcheck --severity=warning $script | grep "POSIX" >/dev/null 2>&1;then
+		not_posix_complaint="$script\n$not_posix_complaint"
+	fi
+done
+if [ -n "$not_posix_complaint" ];then
+	printf "$not_posix_complaint" > ~/Desktop/not_posix_complaint
+fi

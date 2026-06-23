@@ -1,0 +1,9 @@
+#!/bin/sh
+disto_specific_Drivers_installer(){
+	[ -f "${installer_phases}/disto_specific_Drivers_installer" ] && return
+	show_im "Configer Disto Specific Drivers."
+	if [ "$machine_type_are" = "laptop" ];then
+		show_im "this is laptop"
+	fi
+	touch "${installer_phases}/disto_specific_Drivers_installer"
+}

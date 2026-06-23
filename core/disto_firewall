@@ -1,0 +1,61 @@
+#!/bin/sh
+add_firewall_2_install_list(){
+	install_firewall_apps=""
+	
+	case "${root_distro_name}" in
+		arch) 		install_firewall_apps="ufw";;
+		debian) 	install_firewall_apps="ufw";;
+		fedora) 	install_firewall_apps="ufw";;
+		opensuse)	install_firewall_apps="ufw";;
+		ubuntu) 	install_firewall_apps="ufw";;
+		*) 			install_firewall_apps="ufw";;
+	esac
+	
+	if [ -n "$install_firewall_apps" ];then
+		add_packages_2_install_list "${install_firewall_apps}"
+	else
+		show_wm "Failed to add firewall apps to installing list install_firewall_apps = $install_firewall_apps ."	
+	fi
+}
+
+configure_ufw_(){
+	show_im "Disableing (UFW)"
+	ufw disable >/dev/null 2>&1
+			
+	if package_installed openssh;then
+		show_im "Limiting port 22/tcp (UFW)"
+    	ufw limit 22/tcp || show_wm "Failed to limiting port 22/tcp (UFW)"	
+	fi
+	
+	show_im "Allow out port DNS 53 (UFW)"
+	ufw allow out 53 || show_wm "Failed to allow out port DNS 53 (UFW)"
+    
+    show_im "Allow out port 80/tcp (UFW)"
+    ufw allow out 80/tcp || show_wm "Failed to allow out port 80/tcp (UFW)"
+    
+	show_im "Allow out port 443/tcp (UFW)"
+    ufw allow out 443/tcp || show_wm "Failed to allow out port 443/tcp (UFW)"
+    
+    show_im "Allow out port NTP 123 (UFW)"
+	ufw allow out 123 || show_wm "Failed to allow out port NTP 123 (UFW)"
+    	
+    show_im "Denying Incoming Packets by Default(UFW)"
+    ufw default deny incoming || show_wm "Failed to denying Incoming Packets by Default(UFW)"
+    	
+	show_im "Allowing Outcoming Packets by Default(UFW)"
+    ufw default allow outgoing || show_wm "Failed to allowing Outcoming Packets by Default(UFW)"
+    
+    show_im "Enabled Firewall with Baselines!"
+    ufw --force enable || show_wm "Failed to enabled Firewall with Baselines!"
+    	
+    show_im "Enable Firewall logging"
+	ufw logging on || show_wm "Failed to enable Firewall logging"
+}
+
+configure_firewall(){
+	if command_exist ufw;then
+		configure_ufw_
+	else
+		show_wm "ufw does not exist."	
+	fi
+}

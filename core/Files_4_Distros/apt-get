@@ -1,0 +1,270 @@
+#!/bin/sh -e
+network_manager_app_from_Files_4_Distros="network-manager rfkill"
+
+remove_aria2=false
+__remove_package="apt-get purge -y"
+
+##################################
+# only for apt
+##################################
+aptupdate(){
+	show_sm "updating your system"
+	[ "$(find /var/cache/apt/pkgcache.bin -mtime 0 2>/dev/null)" ] || apt-get update
+}
+
+aptfixer(){
+	show_sm "running aptfixer"
+	if grep -q 'deb cdrom' /etc/apt/sources.list;then
+		sed -i '/deb cdrom/d' /etc/apt/sources.list
+	fi
+	aptupdate
+	apt-get install -yq -f 2>/dev/null || show_em "failed to apt-get install -yq -f"
+}	
+
+install_apt_fast(){
+	if ! type aria2c >/dev/null 2>&1;then
+		show_sm "install aria2c."
+  		apt-get install -y aria2
+	fi
+	remove_aria2=true
+	show_sm "download apt-fast"
+	apt_fast_url='https://raw.githubusercontent.com/ilikenwf/apt-fast/master'
+	download_file "${apt_fast_url}/apt-fast" "/usr/local/bin/apt-fast"
+	
+	show_sm "install apt-fast"
+	chmod +x /usr/local/bin/apt-fast
+  	[ ! -f /etc/apt-fast.conf ] && download_file "${apt_fast_url}/apt-fast.conf" "/etc/apt-fast.conf"
+}
+
+##################################
+# for rest
+##################################
+
+build_packages_list_for_repo(){
+	show_im "Creating package list..."
+	apt list 2>/dev/null > "${list_of_apps_file_path}"
+}
+
+build_packages_installed_list(){
+	show_im "Creating installed package list..."
+	apt list --installed 2>/dev/null | awk -F'/' '{print $1 " " $NF}' > "${list_of_installed_apps_file_path}"
+}
+
+install_packages(){
+	packages_from_arg_to_install="${1:-}"
+	packages_to_install="${packages_from_arg_to_install}"
+	if [ -n "$packages_to_install" ];then
+		if package_installed "${packages_to_install}";then
+			return
+		fi
+	else
+		packages_to_install="${all_Packages_to_install}"
+	fi
+	
+	if [ -n "${packages_to_install}" ];then
+    	(apt install -yq ${packages_to_install} && kill_package_manager) || \
+		(apt install -yq ${packages_to_install} && kill_package_manager) || \
+		apt install -yq ${packages_to_install} || return 1
+    else
+    	show_wm_only "all_Packages_to_install are empty"
+    	return
+    fi
+    
+    build_packages_installed_list
+    
+    if [ -z "${packages_from_arg_to_install}" ];then
+    	failed_2_install=""
+    	for package in ${packages_to_install};do
+    		if ! package_installed "${package}";then
+    			failed_2_add_pakage "${package} does not exist."
+    		else
+    			List_of_installed_packages_="${List_of_installed_packages_} ${package}"
+    		fi
+    	done
+    fi
+}
+
+install_packages_for_dev(){
+	failed_to_locate=""
+	all_packages_to_install=""
+	for package in $@;do
+		if apt-cache policy $package >/dev/null 2>&1;then
+			all_packages_to_install="$all_packages_to_install $package"
+		else
+			failed_to_install="$failed_to_install $package"
+		fi
+	done
+	(apt install -yq ${all_packages_to_install} && kill_package_manager) || \
+	(apt install -yq ${all_packages_to_install} && kill_package_manager) || \
+	apt install -yq ${all_packages_to_install}
+}
+
+add_packages_2_install_list(){
+	localarray="$@"
+	for INDEX in ${localarray};do
+		if ! package_installed "${INDEX}";then
+			if grep -q "^$INDEX/" "${list_of_apps_file_path}";then
+				all_Packages_to_install="$all_Packages_to_install $INDEX"
+				show_im "${INDEX} added to install apps" 
+			else
+				failed_2_add_pakage "${INDEX} does not exist."
+			fi
+		fi
+	done
+}
+
+upgrade_now()
+{
+	show_im "Run upgrade_now function"
+	show_sm "Run upgrade" 
+	apt-get -y upgrade
+	show_sm "Run dist-upgrade" 
+	apt-get -y dist-upgrade
+	show_sm "Run full-upgrade" 
+	apt-get -y full-upgrade
+	show_im "end upgrade_now" 
+}
+
+remove_packages()
+{
+	packages="$@"
+	if [ -n "$packages" ];then
+		show_im "Removing ${packages}."
+		${__remove_package} $packages
+	else
+		show_wm_only "no packages to remove."
+	fi
+}
+
+run_autoclean(){
+	show_im "run autoremove autoclean."
+	apt-get autoremove -y
+	apt-get autoclean -y
+}
+
+run_package_manager_autoclean(){
+	show_im "autoremove unwanted pakages"
+	run_autoclean
+	du -h /var/cache/apt
+      
+    if [ -d /var/tmp ]; then
+        find /var/tmp -type f -atime +5 -delete
+    fi
+    
+    if [ -d /var/log ]; then
+        find /var/log -type f -name "*.log" -exec truncate -s 0 {} \;
+    fi
+
+	if [ "$init_system_are" = "systemd" ]; then
+        journalctl --vacuum-time=3d
+    fi
+}
+
+_unattended_upgrades_()
+{
+	auto_upgrades_file="/etc/apt/apt.conf.d/20auto-upgrades"
+	if [ -f "${auto_upgrades_file}" ];then
+		auto_upgrades_file_bak="/etc/apt/apt.conf.d/20auto-upgrades.bak"
+		case "$1" in
+			start)
+				[ -f "${installer_phases}/_unattended_upgrades_start" ] && return
+				show_im "start unattended upgrades."
+				service_manager stop unattended-upgrades || show_wm_only "failed to stop unattended-upgrades"
+				if [ ! -f "${auto_upgrades_file_bak}" ];then
+					mv "${auto_upgrades_file}" "${auto_upgrades_file_bak}"
+				fi
+				touch "${installer_phases}/_unattended_upgrades_start"
+			;;
+			stop)
+				[ -f "${installer_phases}/_unattended_upgrades_stop" ] && return
+				show_im "stop unattended upgrades."
+				if [ -f "${auto_upgrades_file}" ] && [ -f "${auto_upgrades_file_bak}" ];then
+					rm "${auto_upgrades_file}"
+				fi
+					
+				if [ -f "${auto_upgrades_file_bak}" ];then
+					mv "${auto_upgrades_file_bak}" "${auto_upgrades_file}"
+				fi
+				touch "${installer_phases}/_unattended_upgrades_stop"
+			;;
+		esac
+	fi
+}
+
+install_lightdm_now(){
+	install_lightdm_="lightdm lightdm-gtk-greeter-settings"
+	add_packages_2_install_list "${install_lightdm_}"
+}
+
+switch_lightdm_now(){
+	[ -f "${installer_phases}/switch_lightdm_now" ] && return
+	
+	lightdm_does_not_exist=false
+	show_im "Switching to ( lightdm )."
+	if [ -f "/etc/X11/default-display-manager" ];then
+		d_d_m="$(basename "$(cat /etc/X11/default-display-manager)")"
+		if [ "$d_d_m" != "lightdm" ];then
+        	lightdm_does_not_exist=true
+        	d_d_m="lightdm"
+        fi
+	fi
+	
+	if [ "$lightdm_does_not_exist" = true  ];then
+		echo "/usr/sbin/lightdm" | tee /etc/X11/default-display-manager > /dev/null 2>&1 || (show_em "failed to change default-display-manager")
+		dpkg-reconfigure lightdm || (show_em "failed to dpkg-reconfigure lightdm")
+	else
+		show_im "lightdm already exist."
+	fi
+	touch "${installer_phases}/switch_lightdm_now"
+}
+
+package_installed(){
+	package="${1:-}"
+	if grep -q "^$package " "$list_of_installed_apps_file_path";then
+		return 0
+	else
+		return 1
+	fi
+}
+
+must_install_apps()
+{
+	[ -f "${installer_phases}/must_install_apps" ] && return
+	show_m "installing req apps"
+	install_packages git
+	if [ "$install_hwclock" = true ];then
+		install_packages util-linux-extra util-linux
+		ln -sf "/usr/share/zoneinfo/$__timezone" /etc/localtime
+		if ! hwclock --systohc >/dev/null 2>&1; then
+			show_em "Failed to set hardware clock!(must_install_apps)"
+		fi
+	fi
+	touch "${installer_phases}/must_install_apps"
+}
+
+kill_package_manager(){
+	kill_package_ apt
+	kill_package_ apt-get
+}
+
+pre_package_manager_(){
+	[ -f "${installer_phases}/pre_package_manager_" ] && return
+	export DEBIAN_FRONTEND=noninteractive
+	export DEBCONF_NONINTERACTIVE_SEEN=true
+	kill_package_manager
+	build_packages_list_for_repo
+	service_manager stop apt-daily.timer || show_wm_only "failed to stop apt-daily.timer"
+	service_manager stop apt-daily-upgrade.timer || show_wm_only "failed to stop apt-daily-upgrade.timer "
+	aptfixer
+	install_apt_fast || :
+	if command_exist apt-get;then
+		PACKAGER="apt-get"
+	elif command_exist apt-fast;then
+		PACKAGER="apt-fast"
+	fi
+	touch "${installer_phases}/pre_package_manager_"
+}
+
+enable_repo(){   :; }
+
+install_aur_and_all_needed_packages(){   :; }

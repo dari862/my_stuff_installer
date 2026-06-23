@@ -1,0 +1,69 @@
+#!/bin/sh
+must_purge="system-config-printer zeitgeist zeitgeist-core"
+
+#######################
+## must have apps
+#######################
+install_must_have_apps="libnotify-bin xdg-user-dirs"
+install_must_have_apps2="synaptic galternatives lm-sensors xz-utils"
+install_image_viewer_apps="gtk2-engines-murrine"
+install_files_manager_support_app="gvfs-fuse gvfs-backends avahi-utils"
+install_terminal=""
+install_if_laptop_apps=""
+install_cli_sound_app="libaudiofile1"
+install_MIDI_sound_app="timidity"
+install_text_editer_app=""
+install_mediaplayer_app=""
+install_polkit_apps=""
+install_fonts=""
+install_passman=""
+
+#firefox
+install_firefox_="firefox-esr"
+
+install_for_scripts1=""
+# python3-pyte for theoops , python3-pyte for pickbg
+install_for_scripts2="python3-pyte python3-tk"
+
+#for x11
+install_X11_apps="x11-utils xorg xserver-xorg-input-all xinput dbus-x11 xinit x11-xserver-utils xclip xwallpaper xdotool xprintidle"
+install_must_have_apps_for_X11=""
+install_res_apps_for_X11=""
+install_locker_app_for_X11=""
+install_if_laptop_apps_x11="xserver-xorg-input-synaptics"
+install_conky_all_app="conky-all"
+install_openbox_="obconf"
+
+#for wayland
+
+
+#######################
+## extra apps
+#######################
+install_files_manager_thunar=""
+install_files_manager_pcmanfm=""
+install_zsh=""
+
+#for x11
+install_polybar="libnm-dev"
+install_apps_for_bspwm=""
+install_apps_for_dwm="build-essential libx11-dev libxft-dev libxinerama-dev"
+install_jgmenu=""
+
+#for wayland
+
+
+#######################
+## better bash
+#######################
+install_better_bash=""
+
+#######################
+## better shell
+#######################
+install_better_shell=""
+
+#######################
+## extra
+#######################
+install_extra_apps=""

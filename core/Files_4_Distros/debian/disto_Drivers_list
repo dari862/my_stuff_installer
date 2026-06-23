@@ -1,0 +1,8 @@
+#!/bin/sh
+#must have apps
+install_audio=""
+install_drivers_if_laptop=""
+install_wireless="wireless-tools"
+install_bluetooth="bluez blueman"
+install_autoinstall_firmware="isenkram"
+install_exfat=""

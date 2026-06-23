@@ -1,0 +1,70 @@
+#!/bin/sh
+must_purge="system-config-printer zeitgeist"
+
+#######################
+## must have apps
+#######################
+install_must_have_apps="libnotify"
+install_must_have_apps2="pamac-aur xdotool lm_sensors xz"
+install_image_viewer_apps=""
+install_files_manager_support_app="gvfs-mtp gvfs-afc avahi"
+install_terminal="xdg-desktop-portal xdg-desktop-portal-gtk"
+install_if_laptop_apps=""
+install_cli_sound_app="libaudiofile"
+install_MIDI_sound_app="timidity++"
+install_text_editer_app=""
+install_mediaplayer_app=""
+install_polkit_apps=""
+install_fonts=""
+install_passman=""
+
+#firefox
+install_firefox_="firefox"
+
+install_for_scripts1=""
+# python3-pyte for theoops , python3-pyte for pickbg
+install_for_scripts2="python-pyte tk"
+
+#for x11
+install_X11_apps="xorg-xprop xorg-server xorg-xinput dbus xorg-xinit xdg-user-dirs xorg-xdpyinfo xclip xwallpaper xdotool xprintidle"
+install_must_have_apps_for_X11=""
+install_res_apps_for_X11=""
+install_locker_app_for_X11=""
+install_if_laptop_apps_x11="xf86-input-synaptics"
+install_conky_all_app="conky"
+install_openbox_="obconf-qt-git xorg-xset"
+
+#for wayland
+
+
+#######################
+## extra apps
+#######################
+install_files_manager_thunar="tumbler"
+install_files_manager_pcmanfm=""
+install_zsh=""
+
+#for x11
+#install_clipman_manager_for_X11="diodon"
+install_polybar="libnm-dev"
+install_apps_for_bspwm=""
+install_apps_for_dwm="base-devel"
+install_jgmenu=""
+
+#for wayland
+
+
+#######################
+## better bash
+#######################
+install_better_bash=""
+
+#######################
+## better shell
+#######################
+install_better_shell="pkgfile"
+
+#######################
+## extra
+#######################
+install_extra_apps=""

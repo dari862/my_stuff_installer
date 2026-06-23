@@ -1,0 +1,49 @@
+#!/bin/sh
+#===================================================================================
+. "$__distro_path_lib"
+icons_list="
+Arc-Circle
+Blue-Icons
+Catppuccin-Mocha
+default
+Dracula
+Faenza-Dark-Bunsen
+Green-Icons
+Gruvbox-Plus-Dark
+Luna-Dark
+Luv-Folders
+Luv-Folders-Dark
+Nordic-Folders
+Numix
+Numix-Bunsen-Circle-aqua
+Numix-Bunsen-Circle-aqua-Light
+Numix-Bunsen-Circle-darkred
+Paper-Bunsen
+Papirus-Bunsen-bluegrey
+Papirus-Bunsen-Dark-black
+Papirus-Bunsen-Dark-bluegrey
+Papirus-Custom
+Papirus-Dark-Custom
+Qogir
+Qogir-Dark
+Vimix-White
+"
+
+picknewicons(){
+	new_icon="${1:-}"
+	sed -i "s|Net/IconThemeName .*|Net/IconThemeName \"$new_icon\"|g" $HOME/.config/xsettingsd/xsettingsd.conf
+	sed -i "s/gtk-icon-theme-name=.*/gtk-icon-theme-name=\"$new_icon\"/g" $HOME/.config/gtk-2.0/gtkrc-2.0
+	sed -i "s/gtk-icon-theme-name=.*/gtk-icon-theme-name=$new_icon/g" $HOME/.config/gtk-3.0/settings.ini
+	"${__distro_path_root}"/bin/X11/WM/reload_gtk23
+}
+
+for i in ${icons_list};do
+	picknewicons "${i}1"
+	sleep 2
+	my-shots --now --path "$HOME/Pictures/test" --name "${i}my" --no-view --no-copy --no-notify
+	sleep 2
+	picknewicons "${i}"
+	sleep 2
+	my-shots --now --path "$HOME/Pictures/test" --name "${i}-org" --no-view --no-copy --no-notify
+	sleep 2
+done

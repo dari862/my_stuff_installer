@@ -1,0 +1,41 @@
+missing
+=====
+Adwaita
+Archcraft
+Archcraft-Dark
+breeze
+breeze-dark
+Candy
+Faenza-Bunsen-common
+Faenza-Dark
+gnome
+hicolor
+Mint X
+Numix-Bunsen-recoloured-common
+Numix-Circle
+Numix-Light
+Paper
+Papirus
+Papirus-Apps
+Papirus-Dark
+
+
+##################################################
+(process:693010): GLib-CRITICAL **: 15:57:40.958: g_markup_escape_text: assertion 'text != NULL' failed
+=============================
+block and many more for rofi-lancher and runner
+##################################################
+sometime polybar does not launch
+================================
+ BlackArch clean Hacker_Den Japanese_Street keyboards Neon_punk Tokyo_City
+ and many more
+to_test(){
+	cd $HOME/.config/blob/polybar
+    for t in BlackArch clean Hacker_Den Japanese_Street keyboards Neon_punk Tokyo_City;do
+        style_changer polybar $t >/dev/null 2>&1
+        echo "style name are : $t"
+        echo "style name are : $t"
+        echo "style name are : $t"
+        sleep 3
+    done
+}

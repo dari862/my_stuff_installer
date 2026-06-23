@@ -1,0 +1,128 @@
+#!/bin/sh
+set -e
+
+gui_file_editor="featherpad"
+
+__USER="${1:-$(logname)}"
+__packagemanager_file="${2:-}"
+distro_name="${3:-}"
+remote_repo_link="${4:-}"
+
+current_user_home="/home/$__USER"
+all_packages_are=""
+dont_install="wireless|fingerprint|bluetooth|laptop|gpu|must_purge|#install_"
+
+show_m(){
+	message="${1-}"
+	printf '%b' "\n==[ \\033[1;32m${message}\\033[0m ]==\n"
+}
+
+show_wm(){
+	message="${1-}"
+	printf '%b' "\\033[1;33m[!] \\033[0m${message}\n"
+	printf '%s\n' "${message}"
+}
+
+show_wm_only(){
+	message="${1-}"
+	printf '%b' "\\033[1;33m[!] \\033[0m${message}\n"
+}
+
+show_em(){
+	message="${1-}"
+	printf '%b' "\\033[1;31m[-] ${message}\\033[0m\n"
+	exit 1
+}
+
+show_im(){
+	message="${1-}"
+	printf '%b' "\\033[1;34m[*] \\033[0m${message}\n"
+}
+
+show_sm(){
+	message="${1-}"
+	printf '%b' "\\033[1;36m[**] \\033[0m${message}\n"
+}
+
+kill_package_(){
+	ps aux | grep "${1}" | awk '{print $2}' | xargs kill -9 >/dev/null 2>&1 || :
+}
+
+aptfixer(){   :; }
+
+git_clone_repos(){
+	[ ! -d "$current_user_home/Desktop" ] && mkdir -p "$current_user_home"/Desktop
+	cd "$current_user_home"/Desktop
+	
+	for repo in my_stuff_installer my_stuff Theme_Stuff secureMyLinux;do
+		if [ ! -d "$repo" ];then
+			git clone "https://${remote_repo_link}/$repo.git"
+			chown -R ${__USER}:${__USER} "$repo"
+		fi
+	done
+	
+	ln -sf my_stuff_installer/For_dev/push_to_git .
+	ln -sf my_stuff_installer/For_dev/git_to_pull .
+	ln -sf my_stuff_installer/For_dev .
+	ln -sf my_stuff_installer/workon .
+}
+
+add_all_packages_in_repo_to_var(){
+	
+	all_packages_are="$( cd "$current_user_home"/Desktop/my_stuff_installer/core/Files_4_Distros && \
+		grep 'install_' \
+		disto_apps_list_common disto_Drivers_list_common \
+		"$distro_name"/disto_Drivers_list "$distro_name"/disto_apps_list \
+		| grep '=' | grep -vE "${dont_install}" | grep -oP '"\K[^"]+(?=")'
+	)"
+}
+
+printf ""
+printf "Do you want to install all software in disto_Installapps_list disto_Drivers? [Y|n]"
+stty -icanon -echo time 0 min 1
+yn="$(head -c1)"
+stty icanon echo
+if printf "%s" "$yn" | tr '[:lower:]' '[:upper:]' | grep -q "N";then
+	install_packages=false
+else
+	install_packages=true
+fi
+printf ""
+
+. "${__packagemanager_file}"
+aptfixer
+
+show_m "Running upgrade."
+upgrade_now
+
+show_m "install packages: ${gui_file_editor} git openssh-server shellcheck meld"
+install_packages_for_dev "${gui_file_editor} git openssh-server shellcheck meld"
+
+show_m "Enable ssh."
+systemctl enable --now ssh || systemctl enable --now sshd || :
+
+show_m "Clone distro repo."
+if ! grep -q "github.com" ~/.ssh/known_hosts;then
+	mkdir -p ~/.ssh
+	touch ~/.ssh/known_hosts
+	ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts
+fi
+git_clone_repos
+
+show_m "Adding mygrep alias."
+if ! grep -q "alias mygrep=" "$HOME/.bashrc";then
+	echo "alias mygrep='grep -rI --exclude-dir=\"\$HOME/my_stuff/Theme_Stuff\" --exclude-dir=\"\$HOME/my_stuff/All_Distro_Themes\"'" >> "$HOME/.bashrc"
+fi
+
+if [ "${install_packages}" = true ];then
+	show_m "install packages for dev"
+	add_all_packages_in_repo_to_var
+	install_packages_for_dev "${all_packages_are}"
+	if [ -n "$failed_to_install" ];then
+		show_wm_only "failed to install : $failed_to_install"
+	fi
+fi
+
+show_m "Done!!"
+show_m "Done!!"
+show_m "Done!!"

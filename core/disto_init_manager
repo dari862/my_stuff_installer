@@ -1,0 +1,46 @@
+#!/bin/sh
+if [ "$init_system_are" = "systemd" ];then
+	service_manager(){
+		_command="${1-}"
+		_file="${2-}"
+		if [ "${_command}" = "stop" ];then
+			systemctl stop ${_file} || return 1
+		elif [ "${_command}" = "enable-only" ];then
+			systemctl enable ${_file} || return 1
+		elif [ "${_command}" = "enable" ];then
+			systemctl enable --now ${_file} || return 1
+		elif [ "${_command}" = "disable" ];then
+			systemctl disable ${_file} || return 1
+		elif [ "${_command}" = "disable-stop" ];then
+			systemctl disable ${_file} || return 1
+			systemctl stop ${_file} || return 1
+		elif [ "${_command}" = "is-enabled" ];then
+			systemctl is-enabled --quiet ${_file} || return 1
+		elif [ "${_command}" = "mask" ];then
+			systemctl mask ${_file} || return 1
+		fi
+	}
+elif [ "$init_system_are" = "openrc" ];then
+	service_manager(){
+		_command="${1-}"
+		_file="${2-}"
+		if [ "${_command}" = "stop" ];then
+			rc-service ${_file} stop || return 1
+		elif [ "${_command}" = "enable-only" ];then
+			rc-update add ${_file} || return 1
+		elif [ "${_command}" = "enable" ];then
+			rc-update add ${_file} || return 1
+		elif [ "${_command}" = "disable" ];then
+			rc-update del ${_file} || return 1
+		elif [ "${_command}" = "disable-stop" ];then
+			rc-update del ${_file} || return 1
+			rc-service ${_file} stop || return 1
+		elif [ "${_command}" = "is-enabled" ];then
+			rc-service ${_file} status --quiet || return 1
+		elif [ "${_command}" = "mask" ];then
+			rc-update del ${_file} || return 1
+		fi
+	}
+else
+	show_em "init_system_are = $init_system_are . $init_system_are does not exist."
+fi

@@ -1,0 +1,34 @@
+#!/bin/sh
+if [ -d "${__distro_path_root}" ] && [ "${__reinstall_distro}" = false ];then
+	show_im "Establish Distro_Specific dir."
+	ln -sf "${__distro_path_root}/All_Distro_Specific/${root_distro_name}" "${__distro_path_root}/Distro_Specific" || show_em "failed to Establish Distro_Specific dir."
+	return
+fi
+
+show_im "moving Theme_Stuff to ${__custom_distro_name}"
+mv "${theme_temp_path}"/system-icons/* "${distro_temp_path}/${__Theme_repo_name}/system-icons"
+rm -rdf "${theme_temp_path}"/system-icons
+mv "${theme_temp_path}"/* "${distro_temp_path}/${__Theme_repo_name}"
+rm -rdf "${theme_temp_path}"
+
+show_im "change ownership to root"
+chown -R root:root "${distro_temp_path}"
+
+if [ "${__reinstall_distro}" = true ] && [ ! -f "${installer_phases}/__distro_path_root_removed" ];then
+	mv "${__distro_path_root}"/never_remove "${distro_temp_path}"
+	rm -rdf "$__distro_path_root"
+	touch "${installer_phases}/__distro_path_root_removed"
+elif [ -d "${__distro_path_root}" ];then
+	rm -rdf "${__distro_path_root}"
+fi
+
+show_im "moving usr_share"
+mv "${distro_temp_path}" /usr/share/
+
+show_im "Establish Distro_Specific dir."
+ln -sf "${__distro_path_root}/All_Distro_Specific/${root_distro_name}" "${__distro_path_root}/Distro_Specific"
+
+sed -i "s/__reinstall_distro=.*/__reinstall_distro=false/g" "${prompt_to_install_value_file}"
+
+git config --system --add safe.directory "${__distro_path_root}"
+git config --system --add safe.directory "${__distro_path_themes}"

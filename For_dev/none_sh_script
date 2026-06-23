@@ -1,0 +1,9 @@
+#!/bin/sh
+script_types="$(grep -r '#!/' -I ~/Desktop/my_stuff/bin | awk -F: '{print $2}' | grep '^#!/' | sort -u | awk -F'/' '{print $NF}' | sed 's/env //g' | sort -u | grep -v "^sh")"
+for type in ${script_types};do
+	echo "##########################"
+	echo "type are : $type"
+	echo "##########################"
+	grep -r '^#!/' -I ~/Desktop/my_stuff/bin | grep ':#!/' | grep "/$type" | awk -F: '{print $1}' | sort -u
+	echo ""
+done > ~/Desktop/none_sh_script_output
