@@ -14,52 +14,84 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # No color
 
+show_title(){
+	if [ "$3" = "bold" ];then
+		printf "#######################################################"
+		printf "\n#######################################################\n"
+		printf "  %s: %s" "$1" "$2"
+		printf "\n#######################################################"
+		printf "\n#######################################################\n"
+	else
+		printf "\n-------------------------------------------------------\n"
+		printf "  %s: %s" "$1" "$2"
+		printf "\n-------------------------------------------------------\n"
+	fi
+}
+
+show_massage(){
+	printf "\n  %s: %s\n" "$1" "$2"
+}
+
+show_done(){
+	echo "${GREEN}${1}${NC}"
+}
+
+show_error(){
+	echo "${RED}${1}${NC}"
+}
+
+show_newline(){
+	printf "\n\n"
+}
+
 start_ssh_agent() {
+	show_title "ssh agent" "starting ssh agent"
 	eval "$(ssh-agent -s)" >/dev/null 2>&1
+	show_massage "ssh agent" "finding ssh keys"
 	ssh_key="$(find ~/.ssh/* -name id_* | grep -v ".pub" | head -n1)"
+	if [ -z "" ];then
+		
+		exit 1
+	fi
+	show_massage "ssh agent" "adding ssh keys"
 	ssh-add "${ssh_key}" >/dev/null 2>&1
+	show_done "done adding ssh keys"
 }
 
 push_now() {
     repo_name="$1"
-    printf "\n-------------------------------------------------------\n"
-	printf "  Pushing repository: %s" "$repo"
-	printf "\n-------------------------------------------------------\n"
-    echo "🔍 Checking repo: $repo_name"
+    show_title "Pushing repository" "$repo"
+    show_massage "🔍 Checking repo" "$repo_name"
     git remote set-url origin "git@github.com:dari862/${repo_name}.git"
     git add -A
 
     if git diff-index --quiet HEAD --; then
-        echo "${GREEN}✅ No changes to commit for $repo_name${NC}"
+        show_done "✅ No changes to commit for $repo_name$"
         return
     else
         if git commit -m "Update README.md"; then
-            echo "${GREEN}✅ Successfully Committed changes in $repo_name ${NC}"
+            show_done "✅ Successfully Committed changes in $repo_name"
         else
-            echo "${RED}❌ Failed to commit changes in $repo_name${NC}"
+            show_error "❌ Failed to commit changes in $repo_name"
             return 1
         fi
 
         CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
     	if git push origin "$CURRENT_BRANCH"; then
-            echo "${GREEN}✅ Successfully pushed $repo_name ($CURRENT_BRANCH)${NC}"
+            show_done "✅ Successfully pushed $repo_name ($CURRENT_BRANCH)"
         else
-            echo "${RED}❌ Failed to push $repo_name ($CURRENT_BRANCH)${NC}"
+            show_error "❌ Failed to push $repo_name ($CURRENT_BRANCH)"
             git push --force
         fi
     fi
-    printf "\n\n"
+    show_newline
 }
 
 start_ssh_agent
 
 repos_name=$(printf "%s" "$repos" | tr '\n' ' ')
-printf "#######################################################"
-printf "\n#######################################################\n"
-printf "Starting push for all Git repositories: %s" "$repos_name"
-printf "\n#######################################################"
-printf "\n#######################################################\n"
+show_title "Starting push for all Git repositories" "$repos_name" "bold"
 
 for repo in ${repos}; do
     repo_path="$HOME/Desktop/$repo"

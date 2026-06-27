@@ -46,16 +46,19 @@ user_with_superuser_accese=""
 install_hwclock=false
 
 PACKAGEMANAGER='apt-get dnf pacman zypper'
+distro_temp_at_all_temp=false
 
 if [ -d "$current_user_home/Desktop/$__custom_distro_name" ];then
 	distro_temp_path="$current_user_home/Desktop/$__custom_distro_name"
 else
+	distro_temp_at_all_temp=true
 	distro_temp_path="${all_temp_path}/$__custom_distro_name"
 fi
 
 if [ -d "$current_user_home/Desktop/Theme_Stuff" ];then
 	theme_temp_path="$current_user_home/Desktop/$__Theme_repo_name"
 else
+	distro_temp_at_all_temp=true
 	theme_temp_path="${all_temp_path}/$__Theme_repo_name"
 fi
 
@@ -576,6 +579,7 @@ build_prompt_to_install_value_file(){
 		pre_remote_repo_raw_link="${pre_remote_repo_raw_link}"
 		post_remote_repo_raw_link="${post_remote_repo_raw_link}"
 		__Theme_repo_name="${__Theme_repo_name}"
+		distro_temp_at_all_temp=${distro_temp_at_all_temp}
 	EOF
 }
 

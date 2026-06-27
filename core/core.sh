@@ -358,6 +358,9 @@ clone_rep_(){
 	getthis="${1-}"
 	getthis_location="${2-}"
 	if [ -d "${getthis_location}" ];then
+		if [ "${distro_temp_at_all_temp}" = true ];then
+			return
+		fi
 		show_im "Update distro files repo ( ${getthis} )."
 		if ! su - "$__USER" -c "(cd "${getthis_location}" && $repo_commnad checkout)" >/dev/null 2>&1;then
 			su - "$__USER" -c "(cd "${getthis_location}" && $repo_commnad pull)"

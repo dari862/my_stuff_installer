@@ -167,23 +167,24 @@ install_ads_block_for_firefox(){
 		download_file "${ads_block_url}" "${ads_block_tmp_path}/${ads_block_name}"
 		unzip "${ads_block_downloaded_tmp_path}" -d "${ads_block_contant_tmp_path}" >/dev/null 2>&1
 		
-		ads_block_tmp_path="${ads_block_tmp_path}/$(grep -oP '(?<=id": ")[^"]*' "${ads_block_contant_tmp_path}/manifest.json").xpi"
+		ads_block_new_tmp_path="${ads_block_tmp_path}/$(grep -oP '(?<=id": ")[^"]*' "${ads_block_contant_tmp_path}/manifest.json").xpi"
 		
-		mv "${ads_block_downloaded_tmp_path}" "${ads_block_tmp_path}"
+		mv "${ads_block_downloaded_tmp_path}" "${ads_block_new_tmp_path}"
 		
 		for d in /home/*; do
-			if [ -d "$d/.mozilla/firefox" ];then
-				show_im "Installing uBlock to ($d) firefox."
-				user_and_group=$(stat "$(dirname "$d/.config")" -c %u:%g)
-				profiles="$(cat "$d/.mozilla/firefox/profiles.ini" | grep "Path=" | awk -F= '{print $2}')"
-				for p in $profiles;do
-					mkdir -p "$d/.mozilla/firefox/$p/extensions"
-					cp -r "${ads_block_tmp_path}" "$d/.mozilla/firefox/$p/extensions"
-				done
-				chown -R "$user_and_group" "$d"
-			else
+			if [ ! -d "$d/.mozilla/firefox" ] || [ ! -f "$d/.mozilla/firefox/profiles.ini" ];then
 				show_im "Skipping install of uBlock to ($d) firefox."
+				continue
 			fi
+			
+			show_im "Installing uBlock to ($d) firefox."
+			user_and_group=$(stat "$(dirname "$d/.config")" -c %u:%g)
+			profiles="$(cat "$d/.mozilla/firefox/profiles.ini" | grep "Path=" | awk -F= '{print $2}')"
+			for p in $profiles;do
+				mkdir -p "$d/.mozilla/firefox/$p/extensions"
+				cp -r "${ads_block_new_tmp_path}" "$d/.mozilla/firefox/$p/extensions"
+			done
+			chown -R "$user_and_group" "$d"
 		done
 	fi
 	touch "${installer_phases}/install_ads_block_for_firefox"
