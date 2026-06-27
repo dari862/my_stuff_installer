@@ -49,11 +49,12 @@ start_ssh_agent() {
 	eval "$(ssh-agent -s)" >/dev/null 2>&1
 	show_massage "ssh agent" "finding ssh keys"
 	ssh_key="$(find ~/.ssh/* -name id_* | grep -v ".pub" | head -n1)"
-	if [ -z "" ];then
-		
+	if [ -z "$ssh_key" ];then
+		show_error "no ssh key were found."
 		exit 1
+	else
+		show_massage "ssh agent" "adding ssh keys"
 	fi
-	show_massage "ssh agent" "adding ssh keys"
 	ssh-add "${ssh_key}" >/dev/null 2>&1
 	show_done "done adding ssh keys"
 }
@@ -96,9 +97,9 @@ show_title "Starting push for all Git repositories" "$repos_name" "bold"
 for repo in ${repos}; do
     repo_path="$HOME/Desktop/$repo"
     if [ -d "$repo_path" ]; then
-        cd "$repo_path" || { echo "Failed to cd into $repo_path"; continue; }
+        cd "$repo_path" || { show_error "Failed to cd into $repo_path"; continue; }
         push_now "$repo"
     else
-        echo "Directory not found: $repo_path"
+        show_error "Directory not found: $repo_path"
     fi
 done
